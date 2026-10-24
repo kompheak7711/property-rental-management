@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from typing import Final, Protocol
 from uuid import UUID
 
+from property_rental.local_authentication import normalize_local_username
 from property_rental.password_security import blocked_passwords as shared_blocked_passwords
 from property_rental.password_security import validate_new_password
 from property_rental.visible_text import tidy_spaces
@@ -144,7 +145,9 @@ class BootstrapRequest:
             raise ValueError("invalid initial Owner bootstrap identity")
         # Login sub-slice L2d review round 1 (security): sign-in tidies the typed username
         # (Q-2026-10-22-170 (a)), so a username that tidying would change, such as one with two
-        # spaces in a row, is refused until L7 makes the bootstrap store the sign-in form.
+        # spaces in a row, is refused. Since L7b the stored username is also the sign-in form
+        # (`normalize_local_username`); the refusal stays, so the Owner signs in with what
+        # they typed here.
         if tidy_spaces(self.username) != self.username:
             raise ValueError("invalid initial Owner bootstrap identity")
 
@@ -351,7 +354,7 @@ class PostgresInitialOwnerBootstrapRepository:
                     request.correlation_id,
                     request.enrollment_id,
                     request.recovery_set_id,
-                    request.username.casefold(),
+                    normalize_local_username(request.username),
                     request.display_name,
                     request.audit_name,
                     bundle.password_verifier,
