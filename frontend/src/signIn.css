@@ -1,9 +1,10 @@
 /* Login sub-slice L6: the sign-in layer in the CHETANA brand (DESIGN.md tokens, the owner's
-   mock-up signin-styles.css). The fonts are hosted with the app (OFL files beside them). */
+   mock-up signin-styles.css). The fonts are hosted with the app (OFL files beside them), kept
+   outside src because the source scans read every file there as text. */
 
 @font-face {
   font-family: "Montserrat";
-  src: url("./assets/fonts/Montserrat-Variable.ttf") format("truetype");
+  src: url("../assets/fonts/Montserrat-Variable.ttf") format("truetype");
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
@@ -11,7 +12,7 @@
 
 @font-face {
   font-family: "Kantumruy Pro";
-  src: url("./assets/fonts/KantumruyPro-Variable.ttf") format("truetype");
+  src: url("../assets/fonts/KantumruyPro-Variable.ttf") format("truetype");
   font-weight: 100 700;
   font-style: normal;
   font-display: swap;

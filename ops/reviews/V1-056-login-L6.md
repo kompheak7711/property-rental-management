@@ -77,3 +77,26 @@ in `git log` (this record is part of that commit).
   bootstrap writes another provenance today).
 - Every round 1 fix checked: correct (the timer cannot loop, keep a session forever, or end one
   late).
+
+## Review round 3 (one fresh agent, read-only, no files written)
+
+- No blocker, no should-fix. The key fix was checked through every view change in memory: no
+  box is reused for another field, every new box opens empty, the refs read and clear the live
+  box, no secret box has a `value` attribute, and React gives no warning. Without the keys the
+  code box reopens holding the username, as round 2 found. The live-set loading logic and
+  TEST-FE-707 to TEST-FE-709 test what they say.
+- Note taken: TEST-FE-708 now also types a code and a recovery code before each switch and
+  checks that the next box opens empty. Notes kept: the account screen's layout moves a little
+  when the live-set answer arrives.
+
+## Runs
+
+- Static checks: ruff, format and mypy (backend); prettier, eslint and tsc (frontend): clean.
+- Targeted PostgreSQL (T1): the live-set read, the HTTP recovery-code routes and the enrollment
+  module: 29 passed.
+- F4 (full frontend with build, after round 1): 1,633 passed; F5 (after round 3): 1,635 passed.
+- U1 (full backend unit, after round 1): 3,962 passed, 1 failed:
+  `test_server_secret_source_names_cannot_be_frontend_environment_inputs` reads every file of
+  `frontend/src` as text and stopped at the font files. The fonts moved to `frontend/assets/fonts`
+  (outside `src`; the build still bundles them); the scan and the traceability audit then
+  passed (42).

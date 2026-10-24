@@ -805,12 +805,23 @@ describe("sign-in screens", () => {
     );
     signIn("sokha.chan", "a password of mine");
     expect(await screen.findByLabelText("6-digit code")).toHaveValue("");
+    // Review round 3: a code typed before a switch never reaches the next box.
+    fireEvent.change(screen.getByLabelText("6-digit code"), {
+      target: { value: "123456" },
+    });
     fireEvent.click(
       screen.getByRole("button", {
         name: "Lost your phone? Use a recovery code",
       }),
     );
     expect(screen.getByLabelText("Recovery code")).toHaveValue("");
+    fireEvent.change(screen.getByLabelText("Recovery code"), {
+      target: { value: "first-recovery-code" },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Use the code from my phone" }),
+    );
+    expect(screen.getByLabelText("6-digit code")).toHaveValue("");
     fireEvent.click(screen.getByRole("button", { name: "Back to sign in" }));
     expect(screen.getByLabelText("Username")).toHaveValue("sokha.chan");
     expect(screen.getByLabelText("Password")).toHaveValue("");
