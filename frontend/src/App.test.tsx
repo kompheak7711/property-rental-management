@@ -29,6 +29,7 @@ import {
 import { AccessAdministrationApi, UserAccount } from "./adminClient";
 import {
   AuthenticationApi,
+  AuthenticationError,
   PasswordRuleError,
   SessionData,
   SessionExpiredError,
@@ -249,6 +250,7 @@ function mockAuthenticationApi(
       set_id: "set-2",
       codes: ["replacement-one", "replacement-two"],
     }),
+    liveRecoveryCodeSet: vi.fn().mockResolvedValue(null),
     logout: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   };
@@ -680,7 +682,7 @@ describe("local sign-in", () => {
       });
     });
     expect(await screen.findByRole("status")).toHaveTextContent(
-      "Recovery code used. Make new codes in your account soon.",
+      "Recovery code used. If your phone is lost, ask the Owner to reset your two-step sign-in.",
     );
     expect(screen.queryByText(/account disabled/i)).not.toBeInTheDocument();
   });
@@ -724,7 +726,10 @@ describe("local sign-in", () => {
 
   it("TEST-FE-011 returns expired sessions to sign-in without claiming unsaved commands succeeded", async () => {
     vi.useFakeTimers();
-    const api = mockAuthenticationApi();
+    const api = mockAuthenticationApi({
+      // L6 review round 1: the server is asked first and says the session ended.
+      inspectSession: vi.fn().mockRejectedValue(new AuthenticationError()),
+    });
     render(
       <App
         api={api}
@@ -861,6 +866,90 @@ describe("local sign-in", () => {
       screen.queryByRole("region", { name: "One-time recovery codes" }),
     ).not.toBeInTheDocument();
     expect(screen.queryByText("code-one")).not.toBeInTheDocument();
+  });
+
+  it("TEST-FE-707 shows the live recovery-code set and replaces it by its id, and a refused read keeps the person signed in", async () => {
+    const api = mockAuthenticationApi({
+      liveRecoveryCodeSet: vi
+        .fn()
+        .mockResolvedValueOnce({
+          set_id: "bootstrap-set",
+          created_at: "2026-08-20T08:00:00Z",
+          made_by: "other",
+          usable_count: 10,
+        })
+        .mockResolvedValue({
+          set_id: "set-2",
+          created_at: "2026-08-22T10:10:00Z",
+          made_by: "regenerated",
+          usable_count: 2,
+        }),
+    });
+    render(
+      <App
+        api={api}
+        environment="development"
+        buildId="test-build"
+        now={() => new Date("2026-08-22T10:10:00Z").getTime()}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText("Username"), {
+      target: { value: "owner" },
+    });
+    fireEvent.change(screen.getByLabelText("Password"), {
+      target: { value: "password" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+    expect(
+      await screen.findByText(
+        "Your recovery codes: 10 still work. Made by the server set-up 2026-08-20T08:00:00.000Z.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", {
+        name: "Generate one-time recovery codes",
+      }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Replace my recovery codes" }),
+    );
+    await waitFor(() => {
+      expect(api.regenerateRecoveryCodes).toHaveBeenCalledWith("bootstrap-set");
+    });
+    expect(
+      await screen.findByRole("region", { name: "One-time recovery codes" }),
+    ).toHaveTextContent("replacement-one");
+    fireEvent.click(
+      screen.getByRole("button", { name: "I saved these codes—clear them" }),
+    );
+    expect(
+      await screen.findByText(/Your recovery codes: 2 still work\. Replaced/),
+    ).toBeInTheDocument();
+    cleanup();
+
+    const refused = mockAuthenticationApi({
+      liveRecoveryCodeSet: vi.fn().mockRejectedValue(new AuthenticationError()),
+    });
+    render(
+      <App
+        api={refused}
+        environment="development"
+        buildId="test-build"
+        now={() => new Date("2026-08-22T10:10:00Z").getTime()}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText("Username"), {
+      target: { value: "owner" },
+    });
+    fireEvent.change(screen.getByLabelText("Password"), {
+      target: { value: "password" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+    expect(
+      await screen.findByText(/Your recovery codes could not be checked/),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("main")).toHaveAccessibleName("Account and access");
+    expect(refused.logout).not.toHaveBeenCalled();
   });
 
   it("TEST-FE-014 requires consequence confirmation before administrative recovery", async () => {
@@ -1522,6 +1611,8 @@ describe("local sign-in", () => {
         phase: "authenticated",
         session: expiringSession,
       }),
+      // L6 review round 1: the server is asked first and says the session ended.
+      inspectSession: vi.fn().mockRejectedValue(new AuthenticationError()),
     });
     const customers = customerApiDouble({
       create: vi.fn().mockReturnValue(pendingCreate),
@@ -1622,6 +1713,8 @@ describe("local sign-in", () => {
         phase: "authenticated",
         session: expiringSession,
       }),
+      // L6 review round 1: the server is asked first and says the session ended.
+      inspectSession: vi.fn().mockRejectedValue(new AuthenticationError()),
     });
     const customers = customerApiDouble({
       create: vi
@@ -2516,6 +2609,78 @@ describe("local sign-in", () => {
     expect(
       screen.queryByText("2026-08-23T10:00:00.000Z"),
     ).not.toBeInTheDocument();
+  });
+
+  it("TEST-FE-706 keeps a session restore that finishes during a sign-in from opening the app", async () => {
+    const newerSession: SessionData = {
+      ...session,
+      actor_id: "actor-2",
+      idle_expires_at: "2026-08-22T11:30:00Z",
+      absolute_expires_at: "2026-08-24T10:00:00Z",
+    };
+    const answers: Record<string, (data: unknown) => void> = {};
+    const fetchMock = vi.fn((input: RequestInfo | URL) => {
+      const path =
+        typeof input === "string"
+          ? input
+          : input instanceof URL
+            ? input.href
+            : input.url;
+      return new Promise<Response>((resolve) => {
+        answers[path.endsWith("/auth/session") ? "restore" : "login"] = (
+          data,
+        ) => {
+          resolve(
+            new Response(
+              JSON.stringify({ data, meta: { request_id: "request-1" } }),
+              {
+                status: 200,
+                headers: { "Content-Type": "application/json" },
+              },
+            ),
+          );
+        };
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    render(
+      <App
+        buildId="test-build"
+        environment="development"
+        now={() => new Date("2026-08-22T10:10:00Z").getTime()}
+      />,
+    );
+    await waitFor(() => {
+      expect(answers.restore).toBeDefined();
+    });
+    fireEvent.change(screen.getByLabelText("Username"), {
+      target: { value: "manager" },
+    });
+    fireEvent.change(screen.getByLabelText("Password"), {
+      target: { value: "password" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+    await waitFor(() => {
+      expect(answers.login).toBeDefined();
+    });
+
+    // L6 review round 1: the older session answers while the sign-in is on its way.
+    await act(async () => {
+      answers.restore?.(session);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(screen.getByRole("main")).toHaveAccessibleName("Sign in");
+    expect(
+      screen.queryByText("2026-08-23T10:00:00.000Z"),
+    ).not.toBeInTheDocument();
+
+    await act(async () => {
+      answers.login?.({ phase: "authenticated", session: newerSession });
+      await Promise.resolve();
+    });
+    expect(
+      await screen.findByText("2026-08-24T10:00:00.000Z"),
+    ).toBeInTheDocument();
   });
 
   it("TEST-FE-073 removes Customer commands while logout is pending", async () => {

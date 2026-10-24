@@ -12,6 +12,7 @@ import {
   completeMfa,
   inspectSession,
   issueRecoveryCodes,
+  liveRecoveryCodeSet,
   logout,
   regenerateRecoveryCodes,
   signIn,
@@ -357,7 +358,7 @@ describe("local authentication client", () => {
     expect(wrong).not.toBeInstanceOf(ServiceUnavailableError);
   });
 
-  it("TEST-FE-AUTH-013 accepts the set-up QR picture and the display name", async () => {
+  it("TEST-FE-AUTH-013 accepts a set-up picture only when it starts as an SVG, and the display name", async () => {
     vi.spyOn(document, "cookie", "get").mockReturnValue(
       "__Host-prm_csrf=csrf-token",
     );
@@ -411,5 +412,37 @@ describe("local authentication client", () => {
     await expect(inspectSession(badName)).rejects.toBeInstanceOf(
       AuthenticationError,
     );
+  });
+
+  it("TEST-FE-AUTH-014 reads the live recovery-code set or none, refusing any other shape", async () => {
+    const summary = {
+      set_id: "11111111-1111-4111-8111-111111111111",
+      created_at: "2026-10-24T09:00:00Z",
+      made_by: "issued",
+      usable_count: 9,
+    };
+    const answer = (data: unknown) =>
+      vi
+        .fn<typeof fetch>()
+        .mockResolvedValue(
+          new Response(JSON.stringify({ data, meta: { request_id: "r" } })),
+        );
+    const live = answer(summary);
+    await expect(liveRecoveryCodeSet(live)).resolves.toEqual(summary);
+    expect(live).toHaveBeenCalledWith("/api/v1/auth/recovery-codes", {
+      method: "GET",
+      credentials: "include",
+    });
+    await expect(liveRecoveryCodeSet(answer(null))).resolves.toBeNull();
+    for (const bad of [
+      { ...summary, made_by: "guessed" },
+      { ...summary, usable_count: 1.5 },
+      { ...summary, created_at: "not a time" },
+      { ...summary, codes: undefined, set_id: 7 },
+    ]) {
+      await expect(liveRecoveryCodeSet(answer(bad))).rejects.toBeInstanceOf(
+        AuthenticationError,
+      );
+    }
   });
 });

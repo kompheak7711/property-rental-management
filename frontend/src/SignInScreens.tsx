@@ -1,4 +1,5 @@
 import {
+  ChangeEvent,
   FormEvent,
   ReactNode,
   useCallback,
@@ -53,6 +54,10 @@ type Field =
   | "newPasswordAgain"
   | "setupCode"
   | "kept";
+
+// Passwords and codes are read from the box itself, never kept in React state: React writes a
+// controlled box's text into its HTML `value` attribute (review round 1).
+type SecretField = Exclude<Field, "username" | "kept">;
 
 interface Message {
   key: TextKey;
@@ -133,6 +138,8 @@ export interface SignInScreensProps {
   now: () => number;
   /** The server said the sign-in is complete; `message` greets the person in their language. */
   onAuthenticated: (result: AuthenticationData, message: string) => void;
+  /** A sign-in was sent; a session restore still running must not open the app any more. */
+  onSignInStarted?: () => void;
   footer?: ReactNode;
 }
 
@@ -141,21 +148,23 @@ export function SignInScreens({
   entry,
   now,
   onAuthenticated,
+  onSignInStarted,
   footer,
 }: SignInScreensProps) {
   const [language, setLanguage] = useState<Language>(storedLanguage);
   const [view, setView] = useState<View>(
     entry.kind === "idle" ? "out" : entry.kind === "day" ? "day" : "signin",
   );
-  const [values, setValues] = useState<Record<Exclude<Field, "kept">, string>>({
-    username: "",
-    password: "",
-    code: "",
-    recovery: "",
-    newPassword: "",
-    newPasswordAgain: "",
-    setupCode: "",
+  const [username, setUsername] = useState("");
+  const inputs = useRef<Partial<Record<SecretField, HTMLInputElement | null>>>(
+    {},
+  );
+  // Only the shape of a new password is kept, for the rule list.
+  const [newPasswordShape, setNewPasswordShape] = useState({
+    length: 0,
+    same: false,
   });
+  const [pending, setPending] = useState(false);
   const [kept, setKept] = useState(false);
   const [shown, setShown] = useState<Record<string, boolean>>({});
   const [codeMethod, setCodeMethod] = useState<"totp" | "recovery_code">(
@@ -182,6 +191,8 @@ export function SignInScreens({
   const heldResult = useRef<AuthenticationData | null>(null);
   const stepEndsAt = useRef<number | null>(null);
   const busy = useRef(false);
+  // Raised by "Back to sign in": an answer to an older request is dropped (review round 1).
+  const generation = useRef(0);
   const mounted = useRef(true);
   // Read through a function: an answer may arrive after the layer was closed.
   const alive = () => mounted.current;
@@ -227,21 +238,47 @@ export function SignInScreens({
     setFocus((current) => ({ target, sequence: current.sequence + 1 }));
   }
 
-  function setValue(field: Exclude<Field, "kept">, value: string) {
-    setValues((current) => ({ ...current, [field]: value }));
+  function edited(field: Exclude<Field, "kept">) {
     setErrors((current) =>
       current[field] === undefined
         ? current
         : { ...current, [field]: undefined },
     );
+    if (field === "newPassword" || field === "newPasswordAgain") {
+      const value = secret("newPassword");
+      setNewPasswordShape({
+        length: passwordLength(value),
+        same: value.length > 0 && value === secret("newPasswordAgain"),
+      });
+    }
   }
 
-  function clearSecrets(fields: Exclude<Field, "kept">[]) {
-    setValues((current) => {
-      const next = { ...current };
-      for (const field of fields) next[field] = "";
-      return next;
-    });
+  function secret(field: SecretField): string {
+    return inputs.current[field]?.value ?? "";
+  }
+
+  function clearSecrets(fields: SecretField[]) {
+    for (const field of fields) {
+      const input = inputs.current[field];
+      if (input !== null && input !== undefined) input.value = "";
+    }
+    if (fields.includes("newPassword")) {
+      setNewPasswordShape({ length: 0, same: false });
+    }
+  }
+
+  /** A request starts; the returned check says whether its answer may still be used. */
+  function start(): () => boolean {
+    busy.current = true;
+    setPending(true);
+    const mine = generation.current;
+    return () => alive() && generation.current === mine;
+  }
+
+  function settle(current: () => boolean) {
+    if (!current()) return;
+    busy.current = false;
+    setPending(false);
   }
 
   function open(next: View, noteKeys: TextKey[] = []) {
@@ -255,6 +292,9 @@ export function SignInScreens({
   }
 
   function backToSignIn(message: Message | null = null) {
+    generation.current += 1;
+    busy.current = false;
+    setPending(false);
     stepEndsAt.current = null;
     heldResult.current = null;
     setEnrollment(null);
@@ -306,7 +346,7 @@ export function SignInScreens({
     setEnrollment(null);
     setRecoveryCodes(null);
     const displayName = result.session?.display_name?.trim() ?? "";
-    const name = displayName.length > 0 ? displayName : values.username.trim();
+    const name = displayName.length > 0 ? displayName : username.trim();
     const message = [
       t("au_welcome", name),
       ...noteKeys.map((key) => t(key)),
@@ -315,30 +355,28 @@ export function SignInScreens({
   }
 
   function beginSetup() {
-    busy.current = true;
+    const mine = generation.current;
+    const current = () => alive() && generation.current === mine;
     void api
       .beginMfaEnrollment()
       .then((material) => {
-        if (!alive()) return;
+        if (!current()) return;
         setEnrollment({
           qr: material.qr_code_svg,
           key: setupKey(material.provisioning_uri),
         });
       })
       .catch((error: unknown) => {
-        if (!alive()) return;
-        if (
-          error instanceof RateLimitedError ||
-          error instanceof ServiceUnavailableError
-        ) {
-          refused(error, "au_e_step_time");
-        } else {
-          // The set-up material is given once per sign-in; it cannot be asked for again.
-          backToSignIn({ key: "au_e_step_time" });
-        }
-      })
-      .finally(() => {
-        busy.current = false;
+        if (!current()) return;
+        // The set-up material is given once per sign-in, so the person signs in again
+        // (review round 1: no screen without a QR code and no way on).
+        backToSignIn(
+          error instanceof RateLimitedError
+            ? waitMessage(error.retryAfterSeconds)
+            : error instanceof ServiceUnavailableError
+              ? { key: "au_e_offline" }
+              : { key: "au_e_step_time" },
+        );
       });
   }
 
@@ -379,27 +417,29 @@ export function SignInScreens({
   function submitSignIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy.current) return;
+    const password = secret("password");
     const found: Partial<Record<Field, TextKey>> = {};
-    if (values.username.trim().length === 0) found.username = "au_e_user";
-    if (values.password.length === 0) found.password = "au_e_pw";
+    if (username.trim().length === 0) found.username = "au_e_user";
+    if (password.length === 0) found.password = "au_e_pw";
     if (invalid(found, ["username", "password"])) return;
-    busy.current = true;
+    const current = start();
+    onSignInStarted?.();
     setNotes([]);
     setEntryNote(null);
     void api
-      .signIn({ username: values.username, password: values.password })
+      .signIn({ username, password })
       .then((result) => {
-        if (!alive()) return;
+        if (!current()) return;
         clearSecrets(["password"]);
         continueWith(result, []);
       })
       .catch((error: unknown) => {
-        if (!alive()) return;
+        if (!current()) return;
         clearSecrets(["password"]);
         refused(error, "au_e_wrong");
       })
       .finally(() => {
-        busy.current = false;
+        settle(current);
       });
   }
 
@@ -408,8 +448,8 @@ export function SignInScreens({
     if (busy.current) return;
     const recovery = codeMethod === "recovery_code";
     const code = recovery
-      ? values.recovery.trim()
-      : values.code.replace(/\s/g, "");
+      ? secret("recovery").trim()
+      : secret("code").replace(/\s/g, "");
     if (recovery) {
       if (
         invalid(
@@ -426,44 +466,45 @@ export function SignInScreens({
     ) {
       return;
     }
-    busy.current = true;
+    const current = start();
     void api
       .completeMfa({ method: codeMethod, code })
       .then((result) => {
-        if (!alive()) return;
+        if (!current()) return;
         clearSecrets(["code", "recovery"]);
         continueWith(result, recovery ? ["au_rc_used"] : []);
       })
       .catch((error: unknown) => {
-        if (!alive()) return;
+        if (!current()) return;
         clearSecrets(["code", "recovery"]);
         refused(error, recovery ? "au_e_rc_bad" : "au_e_code_bad");
       })
       .finally(() => {
-        busy.current = false;
+        settle(current);
       });
   }
 
   function submitNewPassword(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy.current) return;
-    const length = passwordLength(values.newPassword);
+    const newPassword = secret("newPassword");
+    const length = passwordLength(newPassword);
     const found: Partial<Record<Field, TextKey>> = {};
     if (length < 15) found.newPassword = "au_e_short";
     else if (length > 128) found.newPassword = "au_e_long";
-    else if (values.newPassword !== values.newPasswordAgain)
+    else if (newPassword !== secret("newPasswordAgain"))
       found.newPasswordAgain = "au_e_same";
     if (invalid(found, ["newPassword", "newPasswordAgain"])) return;
-    busy.current = true;
+    const current = start();
     void api
-      .changePassword(values.newPassword)
+      .changePassword(newPassword)
       .then((result) => {
-        if (!alive()) return;
+        if (!current()) return;
         clearSecrets(["newPassword", "newPasswordAgain"]);
         continueWith(result, ["au_np_done"]);
       })
       .catch((error: unknown) => {
-        if (!alive()) return;
+        if (!current()) return;
         clearSecrets(["newPassword", "newPasswordAgain"]);
         if (error instanceof PasswordRuleError) {
           invalid({ newPassword: "au_e_common" }, ["newPassword"]);
@@ -475,25 +516,25 @@ export function SignInScreens({
         }
       })
       .finally(() => {
-        busy.current = false;
+        settle(current);
       });
   }
 
   function submitSetup(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy.current) return;
-    const code = values.setupCode.replace(/\s/g, "");
+    const code = secret("setupCode").replace(/\s/g, "");
     if (
       invalid(/^\d{6}$/.test(code) ? {} : { setupCode: "au_e_code" }, [
         "setupCode",
       ])
     )
       return;
-    busy.current = true;
+    const current = start();
     void api
       .confirmMfaEnrollment(code)
       .then(async (result) => {
-        if (!alive()) return;
+        if (!current()) return;
         clearSecrets(["setupCode"]);
         setEnrollment(null);
         if (result.phase !== "authenticated") {
@@ -504,23 +545,23 @@ export function SignInScreens({
         try {
           // The confirmed set-up counts as a reauthentication, which the first codes need.
           const codes = await api.issueRecoveryCodes();
-          if (!alive()) return;
+          if (!current()) return;
           heldResult.current = result;
           setRecoveryCodes(codes.codes);
           setKept(false);
           open("codes");
         } catch {
-          if (!alive()) return;
+          if (!current()) return;
           finish(result, ["au_rcs_none"]);
         }
       })
       .catch((error: unknown) => {
-        if (!alive()) return;
+        if (!current()) return;
         clearSecrets(["setupCode"]);
         refused(error, "au_e_code_bad");
       })
       .finally(() => {
-        busy.current = false;
+        settle(current);
       });
   }
 
@@ -579,6 +620,24 @@ export function SignInScreens({
     const id = FIELD_IDS[field];
     const helpId = help === undefined ? undefined : `${id}-help`;
     const numeric = field === "code" || field === "setupCode";
+    // The username is not secret, so its box alone is controlled.
+    const content =
+      field === "username"
+        ? {
+            value: username,
+            onChange: (event: ChangeEvent<HTMLInputElement>) => {
+              setUsername(event.target.value);
+              edited(field);
+            },
+          }
+        : {
+            ref: (input: HTMLInputElement | null) => {
+              inputs.current[field] = input;
+            },
+            onChange: () => {
+              edited(field);
+            },
+          };
     return (
       <div className="sign-in-field">
         <label htmlFor={id}>{t(label)}</label>
@@ -593,12 +652,9 @@ export function SignInScreens({
           id={id}
           inputMode={numeric ? "numeric" : "text"}
           maxLength={numeric ? 7 : MAX_CODE_LENGTH}
-          onChange={(event) => {
-            setValue(field, event.target.value);
-          }}
           spellCheck={false}
           type="text"
-          value={values[field]}
+          {...content}
         />
         {help !== undefined && (
           <p className="sign-in-help" id={helpId}>
@@ -630,12 +686,14 @@ export function SignInScreens({
             autoComplete={autoComplete}
             className="sign-in-input"
             id={id}
-            onChange={(event) => {
-              setValue(field, event.target.value);
+            onChange={() => {
+              edited(field);
+            }}
+            ref={(input) => {
+              inputs.current[field] = input;
             }}
             spellCheck={false}
             type={visible ? "text" : "password"}
-            value={values[field]}
           />
           <button
             aria-label={t(visible ? "au_hide_l" : "au_show_l")}
@@ -672,6 +730,18 @@ export function SignInScreens({
           {t("au_back_signin")}
         </button>
       </p>
+    );
+  }
+
+  function submitButton(label: TextKey) {
+    return (
+      <button
+        aria-disabled={pending}
+        className="sign-in-button sign-in-primary"
+        type="submit"
+      >
+        {t(pending ? "au_working" : label)}
+      </button>
     );
   }
 
@@ -719,12 +789,15 @@ export function SignInScreens({
           {heading("au_signin")}
           <p className="sign-in-muted">{t("au_signin_s")}</p>
           {messages()}
-          <form className="sign-in-form" noValidate onSubmit={submitSignIn}>
+          <form
+            aria-busy={pending}
+            className="sign-in-form"
+            noValidate
+            onSubmit={submitSignIn}
+          >
             {textField("username", "au_user")}
             {passwordField("password", "au_pw", "current-password")}
-            <button className="sign-in-button sign-in-primary" type="submit">
-              {t("au_signin")}
-            </button>
+            {submitButton("au_signin")}
           </form>
           <p className="sign-in-links">
             <button
@@ -751,13 +824,16 @@ export function SignInScreens({
             {t(recovery ? "au_rc_h" : "au_code_s")}
           </p>
           {messages()}
-          <form className="sign-in-form" noValidate onSubmit={submitCode}>
+          <form
+            aria-busy={pending}
+            className="sign-in-form"
+            noValidate
+            onSubmit={submitCode}
+          >
             {recovery
               ? textField("recovery", "au_rc")
               : textField("code", "au_code", "au_code_h")}
-            <button className="sign-in-button sign-in-primary" type="submit">
-              {t("au_verify")}
-            </button>
+            {submitButton("au_verify")}
           </form>
           <p className="sign-in-links">
             <button
@@ -803,10 +879,7 @@ export function SignInScreens({
       );
     }
     if (view === "newpw") {
-      const length = passwordLength(values.newPassword);
-      const same =
-        values.newPassword.length > 0 &&
-        values.newPassword === values.newPasswordAgain;
+      const { length, same } = newPasswordShape;
       const rule = (met: boolean, label: TextKey, extra?: string) => (
         <li className={met ? "sign-in-rule-met" : undefined}>
           <span aria-hidden="true">{met ? "✓" : "•"}</span>
@@ -822,21 +895,28 @@ export function SignInScreens({
           <p className="sign-in-muted">{t("au_np_temp")}</p>
           {messages()}
           <form
+            aria-busy={pending}
             className="sign-in-form"
             noValidate
             onSubmit={submitNewPassword}
           >
+            {/* For password managers: the account the new password belongs to. */}
+            <input
+              autoComplete="username"
+              hidden
+              readOnly
+              type="text"
+              value={username}
+            />
             {passwordField("newPassword", "au_new", "new-password", "au_np_h")}
-            <ul aria-live="polite" className="sign-in-rules">
+            <ul className="sign-in-rules">
               {rule(length >= 15, "au_r_len", t("au_r_now", length))}
               {rule(length > 0 && length <= 128, "au_r_max")}
               {rule(false, "au_r_common", t("au_r_common_h"))}
               {rule(same, "au_r_same")}
             </ul>
             {passwordField("newPasswordAgain", "au_new2", "new-password")}
-            <button className="sign-in-button sign-in-primary" type="submit">
-              {t("au_np_save")}
-            </button>
+            {submitButton("au_np_save")}
           </form>
           {backLink()}
         </>
@@ -854,7 +934,11 @@ export function SignInScreens({
             </li>
             <li>
               <p>{t("au_su_2")}</p>
-              {enrollment !== null && (
+              {enrollment === null ? (
+                <p className="sign-in-muted" role="status">
+                  {t("au_su_loading")}
+                </p>
+              ) : (
                 <div className="sign-in-qr-box">
                   <img
                     alt={t("au_su_qr")}
@@ -874,15 +958,17 @@ export function SignInScreens({
             </li>
             <li>
               <p>{t("au_su_3")}</p>
-              <form className="sign-in-form" noValidate onSubmit={submitSetup}>
-                {textField("setupCode", "au_code", "au_code_h")}
-                <button
-                  className="sign-in-button sign-in-primary"
-                  type="submit"
+              {enrollment !== null && (
+                <form
+                  aria-busy={pending}
+                  className="sign-in-form"
+                  noValidate
+                  onSubmit={submitSetup}
                 >
-                  {t("au_verify")}
-                </button>
-              </form>
+                  {textField("setupCode", "au_code", "au_code_h")}
+                  {submitButton("au_verify")}
+                </form>
+              )}
             </li>
           </ol>
           {backLink()}

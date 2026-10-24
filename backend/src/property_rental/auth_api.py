@@ -96,6 +96,18 @@ class RecoveryCodeSetResult:
             raise ValueError("invalid recovery-code presentation")
 
 
+@dataclass(frozen=True, slots=True)
+class RecoveryCodeSetSummary:
+    """The account's live recovery-code set without its codes (login sub-slice L6, plan
+    bindings of L3c-2c-1 rounds 1 and 2): its id for a regeneration, when and how it was made,
+    and how many of its codes still work."""
+
+    set_id: UUID
+    created_at: datetime
+    made_by: Literal["issued", "regenerated", "other"]
+    usable_count: int
+
+
 class AuthenticationFlow(Protocol):
     """Application boundary that atomically performs authentication commands."""
 
@@ -176,6 +188,10 @@ class AuthenticationFlow(Protocol):
         request_id: str,
         reauthentication_token: str | None = None,
     ) -> RecoveryCodeSetResult: ...
+
+    def live_recovery_code_set(
+        self, *, session_token: str, request_id: str
+    ) -> RecoveryCodeSetSummary | None: ...
 
 
 class AuthenticationRejected(RuntimeError):
@@ -304,6 +320,12 @@ class UnavailableAuthenticationFlow:
         request_id: str,
         reauthentication_token: str | None = None,
     ) -> RecoveryCodeSetResult:
+        self._unavailable()
+        raise AssertionError
+
+    def live_recovery_code_set(
+        self, *, session_token: str, request_id: str
+    ) -> RecoveryCodeSetSummary | None:
         self._unavailable()
         raise AssertionError
 
@@ -447,6 +469,26 @@ class RecoveryCodeSetResponse(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     data: RecoveryCodeSetData
+    meta: ResponseMeta
+
+
+class RecoveryCodeSetSummaryData(BaseModel):
+    """The live recovery-code set without its codes (login sub-slice L6)."""
+
+    model_config = ConfigDict(frozen=True)
+
+    set_id: UUID
+    created_at: datetime
+    made_by: Literal["issued", "regenerated", "other"]
+    usable_count: int = Field(ge=0, le=20)
+
+
+class RecoveryCodeSetSummaryResponse(BaseModel):
+    """`data` is null when the account has no live recovery-code set."""
+
+    model_config = ConfigDict(frozen=True)
+
+    data: RecoveryCodeSetSummaryData | None
     meta: ResponseMeta
 
 
@@ -843,6 +885,33 @@ def create_auth_router(settings: Settings, flow: AuthenticationFlow) -> APIRoute
         _set_reauthentication_cookie(response, result.reauthentication_token)
         return SessionResponse(
             data=SessionData.model_validate(result.session, from_attributes=True),
+            meta=ResponseMeta(request_id=request.state.request_id),
+        )
+
+    @router.get(
+        "/recovery-codes",
+        response_model=RecoveryCodeSetSummaryResponse,
+        summary="Read the live recovery-code set without its codes",
+    )
+    def live_recovery_code_set(
+        request: Request, response: Response
+    ) -> RecoveryCodeSetSummaryResponse:
+        session_token = request.cookies.get(SESSION_COOKIE_NAME)
+        if session_token is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+        try:
+            summary = flow.live_recovery_code_set(
+                session_token=session_token, request_id=request.state.request_id
+            )
+        except AuthenticationRejected:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED) from None
+        response.headers["Cache-Control"] = "no-store"
+        return RecoveryCodeSetSummaryResponse(
+            data=(
+                None
+                if summary is None
+                else RecoveryCodeSetSummaryData.model_validate(summary, from_attributes=True)
+            ),
             meta=ResponseMeta(request_id=request.state.request_id),
         )
 

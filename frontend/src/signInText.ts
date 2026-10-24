@@ -81,10 +81,11 @@ const text = {
   ],
   au_verify: ["Continue", "បន្ត"],
   au_back_signin: ["Back to sign in", "ត្រឡប់ទៅចូលប្រព័ន្ធ"],
-  // Changed: the server does not say how many codes are left.
+  // Changed: the server does not say how many codes are left, and a session signed in with a
+  // recovery code cannot make new codes (API-098; L6 review round 1).
   au_rc_used: [
-    "Recovery code used. Make new codes in your account soon.",
-    "បានប្រើលេខកូដសង្គ្រោះ។ សូមបង្កើតលេខកូដថ្មីឆាប់ៗ។",
+    "Recovery code used. If your phone is lost, ask the Owner to reset your two-step sign-in. Make new recovery codes after you sign in with your phone again.",
+    "បានប្រើលេខកូដសង្គ្រោះ។ បើបាត់ទូរស័ព្ទ សូមសុំម្ចាស់ឱ្យកំណត់ការចូលពីរជំហានឡើងវិញ។ សូមបង្កើតលេខកូដសង្គ្រោះថ្មី បន្ទាប់ពីចូលដោយទូរស័ព្ទម្តងទៀត។",
   ],
   au_fg_t: ["Forgot your password?", "ភ្លេចពាក្យសម្ងាត់?"],
   au_fg_s: [
@@ -234,6 +235,9 @@ const text = {
     "The app could not reach the office computer. Try again.",
     "កម្មវិធីមិនអាចភ្ជាប់ទៅកុំព្យូទ័រការិយាល័យបានទេ។ សូមសាកម្តងទៀត។",
   ],
+  // New (L6 review round 1): a request is running; the set-up picture is being fetched.
+  au_working: ["Please wait…", "សូមរង់ចាំ…"],
+  au_su_loading: ["Getting your QR code…", "កំពុងយក QR កូដរបស់អ្នក…"],
   me_out: ["Sign out", "ចាកចេញ"],
 } as const satisfies Record<string, readonly [string, string]>;
 
@@ -258,7 +262,8 @@ export function translate(
     typeof argument === "number" && language === "km"
       ? khmerDigits(String(argument))
       : String(argument);
-  return template.replace("{0}", filled);
+  // A function, so a "$" in a name is shown as typed (review round 1).
+  return template.replace("{0}", () => filled);
 }
 
 export const LANGUAGE_STORAGE_KEY = "chetana.language";

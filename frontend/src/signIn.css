@@ -386,8 +386,8 @@ html[lang="km"] .sign-in-layer {
 }
 
 .sign-in-qr {
-  width: 168px;
-  height: 168px;
+  width: 200px;
+  height: 200px;
   border: 1px solid var(--si-border);
   border-radius: 6px;
   flex: none;

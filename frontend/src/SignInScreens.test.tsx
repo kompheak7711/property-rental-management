@@ -12,6 +12,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "./App";
 import {
   AuthenticationApi,
+  AuthenticationData,
   AuthenticationError,
   RateLimitedError,
   ServiceUnavailableError,
@@ -96,6 +97,7 @@ function api(overrides: Partial<AuthenticationApi> = {}): AuthenticationApi {
       .fn()
       .mockResolvedValue({ set_id: "set-1", codes: RECOVERY_CODES }),
     regenerateRecoveryCodes: vi.fn(),
+    liveRecoveryCodeSet: vi.fn().mockResolvedValue(null),
     logout: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   };
@@ -396,7 +398,8 @@ describe("sign-in screens", () => {
       ),
     ).toBeInTheDocument();
     const rules = within(screen.getByRole("main")).getByRole("list");
-    expect(rules).toHaveAttribute("aria-live", "polite");
+    // Review round 1: the list is not a live region, so it is not read out on every key.
+    expect(rules).not.toHaveAttribute("aria-live");
 
     // "é" written as e plus a combining accent is one character after NFC.
     fireEvent.change(first, { target: { value: "café" } });
@@ -683,10 +686,107 @@ describe("sign-in screens", () => {
       expect(onAuthenticated).toHaveBeenCalledTimes(1);
     });
   });
+
+  it("TEST-FE-702 keeps typed passwords and codes out of the page's HTML while they are typed", async () => {
+    renderScreens(
+      api({
+        signIn: vi
+          .fn()
+          .mockResolvedValue({ phase: "mfa_required", session: null }),
+        completeMfa: vi.fn(() => new Promise<never>(() => undefined)),
+      }),
+    );
+    fireEvent.change(screen.getByLabelText("Username"), {
+      target: { value: "sokha" },
+    });
+    fireEvent.change(screen.getByLabelText("Password"), {
+      target: { value: "k7m2-x9qp-4hrt-w3nd" },
+    });
+    expect(screen.getByLabelText("Password")).toHaveValue(
+      "k7m2-x9qp-4hrt-w3nd",
+    );
+    expect(document.body.innerHTML).not.toContain("k7m2-x9qp-4hrt-w3nd");
+    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+    fireEvent.change(await screen.findByLabelText("6-digit code"), {
+      target: { value: "481516" },
+    });
+    expect(document.body.innerHTML).not.toContain("481516");
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    expect(document.body.innerHTML).not.toContain("481516");
+  });
+
+  it("TEST-FE-703 shows that a request is running and drops its answer after Back to sign in", async () => {
+    let answer!: (value: AuthenticationData) => void;
+    const onAuthenticated = renderScreens(
+      api({
+        signIn: vi
+          .fn()
+          .mockResolvedValue({ phase: "mfa_required", session: null }),
+        completeMfa: vi.fn(
+          () =>
+            new Promise<AuthenticationData>((resolve) => {
+              answer = resolve;
+            }),
+        ),
+      }),
+    );
+    signIn();
+    fireEvent.change(await screen.findByLabelText("6-digit code"), {
+      target: { value: "123456" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    const waiting = screen.getByRole("button", { name: "Please wait…" });
+    expect(waiting).toHaveAttribute("aria-disabled", "true");
+    expect(waiting.closest("form")).toHaveAttribute("aria-busy", "true");
+
+    fireEvent.click(screen.getByRole("button", { name: "Back to sign in" }));
+    expect(screen.getByRole("button", { name: "Sign in" })).toHaveAttribute(
+      "aria-disabled",
+      "false",
+    );
+    await act(async () => {
+      answer({ phase: "authenticated", session });
+      await Promise.resolve();
+    });
+    expect(onAuthenticated).not.toHaveBeenCalled();
+    expect(screen.getByRole("main")).toHaveAccessibleName("Sign in");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("TEST-FE-704 shows the QR picture is coming and sends the person back with the wait when set-up cannot start", async () => {
+    let refuse!: (error: unknown) => void;
+    renderScreens(
+      api({
+        signIn: vi.fn().mockResolvedValue({
+          phase: "mfa_enrollment_required",
+          session: null,
+        }),
+        beginMfaEnrollment: vi.fn(
+          () =>
+            new Promise<never>((_, reject) => {
+              refuse = reject;
+            }),
+        ),
+      }),
+    );
+    signIn();
+    expect(
+      await screen.findByText("Getting your QR code…"),
+    ).toBeInTheDocument();
+    expect(screen.queryByLabelText("6-digit code")).not.toBeInTheDocument();
+    await act(async () => {
+      refuse(new RateLimitedError(120));
+      await Promise.resolve();
+    });
+    expect(screen.getByRole("main")).toHaveAccessibleName("Sign in");
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Too many tries. Wait 2 minutes, then try again.",
+    );
+  });
 });
 
 describe("sign-in layer in the app", () => {
-  it("TEST-FE-700 shows the person's name, signs out to the sign-in layer and tells the day limit from no use", async () => {
+  it("TEST-FE-700 shows the person's name and tells the day limit from no use when the server ends the session", async () => {
     vi.useFakeTimers();
     const dayEnds: SessionData = {
       ...session,
@@ -698,6 +798,8 @@ describe("sign-in layer in the app", () => {
         .fn()
         .mockResolvedValueOnce({ phase: "authenticated", session })
         .mockResolvedValueOnce({ phase: "authenticated", session: dayEnds }),
+      // Review round 1: the server is asked first and says the session ended.
+      inspectSession: vi.fn().mockRejectedValue(new AuthenticationError()),
     });
     render(
       <App
@@ -760,5 +862,41 @@ describe("sign-in layer in the app", () => {
     expect(screen.getByRole("status")).toHaveTextContent("You are signed out.");
     expect(screen.getByLabelText("Password")).toHaveValue("");
     expect(client.logout).toHaveBeenCalledTimes(1);
+  });
+
+  it("TEST-FE-705 keeps the app open when the server says the session is still in use", async () => {
+    vi.useFakeTimers();
+    const used: SessionData = {
+      ...session,
+      idle_expires_at: "2026-08-22T10:40:00Z",
+    };
+    const client = api({
+      signIn: vi.fn().mockResolvedValue({
+        phase: "authenticated",
+        session: { ...session, idle_expires_at: "2026-08-22T10:10:01Z" },
+      }),
+      inspectSession: vi.fn().mockResolvedValue(used),
+    });
+    render(
+      <App
+        api={client}
+        buildId="test-build"
+        environment="development"
+        now={() => START}
+      />,
+    );
+    signIn();
+    await act(async () => {
+      await Promise.resolve();
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1000);
+    });
+    expect(client.inspectSession).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("main")).toHaveAccessibleName("Account and access");
+    expect(
+      screen.queryByText(/Nobody used the app on this computer/),
+    ).not.toBeInTheDocument();
+    vi.useRealTimers();
   });
 });

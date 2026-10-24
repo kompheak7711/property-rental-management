@@ -49,6 +49,14 @@ export interface RecoveryCodeSetData {
   codes: string[];
 }
 
+/** The live recovery-code set without its codes (login sub-slice L6, API-098). */
+export interface RecoveryCodeSetSummary {
+  set_id: string;
+  created_at: string;
+  made_by: "issued" | "regenerated" | "other";
+  usable_count: number;
+}
+
 interface MfaEnrollmentResponse {
   data: MfaEnrollmentData;
   meta: ResponseMeta;
@@ -88,6 +96,8 @@ export interface AuthenticationApi {
   reauthenticate: (request: ReauthenticationRequest) => Promise<SessionData>;
   issueRecoveryCodes: () => Promise<RecoveryCodeSetData>;
   regenerateRecoveryCodes: (priorSetId: string) => Promise<RecoveryCodeSetData>;
+  /** null when the account has no live set. */
+  liveRecoveryCodeSet: () => Promise<RecoveryCodeSetSummary | null>;
   logout: () => Promise<void>;
 }
 
@@ -269,6 +279,29 @@ function isMfaEnrollmentResponse(
     "qr_code_svg" in data &&
     typeof data.qr_code_svg === "string" &&
     data.qr_code_svg.startsWith("<svg ")
+  );
+}
+
+function isRecoveryCodeSetSummary(
+  value: unknown,
+): value is RecoveryCodeSetSummary {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "set_id" in value &&
+    typeof value.set_id === "string" &&
+    "created_at" in value &&
+    typeof value.created_at === "string" &&
+    !Number.isNaN(Date.parse(value.created_at)) &&
+    "made_by" in value &&
+    (value.made_by === "issued" ||
+      value.made_by === "regenerated" ||
+      value.made_by === "other") &&
+    "usable_count" in value &&
+    Number.isInteger(value.usable_count) &&
+    typeof value.usable_count === "number" &&
+    value.usable_count >= 0 &&
+    value.usable_count <= 20
   );
 }
 
@@ -531,6 +564,27 @@ export async function regenerateRecoveryCodes(
   return payload.data;
 }
 
+export async function liveRecoveryCodeSet(
+  fetchImplementation: typeof fetch = fetch,
+): Promise<RecoveryCodeSetSummary | null> {
+  const payload = await requestJson(
+    "/api/v1/auth/recovery-codes",
+    { method: "GET", credentials: "include" },
+    fetchImplementation,
+  );
+  if (
+    typeof payload !== "object" ||
+    payload === null ||
+    !("data" in payload) ||
+    !("meta" in payload) ||
+    !isResponseMeta(payload.meta) ||
+    (payload.data !== null && !isRecoveryCodeSetSummary(payload.data))
+  ) {
+    throw new AuthenticationError();
+  }
+  return payload.data;
+}
+
 export async function logout(
   fetchImplementation: typeof fetch = fetch,
 ): Promise<void> {
@@ -559,5 +613,6 @@ export const authenticationApi: AuthenticationApi = {
   reauthenticate,
   issueRecoveryCodes,
   regenerateRecoveryCodes,
+  liveRecoveryCodeSet,
   logout,
 };

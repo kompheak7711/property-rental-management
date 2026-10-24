@@ -5,6 +5,7 @@ import {
   AuthenticationData,
   LocalSignIn,
   RecoveryCodeSetData,
+  RecoveryCodeSetSummary,
   SessionData,
   authenticationApi,
   signIn,
@@ -542,6 +543,12 @@ export function App({
   const [signInSequence, setSignInSequence] = useState(0);
   const [recoveryCodes, setRecoveryCodes] =
     useState<RecoveryCodeSetData | null>(null);
+  // Login sub-slice L6: the account's live recovery-code set without its codes; undefined until
+  // the server answers (or when it could not).
+  const [liveRecoverySet, setLiveRecoverySet] = useState<
+    RecoveryCodeSetSummary | null | undefined
+  >(undefined);
+  const liveRecoverySetSequence = useRef(0);
   const [showReauthentication, setShowReauthentication] = useState(false);
   const [administration, setAdministration] =
     useState<AccessAdministrationSnapshot | null>(null);
@@ -719,7 +726,8 @@ export function App({
     const dayLimit =
       new Date(session.absolute_expires_at).getTime() <=
       new Date(session.idle_expires_at).getTime();
-    const timer = window.setTimeout(() => {
+    let active = true;
+    const ended = () => {
       returnToSignIn({
         kind: dayLimit ? "day" : "idle",
         note:
@@ -727,11 +735,42 @@ export function App({
             ? "Your session expired while a Customer command was pending. Its outcome is unknown; sign in, reload Customers, and reconcile before retrying."
             : null,
       });
+    };
+    const timer = window.setTimeout(() => {
+      // L6 review round 1: every request moves the server's 30 minutes on, so the server is
+      // asked first; a session it still holds for this person keeps the app open.
+      const operation = authenticationOperationSequence.current;
+      void client
+        .inspectSession()
+        .then((current) => {
+          if (
+            !active ||
+            operation !== authenticationOperationSequence.current
+          ) {
+            return;
+          }
+          const currentEnd = Math.min(
+            new Date(current.idle_expires_at).getTime(),
+            new Date(current.absolute_expires_at).getTime(),
+          );
+          if (current.actor_id === session.actor_id && currentEnd > now()) {
+            setSession(current);
+          } else {
+            ended();
+          }
+        })
+        .catch(() => {
+          if (active && operation === authenticationOperationSequence.current) {
+            ended();
+          }
+        });
     }, delay);
     return () => {
+      active = false;
       window.clearTimeout(timer);
     };
   }, [
+    client,
     customerCommandBusy,
     customerReconciliationRequirement,
     now,
@@ -820,12 +859,38 @@ export function App({
       });
   }
 
+  function loadLiveRecoverySet() {
+    const sequence = ++liveRecoverySetSequence.current;
+    void client
+      .liveRecoveryCodeSet()
+      .then((summary) => {
+        if (sequence === liveRecoverySetSequence.current) {
+          setLiveRecoverySet(summary);
+        }
+      })
+      .catch(() => {
+        // A refusal of this read does not mean signed out (plan binding of L3c-2c-1).
+        if (sequence === liveRecoverySetSequence.current) {
+          setLiveRecoverySet(undefined);
+        }
+      });
+  }
+
+  const sessionActor = session?.actor_id ?? null;
+  useEffect(() => {
+    liveRecoverySetSequence.current += 1;
+    setLiveRecoverySet(undefined);
+    if (screen !== "authenticated" || sessionActor === null) return;
+    loadLiveRecoverySet();
+  }, [client, screen, sessionActor]);
+
   function issueRecoveryCodes() {
     setSubmissionState("submitting");
     void client
       .issueRecoveryCodes()
       .then((result) => {
         setRecoveryCodes(result);
+        loadLiveRecoverySet();
         setSubmissionState("succeeded");
         setNotice(
           "Recovery codes were generated. Save them now; they will not be shown again.",
@@ -838,12 +903,16 @@ export function App({
   }
 
   function regenerateRecoveryCodes() {
-    if (recoveryCodes === null) return;
+    // The set on screen, else the live set the server reports (for example the first Owner's
+    // set from the server set-up, whose codes this screen never showed).
+    const priorSetId = recoveryCodes?.set_id ?? liveRecoverySet?.set_id;
+    if (priorSetId === undefined) return;
     setSubmissionState("submitting");
     void client
-      .regenerateRecoveryCodes(recoveryCodes.set_id)
+      .regenerateRecoveryCodes(priorSetId)
       .then((result) => {
         setRecoveryCodes(result);
+        loadLiveRecoverySet();
         setSubmissionState("succeeded");
         setNotice(
           "The prior recovery-code set was invalidated. Save this replacement set now.",
@@ -1203,6 +1272,11 @@ export function App({
         onAuthenticated={(result, welcome) => {
           void acceptAuthentication(result, welcome);
         }}
+        onSignInStarted={() => {
+          // L6 review round 1 (TEST-FE-110): a session restore still running must not open
+          // the app for another person while this sign-in is on its way.
+          authenticationOperationSequence.current += 1;
+        }}
       />
     );
   }
@@ -1330,18 +1404,46 @@ export function App({
               Staff are not granted recovery authority for Owner or Manager
               accounts. Role labels never replace server-side capability checks.
             </p>
+            {liveRecoverySet !== undefined && recoveryCodes === null && (
+              <p>
+                {liveRecoverySet === null
+                  ? "You have no recovery codes."
+                  : `Your recovery codes: ${String(liveRecoverySet.usable_count)} still work. ${
+                      liveRecoverySet.made_by === "issued"
+                        ? "First made"
+                        : liveRecoverySet.made_by === "regenerated"
+                          ? "Replaced"
+                          : "Made by the server set-up"
+                    } ${formatDateTime(liveRecoverySet.created_at)}.`}
+              </p>
+            )}
             {session.reauthenticated_at === null ? (
               <p className="muted">
                 Reauthenticate before generating or replacing recovery codes.
               </p>
             ) : recoveryCodes === null ? (
-              <button
-                disabled={isSubmitting}
-                onClick={issueRecoveryCodes}
-                type="button"
-              >
-                Generate one-time recovery codes
-              </button>
+              liveRecoverySet === null ? (
+                <button
+                  disabled={isSubmitting}
+                  onClick={issueRecoveryCodes}
+                  type="button"
+                >
+                  Generate one-time recovery codes
+                </button>
+              ) : liveRecoverySet === undefined ? (
+                <p className="muted">
+                  Your recovery codes could not be checked. Reload the page to
+                  try again.
+                </p>
+              ) : (
+                <button
+                  disabled={isSubmitting}
+                  onClick={regenerateRecoveryCodes}
+                  type="button"
+                >
+                  Replace my recovery codes
+                </button>
+              )
             ) : (
               <div
                 aria-label="One-time recovery codes"
