@@ -842,10 +842,12 @@ def test_install_uses_kwh_or_m3_and_refuses_another_unit_code() -> None:
     }
     url = f"/api/v1/units/{flow.unit_id}/meters"
     assert client.post(url, json=payload, headers=browser_headers(uuid4())).status_code == 201
+    assert flow.last_payload is not None
     assert flow.last_payload["measurement_unit_code"] == "KWH"
     water = {**payload, "utility_type": "WATER", "measurement_unit_code": "M3"}
     assert client.post(url, json=water, headers=browser_headers(uuid4())).status_code == 201
-    assert flow.last_payload["measurement_unit_code"] == "M3"
+    assert flow.last_payload is not None
+    assert flow.last_payload.get("measurement_unit_code") == "M3"
     for wrong in (
         {**payload, "measurement_unit_code": "MWH"},
         {**water, "measurement_unit_code": "KWH"},

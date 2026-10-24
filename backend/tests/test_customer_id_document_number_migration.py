@@ -169,3 +169,23 @@ def test_the_number_is_kept_in_the_command_replay(migrated_database_url: str) ->
     replayed = flow.create(property_id, **arguments)  # type: ignore[arg-type]
     assert replayed == created
     assert replayed.customer.id_document_number == number
+
+
+def test_the_runtime_role_cannot_create_a_customer_without_the_number(
+    migrated_database_url: str,
+) -> None:
+    with psycopg.connect(migrated_database_url) as admin:
+        rows = admin.execute(
+            "SELECT p.oid::regprocedure::text, "
+            "has_function_privilege('prm_runtime', p.oid, 'EXECUTE') "
+            "FROM pg_proc AS p JOIN pg_namespace AS n ON n.oid = p.pronamespace "
+            "WHERE n.nspname = 'app' "
+            "AND p.proname IN ('create_customer', 'execute_customer_create')"
+        ).fetchall()
+    allowed = {str(name): bool(granted) for name, granted in rows}
+    assert allowed == {
+        "app.create_customer(uuid,text,text,text,text,text,uuid,uuid)": False,
+        "app.create_customer(uuid,text,text,text,text,text,uuid,uuid,text)": True,
+        "app.execute_customer_create(uuid,uuid,text,uuid,text,text,text,text,text,uuid)": False,
+        "app.execute_customer_create(uuid,uuid,text,uuid,text,text,text,text,text,uuid,text)": True,
+    }

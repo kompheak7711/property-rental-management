@@ -363,6 +363,14 @@ def upgrade() -> None:
         op.execute(f"REVOKE ALL ON FUNCTION {signature} FROM PUBLIC")
     op.execute(f"GRANT EXECUTE ON FUNCTION {SIGNATURES[2]}, {SIGNATURES[3]} TO prm_runtime")
     op.execute(f"GRANT EXECUTE ON FUNCTION {SIGNATURES[0]}, {SIGNATURES[1]} TO prm_runtime")
+    # A new Customer needs the number: the runtime role can no longer call the earlier create
+    # overloads (review round 1). The earlier update overloads keep the number as it is.
+    op.execute(
+        "REVOKE EXECUTE ON FUNCTION "
+        "app.create_customer(uuid, text, text, text, text, text, uuid, uuid), "
+        "app.execute_customer_create(uuid, uuid, text, uuid, text, text, text, text, text, uuid) "
+        "FROM prm_runtime"
+    )
 
 
 def downgrade() -> None:
