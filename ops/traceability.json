@@ -48435,6 +48435,18 @@
       "test_path": "backend/tests/test_recovery_code_regeneration.py",
       "status": "implemented",
       "notes": "A generator giving two spellings of one code is refused before the live set is invalidated (the check compares canonical forms) (login slice sub-slice L7a review round 3, Q-2026-10-24-188, decided by Claude under the owner's 2026-10-23 22:30 rule, DL-081)."
+    },
+    {
+      "test_id": "test_the_bootstrap_stores_the_owner_username_as_sign_in_looks_it_up",
+      "upstream_ids": [
+        "SEC-073",
+        "DB-AUTH-001",
+        "DL-081"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_migrations.py",
+      "status": "implemented",
+      "notes": "On PostgreSQL the server set-up stores \"Sokhá Straße\" as \"sokhá straße\" (the sign-in form, not casefold), and sign-in finds the Owner by three spellings of it but not by \"sokha strasse\"; the test fails with the old casefold storage (login slice sub-slice L7b, the L2c binding of Q-2026-10-22-169 (a), DL-081)."
     }
   ]
 }

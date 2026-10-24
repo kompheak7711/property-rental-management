@@ -657,6 +657,8 @@ root-controlled descriptor or equivalent protected secret file, never arguments,
 repository or compact state, or ordinary environment variables. A dedicated least-privilege
 one-time database identity is restricted to this atomic boundary.
 
+Amended by DL-081 (login sub-slice L7b): the initial Owner's username is stored in the sign-in form (U+200B removed, NFC, spaces tidied, lower case), the same form account creation stores and sign-in looks up; a username that tidying would change is refused.
+
 ## SEC-074 — Bootstrap Closure
 
 After the initial Owner is established, bootstrap cannot create another Owner or remain

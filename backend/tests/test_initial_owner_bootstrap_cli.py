@@ -338,8 +338,9 @@ def test_request_requires_exactly_ten_distinct_recovery_code_identifiers() -> No
 
 def test_request_refuses_a_username_that_sign_in_would_tidy() -> None:
     """DL-081, Q-2026-10-22-170 (a) (login sub-slice L2d review round 1, security): sign-in
-    tidies the typed username, so the bootstrap refuses a username with two spaces in a row,
-    which it would store as typed, until L7 makes it store the sign-in form."""
+    tidies the typed username, so the bootstrap refuses a username with two spaces in a row.
+    Since login sub-slice L7b the bootstrap stores the sign-in form; the refusal stays, so the
+    Owner signs in with what they typed."""
 
     def request_for(username: str) -> BootstrapRequest:
         return BootstrapRequest(
