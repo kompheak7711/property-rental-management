@@ -100,3 +100,9 @@ in `git log` (this record is part of that commit).
   `frontend/src` as text and stopped at the font files. The fonts moved to `frontend/assets/fonts`
   (outside `src`; the build still bundles them); the scan and the traceability audit then
   passed (42).
+- P1 (full PostgreSQL): 2,677 passed, 1 failed:
+  `test_settlement_return_reversal_migration.py::test_a_mistaken_credit_return_is_reversed_and_its_new_refund_is_charged_back`
+  hit the 5-second statement timeout inside `app.record_settlement_return_reversal_draft` under
+  the full run's load. L6 changes no money code or migration; R1 (that module alone): 18
+  passed. Added to the slice 12 list of intermittent full-run failures (V1-060 needs them
+  fixed, not rerun).
