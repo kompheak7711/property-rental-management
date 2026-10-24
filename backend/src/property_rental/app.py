@@ -73,12 +73,14 @@ from property_rental.credit_refund_api import (
 from property_rental.customer import CustomerVersionConflict
 from property_rental.customer_api import (
     CustomerIdempotencyKeyReused,
+    CustomerIdNumberConflict,
     CustomerLifecycleConflict,
     CustomerResourceFlow,
     CustomerReuseConflict,
     PostgresCustomerResourceFlow,
     UnavailableCustomerResourceFlow,
     create_customer_router,
+    customer_id_number_conflict_response,
     customer_idempotency_key_reused_response,
     customer_reuse_conflict_response,
 )
@@ -810,6 +812,13 @@ def create_app(
             request.state.request_id,
             current_version=exc.current_version,
         )
+
+    @app.exception_handler(CustomerIdNumberConflict)
+    async def customer_id_number_conflict(
+        request: Request,
+        exc: CustomerIdNumberConflict,
+    ) -> JSONResponse:
+        return customer_id_number_conflict_response(request, exc)
 
     @app.exception_handler(CustomerReuseConflict)
     async def customer_reuse_conflict(
