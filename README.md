@@ -231,6 +231,63 @@ and volume on exit. Credentials are generated inside the wrapper and are neither
 printed nor persisted. Direct test invocation still refuses non-loopback hosts,
 unexpected database/role names, missing passwords, or reused identity passwords.
 
+## Local run on the Mac mini
+
+Login sub-slice L7c (owner answers (a) to Q-2026-10-21-155 and Q-2026-10-21-159; technical
+points Q-2026-10-24-189). This is how the owner runs the app on the Mac mini, makes the first
+Owner account once, and opens the screens on the Mac and on an iPad on the same Wi-Fi. Every
+step is typed in Terminal from the repository folder. Nothing is downloaded. No password, key or
+database address is ever typed as a command argument or shown on screen, except the Owner
+set-up's own one-time screen.
+
+1. **Make the local secrets** (once): `sh scripts/local/make-secrets.sh`. It makes the eight
+   database password files and four database address files in `.local/secrets` (ignored by Git,
+   readable only by your account). A file that is already there is kept.
+2. **Make the protected key and install the helper** (once; sudo asks for your Mac password):
+
+       sudo install -d -o root -g wheel -m 0755 /usr/local/etc/prm /usr/local/libexec/prm
+       sudo sh -c 'umask 077; openssl rand -hex 32 > /usr/local/etc/prm/totp_protection_key'
+       sudo chown root:wheel /usr/local/etc/prm/totp_protection_key
+       sudo install -o root -g wheel -m 0755 scripts/local/with-protected-key.py \
+           /usr/local/libexec/prm/with-protected-key.py
+
+   The key protects every sign-in code: never copy it anywhere else, and keep it in the Mac's
+   backup. The helper is the only part that runs as root: it opens the key and then runs the API
+   or the Owner set-up as you. `/usr/bin/python3 --version` must answer (macOS asks to install
+   the command line tools the first time).
+3. **Start the database**: `sh scripts/local/database.sh` (Docker Desktop must be running). The
+   first start makes the database identities. If an older `property-rental-management` volume
+   exists without them, stop and ask; never delete the volume. Stop it later with
+   `sh scripts/local/database.sh stop`.
+4. **Apply the migrations**: `sh scripts/local/migrate.sh`.
+5. **Make the first Owner account** (once, before anyone else):
+
+       sh scripts/local/bootstrap-owner.sh --username sokpheak \
+           --display-name "Sok Pheak" --audit-name sok-pheak
+
+   Choose your own username and names (a display name in Khmer is fine; type it without the
+   invisible space some Khmer keyboards add, or the set-up refuses it). Type the Owner password
+   twice (15 to 128 characters; nothing shows while you type). Scan the QR code with Google
+   Authenticator, type the 6-digit code, write the 10 recovery codes on paper, and type the
+   acknowledgement it asks for. You have 15 minutes from the QR code to the acknowledgement; if
+   time runs out, nothing is saved and you start again. The
+   set-up can run only once; after it, the Owner makes every other account in the app.
+6. **Make the HTTPS certificate** (once a year): `sh scripts/local/make-certificate.sh`. It covers
+   `https://NAME.local:5173` (NAME is the Mac's local network name, System Settings, General,
+   Sharing) and `https://localhost:5173`. Trust its authority once:
+   - on the Mac: `sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain .local/https/local-ca.pem`;
+   - on the iPad: AirDrop `.local/https/local-ca.pem` to the iPad, install it in Settings,
+     General, VPN & Device Management, then turn it on in Settings, General, About, Certificate
+     Trust Settings.
+7. **Start the API** in one Terminal window: `sh scripts/local/start-api.sh` (sudo asks for your
+   Mac password). It listens on 127.0.0.1:8000 only, with `APP_ENVIRONMENT=production`.
+8. **Start the screens** in a second Terminal window: `cd frontend && npm run dev:local`.
+9. **Open** `https://NAME.local:5173` on the Mac or the iPad and sign in. Use this address on
+   the Mac too: the API accepts sign-ins only from this one address.
+
+Stop with Control-C in both windows. The passwords never leave `.local/secrets`; the password
+blocklist is `config/password-blocklist.txt` (not a secret; add lines to it, one password each).
+
 ## Development workflow
 
 1. Create or select a Git branch.
