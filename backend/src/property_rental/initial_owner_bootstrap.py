@@ -12,7 +12,7 @@ from uuid import UUID
 from property_rental.local_authentication import normalize_local_username
 from property_rental.password_security import blocked_passwords as shared_blocked_passwords
 from property_rental.password_security import validate_new_password
-from property_rental.visible_text import tidy_spaces
+from property_rental.visible_text import HIDDEN_NAME_CHARACTERS, tidy_spaces
 
 RECOVERY_CODE_COUNT: Final = 10
 BOOTSTRAP_ACKNOWLEDGEMENT: Final = "I HAVE STORED THE RECOVERY CODES"
@@ -154,8 +154,17 @@ class BootstrapRequest:
         # L7b review round 1: lower case can undo NFC (J with a combining caron becomes a
         # decomposed j-caron), so a username whose stored form is not NFC is refused, as
         # account creation refuses it (`app.assert_account_names`).
+        # L7b review round 2: the rest of the account name rule of account creation
+        # (`app.assert_account_names`, which the bootstrap SQL does not run): 1 to 128
+        # characters, NFC, and none of the hidden characters, for the stored username and for
+        # the display and audit names as stored.
         stored = normalize_local_username(self.username)
-        if unicodedata.normalize("NFC", stored) != stored:
+        if any(
+            not 1 <= len(name) <= 128
+            or unicodedata.normalize("NFC", name) != name
+            or HIDDEN_NAME_CHARACTERS.search(name) is not None
+            for name in (stored, self.display_name, self.audit_name)
+        ):
             raise ValueError("invalid initial Owner bootstrap identity")
 
 

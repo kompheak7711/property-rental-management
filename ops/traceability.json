@@ -48459,6 +48459,18 @@
       "test_path": "backend/tests/test_initial_owner_bootstrap_cli.py",
       "status": "implemented",
       "notes": "The bootstrap refuses \"J̌ohn\" and \"W̊ill\", whose lower-case sign-in form is not NFC (account creation refuses such names), and still accepts an NFC-safe accented name (login slice sub-slice L7b review round 1, DL-081)."
+    },
+    {
+      "test_id": "test_request_refuses_names_that_account_creation_refuses",
+      "upstream_ids": [
+        "SEC-073",
+        "DB-AUTH-001",
+        "DL-081"
+      ],
+      "test_level": "security",
+      "test_path": "backend/tests/test_initial_owner_bootstrap_cli.py",
+      "status": "implemented",
+      "notes": "The bootstrap refuses a hidden but printable character, a stored username over 128 characters (also after lower case grows it), and a display or audit name that is not NFC or holds a hidden character, as account creation does; 128 characters and an NFC accented display name are accepted (login slice sub-slice L7b review round 2, DL-081)."
     }
   ]
 }

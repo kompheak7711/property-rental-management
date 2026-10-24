@@ -384,6 +384,42 @@ def test_request_refuses_a_username_whose_stored_form_would_not_be_nfc() -> None
     assert request_for("Sokha\u0301 Stra\u00dfe").username == "Sokha\u0301 Stra\u00dfe"
 
 
+def test_request_refuses_names_that_account_creation_refuses() -> None:
+    """DL-081 (login sub-slice L7b review round 2): the bootstrap applies the rest of the
+    account name rule of account creation (`app.assert_account_names`): a hidden but printable
+    character (U+3164 Hangul filler, which looks like nothing, or U+034F), more than 128
+    characters in the stored username (100 dotted capital I become 200 after lower case), and a
+    display or audit name that is not NFC or holds a hidden character, are refused."""
+
+    def request_for(
+        username: str, display_name: str = "Initial Owner", audit_name: str = "initial-owner"
+    ) -> BootstrapRequest:
+        return BootstrapRequest(
+            actor_id=REQUEST.actor_id,
+            correlation_id=REQUEST.correlation_id,
+            enrollment_id=REQUEST.enrollment_id,
+            recovery_set_id=REQUEST.recovery_set_id,
+            recovery_code_ids=REQUEST.recovery_code_ids,
+            username=username,
+            display_name=display_name,
+            audit_name=audit_name,
+        )
+
+    for refused in (
+        {"username": "admin\u3164"},
+        {"username": "ad\u034fmin"},
+        {"username": "\u0130" * 100},
+        {"username": "o" * 129},
+        {"username": "owner", "display_name": "Initial\u3164Owner"},
+        {"username": "owner", "display_name": "Cafe\u0301"},
+        {"username": "owner", "audit_name": "initial\u2800owner"},
+    ):
+        with pytest.raises(ValueError, match="invalid initial Owner bootstrap identity"):
+            request_for(**refused)
+    assert request_for("o" * 128).username == "o" * 128
+    assert request_for("owner", display_name="Caf\u00e9").display_name == "Caf\u00e9"
+
+
 def test_recovery_codes_are_written_to_the_dedicated_tty_descriptor_not_stdout(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
