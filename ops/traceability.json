@@ -47909,10 +47909,10 @@
       "test_level": "DB",
       "test_path": "backend/tests/test_settings_access_routes_migration.py",
       "status": "implemented",
-      "notes": "Through create_app and real sessions on a throwaway database: the default Manager bundle is refused the Service rate, Utility Rate, Property, configuration and due-days changes and nothing changes; with Settings access from the Owner all five succeed; the Owner succeeds without a grant; a Staff account with a sign-in code and Settings access succeeds; the Manager still creates and updates a Unit with property.manage; the Staff account without units.read cannot read it (owner answer (a) to Q-2026-10-21-151, L1c review round 2) (login slice sub-slice L5, Q-2026-10-24-186, decided by Claude under the owner's 2026-10-23 22:30 rule, DL-081)."
+      "notes": "Through create_app and real sessions on a throwaway database: the default Manager bundle is refused the Service rate, Utility Rate, Property, configuration and due-days changes and nothing changes; with Settings access from the Owner all five succeed; the Owner succeeds without a grant; a Staff account with a sign-in code and Settings access succeeds; before any Settings access the Manager creates and updates a Unit with property.manage; the Staff account without units.read cannot read it (owner answer (a) to Q-2026-10-21-151, L1c review round 2) (login slice sub-slice L5, Q-2026-10-24-186, decided by Claude under the owner's 2026-10-23 22:30 rule, DL-081)."
     },
     {
-      "test_id": "test_the_open_operations_are_exactly_the_listed_ones",
+      "test_id": "test_the_listed_open_operations_exist_and_the_app_serves_nothing_else",
       "upstream_ids": [
         "SEC-002",
         "SEC-003",
@@ -47924,7 +47924,7 @@
       "test_level": "integration",
       "test_path": "backend/tests/test_route_authorization_inventory.py",
       "status": "implemented",
-      "notes": "The 13 operations that run without a session (health, identity/me, sign-in) all exist and every other operation of the OpenAPI document (more than 150) is guarded (login slice sub-slice L5, Q-2026-10-24-186, decided by Claude under the owner's 2026-10-23 22:30 rule, DL-081)."
+      "notes": "The 13 operations that run without a session (health, identity/me, sign-in) all exist, every other operation of the OpenAPI document (more than 150) is guarded, the app serves no route outside that document and the generated documentation pages answer 404 (review round 1) (login slice sub-slice L5, Q-2026-10-24-186, decided by Claude under the owner's 2026-10-23 22:30 rule, DL-081)."
     },
     {
       "test_id": "test_every_guarded_operation_answers_401_without_a_session",
@@ -47957,7 +47957,7 @@
       "test_level": "integration",
       "test_path": "backend/tests/test_route_authorization_inventory.py",
       "status": "implemented",
-      "notes": "Every guarded change by a signed-in user answers 403 with no headers, another Origin, no CSRF header or a CSRF token that differs from the cookie, before its body is read (login slice sub-slice L5, Q-2026-10-24-186, decided by Claude under the owner's 2026-10-23 22:30 rule, DL-081)."
+      "notes": "Every guarded change by a signed-in user answers 403 with no headers, another Origin, no CSRF header or a CSRF token that differs from the cookie, before its body is validated (login slice sub-slice L5, Q-2026-10-24-186, decided by Claude under the owner's 2026-10-23 22:30 rule, DL-081)."
     },
     {
       "test_id": "test_no_guarded_read_gives_anything_to_a_user_without_capabilities",

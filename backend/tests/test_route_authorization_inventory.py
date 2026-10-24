@@ -3,9 +3,11 @@
 SEC-002, SEC-003, SEC-016, SEC-019, SEC-023, API-008, TEST-084, TEST-085, TEST-109 (DL-081;
 Q-2026-10-24-186). The test walks every operation of the application's OpenAPI document. The
 operations that run without a session are listed here, so a new open route fails the test until
-it is listed on purpose. Every other operation answers 401 without a session, whatever its body;
-every other change answers 403 without the configured Origin or the CSRF pair, before its body is
-read; and no other read gives anything to a signed-in user who holds no capability.
+it is listed on purpose, and the app serves no route outside that document (no generated
+documentation pages). Every other operation answers 401 without a session, whatever JSON body it
+gets; every other change answers 403 without the configured Origin or the CSRF pair, before its
+body is validated (FastAPI parses the JSON first, so a body that is not JSON answers 400); and no
+other read gives anything to a signed-in user who holds no capability.
 """
 
 from __future__ import annotations
@@ -18,6 +20,7 @@ from fastapi.testclient import TestClient
 
 from property_rental.app import create_app
 from property_rental.identity import AuthenticatedActor
+from test_initial_owner_bootstrap_cli import _collect_runtime_http_operations
 
 # The health routes and the sign-in routes: they run before a session exists, or check the
 # session cookie and the pre-authentication cookie themselves (API-096, API-097, API-098).
@@ -81,10 +84,19 @@ def guarded() -> list[tuple[str, str]]:
     return [operation for operation in operations() if operation not in OPEN_OPERATIONS]
 
 
-def test_the_open_operations_are_exactly_the_listed_ones() -> None:
-    """Every listed open operation exists, and the guarded ones are the rest (more than 150)."""
+def test_the_listed_open_operations_exist_and_the_app_serves_nothing_else() -> None:
+    """Every listed open operation exists and the guarded ones are the rest (more than 150); the
+    app serves no route outside its OpenAPI document (review round 1: the generated
+    documentation pages answered without a session)."""
     assert OPEN_OPERATIONS <= set(operations())
     assert len(guarded()) > 150
+    served = _collect_runtime_http_operations(create_app(actor_resolver=lambda _: None).routes)
+    assert {
+        (method, path) for path, methods in served.items() for method in methods - {"head"}
+    } == set(operations())
+    client = TestClient(create_app(actor_resolver=lambda _: None))
+    for path in ("/docs", "/redoc", "/openapi.json", "/docs/oauth2-redirect"):
+        assert client.get(path).status_code == 404, path
 
 
 @pytest.mark.parametrize("body", [None, {}, {"unexpected": True}])

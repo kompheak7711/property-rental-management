@@ -480,10 +480,15 @@ def create_app(
             finally:
                 logger.info("application stopping", extra={"event": "application.stopping"})
 
+    # Login sub-slice L5 (Q-2026-10-24-186): no generated documentation pages, so every route
+    # that answers without a session is in the inventory test's list.
     app = FastAPI(
         title=resolved_settings.service_name,
         version=resolved_settings.build_version,
         lifespan=lifespan,
+        docs_url=None,
+        redoc_url=None,
+        openapi_url=None,
     )
 
     @app.exception_handler(RequestValidationError)

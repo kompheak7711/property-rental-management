@@ -755,11 +755,16 @@ def test_nil_invoice_commands_preserve_query_auth_and_hidden_not_found_precedenc
             method,
             path,
             json=payload,
-            headers={
-                **headers,
-                "If-Match": '"2147483648"',
-                "X-CSRF-Token": "invalid",
-            },
+            headers={**headers, "If-Match": '"2147483648"'},
+        )
+        for method, path, payload in cases
+    ]
+    invalid_csrf = [
+        inapplicable_context_client.request(
+            method,
+            path,
+            json=payload,
+            headers={**headers, "If-Match": '"2147483648"', "X-CSRF-Token": "invalid"},
         )
         for method, path, payload in cases
     ]
@@ -770,9 +775,10 @@ def test_nil_invoice_commands_preserve_query_auth_and_hidden_not_found_precedenc
 
     assert [response.status_code for response in unsupported] == [400] * 4
     assert [response.status_code for response in unauthenticated] == [401] * 4
+    assert [response.status_code for response in inapplicable_context] == [404] * 4
     # Login sub-slice L5 (Q-2026-10-24-186): an invalid CSRF token is refused (403) before the
     # Invoice is looked for, so the answer says nothing about whether it exists.
-    assert [response.status_code for response in inapplicable_context] == [403] * 4
+    assert [response.status_code for response in invalid_csrf] == [403] * 4
     assert [response.status_code for response in hidden] == [404] * 4
     expected_error: dict[str, object] = {
         "code": "NOT_FOUND",

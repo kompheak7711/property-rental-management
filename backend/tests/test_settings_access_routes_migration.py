@@ -207,13 +207,24 @@ def test_the_settings_routes_need_settings_access_and_the_owner_always_has_it(
     bundle (`service_rates.manage`, `utility_rates.manage` and `property.manage` included), is
     refused the five Settings changes and nothing changes; once the Owner gives the Manager
     Settings access the same five succeed; the Owner succeeds with no per-user grant; a Staff
-    account with a sign-in code and Settings access succeeds too; the Manager still creates and
-    updates a Unit with `property.manage`."""
+    account with a sign-in code and Settings access succeeds too; before any Settings access the
+    Manager creates and updates a Unit with `property.manage`."""
     database = route_database
     manager = signed_in(database, database.manager)
     before = counts(database)
     assert settings_calls(database, manager, current_version(database)) == [403] * 5
     assert counts(database) == before
+    # Review round 1: before any Settings access, `property.manage` alone creates and updates a
+    # Unit.
+    created = manager.post(
+        f"/properties/{database.property_id}/units",
+        json={"unit_number": "L5-101", "floor": "1", "unit_type": "STUDIO", "status": "VACANT"},
+    )
+    assert created.status_code == 201
+    unit_id = created.json()["data"]["unit_id"]
+    assert manager.get(f"/units/{unit_id}").status_code == 200
+    updated = manager.patch(f"/units/{unit_id}", headers={"If-Match": '"1"'}, json={"floor": "2"})
+    assert updated.status_code == 200
 
     admin = PostgresAccessAdministrationFlow(database.runtime_url)
     for account in (database.manager, database.staff):
@@ -229,14 +240,5 @@ def test_the_settings_routes_need_settings_access_and_the_owner_always_has_it(
     staff = signed_in(database, database.staff)
     assert settings_calls(database, staff, current_version(database), 2032) == DONE
 
-    created = manager.post(
-        f"/properties/{database.property_id}/units",
-        json={"unit_number": "L5-101", "floor": "1", "unit_type": "STUDIO", "status": "VACANT"},
-    )
-    assert created.status_code == 201
-    unit_id = created.json()["data"]["unit_id"]
-    assert manager.get(f"/units/{unit_id}").status_code == 200
-    updated = manager.patch(f"/units/{unit_id}", headers={"If-Match": '"1"'}, json={"floor": "2"})
-    assert updated.status_code == 200
     # Staff reads the Unit (`units.read` is in no bundle of this Staff account), so 403.
     assert staff.get(f"/units/{unit_id}").status_code == 403
