@@ -3,6 +3,7 @@
 import json
 import math
 import time
+import unicodedata
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from typing import Final, Protocol
@@ -149,6 +150,12 @@ class BootstrapRequest:
         # (`normalize_local_username`); the refusal stays, so the Owner signs in with what
         # they typed here.
         if tidy_spaces(self.username) != self.username:
+            raise ValueError("invalid initial Owner bootstrap identity")
+        # L7b review round 1: lower case can undo NFC (J with a combining caron becomes a
+        # decomposed j-caron), so a username whose stored form is not NFC is refused, as
+        # account creation refuses it (`app.assert_account_names`).
+        stored = normalize_local_username(self.username)
+        if unicodedata.normalize("NFC", stored) != stored:
             raise ValueError("invalid initial Owner bootstrap identity")
 
 

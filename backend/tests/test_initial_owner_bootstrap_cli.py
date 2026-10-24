@@ -360,6 +360,30 @@ def test_request_refuses_a_username_that_sign_in_would_tidy() -> None:
     assert request_for("sokha chan").username == "sokha chan"
 
 
+def test_request_refuses_a_username_whose_stored_form_would_not_be_nfc() -> None:
+    """DL-081 (login sub-slice L7b review round 1): the bootstrap stores the lower-case sign-in
+    form, and lower case can undo NFC: "J\u030cohn" is NFC, but its lower case "j\u030cohn" is
+    not (NFC makes it "\u01f0ohn"). Account creation refuses such a name, so the bootstrap
+    refuses it too; an NFC-safe accented name is still accepted."""
+
+    def request_for(username: str) -> BootstrapRequest:
+        return BootstrapRequest(
+            actor_id=REQUEST.actor_id,
+            correlation_id=REQUEST.correlation_id,
+            enrollment_id=REQUEST.enrollment_id,
+            recovery_set_id=REQUEST.recovery_set_id,
+            recovery_code_ids=REQUEST.recovery_code_ids,
+            username=username,
+            display_name="Initial Owner",
+            audit_name="initial-owner",
+        )
+
+    for refused in ("J\u030cohn", "W\u030aill"):
+        with pytest.raises(ValueError, match="invalid initial Owner bootstrap identity"):
+            request_for(refused)
+    assert request_for("Sokha\u0301 Stra\u00dfe").username == "Sokha\u0301 Stra\u00dfe"
+
+
 def test_recovery_codes_are_written_to_the_dedicated_tty_descriptor_not_stdout(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
