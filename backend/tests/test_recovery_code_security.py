@@ -91,6 +91,9 @@ def test_the_canonical_form_keeps_anything_that_is_not_a_code_as_given() -> None
     assert canonical_recovery_code("7kq4 m2xd-9prt") == "7KQ4M2XD9PRT"
     assert canonical_recovery_code("not-a-code") == "not-a-code"
     assert canonical_recovery_code("7KQ4-M2XD-9PR") == "7KQ4-M2XD-9PR"
+    # Only ASCII: a dotless i or a long s, which Python turns into I or S, is not read as a code.
+    assert canonical_recovery_code("\u0131kq0m2xd9prt") == "\u0131kq0m2xd9prt"
+    assert canonical_recovery_code("7kq4-m2xd-9p\u017ft") == "7kq4-m2xd-9p\u017ft"
 
 
 def test_verifier_provider_contract_encodes_and_verifies_independently_salted_codes() -> None:

@@ -48408,7 +48408,7 @@
       "test_level": "security",
       "test_path": "backend/tests/test_recovery_code_security.py",
       "status": "implemented",
-      "notes": "Only the 12-symbol shape is changed for the check; anything else is kept as given (login slice sub-slice L7a, Q-2026-10-24-188, decided by Claude under the owner's 2026-10-23 22:30 rule, DL-081)."
+      "notes": "Only the 12-symbol shape in ASCII is changed for the check; anything else (a short code, text with a dotless i or a long s) is kept as given (login slice sub-slice L7a, Q-2026-10-24-188, decided by Claude under the owner's 2026-10-23 22:30 rule, DL-081)."
     }
   ]
 }

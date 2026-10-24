@@ -58,12 +58,14 @@ class RecoveryCodeVerifierProvider(Protocol):
 
 def canonical_recovery_code(value: str) -> str:
     """The form a recovery code is hashed and checked in: a code of the L7a shape typed in any
-    case, with or without dashes and spaces, becomes its 12 capital symbols; anything else
-    (an older 43-sign code, or something that is no code) stays as given, so it can still match
-    only its own verifier."""
+    case, with or without dashes and spaces, becomes its 12 capital symbols; anything else (an
+    older 43-sign code, text that is not all ASCII, or something that is no code) stays as given,
+    so it can still match only its own verifier."""
     compact = "".join(value.split()).replace("-", "").upper().translate(_LOOK_ALIKES)
-    if len(compact) == RECOVERY_CODE_SYMBOLS and all(
-        symbol in RECOVERY_CODE_ALPHABET for symbol in compact
+    if (
+        value.isascii()
+        and len(compact) == RECOVERY_CODE_SYMBOLS
+        and all(symbol in RECOVERY_CODE_ALPHABET for symbol in compact)
     ):
         return compact
     return value

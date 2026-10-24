@@ -1840,7 +1840,7 @@ class PostgresAuthenticationFlow:
         while len(codes) < RECOVERY_CODE_COUNT:
             code = generator.generate().get_secret_value()
             if code in codes:
-                # 256 random bits do not repeat; a repeat means a broken entropy source.
+                # 60 random bits do not repeat in 10 codes; a repeat means a broken entropy source.
                 raise RuntimeError("duplicate recovery-code material")
             verifier = verifiers.encode(code)
             codes.append(code)
