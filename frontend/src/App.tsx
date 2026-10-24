@@ -11,7 +11,6 @@ import {
   PasswordRuleError,
   RecoveryCodeSetData,
   SessionData,
-  SessionExpiredError,
   authenticationApi,
   signIn,
 } from "./authClient";
@@ -97,6 +96,9 @@ function formatDateTime(value: string): string {
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? "Unavailable" : parsed.toISOString();
 }
+
+const PASSWORD_CHANGE_NOT_FINISHED =
+  "The password change did not finish. Sign in with your new password. If it is not accepted, sign in with your one-time password.";
 
 function phaseScreen(result: AuthenticationData): Screen {
   return result.phase;
@@ -809,12 +811,10 @@ export function App({
         if (error instanceof PasswordRuleError) {
           setPasswordRuleRefused(true);
           setSubmissionState("idle");
-        } else if (error instanceof SessionExpiredError) {
-          returnToSignIn(
-            "The password change step ended. Sign in again with your one-time password.",
-          );
         } else {
-          setSubmissionState("failed");
+          // The change may have been saved before a later step failed (review round 1), so
+          // the person is told to try the new password first.
+          returnToSignIn(PASSWORD_CHANGE_NOT_FINISHED);
         }
       });
   }
@@ -1099,6 +1099,8 @@ export function App({
 
   function loadAdministration(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    // L4 review round 2: a one-time password never stays beside another property's users.
+    setIssuedPassword(null);
     setAdministrationStatus(
       "Checking server-authorized administration access…",
     );
@@ -1376,6 +1378,7 @@ export function App({
               continue.
             </p>
             <form className="form-stack" onSubmit={handlePasswordChange}>
+              {/* 128 code points may be 256 UTF-16 units; the server checks the rule. */}
               <div className="form-field">
                 <label htmlFor="new-password">New password</label>
                 <input
@@ -1383,7 +1386,7 @@ export function App({
                   autoComplete="new-password"
                   disabled={isSubmitting}
                   id="new-password"
-                  maxLength={128}
+                  maxLength={256}
                   minLength={15}
                   name="new-password"
                   required
@@ -1396,7 +1399,7 @@ export function App({
                   autoComplete="new-password"
                   disabled={isSubmitting}
                   id="new-password-again"
-                  maxLength={128}
+                  maxLength={256}
                   minLength={15}
                   name="new-password-again"
                   required
@@ -1413,8 +1416,7 @@ export function App({
               )}
               {hasError && (
                 <p className="authentication-error" role="alert">
-                  The two passwords must match. If they do, sign in again with
-                  your one-time password.
+                  The two passwords must match.
                 </p>
               )}
               <button disabled={isSubmitting} type="submit">
@@ -2298,7 +2300,7 @@ export function App({
                             </label>
                             <input
                               id="recovery-reason"
-                              maxLength={128}
+                              maxLength={500}
                               name="recovery-reason"
                               required
                             />

@@ -9,6 +9,7 @@ from property_rental.password_security import (
     PasswordHashService,
     blocked_passwords,
     new_one_time_password,
+    one_time_password_forms,
     parse_password_blocklist,
     validate_new_password,
 )
@@ -161,3 +162,15 @@ def test_a_one_time_password_is_random_easy_to_type_and_meets_the_rule() -> None
         assert set("".join(groups)) <= set(ONE_TIME_PASSWORD_ALPHABET)
         assert validate_new_password(value, blocked=BLOCKED) == value
     assert not set("01ilo") & set(ONE_TIME_PASSWORD_ALPHABET)
+
+
+def test_the_one_time_password_in_another_case_or_spacing_is_compared_as_written() -> None:
+    """Login sub-slice L4 review round 1: a new password that is the one-time password in
+    capitals, without its hyphens or with spaces is compared with the one-time password as it
+    was written; any other password only as typed."""
+    written = "k7m2-x9qp-4hrt-w3nd"
+    assert one_time_password_forms(written) == (written,)
+    for typed in ("K7M2-X9QP-4HRT-W3ND", "k7m2x9qp4hrtw3nd", "k7m2 x9qp 4hrt w3nd"):
+        assert one_time_password_forms(typed) == (typed, written)
+    for typed in ("a long new password of mine", "k7m2-x9qp-4hrt-w3nd-extra", "k1m2x9qp4hrtw3nd"):
+        assert one_time_password_forms(typed) == (typed,)

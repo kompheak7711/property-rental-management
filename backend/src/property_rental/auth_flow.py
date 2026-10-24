@@ -52,7 +52,11 @@ from property_rental.local_authentication import (
     normalize_local_username,
     verifier_digest,
 )
-from property_rental.password_security import PasswordHashService, validate_new_password
+from property_rental.password_security import (
+    PasswordHashService,
+    one_time_password_forms,
+    validate_new_password,
+)
 from property_rental.recovery_code_security import (
     Argon2idRecoveryCodeVerifierProvider,
     SecureRecoveryCodeGenerator,
@@ -979,8 +983,9 @@ class PostgresAuthenticationFlow:
     ) -> None:
         """The account's `password-credential:` lock, shared, as the first statement of every
         session write (login sub-slice L4, Q-2026-10-24-185 point 5): a replacement of the
-        password or the sign-in code takes it exclusive before anything else, so the two never
-        both commit with the old one (the L3a-1 and L3d-1 bindings)."""
+        password or the sign-in code takes it exclusive before any other work (a reset takes
+        only the `recovery-codes:` lock before it), so the two never both commit with the old
+        one (the L3a-1 and L3d-1 bindings)."""
         connection.execute(SHARE_PASSWORD_LOCK, (actor_id,))
 
     def change_password(
@@ -1016,7 +1021,11 @@ class PostgresAuthenticationFlow:
             )
         except ValueError:
             raise NewPasswordRejected from None
-        if self._password_service.verify_password(accepted, str(one_time_verifier)).is_valid:
+        # The one-time password in another case or spacing is refused too (review round 1).
+        if any(
+            self._password_service.verify_password(form, str(one_time_verifier)).is_valid
+            for form in one_time_password_forms(accepted)
+        ):
             raise NewPasswordRejected
         credential = self._password_service.hash_password(accepted)
         correlation = uuid4()
@@ -1474,6 +1483,8 @@ class PostgresAuthenticationFlow:
                 raise AuthenticationRejected
             # Review round 1 (security): a sign-in from before a password reset starts nothing,
             # so it cannot turn off the code another sign-in started with the new password.
+            # The password lock first (L4 review round 2), as every other write of a sign-in.
+            self._hold_password(connection, actor_id)
             current = connection.execute(CURRENT_VERIFIER, (actor_id,)).fetchone()
             if current is None or not hmac.compare_digest(
                 verifier_digest(str(current[0])), bytes(cast(bytes, checked_verifier))

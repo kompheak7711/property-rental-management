@@ -10,13 +10,14 @@ import httpx
 import pytest
 from fastapi import FastAPI
 
-from property_rental.app import create_app
+from property_rental.app import NEW_PASSWORD_RULE_MESSAGE, create_app
 from property_rental.auth_api import (
     AuthenticationFlow,
     AuthenticationPhase,
     AuthenticationRateLimited,
     AuthenticationRejected,
     AuthenticationResult,
+    AuthenticationUnavailable,
     MfaEnrollmentResult,
     NewPasswordRejected,
     ReauthenticationResult,
@@ -1088,6 +1089,16 @@ def test_a_refused_new_password_names_the_rule_and_other_refusals_stay_generic()
     assert refused.headers["Cache-Control"] == "no-store"
     assert refused.json()["error"]["code"] == "PASSWORD_RULE"
     assert refused.json()["error"]["fields"] == ["new_password"]
+    # Review rounds 2 and 3: the one message the screen also shows, word for word
+    # (`PASSWORD_RULE_MESSAGE` in authClient.ts).
+    assert (
+        refused.json()["error"]["message"]
+        == NEW_PASSWORD_RULE_MESSAGE
+        == (
+            "Choose a password of 15 to 128 characters that is not a common password, not your "
+            "name and not the one-time password."
+        )
+    )
     assert NEW_PASSWORD not in refused.text
 
     for result, status_code in (
@@ -1132,3 +1143,25 @@ def test_the_password_change_needs_origin_csrf_and_its_step_before_the_flow() ->
         assert response.status_code == status_code, (headers, payload)
         assert NEW_PASSWORD not in response.text
     assert flow.changes == []
+
+
+def test_the_password_change_answers_a_wait_with_429_and_an_outage_with_503() -> None:
+    """Login sub-slice L4 review round 1: a sign-in wait during the change answers 429 with
+    Retry-After and no-store, and an unavailable database 503, both without the
+    password."""
+    for failure, status_code in (
+        (AuthenticationRateLimited(300), 429),
+        (AuthenticationUnavailable(), 503),
+    ):
+        response = request(
+            change_app(PasswordChangeFlow(failure)),
+            "POST",
+            "/api/v1/auth/password-change",
+            json={"new_password": NEW_PASSWORD},
+            headers=CHANGE_HEADERS,
+        )
+        assert response.status_code == status_code
+        assert NEW_PASSWORD not in response.text
+        if status_code == 429:
+            assert response.headers["Retry-After"] == "300"
+            assert response.headers["Cache-Control"] == "no-store"

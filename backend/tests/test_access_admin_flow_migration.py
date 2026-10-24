@@ -274,7 +274,11 @@ def test_the_flow_creates_lists_and_changes_accounts_through_the_audited_functio
     assert (created.lifecycle_state, created.settings_access) == ("active", False)
     assert created.property_id == database.property_id
     # A request id that is not a UUID becomes a stable UUID5 correlation id.
-    assert audit_actions(database, "create-dara") == ["identity.account.created"]
+    # Login sub-slice L4: the first one-time password is given in the same step (same time).
+    assert sorted(audit_actions(database, "create-dara")) == [
+        "identity.account.created",
+        "identity.account.one_time_password_given",
+    ]
     staff = new_staff(database, flow, "Sokha")
     assert (staff.account_class, staff.mfa_policy_class) == ("staff", "optional")
 

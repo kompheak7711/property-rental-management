@@ -591,6 +591,9 @@ def test_password_credentials_store_only_bounded_verifier_material() -> None:
                 ("changed_at", "timestamp with time zone", "NO"),
                 ("changed_by_actor_id", "uuid", "YES"),
                 ("provenance", "text", "NO"),
+                # Login sub-slice L4a: names the one-time password until the person changes it;
+                # an id only, never a password.
+                ("one_time_password_id", "uuid", "YES"),
             ]
 
 

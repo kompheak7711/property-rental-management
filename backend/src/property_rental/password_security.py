@@ -73,6 +73,25 @@ def validate_new_password(
     return normalized
 
 
+def one_time_password_forms(password: str) -> tuple[str, ...]:
+    """The typed password, and the one-time password it may be written from (login sub-slice L4
+    review round 1): the same letters and digits in another case, without the hyphens or with
+    spaces count as the one-time password too, so they are compared with its verifier."""
+    letters = "".join(
+        character
+        for character in password.casefold()
+        if character.isascii() and character.isalnum()
+    )
+    group_count = ONE_TIME_PASSWORD_GROUPS * ONE_TIME_PASSWORD_GROUP_LENGTH
+    if len(letters) != group_count or not set(letters) <= set(ONE_TIME_PASSWORD_ALPHABET):
+        return (password,)
+    written = "-".join(
+        letters[start : start + ONE_TIME_PASSWORD_GROUP_LENGTH]
+        for start in range(0, group_count, ONE_TIME_PASSWORD_GROUP_LENGTH)
+    )
+    return (password,) if written == password else (password, written)
+
+
 def new_one_time_password() -> str:
     """A random one-time password such as `k7m2-x9qp-4hrt-w3nd`; it meets the new-password rule
     (19 code points)."""

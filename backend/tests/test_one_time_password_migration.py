@@ -634,10 +634,11 @@ def test_a_reset_waits_for_a_session_write_that_holds_the_password_lock(
 ) -> None:
     """Q-2026-10-24-185 (the L3a-1 and L3d-1 bindings): a session write takes the account's
     `password-credential:` lock shared as its first statement; the reset takes it exclusive, so
-    it waits until the session write commits and then ends that session too."""
+    it waits until the session write commits and then ends that session too (review round 2:
+    the session is written inside the transaction that holds the lock)."""
     target = add_target(one_time_database)
     new_session = uuid.uuid4()
-    holder = psycopg.connect(one_time_database.runtime_url)
+    holder = psycopg.connect(one_time_database.owner_url)
     try:
         holder.execute(
             "SELECT pg_advisory_xact_lock_shared(hashtextextended("
@@ -654,9 +655,7 @@ def test_a_reset_waits_for_a_session_write_that_holds_the_password_lock(
             assert time.monotonic() < deadline
             time.sleep(0.05)
         assert not results
-        with psycopg.connect(one_time_database.owner_url) as connection:
-            connection.execute(ADD_SESSION, (new_session, target.actor_id, b"n" * 32, PROVENANCE))
-            connection.commit()
+        holder.execute(ADD_SESSION, (new_session, target.actor_id, b"n" * 32, PROVENANCE))
         holder.commit()
         worker.join(10)
         assert results and results[0][5] == 2

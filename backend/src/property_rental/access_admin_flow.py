@@ -550,6 +550,8 @@ class PostgresAccessAdministrationFlow:
         # The database function revokes the sessions of a disabled account in the same step.
         del revoke_applicable_sessions_if_disabled
         owner = _owner(audit_context.actor_id)
+        # The slow hashing comes before the locks (review round 1); unused unless MFA was required.
+        prepared = self._new_one_time_password() if mfa_policy_class == "optional" else None
         with self._transaction() as connection:
             if lifecycle_state is not None or mfa_policy_class is not None:
                 # Disabling an account or turning its MFA on or off (Q-2026-10-21-157
@@ -591,8 +593,10 @@ class PostgresAccessAdministrationFlow:
                 or (mfa_policy_class is not None and account.mfa_policy_class != mfa_policy_class)
             ):
                 raise AccessAdministrationUnavailable
-            if mfa_turned_off and account.lifecycle_state == "active":
-                one_time_password, credential = self._new_one_time_password()
+            # A request that also disables the account gives no one-time password: a disabled
+            # account cannot sign in, and no path makes it active again.
+            if mfa_turned_off and account.lifecycle_state == "active" and prepared is not None:
+                one_time_password, credential = prepared
                 issued = self._issue_one_time_password(
                     connection,
                     owner=owner,

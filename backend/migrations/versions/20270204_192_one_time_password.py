@@ -18,14 +18,18 @@ in Q-2026-10-24-185 (decided by Claude under the owner's 2026-10-23 22:30 rule).
 - `app.change_one_time_password`: the forced change; every live session of the account ends.
 - `app.perform_account_recovery` (same signature): the administrative mode is refused (the
   Owner's reset is `app.issue_one_time_password`, so it always leaves a one-time password that
-  must be changed); the emergency mode replaces the password whenever it resets MFA
-  (Q-2026-10-23-180) and ends the live recovery codes when it resets MFA.
+  must be changed); the emergency mode always needs a new password (review round 1: stricter
+  than Q-2026-10-24-185, which asks for one only with an MFA reset) and ends the live recovery
+  codes when it resets MFA.
 
-Every replacement of a password or a sign-in code takes the blocking transaction lock on
-`password-credential:` and the account first (after `recovery-codes:` and the account), and
-every session write takes the same key shared as its first statement (Python), so a session
-made with an old password or code cannot commit after the replacement (bindings from L3a-1 and
-L3d-1). A purely additive change apart from the replaced function body.
+Every replacement that can end a sign-in code or the recovery codes (the reset, the emergency
+recovery) takes the blocking transaction lock on `recovery-codes:` and then on
+`password-credential:` before anything else; the forced change, which touches neither, takes
+only `password-credential:`. Every session write takes `password-credential:` shared as its
+first statement (Python), so a session made with an old password or code cannot commit after
+the replacement (bindings from L3a-1 and L3d-1). New tables, a new column and two new
+functions; the replaced `app.perform_account_recovery` refuses what it accepted before (the
+administrative mode, an emergency recovery without a new password).
 """
 
 from alembic import op

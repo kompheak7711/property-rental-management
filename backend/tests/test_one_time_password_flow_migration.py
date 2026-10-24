@@ -68,6 +68,11 @@ ENROLLMENTS_OF = (
     "SELECT enrollment_state FROM app.totp_mfa_enrollments WHERE actor_id = %s ORDER BY created_at"
 )
 TRIES_OF = "SELECT try_kind FROM app.sign_in_wrong_tries WHERE username_digest = %s ORDER BY try_no"
+ADD_RECOVERY_SET = (
+    "INSERT INTO app.recovery_code_sets (set_id, actor_id, created_by_actor_id, provenance) "
+    "VALUES (%s, %s, %s, %s)"
+)
+SET_ENDED = "SELECT invalidated_at IS NOT NULL FROM app.recovery_code_sets WHERE set_id = %s"
 AGE_ONE_TIME_PASSWORD = (
     "UPDATE app.one_time_passwords SET issued_at = issued_at - %s::interval, "
     "expires_at = expires_at - %s::interval WHERE actor_id = %s"
@@ -153,6 +158,8 @@ def test_a_new_account_signs_in_with_its_first_one_time_password_and_must_change
         username.upper(),
         one_time_password,
         one_time_password.upper(),
+        one_time_password.replace("-", ""),
+        one_time_password.replace("-", " "),
     ):
         with pytest.raises(NewPasswordRejected):
             change(flow, started.preauth_token, refused)
@@ -277,8 +284,10 @@ def test_turning_a_staff_accounts_mfa_off_gives_a_one_time_password(
         audit_context=context(admin_database.owner),
     )
     assert required.one_time_password is None
+    set_id = uuid.uuid4()
     with psycopg.connect(admin_database.owner_url) as connection:
         add_sign_in_code(connection, account.user_id)
+        connection.execute(ADD_RECOVERY_SET, (set_id, account.user_id, account.user_id, "l4b"))
         connection.commit()
 
     turned_off = admin.update_user(
@@ -296,9 +305,40 @@ def test_turning_a_staff_accounts_mfa_off_gives_a_one_time_password(
     assert turned_off.one_time_password is not None
     assert GIVEN in audit_actions(admin_database, f"mfa-off-{username}")
     assert read(code_database(admin_database), ENROLLMENTS_OF, account.user_id) == [("disabled",)]
+    # Review round 1: the live recovery codes end in the same step (Q-2026-10-23-180 (a)).
+    assert read(code_database(admin_database), SET_ENDED, set_id) == [(True,)]
     started = sign_in(flow, username, turned_off.one_time_password.value)
     changed = change(flow, started.preauth_token, NEW_PASSWORD)
     assert changed.phase is AuthenticationPhase.AUTHENTICATED
+
+
+def test_a_reset_staff_account_with_its_own_sign_in_code_still_needs_the_code(
+    admin_database: AdminDatabase,
+) -> None:
+    """Review round 2: a Staff account whose MFA is optional but which set up a sign-in code
+    keeps the code after a reset without "also reset MFA", so the change leads to the code and
+    never straight to a session."""
+    flow = auth_flow(admin_database)
+    admin = PostgresAccessAdministrationFlow(admin_database.runtime_url)
+    account, username = new_account(admin_database, "own-code")
+    assert account.mfa_policy_class == "optional"
+    with psycopg.connect(admin_database.owner_url) as connection:
+        add_sign_in_code(connection, account.user_id)
+        connection.commit()
+
+    reset = admin.administratively_recover_user(
+        user_id=account.user_id,
+        property_id=admin_database.property_id,
+        reset_mfa=False,
+        reason="Forgot the password",
+        audit_context=context(admin_database.owner),
+    )
+    assert reset.mfa_reset is False
+    started = sign_in(flow, username, reset.one_time_password.value)
+    assert started.phase is AuthenticationPhase.PASSWORD_CHANGE_REQUIRED
+    changed = change(flow, started.preauth_token, NEW_PASSWORD)
+    assert changed.phase is AuthenticationPhase.MFA_REQUIRED and changed.session is None
+    assert read(code_database(admin_database), LIVE_SESSIONS_OF, account.user_id) == [(0,)]
 
 
 def changed_staff(database: AdminDatabase) -> tuple[uuid.UUID, str]:
@@ -381,3 +421,72 @@ def test_a_sign_in_or_reauthentication_that_meets_a_reset_waits_and_is_refused(
     )
     assert len(outcome) == 1 and isinstance(outcome[0], AuthenticationRejected)
     assert read(code_database(admin_database), LIVE_SESSIONS_OF, actor_id) == [(0,)]
+
+
+def test_a_forced_change_that_meets_a_reset_waits_and_is_refused(
+    admin_database: AdminDatabase,
+) -> None:
+    """Review round 1 (security note 8): a forced change whose step was opened before a reset
+    waits for the reset's lock and is then refused, because a newer one-time password was
+    given; the change step's password is never stored and no session is made."""
+    flow = auth_flow(admin_database)
+    account, username = new_account(admin_database, "change-race")
+    assert account.one_time_password is not None
+    started = sign_in(flow, username, account.one_time_password.value)
+    outcome = reset_while_waiting(
+        admin_database,
+        account.user_id,
+        lambda: change(flow, started.preauth_token, NEW_PASSWORD),
+    )
+    assert len(outcome) == 1 and isinstance(outcome[0], AuthenticationRejected)
+    assert read(code_database(admin_database), LIVE_SESSIONS_OF, account.user_id) == [(0,)]
+    with pytest.raises(AuthenticationRejected):
+        sign_in(flow, username, NEW_PASSWORD)
+
+
+def test_a_sign_in_code_set_up_that_meets_a_reset_waits_and_is_refused(
+    admin_database: AdminDatabase,
+) -> None:
+    """Review round 3: starting a sign-in code set-up takes the account's password lock shared
+    like every other sign-in write, so a set-up from before a reset waits for it and is then
+    refused; no pending sign-in code is written."""
+    flow = auth_flow(admin_database)
+    account, username = new_account(admin_database, "setup-race", "manager")
+    assert account.one_time_password is not None
+    started = sign_in(flow, username, account.one_time_password.value)
+    changed = change(flow, started.preauth_token, NEW_PASSWORD)
+    assert changed.phase is AuthenticationPhase.MFA_ENROLLMENT_REQUIRED
+    outcome = reset_while_waiting(
+        admin_database,
+        account.user_id,
+        lambda: flow.begin_mfa_enrollment(preauth_token=changed.preauth_token, request_id="l4b"),
+    )
+    assert len(outcome) == 1 and isinstance(outcome[0], AuthenticationRejected)
+    assert read(code_database(admin_database), ENROLLMENTS_OF, account.user_id) == []
+
+
+def test_a_change_step_of_an_account_disabled_meanwhile_is_refused(
+    admin_database: AdminDatabase,
+) -> None:
+    """Review round 1: an account the Owner disables while its change step is open cannot
+    finish the change; its one-time password stays unchanged and no session is made."""
+    flow = auth_flow(admin_database)
+    admin = PostgresAccessAdministrationFlow(admin_database.runtime_url)
+    account, username = new_account(admin_database, "disabled-step")
+    assert account.one_time_password is not None
+    started = sign_in(flow, username, account.one_time_password.value)
+    admin.update_user(
+        user_id=account.user_id,
+        property_id=admin_database.property_id,
+        expected_version=account.version,
+        display_name=None,
+        audit_name=None,
+        lifecycle_state="disabled",
+        mfa_policy_class=None,
+        revoke_applicable_sessions_if_disabled=True,
+        audit_context=context(admin_database.owner),
+    )
+    with pytest.raises(AuthenticationRejected):
+        change(flow, started.preauth_token, NEW_PASSWORD)
+    assert read(code_database(admin_database), CREDENTIAL_OF, account.user_id) != [(None,)]
+    assert read(code_database(admin_database), LIVE_SESSIONS_OF, account.user_id) == [(0,)]

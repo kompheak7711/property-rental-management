@@ -934,6 +934,104 @@ describe("local sign-in", () => {
     expect(screen.queryByText("k7m2-x9qp-4hrt-w3nd")).not.toBeInTheDocument();
   });
 
+  it("TEST-FE-684 shows a new account's first one-time password once and clears it", async () => {
+    const created: UserAccount = {
+      user_id: "user-2",
+      property_id: "property-1",
+      username: "staff-two",
+      display_name: "Staff Two",
+      audit_name: "Staff Two",
+      lifecycle_state: "active",
+      mfa_policy_class: "optional",
+      version: 1,
+      account_class: "staff",
+      settings_access: false,
+    };
+    const createUser = vi.fn().mockResolvedValue({
+      account: created,
+      one_time_password: {
+        value: "p4qr-7mxt-k2nw-9hds",
+        expires_at: "2026-08-23T10:10:00Z",
+      },
+    });
+    const load = vi.fn().mockResolvedValue({
+      users: [],
+      capabilities: [],
+      roleBundles: [],
+      authorizationHistory: [],
+    });
+    const administrationApi: AccessAdministrationApi = {
+      load,
+      createUser,
+      disableUser: vi.fn(),
+      revokeSessions: vi.fn(),
+      createRoleBundle: vi.fn(),
+      assignRoleBundle: vi.fn(),
+      administrativelyRecoverUser: vi.fn(),
+    };
+    render(
+      <App
+        administrationApi={administrationApi}
+        api={mockAuthenticationApi()}
+        environment="development"
+        buildId="test-build"
+        now={() => new Date("2026-08-22T10:10:00Z").getTime()}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText("Username"), {
+      target: { value: "owner" },
+    });
+    fireEvent.change(screen.getByLabelText("Password"), {
+      target: { value: "password" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+    fireEvent.change(await screen.findByLabelText("Property identifier"), {
+      target: { value: "property-1" },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Check administration access" }),
+    );
+    await screen.findByRole("heading", { name: "Create account" });
+    const createAccount = () => {
+      fireEvent.change(screen.getByLabelText("Username"), {
+        target: { value: "staff-two" },
+      });
+      fireEvent.change(screen.getByLabelText("Display name"), {
+        target: { value: "Staff Two" },
+      });
+      fireEvent.change(screen.getByLabelText("Audit name"), {
+        target: { value: "Staff Two" },
+      });
+      fireEvent.click(
+        screen.getByRole("button", { name: "Create audited account" }),
+      );
+    };
+    createAccount();
+    const shown = await screen.findByRole("region", {
+      name: "One-time password",
+    });
+    expect(createUser).toHaveBeenCalledTimes(1);
+    expect(shown).toHaveTextContent("staff-two");
+    expect(shown).toHaveTextContent("p4qr-7mxt-k2nw-9hds");
+    fireEvent.click(
+      screen.getByRole("button", { name: "I gave it to the person—clear it" }),
+    );
+    expect(screen.queryByText("p4qr-7mxt-k2nw-9hds")).not.toBeInTheDocument();
+
+    // Review round 2: loading the administration again clears a password not cleared by hand.
+    createAccount();
+    await screen.findByRole("region", { name: "One-time password" });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Check administration access" }),
+    );
+    await waitFor(() => {
+      expect(load).toHaveBeenCalledTimes(2);
+    });
+    expect(
+      screen.queryByRole("region", { name: "One-time password" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("TEST-FE-682 asks for a new password after a one-time password and shows the rule", async () => {
     const changePassword = vi
       .fn()
@@ -992,40 +1090,43 @@ describe("local sign-in", () => {
     );
   });
 
-  it("TEST-FE-683 returns to sign-in when the password change step has ended", async () => {
-    const api = mockAuthenticationApi({
-      signIn: vi.fn().mockResolvedValue({
-        phase: "password_change_required",
-        session: null,
-      }),
-      changePassword: vi.fn().mockRejectedValue(new SessionExpiredError()),
-    });
-    render(<App api={api} environment="development" buildId="test-build" />);
-    fireEvent.change(screen.getByLabelText("Username"), {
-      target: { value: "staff-one" },
-    });
-    fireEvent.change(screen.getByLabelText("Password"), {
-      target: { value: "k7m2-x9qp-4hrt-w3nd" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
-    fireEvent.change(await screen.findByLabelText("New password"), {
-      target: { value: "a long new password of mine" },
-    });
-    fireEvent.change(screen.getByLabelText("New password again"), {
-      target: { value: "a long new password of mine" },
-    });
-    fireEvent.click(
-      screen.getByRole("button", { name: "Save the new password" }),
-    );
-    expect(
-      await screen.findByText(
-        "The password change step ended. Sign in again with your one-time password.",
-      ),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { name: "Sign in" }),
-    ).toBeInTheDocument();
-  });
+  it.each([new SessionExpiredError(), new Error("network")])(
+    "TEST-FE-683 returns to sign-in when the password change did not finish",
+    async (failure) => {
+      const api = mockAuthenticationApi({
+        signIn: vi.fn().mockResolvedValue({
+          phase: "password_change_required",
+          session: null,
+        }),
+        changePassword: vi.fn().mockRejectedValue(failure),
+      });
+      render(<App api={api} environment="development" buildId="test-build" />);
+      fireEvent.change(screen.getByLabelText("Username"), {
+        target: { value: "staff-one" },
+      });
+      fireEvent.change(screen.getByLabelText("Password"), {
+        target: { value: "k7m2-x9qp-4hrt-w3nd" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+      fireEvent.change(await screen.findByLabelText("New password"), {
+        target: { value: "a long new password of mine" },
+      });
+      fireEvent.change(screen.getByLabelText("New password again"), {
+        target: { value: "a long new password of mine" },
+      });
+      fireEvent.click(
+        screen.getByRole("button", { name: "Save the new password" }),
+      );
+      expect(
+        await screen.findByText(
+          "The password change did not finish. Sign in with your new password. If it is not accepted, sign in with your one-time password.",
+        ),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: "Sign in" }),
+      ).toBeInTheDocument();
+    },
+  );
 
   it("TEST-FE-015 restores a valid server session after a browser refresh", async () => {
     const restoredSession = {
