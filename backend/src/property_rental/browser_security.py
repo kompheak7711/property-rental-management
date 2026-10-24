@@ -33,8 +33,9 @@ def signed_in_browser_request(
 ) -> Callable[[Request], None]:
     """The first check of every route outside sign-in and health (login sub-slice L5, SEC-002,
     SEC-016): a request without a signed-in user answers 401, and a change without the
-    configured Origin and the CSRF pair answers 403, before the route reads its body. The route
-    still checks its capability and, for a change, the Origin and the CSRF pair itself."""
+    configured Origin and the CSRF pair answers 403, before the body is validated (FastAPI parses
+    the JSON first, so a body that is not JSON answers 400). The route's own checks still run
+    after it."""
 
     def require(request: Request) -> None:
         if resolver(request) is None:

@@ -41,6 +41,14 @@ part of that commit).
   test was renamed and now also checks the served routes; the database test now creates the
   Manager's Unit before any Settings access; no secret in the diff.
 
+## Review round 2 (one agent, read-only, no files written)
+
+- No blocker, no should-fix; every round 1 fix checked. Notes: the guard's docstring still said
+  "before the route reads its body" (fixed as text); the served-routes check would not see a
+  HEAD-only route, a mounted app or a path answered by middleware (none exist; a future static
+  mount must be added to it); the check imports a private helper from the bootstrap test module
+  (accepted). No round 3: round 2 found nothing to fix but text.
+
 ## Runs
 
 - Static checks: ruff, format and mypy (backend); prettier, eslint and tsc (frontend): clean.
