@@ -14,6 +14,8 @@ export interface SessionData {
   absolute_expires_at: string;
   mfa_assurance: "none" | "totp" | "recovery_code";
   reauthenticated_at: string | null;
+  // The account's display name, when it has one (shown after sign-in, login sub-slice L6).
+  display_name?: string | null;
 }
 
 export interface AuthenticationData {
@@ -38,6 +40,8 @@ interface SessionResponse {
 export interface MfaEnrollmentData {
   method: "totp";
   provisioning_uri: string;
+  // The same link as an SVG QR picture made by the server (login sub-slice L6).
+  qr_code_svg: string;
 }
 
 export interface RecoveryCodeSetData {
@@ -115,6 +119,35 @@ export class SessionExpiredError extends AuthenticationError {
   }
 }
 
+/** A wait for wrong tries (429); the server gives the seconds left in `Retry-After`. */
+export class RateLimitedError extends AuthenticationError {
+  readonly retryAfterSeconds: number;
+
+  constructor(retryAfterSeconds: number) {
+    super();
+    this.name = "RateLimitedError";
+    this.retryAfterSeconds = retryAfterSeconds;
+  }
+}
+
+/** The server could not be reached or could not answer (no answer, or a 5xx answer). */
+export class ServiceUnavailableError extends AuthenticationError {
+  constructor() {
+    super();
+    this.name = "ServiceUnavailableError";
+  }
+}
+
+const DEFAULT_RETRY_AFTER_SECONDS = 60;
+
+function retryAfterSeconds(response: Response): number {
+  const value = response.headers.get("Retry-After");
+  if (value === null || !/^\d{1,9}$/.test(value.trim())) {
+    return DEFAULT_RETRY_AFTER_SECONDS;
+  }
+  return Math.max(1, Number(value.trim()));
+}
+
 /** A new password the server refused by its rule (422 `PASSWORD_RULE`). */
 export class PasswordRuleError extends Error {
   constructor() {
@@ -165,7 +198,10 @@ function isSessionData(value: unknown): value is SessionData {
       session.mfa_assurance === "totp" ||
       session.mfa_assurance === "recovery_code") &&
     (session.reauthenticated_at === null ||
-      typeof session.reauthenticated_at === "string")
+      typeof session.reauthenticated_at === "string") &&
+    (session.display_name === undefined ||
+      session.display_name === null ||
+      typeof session.display_name === "string")
   );
 }
 
@@ -229,7 +265,10 @@ function isMfaEnrollmentResponse(
     data.method === "totp" &&
     "provisioning_uri" in data &&
     typeof data.provisioning_uri === "string" &&
-    data.provisioning_uri.startsWith("otpauth://totp/")
+    data.provisioning_uri.startsWith("otpauth://totp/") &&
+    "qr_code_svg" in data &&
+    typeof data.qr_code_svg === "string" &&
+    data.qr_code_svg.startsWith("<svg ")
   );
 }
 
@@ -294,9 +333,15 @@ async function requestJson(
   try {
     response = await fetchImplementation(path, init);
   } catch {
-    throw new AuthenticationError();
+    throw new ServiceUnavailableError();
   }
   if (!response.ok) {
+    if (response.status === 429) {
+      throw new RateLimitedError(retryAfterSeconds(response));
+    }
+    if (response.status >= 500) {
+      throw new ServiceUnavailableError();
+    }
     if (response.status === 401 && path !== "/api/v1/auth/login") {
       throw new SessionExpiredError();
     }

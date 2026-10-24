@@ -4,6 +4,8 @@ import {
   AUTHENTICATION_ERROR_MESSAGE,
   AuthenticationError,
   PasswordRuleError,
+  RateLimitedError,
+  ServiceUnavailableError,
   SessionExpiredError,
   beginMfaEnrollment,
   changePassword,
@@ -71,7 +73,7 @@ describe("local authentication client", () => {
 
       await expect(
         signIn({ username: "unknown", password: "wrong" }, fetchImplementation),
-      ).rejects.toEqual(new AuthenticationError());
+      ).rejects.toBeInstanceOf(AuthenticationError);
       await expect(
         signIn({ username: "unknown", password: "wrong" }, fetchImplementation),
       ).rejects.toThrow(AUTHENTICATION_ERROR_MESSAGE);
@@ -305,5 +307,109 @@ describe("local authentication client", () => {
     await expect(
       changePassword("a long new password of mine", fetchImplementation),
     ).resolves.toEqual({ phase: "password_change_required", session: null });
+  });
+  it("TEST-FE-AUTH-012 tells a wait with its seconds and an unreachable server from a refusal", async () => {
+    vi.spyOn(document, "cookie", "get").mockReturnValue(
+      "__Host-prm_csrf=csrf-token",
+    );
+    const waiting = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(
+        new Response(null, { status: 429, headers: { "Retry-After": "290" } }),
+      );
+    const waitingWithoutSeconds = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response(null, { status: 429 }));
+    const unreachable = vi
+      .fn<typeof fetch>()
+      .mockRejectedValue(new Error("private network detail"));
+    const failing = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response(null, { status: 503 }));
+    const refused = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response(null, { status: 401 }));
+
+    const wait = await signIn(
+      { username: "user", password: "password" },
+      waiting,
+    ).catch((error: unknown) => error);
+    expect(wait).toBeInstanceOf(RateLimitedError);
+    expect((wait as RateLimitedError).retryAfterSeconds).toBe(290);
+    const codeWait = await completeMfa(
+      { method: "totp", code: "123456" },
+      waitingWithoutSeconds,
+    ).catch((error: unknown) => error);
+    expect(codeWait).toBeInstanceOf(RateLimitedError);
+    expect((codeWait as RateLimitedError).retryAfterSeconds).toBe(60);
+    await expect(
+      signIn({ username: "user", password: "password" }, unreachable),
+    ).rejects.toBeInstanceOf(ServiceUnavailableError);
+    await expect(
+      signIn({ username: "user", password: "password" }, failing),
+    ).rejects.toBeInstanceOf(ServiceUnavailableError);
+    const wrong = await signIn(
+      { username: "user", password: "password" },
+      refused,
+    ).catch((error: unknown) => error);
+    expect(wrong).toBeInstanceOf(AuthenticationError);
+    expect(wrong).not.toBeInstanceOf(RateLimitedError);
+    expect(wrong).not.toBeInstanceOf(ServiceUnavailableError);
+  });
+
+  it("TEST-FE-AUTH-013 accepts the set-up QR picture and the display name", async () => {
+    vi.spyOn(document, "cookie", "get").mockReturnValue(
+      "__Host-prm_csrf=csrf-token",
+    );
+    const material = {
+      method: "totp",
+      provisioning_uri: "otpauth://totp/CHETANA:sokha?secret=JBSWY3DPEHPK3PXP",
+      qr_code_svg: '<svg xmlns="http://www.w3.org/2000/svg"></svg>',
+    };
+    const enrollment = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(
+        new Response(
+          JSON.stringify({ data: material, meta: { request_id: "request" } }),
+        ),
+      );
+    await expect(beginMfaEnrollment(enrollment)).resolves.toEqual(material);
+    const noPicture = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: { ...material, qr_code_svg: "<script></script>" },
+          meta: { request_id: "request" },
+        }),
+      ),
+    );
+    await expect(beginMfaEnrollment(noPicture)).rejects.toBeInstanceOf(
+      AuthenticationError,
+    );
+
+    const named = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: {
+            ...authenticatedResponse.data.session,
+            display_name: "Sokha Chan",
+          },
+          meta: { request_id: "request" },
+        }),
+      ),
+    );
+    await expect(inspectSession(named)).resolves.toMatchObject({
+      display_name: "Sokha Chan",
+    });
+    const badName = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: { ...authenticatedResponse.data.session, display_name: 7 },
+          meta: { request_id: "request" },
+        }),
+      ),
+    );
+    await expect(inspectSession(badName)).rejects.toBeInstanceOf(
+      AuthenticationError,
+    );
   });
 });

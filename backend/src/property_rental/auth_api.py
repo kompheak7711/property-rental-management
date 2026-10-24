@@ -12,6 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from property_rental.api import ResponseMeta
 from property_rental.settings import Settings
+from property_rental.totp_qr import provisioning_qr_svg
 
 SESSION_COOKIE_NAME = "__Host-prm_session"
 PREAUTH_COOKIE_NAME = "__Host-prm_preauth"
@@ -419,6 +420,8 @@ class MfaEnrollmentData(BaseModel):
 
     method: Literal["totp"] = "totp"
     provisioning_uri: str
+    # The same link as a QR picture for the authenticator app (login sub-slice L6).
+    qr_code_svg: str
 
 
 class MfaEnrollmentResponse(BaseModel):
@@ -689,7 +692,10 @@ def create_auth_router(settings: Settings, flow: AuthenticationFlow) -> APIRoute
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED) from None
         response.headers["Cache-Control"] = "no-store"
         return MfaEnrollmentResponse(
-            data=MfaEnrollmentData(provisioning_uri=result.provisioning_uri),
+            data=MfaEnrollmentData(
+                provisioning_uri=result.provisioning_uri,
+                qr_code_svg=provisioning_qr_svg(result.provisioning_uri),
+            ),
             meta=ResponseMeta(request_id=request.state.request_id),
         )
 

@@ -26,6 +26,7 @@ from property_rental.auth_api import (
 )
 from property_rental.identity import AuthenticatedActor
 from property_rental.settings import Settings
+from property_rental.totp_qr import provisioning_qr_svg
 
 
 @dataclass
@@ -519,6 +520,7 @@ def test_required_mfa_enrollment_returns_one_time_totp_provisioning_material() -
     assert response.json()["data"] == {
         "method": "totp",
         "provisioning_uri": "otpauth://totp/Property:operator?secret=ONETIMESECRET",
+        "qr_code_svg": provisioning_qr_svg("otpauth://totp/Property:operator?secret=ONETIMESECRET"),
     }
 
 

@@ -36,6 +36,7 @@ from property_rental.password_security import PasswordHashService
 from property_rental.runtime_secrets import derive_totp_key_identifier
 from property_rental.session_actor import PostgresSessionActorResolver
 from property_rental.settings import Settings
+from property_rental.totp_qr import provisioning_qr_svg
 from property_rental.totp_security import TotpSecret, TotpService
 from test_sign_in_code_migration import (
     CHALLENGES_OF,
@@ -815,6 +816,9 @@ def test_the_set_up_routes_answer_the_link_once_then_401_and_set_the_session_coo
         assert started.status_code == 200
         assert started.headers["Cache-Control"] == "no-store"
         assert started.json()["data"]["method"] == "totp"
+        assert started.json()["data"]["qr_code_svg"] == provisioning_qr_svg(
+            started.json()["data"]["provisioning_uri"]
+        )
         link = urlsplit(started.json()["data"]["provisioning_uri"])
         secret = TotpSecret.from_base32(parse_qs(link.query)["secret"][0])
         assert client.post("/api/v1/auth/mfa/enrollment", headers=headers).status_code == 401
