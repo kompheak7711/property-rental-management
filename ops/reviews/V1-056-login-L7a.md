@@ -44,13 +44,27 @@ decided by Claude under the owner's 2026-10-23 22:30 rule. The commit hash is in
   canonical form also removed tabs and control separators, more than the docs say: it now
   removes only ASCII spaces and dashes (a tab or control separator inside a code does not match;
   tested).
-- Notes taken: the duplicate check of a new set compares canonical forms (issuance,
-  regeneration and the bootstrap), so a generator that gave the same code in two cases would be
+- Notes taken: the duplicate check of a new set compares canonical forms (the issue and replace
+  routes, and the `auth_flow.py` helper that makes a set), so a generator that gave the same code in two cases would be
   refused; the first new test is renamed `test_a_recovery_code_is_twelve_symbols_of_the_hand_copy_alphabet`
   (the alphabet has 32 symbols) and checks the alphabet itself; the match test also tries
   control separators and non-ASCII letters. Notes kept: no new timing or enumeration side effect
   (only empty or white-space text skips Argon2, which depends on what was typed, not on a
   secret).
+
+## Review round 3 (one fresh agent, read-only, no files written)
+
+- No blocker. Every round 2 fix checked as correct.
+- Should-fix, both done without a round 4 (a new test and text, under the round 3 rule):
+  (1) no test proved the canonical duplicate check: two new tests give a generator two
+  spellings of one code (7KQ4-M2XD-9PRT and 7kq4m2xd9prt) and expect the issue and the
+  replacement to be refused before anything is stored or invalidated; both fail when the check
+  goes back to comparing the codes as written; (2) this record and docs/010 said the server
+  set-up also compares canonical forms: it compares the codes as written
+  (`bootstrap_cli.py`, `initial_owner_bootstrap.py`), which is safe because its generator only
+  writes canonical codes; the wording is corrected and the code is left as it is.
+- Notes kept: `matches` removes any white space at the ends before the ASCII check (cannot widen
+  a match); a verifier that is not text still raises (older than L7a; every caller passes text).
 
 ## Runs
 
