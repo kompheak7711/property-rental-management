@@ -31,7 +31,8 @@ def client(actor: AuthenticatedActor | None, settings: Settings | None = None) -
 def test_only_a_signed_in_holder_of_operations_status_read_gets_the_status() -> None:
     assert client(None).get(PATH).status_code == 401
     assert client(OTHER).get(PATH).status_code == 403
-    answer = client(READER).get(PATH)
+    # No database setting, also when the PostgreSQL run sets APP_DATABASE_URL (merge, DL-082).
+    answer = client(READER, Settings(database_url=None)).get(PATH)
     assert answer.status_code == 200
     assert answer.headers["Cache-Control"] == "private, no-store"
     data = answer.json()["data"]
