@@ -9,7 +9,7 @@ from typing import Final, cast
 from uuid import uuid4
 
 import psycopg
-from fastapi import FastAPI, Request, Response, status
+from fastapi import APIRouter, Depends, FastAPI, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -55,6 +55,7 @@ from property_rental.billing_run_api import (
     UnavailableBillingRunFlow,
     create_billing_run_router,
 )
+from property_rental.browser_security import signed_in_browser_request
 from property_rental.configuration_api import (
     ConfigurationFlow,
     ExchangeRateProvider,
@@ -105,7 +106,11 @@ from property_rental.financial_reference_api import (
     FinancialReferenceFlow,
     create_financial_reference_router,
 )
-from property_rental.identity import ActorResolver, deny_unauthenticated_actor
+from property_rental.identity import (
+    ActorResolver,
+    deny_unauthenticated_actor,
+    remembered_actor,
+)
 from property_rental.invoice import (
     InvoiceIdempotencyKeyReused,
     InvoiceLineFullyPaid,
@@ -448,6 +453,8 @@ def create_app(
             if resolved_settings.database_url is not None
             else deny_unauthenticated_actor
         )
+    # Login sub-slice L5: the route guard and the route itself read the same actor, once.
+    actor_resolver = remembered_actor(actor_resolver)
     logger = application_logger or create_application_logger(
         service=resolved_settings.service_name,
         environment=resolved_settings.environment,
@@ -889,6 +896,13 @@ def create_app(
         )
         return response
 
+    signed_in = Depends(signed_in_browser_request(actor_resolver, resolved_settings))
+
+    def include_signed_in(router: APIRouter) -> None:
+        """Every router but health and sign-in needs a signed-in user first (login sub-slice
+        L5); a change also needs the Origin and the CSRF pair first."""
+        app.include_router(router, dependencies=[signed_in])
+
     app.include_router(
         create_api_router(
             resolved_settings,
@@ -912,7 +926,7 @@ def create_app(
             ),
         )
     )
-    app.include_router(
+    include_signed_in(
         create_access_admin_router(
             actor_resolver,
             access_administration_flow
@@ -924,7 +938,7 @@ def create_app(
             resolved_settings,
         )
     )
-    app.include_router(
+    include_signed_in(
         create_audit_router(
             actor_resolver,
             audit_query_flow
@@ -935,7 +949,7 @@ def create_app(
             ),
         )
     )
-    app.include_router(
+    include_signed_in(
         create_property_router(
             actor_resolver,
             property_resource_flow
@@ -947,7 +961,7 @@ def create_app(
             resolved_settings,
         )
     )
-    app.include_router(
+    include_signed_in(
         create_configuration_router(
             actor_resolver,
             configuration_flow
@@ -961,7 +975,7 @@ def create_app(
             exchange_rate_provider,
         )
     )
-    app.include_router(
+    include_signed_in(
         create_unit_router(
             actor_resolver,
             unit_resource_flow
@@ -970,9 +984,10 @@ def create_app(
                 if resolved_settings.database_url is not None
                 else UnavailableUnitResourceFlow()
             ),
+            resolved_settings,
         )
     )
-    app.include_router(
+    include_signed_in(
         create_customer_router(
             actor_resolver,
             customer_resource_flow
@@ -984,7 +999,7 @@ def create_app(
             resolved_settings,
         )
     )
-    app.include_router(
+    include_signed_in(
         create_reservation_router(
             actor_resolver,
             reservation_resource_flow
@@ -1003,7 +1018,7 @@ def create_app(
             resolved_settings,
         )
     )
-    app.include_router(
+    include_signed_in(
         create_lease_router(
             actor_resolver,
             lease_resource_flow
@@ -1015,7 +1030,7 @@ def create_app(
             resolved_settings,
         )
     )
-    app.include_router(
+    include_signed_in(
         create_deposit_router(
             actor_resolver,
             deposit_resource_flow
@@ -1037,7 +1052,7 @@ def create_app(
             resolved_settings,
         )
     )
-    app.include_router(
+    include_signed_in(
         create_utility_router(
             actor_resolver,
             utility_resource_flow
@@ -1059,7 +1074,7 @@ def create_app(
             resolved_settings,
         )
     )
-    app.include_router(
+    include_signed_in(
         create_billing_run_router(
             actor_resolver,
             billing_run_flow
@@ -1077,7 +1092,7 @@ def create_app(
             resolved_settings,
         )
     )
-    app.include_router(
+    include_signed_in(
         create_invoice_router(
             actor_resolver,
             invoice_flow
@@ -1099,7 +1114,7 @@ def create_app(
             resolved_settings,
         )
     )
-    app.include_router(
+    include_signed_in(
         create_utility_lease_router(
             actor_resolver,
             utility_lease_flow
@@ -1121,7 +1136,7 @@ def create_app(
             resolved_settings,
         )
     )
-    app.include_router(
+    include_signed_in(
         create_unpaid_initial_termination_router(
             actor_resolver,
             unpaid_initial_flow
@@ -1138,7 +1153,7 @@ def create_app(
             resolved_settings,
         )
     )
-    app.include_router(
+    include_signed_in(
         create_late_payment_router(
             actor_resolver,
             late_payment_flow
@@ -1160,7 +1175,7 @@ def create_app(
             resolved_settings,
         )
     )
-    app.include_router(
+    include_signed_in(
         create_enforcement_router(
             actor_resolver,
             enforcement_flow
@@ -1181,7 +1196,7 @@ def create_app(
             resolved_settings,
         )
     )
-    app.include_router(
+    include_signed_in(
         create_financial_reference_router(
             actor_resolver,
             financial_reference_flow
@@ -1194,7 +1209,7 @@ def create_app(
             resolved_settings,
         )
     )
-    app.include_router(
+    include_signed_in(
         create_customer_ledger_router(
             actor_resolver,
             customer_ledger_flow
@@ -1205,7 +1220,7 @@ def create_app(
             ),
         )
     )
-    app.include_router(
+    include_signed_in(
         create_financial_action_context_router(
             actor_resolver,
             financial_action_context_flow
@@ -1216,7 +1231,7 @@ def create_app(
             ),
         )
     )
-    app.include_router(
+    include_signed_in(
         create_payment_reversal_context_router(
             actor_resolver,
             payment_reversal_context_flow
@@ -1227,7 +1242,7 @@ def create_app(
             ),
         )
     )
-    app.include_router(
+    include_signed_in(
         create_payment_router(
             actor_resolver,
             payment_flow
@@ -1243,7 +1258,7 @@ def create_app(
             resolved_settings,
         )
     )
-    app.include_router(
+    include_signed_in(
         create_allocation_receipt_router(
             actor_resolver,
             allocation_receipt_flow
@@ -1258,7 +1273,7 @@ def create_app(
             resolved_settings,
         )
     )
-    app.include_router(
+    include_signed_in(
         create_credit_refund_router(
             actor_resolver,
             credit_refund_flow
