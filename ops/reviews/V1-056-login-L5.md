@@ -53,4 +53,6 @@ part of that commit).
 
 - Static checks: ruff, format and mypy (backend); prettier, eslint and tsc (frontend): clean.
 - U1 (before the last test edits): 6 failed, 3,936 passed; the 6 were the L5 changes (fixed).
-- Results of P1, U2 and the reruns after review round 1: see the commit's NOW.md line.
+- U2: 3,954 passed (3 log tests could not start because the run had log capture turned off; they passed in U3).
+- U3 (every API and app test, the tests changed after the reviews and the three log tests): 1,344 passed.
+- P1 (full PostgreSQL): 2,676 passed, 1 failed: the due-days database test's actor held `property.manage` but not `settings.manage`; fixed (docs/010, updated tests); T7 (that module and the new Settings routes module): 8 passed.

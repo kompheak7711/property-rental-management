@@ -32486,7 +32486,7 @@
       "test_level": "integration",
       "test_path": "backend/tests/test_one_time_charges_migration.py",
       "status": "implemented",
-      "notes": "The Property one_time_charge_due_days setting needs property.manage, is versioned and audited, and never changes issued Invoice Due Dates."
+      "notes": "The Property one_time_charge_due_days setting needs property.manage, is versioned and audited, and never changes issued Invoice Due Dates. Login slice sub-slice L5 (owner answer (a) to Q-2026-10-21-151, DL-081): the setting needs settings.manage; property.manage alone is also refused."
     },
     {
       "test_id": "test_governing_source_obligation_keeps_its_recorded_due_date",
