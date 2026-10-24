@@ -48372,7 +48372,7 @@
       "notes": "The session timer ends the app when the server answers with another person's session or cannot be reached (review round 2) (login slice sub-slice L6, Q-2026-10-24-187, decided by Claude under the owner's 2026-10-23 22:30 rule, DL-081)."
     },
     {
-      "test_id": "test_a_recovery_code_uses_only_the_twelve_symbols_of_the_hand_copy_alphabet",
+      "test_id": "test_a_recovery_code_is_twelve_symbols_of_the_hand_copy_alphabet",
       "upstream_ids": [
         "API-098",
         "SEC-071",
@@ -48382,7 +48382,7 @@
       "test_level": "security",
       "test_path": "backend/tests/test_recovery_code_security.py",
       "status": "implemented",
-      "notes": "The edges of the 60 random bits give ZZZZ-ZZZZ-ZZZZ and 0000-0000-0000; a code never shows I, L, O or U (login slice sub-slice L7a, Q-2026-10-24-188, decided by Claude under the owner's 2026-10-23 22:30 rule, DL-081)."
+      "notes": "The alphabet is 32 distinct symbols without I, L, O or U, and the edges of the 60 random bits give ZZZZ-ZZZZ-ZZZZ and 0000-0000-0000 (login slice sub-slice L7a, Q-2026-10-24-188, decided by Claude under the owner's 2026-10-23 22:30 rule, DL-081)."
     },
     {
       "test_id": "test_a_recovery_code_matches_in_any_case_with_or_without_dashes_and_look_alikes",
@@ -48395,7 +48395,7 @@
       "test_level": "security",
       "test_path": "backend/tests/test_recovery_code_security.py",
       "status": "implemented",
-      "notes": "A code matches in small or capital letters, with or without dashes and spaces, with I or L as 1 and O as 0; another code, a symbol outside the alphabet, a short or long code does not; a code made before L7a matches only as written (login slice sub-slice L7a, Q-2026-10-24-188, decided by Claude under the owner's 2026-10-23 22:30 rule, DL-081)."
+      "notes": "A code matches in small or capital letters, with or without dashes and spaces, with I or L as 1 and O as 0; another code, a symbol outside the alphabet, a short or long code, a tab or control separator, a non-ASCII letter or digit, or no text does not; a code made before L7a matches only as written (login slice sub-slice L7a, Q-2026-10-24-188, decided by Claude under the owner's 2026-10-23 22:30 rule, DL-081)."
     },
     {
       "test_id": "test_the_canonical_form_keeps_anything_that_is_not_a_code_as_given",

@@ -7,6 +7,7 @@ from dataclasses import fields
 import pytest
 
 from property_rental.recovery_code_security import (
+    RECOVERY_CODE_ALPHABET,
     RECOVERY_CODE_ENTROPY_BYTES,
     Argon2idRecoveryCodeVerifierProvider,
     RecoveryCodeGenerator,
@@ -52,10 +53,13 @@ def test_secure_generator_requests_independent_high_entropy_material() -> None:
     ("entropy", "code"),
     [(b"\xff" * 8, "ZZZZ-ZZZZ-ZZZZ"), (bytes(8), "0000-0000-0000")],
 )
-def test_a_recovery_code_uses_only_the_twelve_symbols_of_the_hand_copy_alphabet(
+def test_a_recovery_code_is_twelve_symbols_of_the_hand_copy_alphabet(
     entropy: bytes, code: str
 ) -> None:
-    """Login sub-slice L7a: the edges of the 60 bits; no I, L, O or U is ever shown."""
+    """Login sub-slice L7a: the edges of the 60 bits; the alphabet is 32 distinct symbols with
+    no I, L, O or U, so no code ever shows them."""
+    assert len(set(RECOVERY_CODE_ALPHABET)) == len(RECOVERY_CODE_ALPHABET) == 32
+    assert not set(RECOVERY_CODE_ALPHABET) & set("ILOU")
     generated = SecureRecoveryCodeGenerator(entropy_source=lambda _size: entropy).generate()
 
     assert generated.get_secret_value() == code
@@ -77,13 +81,22 @@ def test_a_recovery_code_matches_in_any_case_with_or_without_dashes_and_look_ali
         "lkqo-m2xd-9prt",
     ):
         assert provider.matches(typed, verifier) is True, typed
-    for wrong in ("1KQ0-M2XD-9PRV", "1KQ0-M2XD-9PRU", "1KQ0-M2XD", "1KQ0-M2XD-9PRT-0000"):
+    for wrong in (
+        "1KQ0-M2XD-9PRV",
+        "1KQ0-M2XD-9PRU",
+        "1KQ0-M2XD",
+        "1KQ0-M2XD-9PRT-0000",
+        "1KQ0\tM2XD\x1c9PRT",
+        "\u0131KQ0-M2XD-9PRT",
+        "\uff11KQ0-M2XD-9PRT",
+    ):
         assert provider.matches(wrong, verifier) is False, wrong
 
     older = "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8"
     older_verifier = provider.encode(older).verifier_encoding
     assert provider.matches(older, older_verifier) is True
     assert provider.matches(older.lower(), older_verifier) is False
+    assert provider.matches(None, verifier) is False  # type: ignore[arg-type]
 
 
 def test_the_canonical_form_keeps_anything_that_is_not_a_code_as_given() -> None:

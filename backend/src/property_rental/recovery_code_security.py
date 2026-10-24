@@ -58,10 +58,10 @@ class RecoveryCodeVerifierProvider(Protocol):
 
 def canonical_recovery_code(value: str) -> str:
     """The form a recovery code is hashed and checked in: a code of the L7a shape typed in any
-    case, with or without dashes and spaces, becomes its 12 capital symbols; anything else (an
+    case, with or without dashes and ASCII spaces, becomes its 12 capital symbols; anything else (an
     older 43-sign code, text that is not all ASCII, or something that is no code) stays as given,
     so it can still match only its own verifier."""
-    compact = "".join(value.split()).replace("-", "").upper().translate(_LOOK_ALIKES)
+    compact = value.replace(" ", "").replace("-", "").upper().translate(_LOOK_ALIKES)
     if (
         value.isascii()
         and len(compact) == RECOVERY_CODE_SYMBOLS
@@ -123,7 +123,11 @@ class Argon2idRecoveryCodeVerifierProvider:
     def matches(self, candidate: str, verifier_encoding: str) -> bool:
         """Fail closed when a candidate mismatches or verifier material is malformed. The
         candidate is checked in its canonical form (L7a), as the code was hashed."""
-        if not candidate.strip() or not verifier_encoding.startswith(f"${ARGON2ID_ALGORITHM}$"):
+        if (
+            not isinstance(candidate, str)
+            or not candidate.strip()
+            or not verifier_encoding.startswith(f"${ARGON2ID_ALGORITHM}$")
+        ):
             return False
         canonical = canonical_recovery_code(candidate.strip())
         if not _is_valid_code_material(canonical):

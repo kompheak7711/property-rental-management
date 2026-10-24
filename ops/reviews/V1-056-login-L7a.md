@@ -34,6 +34,24 @@ decided by Claude under the owner's 2026-10-23 22:30 rule. The commit hash is in
   inside its input, which only generated codes reach; the generator test keeps its locked name
   and note (256 bits) with a docstring saying 60 bits.
 
+## Review round 2 (one fresh agent, read-only, no files written)
+
+- No blocker. Every round 1 fix checked: the ASCII check runs on the stripped candidate; a
+  dotless i, a long s, the Kelvin sign, full-width letters and a space or NUL inside a code are
+  never read as a code; no text raises.
+- Should-fix (two contract notes), both done: (1) `matches` raised for a candidate that is not
+  text, where it answered no match before: it answers False again (tested with None); (2) the
+  canonical form also removed tabs and control separators, more than the docs say: it now
+  removes only ASCII spaces and dashes (a tab or control separator inside a code does not match;
+  tested).
+- Notes taken: the duplicate check of a new set compares canonical forms (issuance,
+  regeneration and the bootstrap), so a generator that gave the same code in two cases would be
+  refused; the first new test is renamed `test_a_recovery_code_is_twelve_symbols_of_the_hand_copy_alphabet`
+  (the alphabet has 32 symbols) and checks the alphabet itself; the match test also tries
+  control separators and non-ASCII letters. Notes kept: no new timing or enumeration side effect
+  (only empty or white-space text skips Argon2, which depends on what was typed, not on a
+  secret).
+
 ## Runs
 
 - Static checks: ruff, format and mypy (backend); prettier, eslint and tsc (frontend): clean.
