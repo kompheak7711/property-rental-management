@@ -5,7 +5,9 @@ one command as the sudo user with only that key descriptor."""
 
 from __future__ import annotations
 
+import ast
 import os
+import pwd
 import shutil
 import stat
 import subprocess
@@ -15,6 +17,8 @@ from pathlib import Path
 from typing import Final
 
 import pytest
+
+from property_rental.bootstrap_cli import _parser
 
 REPOSITORY_ROOT: Final = Path(__file__).resolve().parents[2]
 LOCAL_SCRIPTS: Final = REPOSITORY_ROOT / "scripts" / "local"
@@ -81,7 +85,9 @@ def test_the_secrets_script_makes_private_files_and_prints_no_secret(
     passwords = {}
     for name in names:
         file = secrets / f"postgres_{name}_password"
-        assert stat.S_IMODE(file.stat().st_mode) == 0o600
+        # The database container reads it as its own postgres user; the 0700 folder keeps it
+        # private on the Mac.
+        assert stat.S_IMODE(file.stat().st_mode) == 0o444
         passwords[name] = file.read_text(encoding="utf-8").strip()
         assert len(passwords[name]) == 48
     assert len(set(passwords.values())) == 8
@@ -148,6 +154,88 @@ def test_the_certificate_covers_the_local_name_and_localhost_and_chains_to_the_l
     assert "not usable" in refused.stderr
 
 
+def test_the_local_address_is_lower_case_as_browsers_send_it(copied_repository: Path) -> None:
+    common = copied_repository / "scripts" / "local" / "common.sh"
+    result = subprocess.run(
+        ["sh", "-c", '. "$0"; prm_origin', str(common)],
+        capture_output=True,
+        text=True,
+        check=True,
+        env={**os.environ, "PRM_LOCAL_HOSTNAME": "Soks-Mac-mini"},
+    )
+    assert result.stdout == "https://soks-mac-mini.local:5173\n"
+
+    # A name the API could never match is refused before the API starts (review round 2).
+    refused = subprocess.run(
+        ["sh", "-c", '. "$0"; prm_origin', str(common)],
+        capture_output=True,
+        text=True,
+        check=False,
+        env={**os.environ, "PRM_LOCAL_HOSTNAME": "Soks Mac"},
+    )
+    assert refused.returncode != 0
+    assert refused.stdout == ""
+    assert "not usable" in refused.stderr
+
+
+def test_the_inner_parts_refuse_to_start_without_the_key_descriptor(
+    copied_repository: Path,
+) -> None:
+    script = copied_repository / "scripts" / "local" / "start-api.sh"
+    environment = {k: v for k, v in os.environ.items() if k != "PRM_PROTECTED_KEY_FD"}
+    # Without the helper's variable, and with the variable but no descriptor 4 open (review
+    # round 2): both refused before any address file is read.
+    for extra in ({}, {"PRM_PROTECTED_KEY_FD": "4"}):
+        result = subprocess.run(
+            ["sh", str(script), "--inner", "/bin/false", "https://office-mac.local:5173"],
+            capture_output=True,
+            text=True,
+            check=False,
+            env={**environment, **extra},
+        )
+        assert result.returncode == 1
+        assert "Start it with: sh scripts/local/start-api.sh" in result.stderr
+        # The Owner set-up's inner part checks the same (review round 3).
+        bootstrap = copied_repository / "scripts" / "local" / "bootstrap-owner.sh"
+        result = subprocess.run(
+            ["sh", str(bootstrap), "--inner", "/bin/false", "--username", "owner"],
+            capture_output=True,
+            text=True,
+            check=False,
+            env={**environment, **extra},
+        )
+        assert result.returncode == 1
+        assert "Start it with: sh scripts/local/bootstrap-owner.sh" in result.stderr
+
+
+def test_the_owner_set_up_refuses_the_options_it_sets_itself(copied_repository: Path) -> None:
+    script = copied_repository / "scripts" / "local" / "bootstrap-owner.sh"
+    for option in ("--totp-key-fd=9", "--database-url-fd", "--ceremony-timeout-seconds=60"):
+        controller, terminal = os.openpty()
+        try:
+            result = subprocess.run(
+                ["sh", str(script), "--username", "owner", option],
+                stdin=terminal,
+                stdout=terminal,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+        finally:
+            os.close(controller)
+            os.close(terminal)
+        assert result.returncode == 1
+        assert "is set by this script" in result.stderr
+    # The set-up itself takes no shortened option, which could slip past that check.
+    with pytest.raises(SystemExit):
+        _parser().parse_args(["--username", "o", "--totp-key-f", "9"])
+
+
+def test_the_helper_is_python_3_9_syntax_for_macos() -> None:
+    ast.parse(HELPER.read_text(encoding="utf-8"), feature_version=(3, 9))
+    assert HELPER.read_text(encoding="utf-8").startswith("#!/usr/bin/python3 -I\n")
+
+
 def test_the_owner_set_up_refuses_to_run_without_a_terminal(copied_repository: Path) -> None:
     script = copied_repository / "scripts" / "local" / "bootstrap-owner.sh"
     result = subprocess.run(
@@ -162,12 +250,19 @@ def test_the_owner_set_up_refuses_to_run_without_a_terminal(copied_repository: P
 
 
 def run_helper(
-    key: Path, *command: str, uid: int = NOBODY, fd: int = 4
+    key: Path,
+    *command: str,
+    uid: int = NOBODY,
+    gid: int = NOBODY,
+    fd: int = 4,
+    pass_fds: tuple[int, ...] = (),
 ) -> subprocess.CompletedProcess[str]:
     environment = {
         "PATH": "/usr/bin:/bin",
         "SUDO_UID": str(uid),
-        "SUDO_GID": str(NOBODY),
+        "SUDO_GID": str(gid),
+        "USERNAME": "root",
+        "MAIL": "/var/mail/root",
     }
     return subprocess.run(
         [sys.executable, "-I", str(HELPER), "--key", str(key), "--fd", str(fd), "--", *command],
@@ -175,6 +270,7 @@ def run_helper(
         text=True,
         check=False,
         env=environment,
+        pass_fds=pass_fds,
     )
 
 
@@ -199,9 +295,15 @@ def test_the_helper_runs_the_command_as_the_sudo_user_with_only_the_key_descript
         "print(os.environ['PRM_PROTECTED_KEY_FD'],os.environ['USER'],os.environ['HOME']);"
         "print(len(os.read(4,128)));"
         "print(sorted(int(n) for n in os.listdir('/proc/self/fd')));"
-        "print(sorted(k for k in os.environ if k.startswith('SUDO_')))"
+        "print(sorted(k for k in os.environ if k.startswith('SUDO_') or k in ('USERNAME','MAIL')));"
+        "print(sorted(os.getgroups()), os.environ['SHELL'])"
     )
-    result = run_helper(protected_key, sys.executable, "-I", "-c", probe)
+    # Another descriptor is passed on to the helper too (as sudo might leave one): it closes it.
+    with open(protected_key.parent.parent / "other", "w", encoding="ascii") as other:
+        assert other.fileno() > 4
+        result = run_helper(
+            protected_key, sys.executable, "-I", "-c", probe, pass_fds=(other.fileno(),)
+        )
     assert result.returncode == 0, result.stderr
     lines = result.stdout.splitlines()
     assert lines[0] == f"{NOBODY} {NOBODY} {NOBODY}"
@@ -210,11 +312,14 @@ def test_the_helper_runs_the_command_as_the_sudo_user_with_only_the_key_descript
     # 0, 1 and 2, the key on 4, and 3, the descriptor `listdir` itself opened: nothing else.
     assert lines[3] == "[0, 1, 2, 3, 4]"
     assert lines[4] == "[]"
+    nobody = pwd.getpwuid(NOBODY)
+    groups = sorted(set(os.getgrouplist(nobody.pw_name, NOBODY)))
+    assert lines[5] == f"{groups} {nobody.pw_shell}"
     assert "ab" * 32 not in result.stdout + result.stderr
 
 
 @running_as_root
-def test_the_helper_refuses_an_unprotected_key_root_itself_and_a_missing_sudo_user(
+def test_the_helper_refuses_an_unprotected_key_root_itself_a_missing_sudo_user_and_other_files(
     protected_key: Path,
 ) -> None:
     os.chmod(protected_key, 0o640)
@@ -246,6 +351,44 @@ def test_the_helper_refuses_an_unprotected_key_root_itself_and_a_missing_sudo_us
         refused = run_helper(protected_key, "/bin/true", fd=int(fd))
         assert refused.returncode == 1
         assert "--fd must be between 3 and 9" in refused.stderr
+
+    # Only a file called totp_protection_key: the helper cannot pass on another root-only file.
+    other = protected_key.with_name("other_root_only_file")
+    other.write_text("not a key\n", encoding="ascii")
+    os.chmod(other, 0o600)
+    refused = run_helper(other, "/bin/cat", "/dev/fd/4")
+    assert refused.returncode == 1
+    assert "must name a file called totp_protection_key" in refused.stderr
+    assert "not a key" not in refused.stdout
+
+    # Nor under that name: a hard link, a symbolic link, a folder, or a folder others can change.
+    elsewhere = protected_key.parent.parent / "elsewhere"
+    elsewhere.mkdir(mode=0o755)
+    linked = elsewhere / "totp_protection_key"
+    os.link(other, linked)
+    refused = run_helper(linked, "/bin/cat", "/dev/fd/4")
+    assert refused.returncode == 1
+    assert "only root can read" in refused.stderr
+    assert "not a key" not in refused.stdout
+    linked.unlink()
+    linked.symlink_to(other)
+    refused = run_helper(linked, "/bin/cat", "/dev/fd/4")
+    assert refused.returncode == 1
+    assert "cannot be opened" in refused.stderr
+    linked.unlink()
+    linked.mkdir()
+    refused = run_helper(linked, "/bin/true")
+    assert refused.returncode == 1
+    assert "only root can read" in refused.stderr
+    os.chmod(protected_key.parent, 0o777)
+    refused = run_helper(protected_key, "/bin/true")
+    os.chmod(protected_key.parent, 0o755)
+    assert refused.returncode == 1
+    assert "folder only root can change" in refused.stderr
+
+    refused = run_helper(protected_key, "/bin/true", gid=NOBODY - 1)
+    assert refused.returncode == 1
+    assert "group does not match" in refused.stderr
 
 
 def test_the_helper_refuses_to_run_without_root() -> None:

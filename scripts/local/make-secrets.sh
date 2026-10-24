@@ -3,7 +3,10 @@
 # .local/secrets folder (login sub-slice L7c). A file that is already there is kept as it is.
 # Nothing secret is printed or passed as a command argument: the passwords come from openssl's
 # random source straight into their files, and the addresses are written by Python, which
-# reads the password files itself.
+# reads the password files itself. The password files are readable by all (0444, as in
+# scripts/database-test.sh), because Docker mounts each one into the database container, where
+# its start-up script reads them as the container's postgres user; the folder itself stays
+# private (0700), so no other account on the Mac can reach them.
 set -eu
 . "$(dirname -- "$0")/common.sh"
 
@@ -19,6 +22,7 @@ for name in $PRM_PASSWORD_NAMES; do
     openssl rand -hex 24 > "$file"
     made=$((made + 1))
   fi
+  chmod 0444 "$file"
 done
 
 python3 -I - "$PRM_SECRETS" "$PRM_POSTGRES_PORT" <<'PYTHON'
@@ -50,4 +54,4 @@ for file_name, (role, password_name) in addresses.items():
 PYTHON
 
 printf 'Password files made: %s of 8 (the others were already there). Address files ready.\n' "$made"
-printf 'Folder: %s (only your account can read it).\n' "$PRM_SECRETS"
+printf 'Folder: %s (only your account can open it).\n' "$PRM_SECRETS"

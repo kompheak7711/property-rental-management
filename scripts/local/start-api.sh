@@ -27,6 +27,7 @@ fi
 uv_path=$2
 origin=$3
 [ "${PRM_PROTECTED_KEY_FD:-}" = 4 ] || prm_fail "Start it with: sh scripts/local/start-api.sh"
+( : <&4 ) 2>/dev/null || prm_fail "Start it with: sh scripts/local/start-api.sh"
 IFS= read -r APP_DATABASE_URL < "$PRM_SECRETS/runtime_database_url"
 IFS= read -r APP_FINANCIAL_DATABASE_URL < "$PRM_SECRETS/financial_database_url"
 APP_ENVIRONMENT=production
@@ -37,4 +38,7 @@ export APP_DATABASE_URL APP_FINANCIAL_DATABASE_URL APP_ENVIRONMENT APP_TOTP_KEY_
 export APP_PASSWORD_BLOCKLIST_FILE APP_ALLOWED_BROWSER_ORIGIN
 printf 'API for %s, on 127.0.0.1:8000. Stop it with Control-C.\n' "$APP_ALLOWED_BROWSER_ORIGIN"
 cd "$PRM_ROOT/backend"
-exec "$uv_path" run uvicorn property_rental.app:app --host 127.0.0.1 --port 8000 --no-access-log
+# The screen server adds X-Forwarded-For; it is trusted from 127.0.0.1 only, so each device on the
+# Wi-Fi keeps its own sign-in waits and audit address, and none can claim another's.
+exec "$uv_path" run uvicorn property_rental.app:app --host 127.0.0.1 --port 8000 --no-access-log \
+  --proxy-headers --forwarded-allow-ips 127.0.0.1
