@@ -638,8 +638,10 @@ export function SignInScreens({
               edited(field);
             },
           };
+    // A key per field, so a view never reuses another field's box (review round 2: the code
+    // box kept the username).
     return (
-      <div className="sign-in-field">
+      <div className="sign-in-field" key={field}>
         <label htmlFor={id}>{t(label)}</label>
         <input
           aria-describedby={describedBy(field, helpId)}
@@ -676,7 +678,7 @@ export function SignInScreens({
     const helpId = help === undefined ? undefined : `${id}-help`;
     const visible = shown[field] === true;
     return (
-      <div className="sign-in-field">
+      <div className="sign-in-field" key={field}>
         <label htmlFor={id}>{t(label)}</label>
         <div className="sign-in-password-row">
           <input

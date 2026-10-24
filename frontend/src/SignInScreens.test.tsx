@@ -783,6 +783,53 @@ describe("sign-in screens", () => {
       "Too many tries. Wait 2 minutes, then try again.",
     );
   });
+
+  it("TEST-FE-708 opens every code and password box empty after the step before it", async () => {
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    renderScreens(
+      api({
+        signIn: vi
+          .fn()
+          .mockResolvedValueOnce({ phase: "mfa_required", session: null })
+          .mockResolvedValueOnce({
+            phase: "password_change_required",
+            session: null,
+          }),
+        changePassword: vi.fn().mockResolvedValue({
+          phase: "mfa_enrollment_required",
+          session: null,
+        }),
+      }),
+    );
+    signIn("sokha.chan", "a password of mine");
+    expect(await screen.findByLabelText("6-digit code")).toHaveValue("");
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Lost your phone? Use a recovery code",
+      }),
+    );
+    expect(screen.getByLabelText("Recovery code")).toHaveValue("");
+    fireEvent.click(screen.getByRole("button", { name: "Back to sign in" }));
+    expect(screen.getByLabelText("Username")).toHaveValue("sokha.chan");
+    expect(screen.getByLabelText("Password")).toHaveValue("");
+
+    signIn("sokha.chan", "k7m2-x9qp-4hrt-w3nd");
+    expect(await screen.findByLabelText("New password")).toHaveValue("");
+    expect(screen.getByLabelText("Type the new password again")).toHaveValue(
+      "",
+    );
+    fireEvent.change(screen.getByLabelText("New password"), {
+      target: { value: "my blue door opens at seven" },
+    });
+    fireEvent.change(screen.getByLabelText("Type the new password again"), {
+      target: { value: "my blue door opens at seven" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save new password" }));
+    expect(await screen.findByLabelText("6-digit code")).toHaveValue("");
+    expect(consoleError).not.toHaveBeenCalled();
+  });
 });
 
 describe("sign-in layer in the app", () => {
@@ -897,6 +944,50 @@ describe("sign-in layer in the app", () => {
     expect(
       screen.queryByText(/Nobody used the app on this computer/),
     ).not.toBeInTheDocument();
+    vi.useRealTimers();
+  });
+
+  it("TEST-FE-709 ends the app when the server answers for another person or cannot be reached", async () => {
+    vi.useFakeTimers();
+    for (const answer of [
+      vi.fn().mockResolvedValue({
+        ...session,
+        actor_id: "actor-2",
+        idle_expires_at: "2026-08-22T10:40:00Z",
+      }),
+      vi.fn().mockRejectedValue(new ServiceUnavailableError()),
+    ]) {
+      const client = api({
+        signIn: vi.fn().mockResolvedValue({
+          phase: "authenticated",
+          session: { ...session, idle_expires_at: "2026-08-22T10:10:01Z" },
+        }),
+        inspectSession: answer,
+      });
+      render(
+        <App
+          api={client}
+          buildId="test-build"
+          environment="development"
+          now={() => START}
+        />,
+      );
+      signIn();
+      await act(async () => {
+        await Promise.resolve();
+      });
+      expect(screen.getByRole("main")).toHaveAccessibleName(
+        "Account and access",
+      );
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1000);
+      });
+      expect(client.inspectSession).toHaveBeenCalledTimes(1);
+      expect(
+        screen.getByRole("heading", { name: "You were signed out" }),
+      ).toBeInTheDocument();
+      cleanup();
+    }
     vi.useRealTimers();
   });
 });

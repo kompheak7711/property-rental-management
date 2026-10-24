@@ -31,6 +31,7 @@ import {
   AuthenticationApi,
   AuthenticationError,
   PasswordRuleError,
+  RecoveryCodeSetSummary,
   SessionData,
   SessionExpiredError,
 } from "./authClient";
@@ -869,15 +870,15 @@ describe("local sign-in", () => {
   });
 
   it("TEST-FE-707 shows the live recovery-code set and replaces it by its id, and a refused read keeps the person signed in", async () => {
+    let answerLiveSet!: (value: RecoveryCodeSetSummary) => void;
     const api = mockAuthenticationApi({
       liveRecoveryCodeSet: vi
         .fn()
-        .mockResolvedValueOnce({
-          set_id: "bootstrap-set",
-          created_at: "2026-08-20T08:00:00Z",
-          made_by: "other",
-          usable_count: 10,
-        })
+        .mockReturnValueOnce(
+          new Promise<RecoveryCodeSetSummary>((resolve) => {
+            answerLiveSet = resolve;
+          }),
+        )
         .mockResolvedValue({
           set_id: "set-2",
           created_at: "2026-08-22T10:10:00Z",
@@ -900,6 +901,22 @@ describe("local sign-in", () => {
       target: { value: "password" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+    expect(
+      await screen.findByRole("heading", { name: "Recovery safety" }),
+    ).toBeInTheDocument();
+    // Review round 2: nothing about the codes while the read runs.
+    expect(
+      screen.queryByText(/Your recovery codes could not be checked/),
+    ).not.toBeInTheDocument();
+    await act(async () => {
+      answerLiveSet({
+        set_id: "bootstrap-set",
+        created_at: "2026-08-20T08:00:00Z",
+        made_by: "other",
+        usable_count: 10,
+      });
+      await Promise.resolve();
+    });
     expect(
       await screen.findByText(
         "Your recovery codes: 10 still work. Made by the server set-up 2026-08-20T08:00:00.000Z.",

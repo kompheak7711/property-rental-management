@@ -48346,6 +48346,30 @@
       "test_path": "backend/tests/test_recovery_code_flow_migration.py",
       "status": "implemented",
       "notes": "Any live session of the account reads its live set without codes: none before the first codes, issued with 9 usable after a recovery-code sign-in, regenerated with 10, other for a set not made by these routes; another account's set is never shown; a signed-out session is refused (login slice sub-slice L6, Q-2026-10-24-187, decided by Claude under the owner's 2026-10-23 22:30 rule, DL-081)."
+    },
+    {
+      "test_id": "TEST-FE-708",
+      "upstream_ids": [
+        "UI-110",
+        "UI-112",
+        "DL-081"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/SignInScreens.test.tsx",
+      "status": "implemented",
+      "notes": "Every code and password box opens empty after the step before it (the code box never keeps the username), with no React warning (review round 2) (login slice sub-slice L6, Q-2026-10-24-187, decided by Claude under the owner's 2026-10-23 22:30 rule, DL-081)."
+    },
+    {
+      "test_id": "TEST-FE-709",
+      "upstream_ids": [
+        "UI-111",
+        "API-096",
+        "DL-081"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/SignInScreens.test.tsx",
+      "status": "implemented",
+      "notes": "The session timer ends the app when the server answers with another person's session or cannot be reached (review round 2) (login slice sub-slice L6, Q-2026-10-24-187, decided by Claude under the owner's 2026-10-23 22:30 rule, DL-081)."
     }
   ]
 }

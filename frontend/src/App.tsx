@@ -548,6 +548,7 @@ export function App({
   const [liveRecoverySet, setLiveRecoverySet] = useState<
     RecoveryCodeSetSummary | null | undefined
   >(undefined);
+  const [liveRecoverySetFailed, setLiveRecoverySetFailed] = useState(false);
   const liveRecoverySetSequence = useRef(0);
   const [showReauthentication, setShowReauthentication] = useState(false);
   const [administration, setAdministration] =
@@ -861,6 +862,7 @@ export function App({
 
   function loadLiveRecoverySet() {
     const sequence = ++liveRecoverySetSequence.current;
+    setLiveRecoverySetFailed(false);
     void client
       .liveRecoveryCodeSet()
       .then((summary) => {
@@ -872,6 +874,7 @@ export function App({
         // A refusal of this read does not mean signed out (plan binding of L3c-2c-1).
         if (sequence === liveRecoverySetSequence.current) {
           setLiveRecoverySet(undefined);
+          setLiveRecoverySetFailed(true);
         }
       });
   }
@@ -880,6 +883,7 @@ export function App({
   useEffect(() => {
     liveRecoverySetSequence.current += 1;
     setLiveRecoverySet(undefined);
+    setLiveRecoverySetFailed(false);
     if (screen !== "authenticated" || sessionActor === null) return;
     loadLiveRecoverySet();
   }, [client, screen, sessionActor]);
@@ -1431,10 +1435,13 @@ export function App({
                   Generate one-time recovery codes
                 </button>
               ) : liveRecoverySet === undefined ? (
-                <p className="muted">
-                  Your recovery codes could not be checked. Reload the page to
-                  try again.
-                </p>
+                // Nothing while the read runs (review round 2).
+                liveRecoverySetFailed && (
+                  <p className="muted">
+                    Your recovery codes could not be checked. Reload the page to
+                    try again.
+                  </p>
+                )
               ) : (
                 <button
                   disabled={isSubmitting}
