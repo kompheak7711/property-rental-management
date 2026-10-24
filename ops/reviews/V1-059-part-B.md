@@ -80,3 +80,5 @@ real data. No decision log number yet: the merge gives this work its DL number.
 | F1 frontend full run (during the backend runs) | 1 timeout (TEST-FE-394, passes alone; V1-060 flaky list), 1,639 passed |
 | Frontend lint, typecheck, format, build | clean |
 | Backend ruff check, ruff format, mypy | clean |
+| P5 every suite (`scripts/database-test.sh`, fresh database, after the push) | 9 failed, 2,680 passed in 1 h 32 min: 3 upgrade tests compared whole Invoice rows before and after the upgrade and now leave out the new `draft_reference` (and `id_document_number`), as they already did for migration 64's columns; 6 statement timeouts late in the long run (the 2 known ones and 4 settlement tests) |
+| P6 the 9 on a fresh database | the 3 upgrade tests and the 4 settlement tests: 12 passed (with the rest of their files); the 2 known timeouts fail on the foundation code too |
