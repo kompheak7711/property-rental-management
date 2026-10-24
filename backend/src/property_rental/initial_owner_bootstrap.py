@@ -156,12 +156,13 @@ class BootstrapRequest:
         # account creation refuses it (`app.assert_account_names`).
         # L7b review round 2: the rest of the account name rule of account creation
         # (`app.assert_account_names`, which the bootstrap SQL does not run): 1 to 128
-        # characters, NFC, and none of the hidden characters, for the stored username and for
-        # the display and audit names as stored.
+        # characters, NFC, no two spaces in a row (round 3) and none of the hidden characters,
+        # for the stored username and for the display and audit names as stored.
         stored = normalize_local_username(self.username)
         if any(
             not 1 <= len(name) <= 128
             or unicodedata.normalize("NFC", name) != name
+            or "  " in name
             or HIDDEN_NAME_CHARACTERS.search(name) is not None
             for name in (stored, self.display_name, self.audit_name)
         ):

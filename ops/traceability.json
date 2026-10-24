@@ -48470,7 +48470,7 @@
       "test_level": "security",
       "test_path": "backend/tests/test_initial_owner_bootstrap_cli.py",
       "status": "implemented",
-      "notes": "The bootstrap refuses a hidden but printable character, a stored username over 128 characters (also after lower case grows it), and a display or audit name that is not NFC or holds a hidden character, as account creation does; 128 characters and an NFC accented display name are accepted (login slice sub-slice L7b review round 2, DL-081)."
+      "notes": "The bootstrap refuses a hidden but printable character, a stored username over 128 characters (also after lower case grows it), and a display or audit name that is not NFC, holds a hidden character or two spaces in a row, as account creation does; 128 characters and an NFC accented display name are accepted (login slice sub-slice L7b review round 2, DL-081)."
     }
   ]
 }

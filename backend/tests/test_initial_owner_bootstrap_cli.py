@@ -389,7 +389,8 @@ def test_request_refuses_names_that_account_creation_refuses() -> None:
     account name rule of account creation (`app.assert_account_names`): a hidden but printable
     character (U+3164 Hangul filler, which looks like nothing, or U+034F), more than 128
     characters in the stored username (100 dotted capital I become 200 after lower case), and a
-    display or audit name that is not NFC or holds a hidden character, are refused."""
+    display or audit name that is not NFC, holds a hidden character or two spaces in a row
+    (review round 3), are refused."""
 
     def request_for(
         username: str, display_name: str = "Initial Owner", audit_name: str = "initial-owner"
@@ -413,6 +414,8 @@ def test_request_refuses_names_that_account_creation_refuses() -> None:
         {"username": "owner", "display_name": "Initial\u3164Owner"},
         {"username": "owner", "display_name": "Cafe\u0301"},
         {"username": "owner", "audit_name": "initial\u2800owner"},
+        {"username": "owner", "display_name": "Sok  Pheak"},
+        {"username": "owner", "audit_name": "Owner  X"},
     ):
         with pytest.raises(ValueError, match="invalid initial Owner bootstrap identity"):
             request_for(**refused)
