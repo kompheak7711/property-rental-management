@@ -1,0 +1,12 @@
+# Only what install/api.Dockerfile copies; never .local (the Mac test secrets) or .git.
+*
+!backend/pyproject.toml
+!backend/uv.lock
+!backend/src/**
+!backend/alembic.ini
+!backend/migrations/**
+!config/password-blocklist.txt
+!scripts/local/with-protected-key.py
+!install/container/**
+**/__pycache__
+**/*.pyc

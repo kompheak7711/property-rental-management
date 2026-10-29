@@ -1,0 +1,64 @@
+CHETANA Residence Management - V1 - how to install
+====================================================
+
+This folder installs the V1 app on ONE office computer (Mac or Windows).
+Other devices on the same Wi-Fi (iPad, phone, other computers) then open it
+in the browser. Nothing is put on the internet.
+
+BEFORE YOU START (once)
+1. Install Docker Desktop: https://www.docker.com/products/docker-desktop/
+   Open it once and wait until it says it is running.
+   In Docker Desktop, Settings, General: turn on "Start Docker Desktop when you sign in".
+2. Keep the computer on the internet for the first install (it downloads parts, 5 to 15 minutes).
+3. Have your phone with Google Authenticator, and paper and a pen.
+4. Keep this whole folder. Do not move or rename it after the install.
+
+MAC
+1. Right-click "Install on Mac.command", choose Open, then Open again
+   (macOS asks this the first time because the file came from the internet).
+2. Follow the window. It asks for your Mac password once (for the certificate).
+3. At the end the app opens. A "CHETANA" icon is on the Desktop.
+
+WINDOWS
+1. Right-click the downloaded zip, Properties, tick "Unblock", OK. Then Extract All.
+2. Double-click "Install on Windows.bat". If Windows says "Windows protected your PC",
+   click "More info", then "Run anyway".
+3. Follow the window. Windows asks for permission once (click Yes).
+4. At the end the app opens. A "CHETANA" icon is on the Desktop.
+5. If Windows Firewall asks about Docker, allow "Private networks" (the iPad needs it).
+
+THE FIRST OWNER ACCOUNT (the installer asks only the first time)
+- User name: owner
+- Type a password two times: 15 to 128 characters. Nothing shows while you type.
+- In Google Authenticator: +, "Enter a setup key", type the key the window shows.
+- Type the 6-digit code from the phone.
+- Write the 10 recovery codes on paper. Keep the paper safe.
+- Type: I HAVE STORED THE RECOVERY CODES
+
+EVERY DAY
+- Double-click the CHETANA icon on the Desktop (or "Open CHETANA").
+- The app address is shown at the end of the install, for example
+  https://office-pc.local:8443 . Use this same address on every device.
+- Mac: Safari or Chrome. Windows: Edge or Chrome. Firefox does not work.
+
+IPAD (once per iPad, on the same Wi-Fi)
+1. In Safari, open the app address with /chetana-certificate.crt at the end,
+   for example https://office-pc.local:8443/chetana-certificate.crt
+   Safari warns that the site is not private: tap "Show Details", then "visit this website".
+   Tap Allow to download the profile.
+2. Settings, General, VPN & Device Management: tap the CHETANA profile, Install.
+3. Settings, General, About, Certificate Trust Settings: turn on the Caddy Local Authority.
+4. Open the app address in Safari.
+
+STOP, BACKUP, UPDATE
+- "Stop CHETANA" stops the app. The data stays.
+- "Make a backup" saves the whole database in the "backups" folder.
+  The file holds all customer and money data. Copy it to a USB drive and keep it safe.
+  Make one every week, and before every update.
+- To update to a new version: make a backup, put the new files in this same folder,
+  then run the installer again. The data is kept.
+
+IMPORTANT
+- The data lives inside Docker Desktop. Never use "Reset to factory defaults" or
+  "Clean / Purge data" in Docker Desktop, and never uninstall it: that deletes all data.
+- Do not open port 8443 on the office internet router. The app is for the office Wi-Fi only.

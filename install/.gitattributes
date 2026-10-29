@@ -1,0 +1,8 @@
+# The installed app's files keep their line ends on every computer: Unix ones for the scripts
+# that run inside Docker or on the Mac, Windows ones for the .bat launchers.
+*.sh text eol=lf
+*.py text eol=lf
+*.command text eol=lf
+Caddyfile text eol=lf
+*.bat text eol=crlf
+*.txt text eol=crlf

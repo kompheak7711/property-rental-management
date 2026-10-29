@@ -1,0 +1,51 @@
+# The installed V1 app's screen server (install/web.Dockerfile). HTTPS only, at the one address
+# https://NAME.local:8443 that the API accepts sign-ins from (APP_ALLOWED_BROWSER_ORIGIN). Caddy
+# makes its own local certificate authority in the caddy_data volume and renews the server
+# certificate by itself; the installer trusts the authority once on this computer, and an iPad
+# can download it from /chetana-certificate.crt.
+{
+	admin off
+	skip_install_trust
+	auto_https disable_redirects
+	# Only TCP 8443 is published, so no HTTP/3 (UDP) offer.
+	servers {
+		protocols h1 h2
+	}
+}
+
+https://{$PRM_HOST}:8443 {
+	tls internal
+
+	header {
+		-Server
+		X-Content-Type-Options nosniff
+		Referrer-Policy no-referrer
+		X-Frame-Options DENY
+	}
+
+	# The same two forwards as frontend/vite.config.ts: /api, and the Property, Unit, Unit setup
+	# and Reservation routes that have no /api/v1 prefix yet. Caddy sets X-Forwarded-For from the
+	# real device and ignores one a device sends.
+	@api path /api/*
+	handle @api {
+		reverse_proxy api:8000
+	}
+	@routes path_regexp ^/(properties|units|unit-setup|reservations)/
+	handle @routes {
+		reverse_proxy api:8000
+	}
+
+	handle /chetana-certificate.crt {
+		root * /data/caddy/pki/authorities/local
+		rewrite * /root.crt
+		header Content-Type application/x-x509-ca-cert
+		file_server
+	}
+
+	handle {
+		root * /srv
+		encode gzip
+		try_files {path} /index.html
+		file_server
+	}
+}

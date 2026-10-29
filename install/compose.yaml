@@ -1,0 +1,142 @@
+# The installed V1 app on one office computer (Mac or Windows), all inside Docker Desktop.
+# Owner ask 29/10/2026: "installation file of this application V1 for Windows and Mac".
+#
+# The install scripts in install/mac and install/windows run this file; nobody types it. The
+# project name "chetana" keeps its own data volumes, apart from the Mac test app
+# (property-rental-management), so installing never touches the test database.
+#
+# Only the screen server is reachable from outside Docker: HTTPS on port 8443, for this computer
+# and the devices on the same Wi-Fi. The database and the API are on an internal Docker network
+# with no port and no internet. Every password and the sign-in code key are made inside Docker
+# volumes on first start (container/make-secrets.py); none is in this folder or in Git.
+name: chetana
+
+x-app: &app
+  image: chetana-api:v1
+  build:
+    context: ..
+    dockerfile: install/api.Dockerfile
+  networks: [internal]
+
+services:
+  # One-shot: makes any missing password, database address and the sign-in code key.
+  secrets:
+    <<: *app
+    user: "0:0"
+    command: ["python3", "-I", "/opt/prm/make-secrets.py"]
+    volumes:
+      - db_passwords:/run/prm-db-passwords
+      - app_secrets:/run/prm-secrets
+      - totp_key:/run/prm-key
+    restart: "no"
+
+  postgres:
+    image: chetana-postgres:v1
+    build:
+      context: ..
+      dockerfile: install/db.Dockerfile
+    environment:
+      POSTGRES_DB: prm
+      POSTGRES_USER: prm_admin
+      POSTGRES_PASSWORD_FILE: /run/prm-db-passwords/postgres_admin_password
+      POSTGRES_MIGRATION_PASSWORD_FILE: /run/prm-db-passwords/postgres_migration_password
+      POSTGRES_RUNTIME_PASSWORD_FILE: /run/prm-db-passwords/postgres_runtime_password
+      POSTGRES_FINANCIAL_PASSWORD_FILE: /run/prm-db-passwords/postgres_financial_password
+      POSTGRES_BACKUP_PASSWORD_FILE: /run/prm-db-passwords/postgres_backup_password
+      POSTGRES_RESTORE_PASSWORD_FILE: /run/prm-db-passwords/postgres_restore_password
+      POSTGRES_HUMAN_ADMIN_PASSWORD_FILE: /run/prm-db-passwords/postgres_human_admin_password
+      POSTGRES_BOOTSTRAP_PASSWORD_FILE: /run/prm-db-passwords/postgres_bootstrap_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - db_passwords:/run/prm-db-passwords:ro
+    depends_on:
+      secrets:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U prm_admin -d prm"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [internal]
+    restart: unless-stopped
+
+  # One-shot on every start: applies any new reviewed migration (never resets anything).
+  migrate:
+    <<: *app
+    user: "10001:10001"
+    command: ["/bin/sh", "/opt/prm/migrate.sh"]
+    volumes:
+      - app_secrets:/run/prm-secrets:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    <<: *app
+    # Starts as root only to open the root-only key file, then runs the API as user 10001
+    # (scripts/local/with-protected-key.py, the same helper as the Mac test app).
+    user: "0:0"
+    command: ["/bin/sh", "/opt/prm/start-api.sh"]
+    environment:
+      PRM_HOST: ${PRM_HOST:?run the installer, it sets PRM_HOST}
+    volumes:
+      - app_secrets:/run/prm-secrets:ro
+      - totp_key:/run/prm-key:ro
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/ready', timeout=3).read()"]
+      interval: 10s
+      timeout: 5s
+      start_period: 20s
+      retries: 10
+    restart: unless-stopped
+
+  web:
+    image: chetana-web:v1
+    build:
+      context: ..
+      dockerfile: install/web.Dockerfile
+    environment:
+      PRM_HOST: ${PRM_HOST:?run the installer, it sets PRM_HOST}
+    ports:
+      - "8443:8443"
+    volumes:
+      - caddy_data:/data
+    depends_on:
+      api:
+        condition: service_healthy
+    networks: [internal, outside]
+    restart: unless-stopped
+
+  # Tools the installer runs with "docker compose run --rm"; they never start by themselves.
+  owner-setup:
+    <<: *app
+    user: "0:0"
+    entrypoint: ["/bin/sh", "/opt/prm/bootstrap-owner.sh"]
+    volumes:
+      - app_secrets:/run/prm-secrets:ro
+      - totp_key:/run/prm-key:ro
+    profiles: [tools]
+
+  tool:
+    <<: *app
+    user: "10001:10001"
+    entrypoint: ["/bin/sh", "/opt/prm/tool.sh"]
+    volumes:
+      - app_secrets:/run/prm-secrets:ro
+    profiles: [tools]
+
+networks:
+  internal:
+    internal: true
+  outside: {}
+
+volumes:
+  postgres_data:
+  db_passwords:
+  app_secrets:
+  totp_key:
+  caddy_data:
