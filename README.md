@@ -325,6 +325,23 @@ Once a month, with the database started: `sh scripts/local/prune-sign-in-tries.s
 wrong sign-in tries older than 30 days (owner answer (a) to Q-2026-10-23-175). It prints only how
 many rows it removed.
 
+## Install V1 on an office computer (Mac or Windows)
+
+Owner ask 29/10/2026. `sh scripts/package-installer.sh` makes `dist/CHETANA-V1-Installer.zip`
+from the committed files. On the office computer: install Docker Desktop, unzip, then run
+`Install on Mac.command` or `Install on Windows.bat` (steps in `install/launchers/READ ME
+FIRST.txt`). Everything runs inside Docker Desktop from `install/compose.yaml` (project name
+`chetana`, its own volumes, apart from the Mac test app): PostgreSQL and the API on an internal
+network with no published port and no internet, and the screens served by Caddy over HTTPS at
+`https://NAME.local:8443` with its own local certificate authority (the installer trusts it on
+that computer; an iPad downloads it from `/chetana-certificate.crt`). The database passwords and
+the root-only sign-in code key are made inside Docker volumes on first start
+(`install/container/make-secrets.py`); the API opens the key with
+`scripts/local/with-protected-key.py` and runs as user 10001. The installer applies new
+migrations, makes the first Owner account once (user name `owner`), sets up the Property, and
+puts a CHETANA icon on the Desktop. Running it again updates the app and keeps the data.
+`Make a backup` writes a `pg_dump` file to the `backups` folder.
+
 ## Development workflow
 
 1. Create or select a Git branch.

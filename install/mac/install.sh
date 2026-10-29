@@ -73,6 +73,7 @@ until prm_compose cp web:/data/caddy/pki/authorities/local/root.crt "$certificat
   [ "$tries" -le 30 ] || prm_fail "The certificate was not made. Run this again."
   sleep 2
 done
+chmod 0644 "$certificate"
 if security verify-cert -c "$certificate" >/dev/null 2>&1; then
   printf '   This Mac already trusts the app certificate.\n'
 else
