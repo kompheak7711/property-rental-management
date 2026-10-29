@@ -29,6 +29,7 @@ import {
 } from "../unitClient";
 import { type RentTermsServicesApi, RentTermsCard } from "./RentTerms";
 import { ChangeStatusDialog, UpdateUnitDialog } from "./UnitDialogs";
+import { UnitFeaturesPanel } from "./UnitFeatures";
 import { UnitChip, floorText } from "./UnitsList";
 import { ut } from "./text";
 import { type UtilityPricesApi, UnitUtilitiesCard } from "./UtilityPrices";
@@ -324,10 +325,6 @@ export function UnitDetail({
     </div>
   );
   const notRecorded = ut(language, "not_recorded");
-  const features =
-    lists?.lists.ROOM_FEATURE.filter(
-      (item) => !item.removed || unit.room_feature_ids.includes(item.item_id),
-    ) ?? [];
 
   let now: ReactNode;
   if (current !== null) {
@@ -588,45 +585,34 @@ export function UnitDetail({
                 ),
               )}
               {fact(
-                ut(language, "beds"),
-                unit.bedrooms === null ? (
-                  notRecorded
-                ) : (
-                  <span className="ui-num">{unit.bedrooms}</span>
-                ),
-              )}
-              {fact(
-                ut(language, "baths"),
-                unit.bathrooms === null ? (
-                  notRecorded
-                ) : (
-                  <span className="ui-num">{unit.bathrooms}</span>
-                ),
-              )}
-              {features.map((item) =>
-                fact(
-                  khmer && item.name_km !== null ? item.name_km : item.name_en,
-                  ut(
-                    language,
-                    unit.room_feature_ids.includes(item.item_id)
-                      ? "has"
-                      : "hasnt",
-                  ),
-                ),
-              )}
-              {fact(
                 ut(language, "view"),
                 itemName(lists, unit.view_item_id, khmer) ?? notRecorded,
               )}
-              {fact(
-                ut(language, "kitchen"),
-                itemName(lists, unit.kitchen_item_id, khmer) ?? notRecorded,
-              )}
             </div>
             {unit.notes !== null && <p className="ui-small">{unit.notes}</p>}
+            {/* V1.1 (DL-115 (I)): the features list replaces Bedrooms, Bathrooms, Kitchen and
+                the Room features. */}
+            <UnitFeaturesPanel
+              api={unitApi}
+              canManage={canManage && unit.can_manage !== false}
+              language={language}
+              lists={lists}
+              onConflict={() => {
+                setWarning(ut(language, "conflict"));
+                load();
+              }}
+              onSaved={(saved) => {
+                setNotice(ut(language, "uf_saved", saved.unit_number));
+                onChanged(saved);
+                load();
+              }}
+              unit={unit}
+            />
             <UnitInventoryPanel
               api={unitApi}
+              features={unit.features ?? []}
               key={unit.unit_id}
+              lists={lists}
               onSaved={load}
               propertyId={propertyId}
               unitId={unit.unit_id}
