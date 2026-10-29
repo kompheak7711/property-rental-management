@@ -179,8 +179,13 @@ const TEXT = {
   ],
   // new
   new_note: [
-    "A new Unit starts as Vacant with an empty inventory; add its items on the Unit page.",
-    "បន្ទប់ថ្មីចាប់ផ្តើមជាទំនេរ ជាមួយបញ្ជីសម្ភារៈទទេ; បន្ថែមសម្ភារៈនៅទំព័របន្ទប់។",
+    "A new Unit starts as Vacant with an empty inventory. After saving, add its items and its electricity and water meters on the Unit page.",
+    "បន្ទប់ថ្មីចាប់ផ្តើមជាទំនេរ ជាមួយបញ្ជីសម្ភារៈទទេ។ ក្រោយរក្សាទុក សូមបន្ថែមសម្ភារៈ និងនាឡិកាស្ទង់អគ្គិសនី និងទឹក នៅទំព័របន្ទប់។",
+  ],
+  // new (V1-061): the Unit was saved but its Rent and Services were not
+  rt_new_not_saved: [
+    "Unit {0} is saved, but its Rent and Services are not. Set them on the Unit page with Change.",
+    "បន្ទប់ {0} បានរក្សាទុក ប៉ុន្តែថ្លៃឈ្នួល និងសេវាមិនទាន់រក្សាទុកទេ។ សូមកំណត់វានៅទំព័របន្ទប់ ដោយចុច ប្តូរ។",
   ],
   edit_note: [
     "Changes are dated and kept in History. The Unit number cannot change.",
@@ -246,6 +251,8 @@ const TEXT = {
     "No meter, so this Unit is not billed for it.",
     "គ្មាននាឡិកាស្ទង់ ដូច្នេះបន្ទប់នេះមិនត្រូវគិតថ្លៃនេះទេ។",
   ],
+  u_add_el: ["Add electricity meter", "បន្ថែមនាឡិកាស្ទង់អគ្គិសនី"],
+  u_add_wa: ["Add water meter", "បន្ថែមនាឡិកាស្ទង់ទឹក"],
   u_cannot: [
     "Your account cannot read Utilities.",
     "គណនីរបស់អ្នកមិនអាចអានទឹកភ្លើងបានទេ។",
