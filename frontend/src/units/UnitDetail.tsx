@@ -27,7 +27,7 @@ import {
   UnitSetupLists,
   UnitTimelineEvent,
 } from "../unitClient";
-import { ForRentDialog, isForRent } from "./ForRent";
+import { ForRentDialog, isForRent, isInUse } from "./ForRent";
 import { type RentTermsServicesApi, RentTermsCard } from "./RentTerms";
 import { ChangeStatusDialog, UpdateUnitDialog } from "./UnitDialogs";
 import { UnitFeaturesPanel } from "./UnitFeatures";
@@ -596,7 +596,7 @@ export function UnitDetail({
                 ut(language, "fr_col"),
                 <>
                   {ut(language, forRent ? "fr_yes" : "fr_no")}
-                  {manage && (
+                  {manage && !isInUse(unit) && (
                     <button
                       className="ui-btn link"
                       onClick={() => {
