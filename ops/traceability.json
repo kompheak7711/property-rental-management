@@ -54460,12 +54460,13 @@
       "upstream_ids": [
         "DL-074",
         "DL-075",
+        "DL-116",
         "UI-008"
       ],
       "test_level": "UI component",
       "test_path": "frontend/src/settings/UnitSetupTab.test.tsx",
       "status": "implemented",
-      "notes": "V1-058 R7b-2: Unit setup shows the five lists with how many Units use each item; an item in use offers no Remove; Floors have no Edit."
+      "notes": "V1-058 R7b-2; V1.1 rework part 1 (DL-116): Unit setup shows the tabs Floors, Unit Types, Unit features and Views with how many Units use each item; Unit features is one table (Order, Name, Khmer, Units, Edit); an item in use offers no Remove; Floors have no Edit."
     },
     {
       "test_id": "TEST-FE-941",
@@ -58846,14 +58847,15 @@
       "notes": "V1.1 (DL-115 (I)): a Unit feature a Unit uses, and the Feature type a feature names, cannot be removed."
     },
     {
-      "test_id": "test_a_unit_feature_needs_a_feature_type_of_its_property",
+      "test_id": "test_a_unit_feature_type_when_given_is_a_feature_type_of_its_property",
       "upstream_ids": [
-        "DL-115"
+        "DL-115",
+        "DL-116"
       ],
       "test_level": "DB",
       "test_path": "backend/tests/test_unit_features_migration.py",
       "status": "implemented",
-      "notes": "V1.1 (DL-115 (I)): a Unit feature without a Feature type, or with an item that is not a Feature type of its Property, is refused; no other list item takes a Feature type."
+      "notes": "V1.1 rework part 1 (DL-116): a Unit feature needs no Feature type; a type that is given must be a Feature type of its Property, and no other list item takes a Feature type."
     },
     {
       "test_id": "test_runtime_role_cannot_write_unit_features_directly",
@@ -58908,12 +58910,13 @@
     {
       "test_id": "TEST-FE-1124",
       "upstream_ids": [
-        "DL-115"
+        "DL-115",
+        "DL-116"
       ],
       "test_level": "unit",
       "test_path": "frontend/src/settings/UnitSetupTab.test.tsx",
       "status": "implemented",
-      "notes": "V1.1 part 1 (DL-115 (I)): Settings Unit setup adds a Unit feature with its Feature type, changes the type on Edit, and asks no Feature type for other lists."
+      "notes": "V1.1 rework part 1 (DL-116): a Unit feature is added and renamed with no Feature type; a type kept from before is not sent."
     },
     {
       "test_id": "TEST-FE-1125",
@@ -59101,6 +59104,86 @@
       "test_path": "backend/tests/test_deposit_api.py",
       "status": "implemented",
       "notes": "V1-061 (DL-112): POST /api/v1/leases/{lease_id}/security-deposit/receive needs payments.record and payments.allocate, and deposits.manage for a new Security Deposit; another Deposit or a second Security Deposit is refused; the payer is the Primary Tenant."
+    },
+    {
+      "test_id": "test_for_rent_is_set_at_the_unit_version_and_kept_in_history",
+      "upstream_ids": [
+        "DL-116"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_unit_for_rent_migration.py",
+      "status": "implemented",
+      "notes": "V1.1 rework part 1 (DL-116): For rent is set at the Unit version, a repeat changes nothing, the Units list filters by it, and each change is in History."
+    },
+    {
+      "test_id": "test_a_unit_not_for_rent_gets_no_lease_and_is_not_counted",
+      "upstream_ids": [
+        "DL-116"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_unit_for_rent_migration.py",
+      "status": "implemented",
+      "notes": "V1.1 rework part 1 (DL-116): a Unit not for rent gets no Reservation and no Lease, and Home and the occupancy report leave it out."
+    },
+    {
+      "test_id": "test_a_unit_with_a_lease_cannot_be_set_not_for_rent",
+      "upstream_ids": [
+        "DL-116"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_unit_for_rent_migration.py",
+      "status": "implemented",
+      "notes": "V1.1 rework part 1 (DL-116): a Unit with a draft or signed Lease stays for rent."
+    },
+    {
+      "test_id": "test_runtime_role_cannot_change_for_rent_directly",
+      "upstream_ids": [
+        "DL-116"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_unit_for_rent_migration.py",
+      "status": "implemented",
+      "notes": "V1.1 rework part 1 (DL-116): only app.set_unit_for_rent changes For rent."
+    },
+    {
+      "test_id": "test_the_database_review_fixes_are_in_place",
+      "upstream_ids": [
+        "DL-116"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_unit_for_rent_migration.py",
+      "status": "implemented",
+      "notes": "Database review 01/11, fixes 2, 3 and 5 (DL-116 (C)): copied indexes dropped, list indexes added, Lease history and Receipt number checks added."
+    },
+    {
+      "test_id": "test_for_rent_is_set_by_a_manager_and_filters_the_list",
+      "upstream_ids": [
+        "DL-116"
+      ],
+      "test_level": "API",
+      "test_path": "backend/tests/test_unit_api.py",
+      "status": "implemented",
+      "notes": "V1.1 rework part 1 (DL-116): PUT /units/{unit_id}/for-rent needs a Manager, the browser checks and If-Match; a wrong body answers 422, a stale version 412, a Unit in use 409; the list filters by for_rent."
+    },
+    {
+      "test_id": "TEST-FE-1131",
+      "upstream_ids": [
+        "DL-116"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/units/UnitsPage.test.tsx",
+      "status": "implemented",
+      "notes": "V1.1 rework part 1 (DL-116): a Unit not for rent leaves the Units table and its counts and shows in the Units not for rent card with its places."
+    },
+    {
+      "test_id": "TEST-FE-1132",
+      "upstream_ids": [
+        "DL-116"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/units/UnitsPage.test.tsx",
+      "status": "implemented",
+      "notes": "V1.1 rework part 1 (DL-116): the Unit page shows For rent with Change; a Unit not for rent offers no Reservation or Lease; a Unit in use stays for rent."
     }
   ]
 }
