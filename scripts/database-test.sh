@@ -348,6 +348,7 @@ database_test_suites='
   tests/test_money_one_step_migration.py
   tests/test_meter_history_migration.py
   tests/test_unit_rent_terms_migration.py
+  tests/test_general_ledger_migration.py
 '
 
 for database_test_file in $database_test_suites; do
