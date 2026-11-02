@@ -58720,7 +58720,7 @@
       "test_level": "migration",
       "test_path": "backend/tests/test_meter_history_migration.py",
       "status": "implemented",
-      "notes": "V1-061 Fix 4 (DL-114): migration 20270404_254 follows 20270403_253, is the head and is forward-only."
+      "notes": "V1-061 Fix 4 (DL-114): migration 20270404_254 follows 20270403_253, was the head before the General Ledger migrations, and is forward-only."
     },
     {
       "test_id": "TEST-FE-1117",
@@ -58871,6 +58871,117 @@
       "test_path": "backend/tests/test_deposit_api.py",
       "status": "implemented",
       "notes": "V1-061 (DL-112): POST /api/v1/leases/{lease_id}/security-deposit/receive needs payments.record and payments.allocate, and deposits.manage for a new Security Deposit; another Deposit or a second Security Deposit is refused; the payer is the Primary Tenant."
+    },
+    {
+      "test_id": "test_the_starter_chart_and_fiscal_year_2027_are_seeded_once",
+      "upstream_ids": [
+        "DB-GL-001",
+        "PR-GL-001",
+        "PR-GL-005"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_general_ledger_migration.py",
+      "status": "implemented",
+      "notes": "V1.1 part 8 General Ledger (owner approved 2026-11-02): The starter chart (59 accounts, owner names, 2400 and 6040 tax-locked, eight control accounts, one retained-earnings account) and fiscal year 2027 with 12 months and period 13 are seeded once; a second start adds nothing."
+    },
+    {
+      "test_id": "test_every_entry_balances_with_two_or_more_one_sided_lines",
+      "upstream_ids": [
+        "DB-GL-001",
+        "PR-GL-010",
+        "PR-GL-011"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_general_ledger_migration.py",
+      "status": "implemented",
+      "notes": "V1.1 part 8 General Ledger (owner approved 2026-11-02): The posting function and the commit-time constraint trigger refuse an unbalanced entry, a one-line entry and a line with both sides; entry numbers follow JEyy0001."
+    },
+    {
+      "test_id": "test_posted_entries_never_change_and_a_key_posts_once",
+      "upstream_ids": [
+        "DB-GL-001",
+        "PR-GL-012",
+        "PR-GL-013"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_general_ledger_migration.py",
+      "status": "implemented",
+      "notes": "V1.1 part 8 General Ledger (owner approved 2026-11-02): A posting key posts once; entries, lines, accounts and periods are never updated, deleted or truncated; an account code is fixed once used; a name can change."
+    },
+    {
+      "test_id": "test_a_reversal_mirrors_its_entry_once",
+      "upstream_ids": [
+        "DB-GL-001",
+        "PR-GL-012"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_general_ledger_migration.py",
+      "status": "implemented",
+      "notes": "V1.1 part 8 General Ledger (owner approved 2026-11-02): A reversal mirrors every line of its entry, is shown as reversed, happens once, cannot itself be reversed, and a reversal that does not mirror is refused at commit."
+    },
+    {
+      "test_id": "test_control_tax_and_turned_off_accounts_are_guarded",
+      "upstream_ids": [
+        "DB-GL-001",
+        "PR-GL-003",
+        "PR-GL-005"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_general_ledger_migration.py",
+      "status": "implemented",
+      "notes": "V1.1 part 8 General Ledger (owner approved 2026-11-02): Control accounts take only app-record entries; tax-locked and turned-off accounts take no line; an adjusting entry needs an approver; the year-end closing entry names its year and waits for every month to close."
+    },
+    {
+      "test_id": "test_months_close_in_order_with_green_checks_and_never_reopen",
+      "upstream_ids": [
+        "DB-GL-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_general_ledger_migration.py",
+      "status": "implemented",
+      "notes": "V1.1 part 8 General Ledger (owner approved 2026-11-02): A month closes only with every check true and after the month before; nothing posts into a closed month; a closed month never reopens; the close is in History."
+    },
+    {
+      "test_id": "test_statements_balance_and_the_year_end_close_moves_profit_to_3900",
+      "upstream_ids": [
+        "DB-GL-001",
+        "PR-GL-051"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_general_ledger_migration.py",
+      "status": "implemented",
+      "notes": "V1.1 part 8 General Ledger (owner approved 2026-11-02): Trial balance debits equal credits; assets equal liabilities plus equity before and after the year-end close; profit and loss, direct cash flow and ledger detail give the expected figures; the year-end close moves the profit to 3900 and closes the year."
+    },
+    {
+      "test_id": "test_records_follow_their_steps_and_rules",
+      "upstream_ids": [
+        "DB-GL-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_general_ledger_migration.py",
+      "status": "implemented",
+      "notes": "V1.1 part 8 General Ledger (owner approved 2026-11-02): Expense requests follow their steps and are never decided by the requester, edited or deleted; they pay out only from cash and take a Unit only on a Unit account; bills are never overpaid; money moves need two accounts; adjusting lines refuse control accounts; an approved budget is locked."
+    },
+    {
+      "test_id": "test_the_runtime_role_only_reads_the_ledger",
+      "upstream_ids": [
+        "DB-GL-001",
+        "SEC-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_general_ledger_migration.py",
+      "status": "implemented",
+      "notes": "V1.1 part 8 General Ledger (owner approved 2026-11-02): The runtime role reads the ledger tables and the chart template but cannot write them or call the internal ledger functions."
+    },
+    {
+      "test_id": "test_the_migrations_chain_and_roll_back_only_while_the_ledger_is_empty",
+      "upstream_ids": [
+        "DB-GL-001"
+      ],
+      "test_level": "migration",
+      "test_path": "backend/tests/test_general_ledger_migration.py",
+      "status": "implemented",
+      "notes": "V1.1 part 8 General Ledger (owner approved 2026-11-02): Migrations 20270405_255 to 20270408_258 follow 20270404_254 and end at the head; they roll back while the ledger is empty and refuse once an entry is posted (owner Q2)."
     }
   ]
 }
