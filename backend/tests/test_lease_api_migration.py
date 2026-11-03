@@ -318,7 +318,7 @@ def test_http_create_update_sign_and_replay_use_runtime_role(
             ("lease.sign",),
         ]
         assert connection.execute("SELECT version_num FROM alembic_version").fetchone() == (
-            "20270412_262",
+            "20270414_264",
         )
         assert connection.execute(
             "SELECT has_function_privilege('prm_runtime',"

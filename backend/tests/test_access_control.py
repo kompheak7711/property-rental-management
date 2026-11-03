@@ -95,6 +95,9 @@ NON_CAPABILITY_LABELS = frozenset(
         "unit.updated",
         "unit.status_changed",
         "unit.rent_terms_changed",
+        # V1.1 rework part 1 (DL-116) audit actions.
+        "unit.features_changed",
+        "unit.for_rent_changed",
         "unpaid_initial.moved_in_credit",
         "unpaid_initial.never_moved_in",
         "utility.baseline.record",
@@ -142,7 +145,7 @@ def test_the_capability_catalog_names_every_capability_the_code_checks() -> None
 
 
 def test_the_catalog_holds_the_approved_new_names() -> None:
-    assert len(CAPABILITY_CATALOG) == 79
+    assert len(CAPABILITY_CATALOG) == 100
     assert list(CAPABILITY_CATALOG) == sorted(CAPABILITY_CATALOG)
     assert all(DOTTED.fullmatch(name) and len(name) <= 128 for name in CAPABILITY_CATALOG)
     assert all(description.strip() for description in CAPABILITY_CATALOG.values())
@@ -178,7 +181,7 @@ def test_each_capability_has_one_grant_path() -> None:
     assert paths["rent_nonpayment.evaluate"] == "service_principal"
     assert paths["billing.generate"] == "bundle"
     assert BUNDLE_CAPABILITIES == {c for c, path in paths.items() if path == "bundle"}
-    assert len(BUNDLE_CAPABILITIES) == 76
+    assert len(BUNDLE_CAPABILITIES) == 97
     with pytest.raises(KeyError):
         capability_grant_path("reports.export")
 
@@ -275,6 +278,8 @@ STAFF_APPROVED = frozenset(
         "utility.calculate",
         "receipts.reprint",
         "refunds.create",
+        # General Ledger (owner 2026-11-03, phase 6 plan L1): every role sends Expense requests.
+        "expenses.request",
     }
 )
 # What Staff never get (DL-081, Q-150 (a) with the owner's note, DL-080 item 2, Q-161 (a)); the
@@ -331,15 +336,40 @@ STAFF_NOT_NAMED = frozenset(
         "rent.below_default",
     }
 )
+# General Ledger (owner 2026-11-03, phase 6 plan L1): the Owner and Manager only.
+STAFF_NOT_LEDGER = frozenset(
+    {
+        "expenses.approve",
+        "expenses.approve_over_limit",
+        "expenses.record",
+        "ledger.accounts.manage",
+        "ledger.adjustments.approve",
+        "ledger.adjustments.prepare",
+        "ledger.budgets.approve",
+        "ledger.budgets.prepare",
+        "ledger.cash_count",
+        "ledger.close",
+        "ledger.fixed_assets",
+        "ledger.money_move",
+        "ledger.opening_balances",
+        "ledger.owner_money",
+        "ledger.petty_cash",
+        "ledger.read",
+        "ledger.reconcile",
+        "ledger.write_off",
+        "supplier_bills.manage",
+        "supplier_bills.pay",
+    }
+)
 # Replaced by `settings.manage` in sub-slice L5 (Q-2026-10-21-151 (a)); not in the Staff bundle.
 RATE_CAPABILITIES = frozenset({"service_rates.manage", "utility_rates.manage"})
 
 
 def test_the_default_staff_bundle_holds_exactly_the_approved_daily_work() -> None:
     assert STAFF_DEFAULT_BUNDLE_CAPABILITIES == STAFF_APPROVED
-    assert len(STAFF_APPROVED) == 33
+    assert len(STAFF_APPROVED) == 34
     assert STAFF_APPROVED <= BUNDLE_CAPABILITIES
-    groups = (STAFF_APPROVED, STAFF_NEVER, STAFF_NOT_NAMED, RATE_CAPABILITIES)
+    groups = (STAFF_APPROVED, STAFF_NEVER, STAFF_NOT_NAMED, STAFF_NOT_LEDGER, RATE_CAPABILITIES)
     # Every bundle capability is in exactly one group, so a new bundle capability must be
     # placed by the owner before the Staff list can be called complete.
     assert sum(len(group) for group in groups) == len(BUNDLE_CAPABILITIES)

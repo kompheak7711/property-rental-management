@@ -2422,3 +2422,15 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **Built (part 1, migration 20270408_258):** `app.units.for_rent`, `app.set_unit_for_rent` (`PUT /units/{unit_id}/for-rent`, History action `unit.for_rent_changed`), the Reservation and Lease insert checks, the Home and occupancy filters, the relaxed Unit feature check and the fixes in (C). Technical choices by Claude under the owner's 2026-10-23 22:30 rule (no money).
 - **Links:** DL-115, DL-110, DL-075.
 - **Decision date:** 2026-11-02.
+
+## DL-117 — General Ledger phase 6: Business rules tables and ledger rights by role
+
+- **Type:** `OWNER BUSINESS DECISION`
+- **Status:** `APPROVED; BEING BUILT` (phase 6 step 1 of 6 on the General Ledger branch)
+- **Source:** the owner in the thread "General Ledger": "Phase 6 plan approved" 03/11/2026 06:56 (plan L1 to L5 as recommended), and the decision card of 03/11/2026 07:03 ("Manager approves to the limit"). The business rules shape is the one the owner agreed on 31/10/2026 (DL-116 part 2); the V1.1 rework thread agreed that the General Ledger branch builds the two tables first.
+- **(A) Business rules.** The ledger limits live on the Settings Business rules page, Owner only, each change dated and kept with its reason and History: Expense limit $100 (the Accountant or a Manager approves up to it, the Owner above), purchase from $500 is an asset, Petty cash amount $200, Expense report due 3 days after spending, Budget warning 10% and $50, pay-later Supplier bill due 30 days after the bill date.
+- **(B) Rights.** Every role sends Expense requests and reports. The Owner and a Manager see the ledger and reports, record Expenses, Supplier bills and bill payments, money moves and cash counts, approve Expenses up to the Expense limit and top up petty cash. The Owner alone approves above the limit and does the rest of the accountant's work (owner money, write-offs, adjusting entries, opening balances, fixed assets, budgets, bank reconciliation, month and year close, accounts). An Accountant role comes later, when one is hired (U1). This replaces U2 and U3 of 02/11/2026 (a Manager never approves; only the accountant keeps petty cash).
+- **(C) Posting start (L3).** Ledger posting starts on 1 January 2027; Opening balances are entered as at 31 December 2026; older records are not posted. **(L4)** A record dated in a closed month posts on the first day of the first open month, with a note to the first record. **(L5)** Six build steps in order, pushed after each.
+- **Built (step 1):** migrations `20270413_263` (DB-BR-001) and `20270414_264`; API-BR-001.
+- **Links:** DL-116, DL-115.
+- **Decision date:** 2026-11-03.

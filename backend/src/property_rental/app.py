@@ -57,6 +57,12 @@ from property_rental.billing_run_api import (
     create_billing_run_router,
 )
 from property_rental.browser_security import signed_in_browser_request
+from property_rental.business_rules_api import (
+    BusinessRuleFlow,
+    PostgresBusinessRuleFlow,
+    UnavailableBusinessRuleFlow,
+    create_business_rules_router,
+)
 from property_rental.configuration_api import (
     ConfigurationFlow,
     ExchangeRateProvider,
@@ -520,6 +526,7 @@ def create_app(
     unit_inventory_flow: UnitInventoryFlow | None = None,
     customer_resource_flow: CustomerResourceFlow | None = None,
     configuration_flow: ConfigurationFlow | None = None,
+    business_rule_flow: BusinessRuleFlow | None = None,
     exchange_rate_provider: ExchangeRateProvider | None = None,
     reservation_resource_flow: ReservationResourceFlow | None = None,
     lease_resource_flow: LeaseResourceFlow | None = None,
@@ -1148,6 +1155,18 @@ def create_app(
             ),
             resolved_settings,
             exchange_rate_provider,
+        )
+    )
+    include_signed_in(
+        create_business_rules_router(
+            actor_resolver,
+            business_rule_flow
+            or (
+                PostgresBusinessRuleFlow(resolved_settings.database_url.get_secret_value())
+                if resolved_settings.database_url is not None
+                else UnavailableBusinessRuleFlow()
+            ),
+            resolved_settings,
         )
     )
     include_signed_in(

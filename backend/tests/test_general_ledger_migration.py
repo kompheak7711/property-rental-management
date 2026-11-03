@@ -709,16 +709,17 @@ def test_the_migrations_chain_and_roll_back_only_while_the_ledger_is_empty(
 ) -> None:
     assert migrated_database_url
     script = ScriptDirectory.from_config(Config(str(Path(__file__).parents[1] / "alembic.ini")))
-    assert script.get_current_head() == REVISIONS[-1]
+    # The business rules and ledger rights (263, 264, phase 6) come after the ledger tables.
+    assert script.get_revision("20270413_263").down_revision == REVISIONS[-1]
     previous = BEFORE_LEDGER
     for revision in REVISIONS:
         found = script.get_revision(revision)
         assert found is not None and found.down_revision == previous
         previous = revision
     with _temporary_migration_database("prm_general_ledger") as temporary:
-        assert _run_alembic("upgrade", "head").returncode == 0
+        assert _run_alembic("upgrade", REVISIONS[-1]).returncode == 0
         assert _run_alembic("downgrade", BEFORE_LEDGER).returncode == 0
-        assert _run_alembic("upgrade", "head").returncode == 0
+        assert _run_alembic("upgrade", REVISIONS[-1]).returncode == 0
         with psycopg.connect(temporary) as connection:
             actor_id = insert_actor(connection)
             property_id = insert_property(connection, actor_id)

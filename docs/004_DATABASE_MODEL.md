@@ -5577,3 +5577,14 @@ cents in `bigint` (Q1).
 The runtime and financial roles only read. The `ledger.*` rights, the checked wrappers and the
 posting job come in the coding phase. Each downgrade removes only its own objects and refuses
 once the ledger holds any entry or record (Q2).
+
+## DB-BR-001 — Business rules (V1.1, General Ledger phase 6 step 1)
+
+Owner 31/10/2026 (shape agreed with the V1.1 rework thread) and 03/11/2026 (phase 6 plan L2). Migration `20270413_263`.
+
+- `app.business_rule_names`: `id`, `code` (stable upper snake case; the program reads a rule by it), `name_en`, `name_kh`, `value_unit` (`USD_CENTS`, `PERCENT` in hundredths of a percent, `DAYS`, `DAY_OF_MONTH`, `COUNT`), `area` (Billing, Reservations, Prices, Quotations, Riel rate, Ledger, Staff, Attendance, Other) and `used_by_app` (false = "Not used yet"). A rule is never removed and keeps its code, unit and area.
+- `app.business_rules`: `id`, `rule_name_id`, `value` (whole number, 0 or more), `effective_from`, `reason`, `created_at`, `created_by`. Append-only; one row per rule and date; the rule in force on a date is the latest row on or before it; every row after a rule's first has a reason.
+- `app.business_rule_value(code, on)` (runtime and money logins) reads the value in force. `app.set_business_rule` (a change from today or later, with a reason) and `app.add_business_rule_name` are the only writers; each writes one audit event (`settings.business_rule.changed` or `.added`, entity `business_rule`).
+- Seeded ledger rules, in force from 01/01/2026: `EXPENSE_LIMIT` $100, `ASSET_LIMIT` $500, `PETTY_CASH` $200, `EXP_REPORT_DAYS` 3, `BUDGET_PCT` 10% (1000), `BUDGET_MIN` $50, `SUPPLIER_BILL_DAYS` 30.
+
+Ledger rights (migration `20270414_264`, forward-only): 21 bundle rights. The Owner bundle holds all of them. The Manager bundle holds all but the Owner-only ones (`expenses.approve_over_limit`, `ledger.accounts.manage`, `ledger.adjustments.*`, `ledger.budgets.*`, `ledger.close`, `ledger.fixed_assets`, `ledger.opening_balances`, `ledger.owner_money`, `ledger.reconcile`, `ledger.write_off`): a Manager approves Expenses up to the Expense limit and tops up petty cash (owner 03/11/2026 07:03). Staff get `expenses.request` only. This is the first difference between the default Owner and Manager bundles.

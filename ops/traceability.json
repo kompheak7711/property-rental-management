@@ -59314,7 +59314,106 @@
       "test_level": "migration",
       "test_path": "backend/tests/test_general_ledger_migration.py",
       "status": "implemented",
-      "notes": "V1.1 part 8 General Ledger (owner approved 2026-11-02): Migrations 20270409_259 to 20270412_262 follow 20270408_258 (V1.1 rework part 1) and end at the head; they roll back while the ledger is empty and refuse once an entry is posted (owner Q2)."
+      "notes": "V1.1 part 8 General Ledger (owner approved 2026-11-02): Migrations 20270409_259 to 20270412_262 follow 20270408_258 (V1.1 rework part 1), with 20270413_263 after them; they roll back while the ledger is empty and refuse once an entry is posted (owner Q2)."
+    },
+    {
+      "test_id": "test_the_ledger_rules_are_seeded_and_read_by_date",
+      "upstream_ids": [
+        "DB-BR-001",
+        "PR-GL-060"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_business_rules_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 1 (owner 2026-11-03 06:56 and 07:03): The seven ledger rules (Expense limit $100, asset limit $500, petty cash $200, report due 3 days, budget warning 10% and $50, supplier bill due 30 days) are seeded from 01/01/2026 and read by date."
+    },
+    {
+      "test_id": "test_a_change_is_a_new_dated_row_with_a_reason_and_an_audit_event",
+      "upstream_ids": [
+        "DB-BR-001",
+        "PR-GL-060"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_business_rules_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 1 (owner 2026-11-03 06:56 and 07:03): A change is a new row from today or later with a reason and one audit event; a second change for the same date, a past date, no reason, an unknown code, a negative value and a value out of its unit are refused."
+    },
+    {
+      "test_id": "test_the_owner_adds_a_rule_the_program_does_not_use_yet",
+      "upstream_ids": [
+        "DB-BR-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_business_rules_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 1 (owner 2026-11-03 06:56 and 07:03): The Owner adds a rule (upper snake case code, known unit and area); it is marked not used yet; a repeated code and a bad unit or value are refused."
+    },
+    {
+      "test_id": "test_rule_values_are_append_only_and_names_keep_their_code",
+      "upstream_ids": [
+        "DB-BR-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_business_rules_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 1 (owner 2026-11-03 06:56 and 07:03): Rule values are never updated, deleted or truncated; a rule keeps its code, unit and area; only its names and used flag change; a later row needs a reason."
+    },
+    {
+      "test_id": "test_the_runtime_only_reads_and_writes_through_the_functions",
+      "upstream_ids": [
+        "DB-BR-001",
+        "SEC-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_business_rules_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 1 (owner 2026-11-03 06:56 and 07:03): The runtime login only reads the two tables and writes through the SECURITY DEFINER functions; the money login can read a rule value."
+    },
+    {
+      "test_id": "test_the_default_bundles_hold_the_ledger_rights_by_role",
+      "upstream_ids": [
+        "DB-BR-001",
+        "SEC-001",
+        "PR-GL-005"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_business_rules_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 1 (owner 2026-11-03 06:56 and 07:03): Twenty-one ledger rights are bundle rights; the Owner bundle holds all, the Manager bundle all but the Owner-only ones (it approves up to the Expense limit and tops up petty cash), Staff only Expense requests."
+    },
+    {
+      "test_id": "test_reading_the_rules_needs_configuration_read",
+      "upstream_ids": [
+        "API-BR-001",
+        "SEC-001"
+      ],
+      "test_level": "API",
+      "test_path": "backend/tests/test_business_rules_api.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 1 (owner 2026-11-03 06:56 and 07:03): Reading the business rules needs configuration.read for the Property and is not cached."
+    },
+    {
+      "test_id": "test_a_change_needs_settings_manage_and_waits_until_its_date",
+      "upstream_ids": [
+        "API-BR-001",
+        "SEC-001",
+        "SEC-016"
+      ],
+      "test_level": "API",
+      "test_path": "backend/tests/test_business_rules_api.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 1 (owner 2026-11-03 06:56 and 07:03): A change needs settings.manage and the browser checks; a future change shows as waiting; repeats answer 409, bad input 422 and an unknown code 404."
+    },
+    {
+      "test_id": "test_the_owner_adds_a_rule_that_is_not_used_yet",
+      "upstream_ids": [
+        "API-BR-001",
+        "SEC-001"
+      ],
+      "test_level": "API",
+      "test_path": "backend/tests/test_business_rules_api.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 1 (owner 2026-11-03 06:56 and 07:03): A new rule answers 201 and is not used yet; a repeated code answers 409 and a bad code, unit or area 422."
     }
   ]
 }
