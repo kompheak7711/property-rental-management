@@ -5647,3 +5647,11 @@ Owner decisions: DESIGN.md gap G6 (round 25) and the approved database plan (pha
 - Automatic posting: an Invoice adjustment or a Late-payment charge correction linked to a written-off correction posts against 6160 instead of income (1100 or 1110 credit), described "written off". A Rent line billed in advance still moves in full from 2050 to income in its month.
 - Refund corrections post by themselves (owner's cards of 03/11/2026 13:05 and 13:10) instead of waiting in "Needs check" for an adjusting entry: money given back (`VALUE_CORRECTION`) debits the Refund method's ledger account and credits the Refund's source (2100 or 2110 Deposit, 2200 Customer Credit, 2210 money not used yet); its reversal (`CORRECTION_REVERSAL`) does the opposite; a Refund recovered by a charge (`RECOVERED_BY_CHARGE`) credits the source against 4080, because the Miscellaneous recovery Invoice itself posts 1100 against 4080. Money given back waits in "Needs check" only while the Refund method has no ledger account.
 - The downgrade is refused once any write-off exists; it puts back the "Needs check" rule for Refund corrections.
+
+## DB-GL-007 — Ledger report reads (General Ledger phase 6 step 5)
+
+Owner decisions: DESIGN.md round 22 (Financial statements: Customer debt aging, Budget vs actual) and gap G1 (round 25). Migration `20270420_270` adds two read-only functions; it adds no table and writes nothing.
+
+- `gl_customer_aging(property, actor)` (`ledger.read`, SECURITY DEFINER): every unpaid Invoice line and Late-payment charge from the Customer balances the Books check uses, with the Customer's name, the Unit, the Invoice number and the day it fell due (an Invoice's Due Date; a Late-payment charge's payable day in Property time). The runtime login cannot read those balances by itself.
+- `gl_budget_warning(property, actor, day)` (`ledger.read`): the two Budget warning Business rules on a day, percent off in hundredths (`BUDGET_PCT`) and smallest amount off in cents (`BUDGET_MIN`).
+- The other reports read the phase 5 report functions of migration `20270411_261` and the ledger tables with the runtime login, after the route has checked `ledger.read`.

@@ -60043,6 +60043,203 @@
       "test_path": "backend/tests/test_gl_write_off_migration.py",
       "status": "implemented",
       "notes": "General Ledger phase 6 step 4 part 3 (owner's cards of 2026-11-03 13:05 and 13:10): a Refund correction posts by itself: money given back debits the Refund method's account and credits the source, its reversal does the opposite, a Refund recovered by a charge credits the source against 4080; without a ledger account for the method, money given back waits in Needs check."
+    },
+    {
+      "test_id": "test_the_trial_balance_totals_both_sides_and_says_when_they_differ",
+      "upstream_ids": [
+        "API-GL-006"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_ledger_reports.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 5 (DESIGN.md round 22 Financial statements, G1 files): The Trial balance totals debits and credits and its check line says by how much they differ."
+    },
+    {
+      "test_id": "test_profit_and_loss_has_the_five_columns_gross_profit_and_the_margins",
+      "upstream_ids": [
+        "API-GL-006"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_ledger_reports.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 5 (DESIGN.md round 22 Financial statements, G1 files): Profit and loss has This month, Last month, Same month last year, Year to date and Difference, Gross profit, Profit (or loss) and the three margins; its check compares the year's profit with the Balance sheet, or says the closed year's profit is in 3900."
+    },
+    {
+      "test_id": "test_the_balance_sheet_groups_and_adds_profit_this_year_so_it_balances",
+      "upstream_ids": [
+        "API-GL-006"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_ledger_reports.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 5 (DESIGN.md round 22 Financial statements, G1 files): The Balance sheet groups within and after 12 months, shows the depreciation account as a minus and adds Profit this year not closed yet, so assets equal what is owed plus equity."
+    },
+    {
+      "test_id": "test_cash_flow_runs_from_cash_at_start_to_cash_at_end",
+      "upstream_ids": [
+        "API-GL-006"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_ledger_reports.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 5 (DESIGN.md round 22 Financial statements, G1 files): Cash flow runs from cash at start through Daily business, Equipment and Owner money and loans to cash at end, with a red check when they differ."
+    },
+    {
+      "test_id": "test_account_detail_ends_on_the_account_balance",
+      "upstream_ids": [
+        "API-GL-006"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_ledger_reports.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 5 (DESIGN.md round 22 Financial statements, G1 files): Account detail starts with the opening balance, shows each line with its running balance and checks the closing balance against the account."
+    },
+    {
+      "test_id": "test_aging_puts_each_debt_in_its_group_as_at_today",
+      "upstream_ids": [
+        "API-GL-006"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_ledger_reports.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 5 (DESIGN.md round 22 Financial statements, G1 files): Customer debt aging puts each unpaid amount in Not yet due, 1-30, 31-60, 61-90 or Over 90 days by Customer and Unit, as at today, and checks the total against 1100 + 1110."
+    },
+    {
+      "test_id": "test_supplier_bill_aging_adds_staff_advances_and_money_owed_to_staff",
+      "upstream_ids": [
+        "API-GL-006"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_ledger_reports.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 5 (DESIGN.md round 22 Financial statements, G1 files): Supplier bill aging groups the bills still to pay by supplier, checks them against 2010 and adds staff advances (1400) and money owed to staff (2310)."
+    },
+    {
+      "test_id": "test_budget_marks_a_line_more_than_ten_percent_and_fifty_dollars_off",
+      "upstream_ids": [
+        "API-GL-006"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_ledger_reports.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 5 (DESIGN.md round 22 Financial statements, G1 files): Budget vs actual marks a line only when it is more than the Budget warning percent and the smallest amount off, for the month and the year to date; no approved budget is a red check."
+    },
+    {
+      "test_id": "test_month_helpers",
+      "upstream_ids": [
+        "API-GL-006"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_ledger_reports.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 5 (DESIGN.md round 22 Financial statements, G1 files): The month helpers find a month's last day and the first day of an earlier month."
+    },
+    {
+      "test_id": "test_a_report_needs_the_ledger_right_and_is_not_cached",
+      "upstream_ids": [
+        "API-GL-006"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_ledger_reports.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 5 (DESIGN.md round 22 Financial statements, G1 files): A report needs ledger.read for the Property, is private, no-store, and answers its period, state, columns and check line."
+    },
+    {
+      "test_id": "test_each_report_takes_only_its_own_values",
+      "upstream_ids": [
+        "API-GL-006"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_ledger_reports.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 5 (DESIGN.md round 22 Financial statements, G1 files): Each report takes only its own values (as_of, month, from and to, a four-digit account); anything else, a backwards range or an unknown format answers 422."
+    },
+    {
+      "test_id": "test_a_report_downloads_as_excel_and_as_a_pdf_with_the_period_and_check",
+      "upstream_ids": [
+        "API-GL-006"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_ledger_reports.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 5 (DESIGN.md round 22 Financial statements, G1 files): A report downloads as Excel and as a PDF with the title, period, state, check line and the made-on day above the table, and its SHA-256 and row count headers."
+    },
+    {
+      "test_id": "test_every_statement_is_green_on_books_made_by_the_money_functions",
+      "upstream_ids": [
+        "DB-GL-007",
+        "API-GL-006"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_reports_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 5 (DESIGN.md round 22 Financial statements, G1 files): On books made by the checked money functions, the Trial balance, Balance sheet, Profit and loss, Cash flow, Account detail and Supplier bill aging check lines are green."
+    },
+    {
+      "test_id": "test_customer_debt_aging_reads_the_unpaid_list_with_the_ledger_right",
+      "upstream_ids": [
+        "DB-GL-007",
+        "API-GL-006"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_reports_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 5 (DESIGN.md round 22 Financial statements, G1 files): Customer debt aging lists what the checked read gives and checks it against 1100 + 1110; a person without ledger.read is refused."
+    },
+    {
+      "test_id": "test_budget_vs_actual_uses_the_approved_budget_and_the_warning_rules",
+      "upstream_ids": [
+        "DB-GL-007",
+        "API-GL-006"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_reports_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 5 (DESIGN.md round 22 Financial statements, G1 files): Budget vs actual reads the approved budget and the Budget warning Business rules (10% and $50); without an approved budget the check is red."
+    },
+    {
+      "test_id": "test_an_unknown_account_or_property_is_not_found",
+      "upstream_ids": [
+        "DB-GL-007",
+        "API-GL-006"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_reports_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 5 (DESIGN.md round 22 Financial statements, G1 files): An account code or Property that is not there is not found."
+    },
+    {
+      "test_id": "test_each_report_answers_and_makes_both_files",
+      "upstream_ids": [
+        "DB-GL-007",
+        "API-GL-006"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_reports_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 5 (DESIGN.md round 22 Financial statements, G1 files): Each of the eight reports answers with a check line and makes an Excel and a PDF file."
+    },
+    {
+      "test_id": "test_the_runtime_login_reads_customer_balances_only_through_the_checked_function",
+      "upstream_ids": [
+        "DB-GL-007",
+        "API-GL-006"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_reports_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 5 (DESIGN.md round 22 Financial statements, G1 files): The runtime login reads Customer balances and the Budget warning only through the checked reads, which need ledger.read."
+    },
+    {
+      "test_id": "test_the_migration_follows_write_offs",
+      "upstream_ids": [
+        "DB-GL-007",
+        "API-GL-006"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_reports_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 5 (DESIGN.md round 22 Financial statements, G1 files): Migration 20270420_270 follows 20270419_269."
     }
   ]
 }

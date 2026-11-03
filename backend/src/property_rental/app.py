@@ -205,6 +205,12 @@ from property_rental.ledger_posting_api import (
     UnavailableLedgerPostingFlow,
     create_ledger_posting_router,
 )
+from property_rental.ledger_reports import (
+    LedgerReportFlow,
+    PostgresLedgerReports,
+    UnavailableLedgerReports,
+)
+from property_rental.ledger_reports_api import create_ledger_reports_router
 from property_rental.logging import create_application_logger
 from property_rental.move_out_api import (
     MoveOutFlow,
@@ -548,6 +554,7 @@ def create_app(
     ledger_posting_flow: LedgerPostingFlow | None = None,
     ledger_money_flow: LedgerMoneyFlow | None = None,
     ledger_close_flow: LedgerCloseFlow | None = None,
+    ledger_report_flow: LedgerReportFlow | None = None,
     exchange_rate_provider: ExchangeRateProvider | None = None,
     reservation_resource_flow: ReservationResourceFlow | None = None,
     lease_resource_flow: LeaseResourceFlow | None = None,
@@ -1224,6 +1231,17 @@ def create_app(
                 else UnavailableLedgerCloseFlow()
             ),
             resolved_settings,
+        )
+    )
+    include_signed_in(
+        create_ledger_reports_router(
+            actor_resolver,
+            ledger_report_flow
+            or (
+                PostgresLedgerReports(resolved_settings.database_url.get_secret_value())
+                if resolved_settings.database_url is not None
+                else UnavailableLedgerReports()
+            ),
         )
     )
     include_signed_in(
