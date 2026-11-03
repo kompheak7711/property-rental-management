@@ -59537,6 +59537,172 @@
       "test_path": "backend/tests/test_ledger_posting_job.py",
       "status": "implemented",
       "notes": "General Ledger phase 6 step 2 (owner plan 2026-11-03 06:56, L3 and L4): The billing worker loop prints posted and Needs check counts; Needs check is not a failure, a failed pass is."
+    },
+    {
+      "test_id": "test_an_advance_returns_its_change_or_owes_the_staff_the_extra",
+      "upstream_ids": [
+        "DB-GL-003",
+        "PR-GL-060",
+        "PR-GL-062",
+        "PR-GL-063",
+        "PR-GL-065"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_money_records_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 3 (owner plan 2026-11-03 06:56; Manager approves to the limit 07:03): A request makes no entry; nobody approves their own; an advance posts DR 1400; the bill returns the change to cash or owes the staff the extra on 2310, paid back once."
+    },
+    {
+      "test_id": "test_the_expense_limit_and_the_owners_own_spending",
+      "upstream_ids": [
+        "DB-GL-003",
+        "PR-GL-031",
+        "PR-GL-065"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_money_records_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 3 (owner plan 2026-11-03 06:56; Manager approves to the limit 07:03): Above the Expense limit only the Owner approves; a refusal needs a reason; the bill may not pass the approved amount; the Owner's own request and report go in at once with the note Owner's own spending."
+    },
+    {
+      "test_id": "test_an_urgent_report_from_petty_cash_posts_when_approved",
+      "upstream_ids": [
+        "DB-GL-003",
+        "PR-GL-061",
+        "PR-GL-063",
+        "PR-GL-032"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_money_records_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 3 (owner plan 2026-11-03 06:56; Manager approves to the limit 07:03): An Expense report is paid with own money or petty cash, dated today or earlier, and posts DR the account CR 1030 when approved; a waiting request is taken back by its sender or voided by an approver with a reason."
+    },
+    {
+      "test_id": "test_a_supplier_bill_is_paid_in_part_or_full_and_voided_only_without_payments",
+      "upstream_ids": [
+        "DB-GL-003",
+        "PR-GL-033",
+        "PR-GL-039",
+        "PR-GL-032"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_money_records_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 3 (owner plan 2026-11-03 06:56; Manager approves to the limit 07:03): A pay-later bill is due 30 days after the bill date; it is paid in part or in full, a payment is reversed with a reason, and the expense is voided only when no payment stands."
+    },
+    {
+      "test_id": "test_a_straight_expense_in_riel_and_a_pay_later_expense",
+      "upstream_ids": [
+        "DB-GL-003",
+        "PR-GL-030",
+        "PR-GL-032"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_money_records_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 3 (owner plan 2026-11-03 06:56; Manager approves to the limit 07:03): An expense recorded straight from riel cash keeps the riel amount and rate; pay later needs a supplier and makes a supplier bill; a void posts the mirrored entry."
+    },
+    {
+      "test_id": "test_money_moves_owner_money_and_the_petty_cash_amount",
+      "upstream_ids": [
+        "DB-GL-003",
+        "PR-GL-033",
+        "PR-GL-034",
+        "PR-GL-064"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_money_records_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 3 (owner plan 2026-11-03 06:56; Manager approves to the limit 07:03): Money moves post between cash and bank, a riel change difference goes to 4100; owner money in is 3000 and out is 3100 (Owner only); petty cash is topped up from Cash on hand (USD) or the bank up to the Petty cash amount."
+    },
+    {
+      "test_id": "test_a_cash_count_difference_needs_a_reason_and_goes_to_6180",
+      "upstream_ids": [
+        "DB-GL-003",
+        "PR-GL-056"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_money_records_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 3 (owner plan 2026-11-03 06:56; Manager approves to the limit 07:03): One count per cash account each month; a difference needs a reason and posts to 6180; riel cash is counted in riel at the rate; a bank account is not counted."
+    },
+    {
+      "test_id": "test_a_record_in_a_closed_month_or_the_future_is_refused",
+      "upstream_ids": [
+        "DB-GL-003",
+        "PR-GL-050"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_money_records_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 3 (owner plan 2026-11-03 06:56; Manager approves to the limit 07:03): A money record dated in a closed month or after today is refused."
+    },
+    {
+      "test_id": "test_the_runtime_login_writes_only_through_the_checked_functions",
+      "upstream_ids": [
+        "DB-GL-003",
+        "PR-GL-052",
+        "SEC-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_money_records_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 3 (owner plan 2026-11-03 06:56; Manager approves to the limit 07:03): The runtime login writes only through the checked functions; each needs the right for the Property; internal helpers and the tables are closed to it."
+    },
+    {
+      "test_id": "test_the_migration_follows_auto_posting",
+      "upstream_ids": [
+        "DB-GL-003"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_money_records_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 3 (owner plan 2026-11-03 06:56; Manager approves to the limit 07:03): Migration 20270416_266 follows 20270415_265."
+    },
+    {
+      "test_id": "test_the_api_flow_calls_each_function_and_reads_the_records",
+      "upstream_ids": [
+        "API-GL-002",
+        "DB-GL-003",
+        "PR-GL-061"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_money_records_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 3 (owner plan 2026-11-03 06:56; Manager approves to the limit 07:03): The API flow calls each checked function with its arguments in order, keeps database refusals as refused, invalid, conflict or not found, and reads requests (late reports marked), expenses, supplier bills with what is still to pay, and suppliers."
+    },
+    {
+      "test_id": "test_each_change_needs_its_right_and_the_browser_checks",
+      "upstream_ids": [
+        "API-GL-002",
+        "SEC-001",
+        "SEC-016"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_ledger_money_api.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 3 (owner plan 2026-11-03 06:56; Manager approves to the limit 07:03): Each change needs its main right for the Property and the browser mutation checks; a decision and an advance answer with the request they act on."
+    },
+    {
+      "test_id": "test_bodies_are_strict_and_database_refusals_keep_their_meaning",
+      "upstream_ids": [
+        "API-GL-002"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_ledger_money_api.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 3 (owner plan 2026-11-03 06:56; Manager approves to the limit 07:03): Bodies are strict (no extra field, whole cents above zero, 4-digit codes, ISO dates); a refusal answers 403, 422, 409 or 404 with a LEDGER_MONEY code and the plain sentence."
+    },
+    {
+      "test_id": "test_staff_see_their_own_requests_and_approvers_see_all",
+      "upstream_ids": [
+        "API-GL-002",
+        "PR-GL-060"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_ledger_money_api.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 3 (owner plan 2026-11-03 06:56; Manager approves to the limit 07:03): Staff see their own Expense requests, an approver or recorder sees all; expenses and supplier bills need ledger.read."
     }
   ]
 }

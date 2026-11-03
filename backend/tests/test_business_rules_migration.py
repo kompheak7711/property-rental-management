@@ -70,14 +70,14 @@ def today(connection: Connection, property_id: UUID) -> date:
         "WHERE id=%s",
         (property_id,),
     ).fetchone()
-    assert row is not None
+    assert row is not None and isinstance(row[0], date)
     return row[0]
 
 
 def value(connection: Connection, code: str, on: date) -> int | None:
     row = connection.execute("SELECT app.business_rule_value(%s, %s)", (code, on)).fetchone()
     assert row is not None
-    return row[0]
+    return None if row[0] is None else int(row[0])
 
 
 def test_the_ledger_rules_are_seeded_and_read_by_date(migrated_database_url: str) -> None:

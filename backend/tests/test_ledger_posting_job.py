@@ -9,7 +9,6 @@ from uuid import uuid4
 import psycopg
 import pytest
 
-from property_rental import ledger_posting_job
 from property_rental.billing_worker import BillingWorkerResult, run_bounded_loop
 from property_rental.ledger_posting_job import (
     LedgerPostingError,
@@ -54,7 +53,7 @@ def job_with(
     monkeypatch: pytest.MonkeyPatch, batches: list[tuple[int, int] | Exception], **options: Any
 ) -> tuple[LedgerPostingJob, Connection]:
     connection = Connection(batches)
-    monkeypatch.setattr(ledger_posting_job.psycopg, "connect", lambda *_a, **_k: connection)
+    monkeypatch.setattr(psycopg, "connect", lambda *_a, **_k: connection)
     job = LedgerPostingJob("postgresql://unused", property_id=uuid4(), actor_id=uuid4(), **options)
     return job, connection
 

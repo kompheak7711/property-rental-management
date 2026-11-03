@@ -545,8 +545,9 @@ def test_records_follow_their_steps_and_rules(ledger: Ledger) -> None:
     request = uuid4()
     connection.execute(
         "INSERT INTO app.gl_expense_requests(id, property_id, request_number, request_kind, "
-        "requested_by, account_id, description, reason, amount_cents, status, created_by) "
-        "VALUES (%s,%s,'ER270001','REQUEST',%s,%s,'Fix tap','Leak in 3A',2500,'WAITING',%s)",
+        "requested_by, account_id, description, reason, amount_cents, status, paid_how, "
+        "created_by) VALUES (%s,%s,'ER270001','REQUEST',%s,%s,'Fix tap','Leak in 3A',2500,"
+        "'WAITING','ADVANCE',%s)",
         (request, pid, me, ledger.account("6050"), me),
     )
     refused(
@@ -596,8 +597,8 @@ def test_records_follow_their_steps_and_rules(ledger: Ledger) -> None:
         psycopg.errors.CheckViolation,
         "INSERT INTO app.gl_expense_requests(id, property_id, request_number, request_kind, "
         "requested_by, account_id, description, reason, amount_cents, status, unit_id, "
-        "created_by) VALUES (gen_random_uuid(),%s,'ER270002','REQUEST',%s,%s,'Paper','Office',"
-        "100,'WAITING',%s,%s)",
+        "paid_how, created_by) VALUES (gen_random_uuid(),%s,'ER270002','REQUEST',%s,%s,'Paper',"
+        "'Office',100,'WAITING',%s,'ADVANCE',%s)",
         (pid, me, ledger.account("6130"), unit, me),
         match="does not take a Unit",
     )
