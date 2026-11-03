@@ -784,7 +784,9 @@ describe("Settings: Rates and services", () => {
   it("TEST-FE-1000 Service types: Only one or One or more with a Services count; Remove only for a type with no Services; refusals say why and an old version reads again", async () => {
     const services = servicesOf();
     show(undefined, "en", services);
-    const types = await screen.findByRole("region", { name: "Service types" });
+    const types = await screen.findByRole("region", {
+      name: "Monthly service types",
+    });
     expect(rowsOf(types)).toEqual([
       ["Trash", "Only one per Lease", "1", "EditHas 1 Service"],
       ["Laundry", "One or more per Lease", "0", "EditRemove"],
@@ -907,7 +909,9 @@ describe("Settings: Rates and services", () => {
       "en",
       servicesOf(() => Promise.resolve(settingsOf({ can_manage: false }))),
     );
-    const types = await screen.findByRole("region", { name: "Service types" });
+    const types = await screen.findByRole("region", {
+      name: "Monthly service types",
+    });
     expect(screen.queryByRole("button", { name: "Add a Service" })).toBeNull();
     expect(screen.queryByRole("button", { name: /^Edit/ })).toBeNull();
     expect(within(types).queryByRole("button")).toBeNull();
@@ -928,12 +932,14 @@ describe("Settings: Rates and services", () => {
       ),
     ).toBeTruthy();
     expect(screen.getByRole("region", { name: "Utility Rates" })).toBeTruthy();
-    expect(screen.queryByRole("region", { name: "Service types" })).toBeNull();
+    expect(
+      screen.queryByRole("region", { name: "Monthly service types" }),
+    ).toBeNull();
     expect(screen.queryByRole("button", { name: "Add a Service" })).toBeNull();
     cleanup();
 
     show(undefined, "km");
-    const khmer = await screen.findByRole("region", { name: "ប្រភេទសេវា" });
+    const khmer = await screen.findByRole("region", { name: "ប្រភេទសេវាប្រចាំខែ" });
     expect(within(khmer).getByText("សំរាម")).toBeTruthy();
     expect(screen.getByText("ប្រមូលសំរាម")).toBeTruthy();
   });
