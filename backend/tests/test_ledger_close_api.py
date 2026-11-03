@@ -298,3 +298,64 @@ def test_part_two_reads_need_the_ledger_right() -> None:
     lines = reader.get(f"{base}/periods/{month}/bank-lines/1020").json()["data"][0]
     assert (lines["target"], lines["account"]) == (str(month), "1020")
     assert reader.get(f"{base}/periods/{month}/bank-lines/10x0").status_code == 422
+
+
+def test_a_write_off_is_owner_only_and_names_one_line_or_one_late_charge() -> None:
+    flow = InMemoryClose()
+    base = f"/api/v1/properties/{flow.property_id}/ledger"
+    settlement, invoice, line, charge = uuid4(), uuid4(), uuid4(), uuid4()
+    body = {
+        "final_settlement_id": str(settlement),
+        "invoice_id": str(invoice),
+        "invoice_line_id": str(line),
+        "amount_cents": 2_500,
+        "reason": "Left the country",
+    }
+    assert (
+        client(flow, "ledger.read")
+        .post(f"{base}/write-offs", json=body, headers=HEADERS)
+        .status_code
+        == 403
+    )
+    owner = client(flow, "ledger.write_off")
+    assert owner.post(f"{base}/write-offs", json=body).status_code == 403
+    assert owner.post(f"{base}/write-offs", json=body, headers=HEADERS).status_code == 201
+    late = {
+        "final_settlement_id": str(settlement),
+        "late_payment_charge_id": str(charge),
+        "amount_cents": 1_000,
+        "reason": "Left the country",
+    }
+    assert owner.post(f"{base}/write-offs", json=late, headers=HEADERS).status_code == 201
+    assert [write[1] for write in flow.writes] == [
+        {
+            "final_settlement_id": settlement,
+            "target": {
+                "invoice_id": str(invoice),
+                "invoice_line_id": str(line),
+                "amount_usd_cents": 2_500,
+            },
+            "reason": "Left the country",
+        },
+        {
+            "final_settlement_id": settlement,
+            "target": {"late_payment_charge_id": str(charge), "amount_usd_cents": 1_000},
+            "reason": "Left the country",
+        },
+    ]
+    without_line = {key: value for key, value in body.items() if key != "invoice_line_id"}
+    for bad in (
+        {**body, "late_payment_charge_id": str(charge)},
+        without_line,
+        {key: value for key, value in late.items() if key != "late_payment_charge_id"},
+        {**body, "amount_cents": 0},
+        {**body, "reason": ""},
+    ):
+        assert owner.post(f"{base}/write-offs", json=bad, headers=HEADERS).status_code == 422
+    flow.refuse = LedgerMoneyNotFound()
+    assert owner.post(f"{base}/write-offs", json=body, headers=HEADERS).status_code == 404
+    flow.refuse = None
+    reader = client(flow, "ledger.read")
+    listed = reader.get(f"{base}/write-offs")
+    assert listed.status_code == 200 and listed.json()["data"][0]["view"] == "write-offs"
+    assert listed.headers["Cache-Control"] == "private, no-store"

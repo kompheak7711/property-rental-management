@@ -481,6 +481,9 @@ def _refusal(exc: psycopg.Error) -> Exception:
         return LedgerMoneyConflict(message or "This record is already there")
     if state in ("22023", "23514", "22P02", "23502", "23503"):
         return LedgerMoneyInvalid(message or "These values are refused")
+    if state == "P0002":
+        # A V1 record the change names is not there (a Final Settlement correction).
+        return LedgerMoneyNotFound()
     return LedgerMoneyUnavailable()
 
 

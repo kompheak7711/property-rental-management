@@ -24,7 +24,7 @@ years, and the value left is spread over the months left.
 - Bank matching: the statement balance must equal every bank line marked as on the statement, up
   to the month; earlier months first.
 - Budgets: one waiting and one approved version per year; the Owner's own budget is approved at
-  once with a note (Claude's recommendation, waiting for the owner's card of 03/11/2026).
+  once with a note (owner's card of 03/11/2026 12:08).
 """
 
 import importlib.util

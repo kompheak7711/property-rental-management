@@ -12,13 +12,15 @@ main right first.
 Reads (`ledger.read`, `private, no-store`): adjusting entries, the opening balances with the
 entry they would post, the Books check, the months, one month's close checks, the fixed assets
 with their value now, a bank account's lines not yet matched up to a month, the bank matches,
-and the budgets.
+the budgets and the write-offs.
 
 Changes (browser mutation checks): prepare, approve or refuse, and void an adjusting entry;
 start the ledger, type the opening balances and post them; run a month's month-end work; close a
 month; close a year. A month whose checks are not all green answers `closed: false` with the
 checks, and the try is kept. Change one item's years; mark a month's bank lines as matched to
-the statement; send a budget, and approve it or send it back with a reason.
+the statement; send a budget, and approve it or send it back with a reason. Write off an unpaid
+Invoice line or Late-payment charge after the Final Settlement is closed (Owner only, gap G6;
+part 3, migration `20270419_269`); written-off debts are listed too.
 """
 
 from __future__ import annotations
@@ -37,6 +39,7 @@ from property_rental.identity import ActorResolver
 from property_rental.ledger_money_api import (
     FLOW_ERRORS,
     Body,
+    Cents,
     Code,
     Id,
     IsoDate,
@@ -61,6 +64,7 @@ FIXED_ASSETS = "ledger.fixed_assets"
 RECONCILE = "ledger.reconcile"
 BUDGET_PREPARE = "ledger.budgets.prepare"
 BUDGET_APPROVE = "ledger.budgets.approve"
+WRITE_OFF = "ledger.write_off"
 
 LineCents = Annotated[int, Field(ge=0, le=9 * 10**15)]
 
@@ -168,6 +172,39 @@ class BudgetLine(Body):
         }
 
 
+class WriteOffBody(Body):
+    """An Invoice line (invoice_id and invoice_line_id) or a Late-payment charge, after the
+    Final Settlement is closed."""
+
+    final_settlement_id: Id
+    invoice_id: Id | None = None
+    invoice_line_id: Id | None = None
+    late_payment_charge_id: Id | None = None
+    amount_cents: Cents
+    reason: Words
+
+    @model_validator(mode="after")
+    def one_target(self) -> WriteOffBody:
+        line = self.invoice_id is not None and self.invoice_line_id is not None
+        partial = (self.invoice_id is None) != (self.invoice_line_id is None)
+        late = self.late_payment_charge_id is not None
+        if partial or line == late:
+            raise ValueError("Name an Invoice line or a Late-payment charge")
+        return self
+
+    def target(self) -> dict[str, Any]:
+        if self.late_payment_charge_id is not None:
+            return {
+                "late_payment_charge_id": str(self.late_payment_charge_id),
+                "amount_usd_cents": self.amount_cents,
+            }
+        return {
+            "invoice_id": str(self.invoice_id),
+            "invoice_line_id": str(self.invoice_line_id),
+            "amount_usd_cents": self.amount_cents,
+        }
+
+
 class BudgetBody(Body):
     fiscal_year: Annotated[int, Field(ge=2000, le=2100)]
     lines: Annotated[list[BudgetLine], Field(min_length=1, max_length=5000)]
@@ -182,7 +219,7 @@ class Action:
     smallint_field: str | None = None
 
 
-JSON_FIELDS = frozenset({"lines", "items"})
+JSON_FIELDS = frozenset({"lines", "items", "target"})
 
 
 ACTIONS: dict[str, Action] = {
@@ -212,6 +249,7 @@ ACTIONS: dict[str, Action] = {
         smallint_field="fiscal_year",
     ),
     "decide_budget": Action("gl_decide_budget", "gl_budgets", ("approve", "note")),
+    "write_off": Action("gl_write_off", None, ("final_settlement_id", "target", "reason")),
 }
 
 
@@ -323,6 +361,18 @@ VIEWS = {
         JOIN app.gl_periods AS period ON period.id = match.period_id
         WHERE match.property_id = %(prop)s
         ORDER BY period.ends_on DESC, account.code
+        LIMIT 500
+    """,
+    "write-offs": """
+        SELECT write_off.id, write_off.invoice_id, invoice.invoice_number, invoice.customer_id,
+            write_off.amount_cents, write_off.reason, write_off.approved_by, write_off.created_at,
+            write_off.settlement_correction_id, correction.final_settlement_id
+        FROM app.gl_write_offs AS write_off
+        JOIN app.invoices AS invoice ON invoice.id = write_off.invoice_id
+        JOIN app.settlement_corrections AS correction
+            ON correction.id = write_off.settlement_correction_id
+        WHERE write_off.property_id = %(prop)s
+        ORDER BY write_off.created_at DESC
         LIMIT 500
     """,
     "budgets": """
@@ -613,6 +663,23 @@ def create_ledger_close_router(
             "items": [line.as_json() for line in body.lines],
         }
         made = change(request, property_id, (RECONCILE,), "match_bank", values)
+        return answer(request, {"id": str(made)})
+
+    @router.get("/write-offs")
+    def list_write_offs(
+        property_id: UUID, request: Request, response: Response
+    ) -> dict[str, object]:
+        return read(request, response, property_id, "write-offs")
+
+    @router.post("/write-offs", status_code=status.HTTP_201_CREATED)
+    def write_off(property_id: UUID, body: WriteOffBody, request: Request) -> dict[str, object]:
+        # Owner only (G6); the database checks the closed Settlement and the unpaid rest.
+        values = {
+            "final_settlement_id": body.final_settlement_id,
+            "target": body.target(),
+            "reason": body.reason,
+        }
+        made = change(request, property_id, (WRITE_OFF,), "write_off", values)
         return answer(request, {"id": str(made)})
 
     @router.get("/budgets")

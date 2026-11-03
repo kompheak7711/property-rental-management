@@ -59969,6 +59969,80 @@
       "test_path": "backend/tests/test_ledger_close_api.py",
       "status": "implemented",
       "notes": "General Ledger phase 6 step 4 part 2 (owner 2026-11-03 10:26): Fixed assets, bank lines, bank matches and budgets need ledger.read and are private, no-store; a bank line read names a 4-digit account."
+    },
+    {
+      "test_id": "test_an_unpaid_charge_is_written_off_to_6160_by_the_owner_with_a_reason",
+      "upstream_ids": [
+        "DB-GL-006"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_write_off_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 4 part 3 (DESIGN.md G6, database plan Q5): Only a ledger.write_off holder writes off an unpaid Invoice line after the Final Settlement is closed, with a reason of up to 500 characters; the V1 charge reduction correction is recorded, confirmed and marked in one step; automatic posting takes it off 1100 against 6160; more than the unpaid rest is refused."
+    },
+    {
+      "test_id": "test_a_late_payment_charge_is_written_off_against_1110",
+      "upstream_ids": [
+        "DB-GL-006"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_write_off_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 4 part 3 (DESIGN.md G6, database plan Q5): A written-off Late-payment charge posts 6160 debit and 1110 credit."
+    },
+    {
+      "test_id": "test_the_runtime_login_writes_off_only_through_the_checked_function",
+      "upstream_ids": [
+        "DB-GL-006",
+        "SEC-016"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_write_off_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 4 part 3 (DESIGN.md G6, database plan Q5): The runtime login writes off only through the checked function; the write-off table cannot be written straight."
+    },
+    {
+      "test_id": "test_the_migration_follows_fixed_assets",
+      "upstream_ids": [
+        "DB-GL-006"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_write_off_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 4 part 3 (DESIGN.md G6, database plan Q5): Migration 20270419_269 follows 20270418_268."
+    },
+    {
+      "test_id": "test_the_api_flow_writes_off_and_lists_the_write_offs",
+      "upstream_ids": [
+        "API-GL-005",
+        "DB-GL-006"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_write_off_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 4 part 3 (DESIGN.md G6, database plan Q5): The API flow writes off through the checked function (a Manager is refused) and lists the write-offs; an unknown Final Settlement is not found."
+    },
+    {
+      "test_id": "test_a_write_off_is_owner_only_and_names_one_line_or_one_late_charge",
+      "upstream_ids": [
+        "API-GL-005",
+        "SEC-016"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_ledger_close_api.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 4 part 3 (DESIGN.md G6, database plan Q5): A write-off needs ledger.write_off and the browser mutation checks; the body names one Invoice line or one Late-payment charge, an amount of 1 cent or more and a reason; the list needs ledger.read and is private, no-store."
+    },
+    {
+      "test_id": "test_a_refund_correction_posts_by_itself",
+      "upstream_ids": [
+        "DB-GL-006",
+        "DB-GL-002"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_write_off_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 4 part 3 (owner's cards of 2026-11-03 13:05 and 13:10): a Refund correction posts by itself: money given back debits the Refund method's account and credits the source, its reversal does the opposite, a Refund recovered by a charge credits the source against 4080; without a ledger account for the method, money given back waits in Needs check."
     }
   ]
 }
