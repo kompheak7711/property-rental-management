@@ -538,7 +538,9 @@ def test_records_follow_their_steps_and_rules(ledger: Ledger) -> None:
     connection = ledger.connection
     pid, me = ledger.property_id, ledger.actor_id
     other = insert_actor(connection)
-    unit = insert_unit(connection, actor_id=me, property_id=pid)
+    unit = insert_unit(
+        connection, actor_id=me, property_id=pid, unit_number=f"GL-{uuid4().hex[:8]}"
+    )
     request = uuid4()
     connection.execute(
         "INSERT INTO app.gl_expense_requests(id, property_id, request_number, request_kind, "
