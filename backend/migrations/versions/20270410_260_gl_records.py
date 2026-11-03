@@ -1,7 +1,7 @@
 """General Ledger records: expenses, bills, money moves, assets, adjustments, close (PR-GL).
 
-Revision ID: 20270406_256
-Revises: 20270405_255
+Revision ID: 20270410_260
+Revises: 20270409_259
 Create Date: 2026-11-02
 
 Owner approved the ledger database plan on 2026-11-02 21:08
@@ -38,8 +38,8 @@ from collections.abc import Sequence
 
 from alembic import op
 
-revision: str = "20270406_256"
-down_revision: str | None = "20270405_255"
+revision: str = "20270410_260"
+down_revision: str | None = "20270409_259"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

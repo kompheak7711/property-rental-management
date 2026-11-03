@@ -348,6 +348,10 @@ database_test_suites='
   tests/test_money_one_step_migration.py
   tests/test_meter_history_migration.py
   tests/test_unit_rent_terms_migration.py
+  tests/test_unit_features_migration.py
+  tests/test_unit_inventory_items_migration.py
+  tests/test_regular_services_migration.py
+  tests/test_unit_for_rent_migration.py
   tests/test_general_ledger_migration.py
 '
 

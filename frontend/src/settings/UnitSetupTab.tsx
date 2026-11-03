@@ -2,6 +2,8 @@
 // Views, Kitchens and Room features, each with Add, Edit (not Floors) and Remove. The lists fill
 // the choices of New Unit and Update Unit. The Unit counts come from the Units list; an item a Unit
 // uses cannot be removed. R7b-6d: a Unit Type with no move-out cleaning rate shows a chip.
+// V1.1 (DL-115 (I)): Feature types, Unit features (each with its Feature type) and Item types;
+// the old Kitchens and Room features are folded into Unit features and no longer shown.
 
 import {
   type FormEvent,
@@ -22,7 +24,6 @@ import {
   type UnitSetupItem,
   type UnitSetupListKind,
   type UnitSetupLists,
-  unitSetupListKinds,
 } from "../unitClient";
 import { allPages } from "../units/unitsData";
 import {
@@ -42,8 +43,17 @@ export type SetupApi = Pick<
 
 const NOTES: Partial<Record<UnitSetupListKind, SettingsTextKey>> = {
   UNIT_TYPE: "cf_type_note",
-  ROOM_FEATURE: "cf_feat_note",
+  UNIT_FEATURE: "uf20_note",
 };
+
+/** The lists this tab shows, one at a time, in this order. V1.1 rework part 1 (mock-up v53):
+ * Feature types and Item types are gone, and every Unit feature is a place. */
+const SHOWN: UnitSetupListKind[] = [
+  "FLOOR",
+  "UNIT_TYPE",
+  "UNIT_FEATURE",
+  "VIEW",
+];
 
 /** How many Units use the item; null when the Units could not be read. */
 function unitCount(
@@ -63,6 +73,10 @@ function unitCount(
         return unit.kitchen_item_id === item.item_id;
       case "ROOM_FEATURE":
         return unit.room_feature_ids.includes(item.item_id);
+      case "UNIT_FEATURE":
+        return (unit.features ?? []).some(
+          (feature) => feature.item_id === item.item_id,
+        );
       default:
         return false;
     }
@@ -255,6 +269,7 @@ export function UnitSetupTab({
   const [units, setUnits] = useState<UnitResource[] | null>(null);
   const [failed, setFailed] = useState(false);
   const [editing, setEditing] = useState<Editing | null>(null);
+  const [tab, setTab] = useState<UnitSetupListKind>("FLOOR");
   const [removing, setRemoving] = useState<UnitSetupItem | null>(null);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
@@ -460,6 +475,119 @@ export function UnitSetupTab({
     );
   };
 
+  // V1.1 rework part 1 (mock-up v53): Unit features as one list of places, in the order the
+  // Unit page shows them.
+  const featureCard = () => {
+    const kind: UnitSetupListKind = "UNIT_FEATURE";
+    const items = lists.lists.UNIT_FEATURE;
+    return (
+      <section
+        aria-labelledby={`setup-${kind}`}
+        className="ui-card pad0"
+        key={kind}
+      >
+        <header className="ui-chead pad">
+          <div>
+            <h2 id={`setup-${kind}`}>{sst(language, `cf_${kind}`)}</h2>
+            <p className="ui-small ui-muted">{sst(language, "uf20_sub")}</p>
+          </div>
+          {manage && (
+            <button
+              aria-label={`${sst(language, "cf_add")}: ${sst(language, `cf_one_${kind}`)}`}
+              className="ui-btn"
+              onClick={() => {
+                setProblem(null);
+                setToast(null);
+                setEditing({ kind, item: null });
+              }}
+              type="button"
+            >
+              <Icon name="plus" small />
+              {sst(language, "cf_add")}
+            </button>
+          )}
+        </header>
+        {items.length === 0 ? (
+          <p className="ui-empty">{sst(language, "set_none_units")}</p>
+        ) : (
+          <div className="ui-tablewrap">
+            <table className="ui-table">
+              <thead>
+                <tr>
+                  <th scope="col">{sst(language, "uf20_order")}</th>
+                  <th scope="col">{sst(language, "uf20_name")}</th>
+                  <th scope="col">{sst(language, "uf20_khmer")}</th>
+                  <th className="num" scope="col">
+                    {sst(language, "uf20_used")}
+                  </th>
+                  {manage && (
+                    <th scope="col">
+                      <span className="ui-sr">{sst(language, "cf_edit")}</span>
+                    </th>
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((item, index) => {
+                  const count = unitCount(units, item);
+                  const used = item.in_use || (count ?? 0) > 0;
+                  const name = item.name_en;
+                  return (
+                    <tr key={item.item_id}>
+                      <td className="ui-num">{index + 1}</td>
+                      <td>{name}</td>
+                      <td lang="km">
+                        {item.name_km !== null && item.name_km !== item.name_en
+                          ? item.name_km
+                          : ""}
+                      </td>
+                      <td className="ui-num num">
+                        {count ?? (used ? sst(language, "in_use") : "0")}
+                      </td>
+                      {manage && (
+                        <td>
+                          <span className="ui-actions">
+                            <button
+                              aria-label={`${sst(language, "cf_edit")}: ${name}`}
+                              className="ui-btn link"
+                              onClick={() => {
+                                setProblem(null);
+                                setToast(null);
+                                setEditing({ kind, item });
+                              }}
+                              type="button"
+                            >
+                              {sst(language, "cf_edit")}
+                            </button>
+                            {!used && (
+                              <button
+                                aria-label={`${sst(language, "set_remove")}: ${name}`}
+                                className="ui-btn link"
+                                onClick={() => {
+                                  setProblem(null);
+                                  setToast(null);
+                                  setRemoving(item);
+                                }}
+                                type="button"
+                              >
+                                {sst(language, "set_remove")}
+                              </button>
+                            )}
+                          </span>
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+        <p className="ui-small ui-muted pad">{sst(language, "uf20_note")}</p>
+      </section>
+    );
+  };
+
   return (
     <>
       {/* Mounted before it has words, so screen readers announce them. */}
@@ -478,7 +606,25 @@ export function UnitSetupTab({
           <p>{sst(language, "read_only")}</p>
         </div>
       )}
-      <div className="ui-setup">{unitSetupListKinds.map(card)}</div>
+      <div
+        aria-label={sst(language, "us_lists")}
+        className="ui-seg"
+        role="group"
+      >
+        {SHOWN.map((kind) => (
+          <button
+            aria-pressed={tab === kind}
+            key={kind}
+            onClick={() => {
+              setTab(kind);
+            }}
+            type="button"
+          >
+            {sst(language, `cf_${kind}`)}
+          </button>
+        ))}
+      </div>
+      {tab === "UNIT_FEATURE" ? featureCard() : card(tab)}
 
       {editing !== null && (
         <ItemDialog

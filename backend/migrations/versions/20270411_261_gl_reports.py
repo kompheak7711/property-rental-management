@@ -1,7 +1,7 @@
 """General Ledger report functions: ledger detail, trial balance, statements (PR-GL).
 
-Revision ID: 20270407_257
-Revises: 20270406_256
+Revision ID: 20270411_261
+Revises: 20270410_260
 Create Date: 2026-11-02
 
 Owner approved the ledger database plan on 2026-11-02 21:08
@@ -29,8 +29,8 @@ from collections.abc import Sequence
 
 from alembic import op
 
-revision: str = "20270407_257"
-down_revision: str | None = "20270406_256"
+revision: str = "20270411_261"
+down_revision: str | None = "20270410_260"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

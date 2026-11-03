@@ -152,6 +152,8 @@ def test_every_property_gets_the_default_unit_types_and_balcony(
 
     assert rows == [
         ("ROOM_FEATURE", "BALCONY", "Balcony", True),
+        # V1.1 migration 255 (DL-115 (I)): Balcony is also a Unit feature of the Outdoor type.
+        ("UNIT_FEATURE", "BALCONY", "Balcony", True),
         ("UNIT_TYPE", "STUDIO", "Studio", True),
         ("UNIT_TYPE", "ONE_BEDROOM", "1 bedroom", True),
         ("UNIT_TYPE", "TWO_BEDROOM", "2 bedrooms", True),
@@ -168,7 +170,7 @@ def test_every_property_gets_the_default_unit_types_and_balcony(
           )
         """,
         (property_id,),
-    ).fetchone() == (2,)
+    ).fetchone() == (3,)
 
 
 def test_list_items_get_codes_from_their_names_and_are_audited(

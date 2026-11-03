@@ -27,8 +27,10 @@ import {
   UnitSetupLists,
   UnitTimelineEvent,
 } from "../unitClient";
+import { ForRentDialog, isForRent, isInUse } from "./ForRent";
 import { type RentTermsServicesApi, RentTermsCard } from "./RentTerms";
 import { ChangeStatusDialog, UpdateUnitDialog } from "./UnitDialogs";
+import { UnitFeaturesPanel } from "./UnitFeatures";
 import { UnitChip, floorText } from "./UnitsList";
 import { ut } from "./text";
 import { type UtilityPricesApi, UnitUtilitiesCard } from "./UtilityPrices";
@@ -108,6 +110,15 @@ function historyLines(
   for (const event of events) {
     if (event.action === "unit.created") {
       lines.push({ at: event.occurred_at, text: ut(language, "h_created") });
+    } else if (event.action === "unit.for_rent_changed") {
+      const state = event.resulting_state as { for_rent?: boolean } | null;
+      lines.push({
+        at: event.occurred_at,
+        text: ut(
+          language,
+          state?.for_rent === false ? "h_for_rent_no" : "h_for_rent_yes",
+        ),
+      });
     } else if (event.action === "unit.rent_terms_changed") {
       lines.push({ at: event.occurred_at, text: ut(language, "h_rent_terms") });
     } else if (event.action === "unit.inventory_updated") {
@@ -224,7 +235,9 @@ export function UnitDetail({
   const [missing, setMissing] = useState(false);
   const [events, setEvents] = useState<UnitTimelineEvent[]>([]);
   const [leases, setLeases] = useState<LeaseResource[] | null>(null);
-  const [dialog, setDialog] = useState<"update" | "status" | null>(null);
+  const [dialog, setDialog] = useState<"update" | "status" | "for_rent" | null>(
+    null,
+  );
   const [notice, setNotice] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
   const sequence = useRef(0);
@@ -302,9 +315,12 @@ export function UnitDetail({
       (right.start_date ?? "").localeCompare(left.start_date ?? ""),
     );
   const manage = canManage && unit.can_manage !== false && lists !== null;
+  // V1.1 rework part 1: a Unit not for rent gets no Reservation and no Lease.
+  const forRent = isForRent(unit);
   const canLease =
-    ["VACANT", "CLEANING", "UNDER_MAINTENANCE"].includes(unit.status) ||
-    (unit.status === "RESERVED" && reservation !== null && draft === null);
+    forRent &&
+    (["VACANT", "CLEANING", "UNDER_MAINTENANCE"].includes(unit.status) ||
+      (unit.status === "RESERVED" && reservation !== null && draft === null));
   const type = typeName(lists, unit.unit_type, khmer);
   const sub = [
     floorText(language, unit.floor),
@@ -324,10 +340,6 @@ export function UnitDetail({
     </div>
   );
   const notRecorded = ut(language, "not_recorded");
-  const features =
-    lists?.lists.ROOM_FEATURE.filter(
-      (item) => !item.removed || unit.room_feature_ids.includes(item.item_id),
-    ) ?? [];
 
   let now: ReactNode;
   if (current !== null) {
@@ -443,7 +455,9 @@ export function UnitDetail({
             unit.status === "UNDER_MAINTENANCE" ||
             unit.status === "OUT_OF_SERVICE"
           ? (`a_${unit.status}` as const)
-          : "a_VACANT";
+          : unit.for_rent === false
+            ? "fr_no"
+            : "a_VACANT";
     now = (
       <section aria-labelledby="unit-now" className="ui-card">
         <h2 id="unit-now">{ut(language, "availability")}</h2>
@@ -462,19 +476,22 @@ export function UnitDetail({
           <div className="ui-hrow">
             <h2 className="ui-num">{unit.unit_number}</h2>
             <UnitChip language={language} status={unit.status} />
+            {!forRent && <Chip tone="neutral">{ut(language, "fr_no")}</Chip>}
           </div>
           <p>{sub}</p>
         </div>
         <div className="ui-actions">
-          {unit.status === "VACANT" && may("reservations.create") && (
-            <a
-              className="ui-btn primary"
-              href={hashForPage("reservations", `new:${unit.unit_id}`)}
-            >
-              <Icon name="calendar" />
-              {ut(language, "make_reservation")}
-            </a>
-          )}
+          {forRent &&
+            unit.status === "VACANT" &&
+            may("reservations.create") && (
+              <a
+                className="ui-btn primary"
+                href={hashForPage("reservations", `new:${unit.unit_id}`)}
+              >
+                <Icon name="calendar" />
+                {ut(language, "make_reservation")}
+              </a>
+            )}
           {canLease && may("leases.draft") && (
             <a
               className={unit.status === "VACANT" ? "ui-btn" : "ui-btn primary"}
@@ -575,6 +592,25 @@ export function UnitDetail({
               <span className="ui-small">{ut(language, "photo_later")}</span>
             </div>
             <div className="ui-facts">
+              {fact(
+                ut(language, "fr_col"),
+                <>
+                  {ut(language, forRent ? "fr_yes" : "fr_no")}
+                  {manage && !isInUse(unit) && (
+                    <button
+                      className="ui-btn link"
+                      onClick={() => {
+                        setNotice(null);
+                        setWarning(null);
+                        setDialog("for_rent");
+                      }}
+                      type="button"
+                    >
+                      {ut(language, "fr_change")}
+                    </button>
+                  )}
+                </>,
+              )}
               {fact(ut(language, "floor"), floorText(language, unit.floor))}
               {fact(ut(language, "type"), type)}
               {fact(
@@ -588,45 +624,39 @@ export function UnitDetail({
                 ),
               )}
               {fact(
-                ut(language, "beds"),
-                unit.bedrooms === null ? (
-                  notRecorded
-                ) : (
-                  <span className="ui-num">{unit.bedrooms}</span>
-                ),
-              )}
-              {fact(
-                ut(language, "baths"),
-                unit.bathrooms === null ? (
-                  notRecorded
-                ) : (
-                  <span className="ui-num">{unit.bathrooms}</span>
-                ),
-              )}
-              {features.map((item) =>
-                fact(
-                  khmer && item.name_km !== null ? item.name_km : item.name_en,
-                  ut(
-                    language,
-                    unit.room_feature_ids.includes(item.item_id)
-                      ? "has"
-                      : "hasnt",
-                  ),
-                ),
-              )}
-              {fact(
                 ut(language, "view"),
                 itemName(lists, unit.view_item_id, khmer) ?? notRecorded,
               )}
-              {fact(
-                ut(language, "kitchen"),
-                itemName(lists, unit.kitchen_item_id, khmer) ?? notRecorded,
-              )}
             </div>
+            {!forRent && (
+              <p className="ui-small ui-muted">
+                <Icon name="info" small /> {ut(language, "fr_unit_help")}
+              </p>
+            )}
             {unit.notes !== null && <p className="ui-small">{unit.notes}</p>}
+            {/* V1.1 (DL-115 (I)): the features list replaces Bedrooms, Bathrooms, Kitchen and
+                the Room features. */}
+            <UnitFeaturesPanel
+              api={unitApi}
+              canManage={canManage && unit.can_manage !== false}
+              language={language}
+              lists={lists}
+              onConflict={() => {
+                setWarning(ut(language, "conflict"));
+                load();
+              }}
+              onSaved={(saved) => {
+                setNotice(ut(language, "uf_saved", saved.unit_number));
+                onChanged(saved);
+                load();
+              }}
+              unit={unit}
+            />
             <UnitInventoryPanel
               api={unitApi}
+              features={unit.features ?? []}
               key={unit.unit_id}
+              lists={lists}
               onSaved={load}
               propertyId={propertyId}
               unitId={unit.unit_id}
@@ -738,6 +768,33 @@ export function UnitDetail({
           onSaved={(saved) => {
             setDialog(null);
             setNotice(ut(language, "saved", saved.unit_number));
+            onChanged(saved);
+            load();
+          }}
+          unit={unit}
+        />
+      )}
+      {dialog === "for_rent" && (
+        <ForRentDialog
+          api={unitApi}
+          language={language}
+          onClose={() => {
+            setDialog(null);
+          }}
+          onConflict={() => {
+            setDialog(null);
+            setWarning(ut(language, "conflict"));
+            load();
+          }}
+          onSaved={(saved) => {
+            setDialog(null);
+            setNotice(
+              ut(
+                language,
+                isForRent(saved) ? "fr_saved_yes" : "fr_saved_no",
+                saved.unit_number,
+              ),
+            );
             onChanged(saved);
             load();
           }}

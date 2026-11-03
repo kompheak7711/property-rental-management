@@ -1,4 +1,4 @@
-"""General Ledger database (migrations 20270405_255 to 20270408_258; V1.1 part 8, PR-GL).
+"""General Ledger database (migrations 20270409_259 to 20270412_262; V1.1 part 8, PR-GL).
 
 Owner approved the ledger database plan on 2026-11-02 21:08 (bigint cents, rollback only while
 the ledger is empty, month close in order and never reopened, start on 1 January 2027, write-off
@@ -25,7 +25,8 @@ from test_move_in_migration import runtime_database_url
 from test_unit_migration import insert_actor, insert_property, insert_unit
 
 Connection = psycopg.Connection[Any]
-REVISIONS = ("20270405_255", "20270406_256", "20270407_257", "20270408_258")
+REVISIONS = ("20270409_259", "20270410_260", "20270411_261", "20270412_262")
+BEFORE_LEDGER = "20270408_258"
 POST = (
     "SELECT app.gl_post_entry(%s, %s::date, %s, %s, 'TEST', NULL::uuid, %s, %s, %s, %s::uuid, "
     "gen_random_uuid(), %s)"
@@ -709,14 +710,14 @@ def test_the_migrations_chain_and_roll_back_only_while_the_ledger_is_empty(
     assert migrated_database_url
     script = ScriptDirectory.from_config(Config(str(Path(__file__).parents[1] / "alembic.ini")))
     assert script.get_current_head() == REVISIONS[-1]
-    previous = "20270404_254"
+    previous = BEFORE_LEDGER
     for revision in REVISIONS:
         found = script.get_revision(revision)
         assert found is not None and found.down_revision == previous
         previous = revision
     with _temporary_migration_database("prm_general_ledger") as temporary:
         assert _run_alembic("upgrade", "head").returncode == 0
-        assert _run_alembic("downgrade", "20270404_254").returncode == 0
+        assert _run_alembic("downgrade", BEFORE_LEDGER).returncode == 0
         assert _run_alembic("upgrade", "head").returncode == 0
         with psycopg.connect(temporary) as connection:
             actor_id = insert_actor(connection)
@@ -726,7 +727,7 @@ def test_the_migrations_chain_and_roll_back_only_while_the_ledger_is_empty(
             )
             Ledger(connection, property_id, actor_id).post("2027-01-02", pair("1020", "3000", 100))
             connection.commit()
-        result = _run_alembic("downgrade", "20270404_254")
+        result = _run_alembic("downgrade", BEFORE_LEDGER)
         assert result.returncode != 0
         assert "it cannot be rolled back" in result.stderr
         with psycopg.connect(temporary) as connection:

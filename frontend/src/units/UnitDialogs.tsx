@@ -10,12 +10,14 @@ import {
   UnitApi,
   UnitConflictError,
   UnitDetails,
+  UnitInUseError,
   UnitInvalidError,
   UnitResource,
   UnitSetupItem,
   UnitSetupLists,
   UnitStatus,
 } from "../unitClient";
+import { ForRentField, isForRent, isInUse } from "./ForRent";
 import {
   RentTermsFields,
   type RentTermsServicesApi,
@@ -29,11 +31,6 @@ function text(data: FormData, name: string): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
-function optionalNumber(data: FormData, name: string): number | null {
-  const value = text(data, name);
-  return value === "" ? null : Number(value);
-}
-
 function itemLabel(item: UnitSetupItem, language: Language): string {
   return language === "km" && item.name_km !== null
     ? item.name_km
@@ -45,18 +42,16 @@ function choices(items: UnitSetupItem[], current?: string | null) {
   return items.filter((item) => !item.removed || item.item_id === current);
 }
 
-function detailsFrom(data: FormData): UnitDetails {
+// V1.1 (DL-115 (I)): Bedrooms, Bathrooms, Kitchen and the Room features are no longer asked;
+// the Unit page's features list says them. An update leaves the old values as they were.
+function detailsFrom(
+  data: FormData,
+): Pick<UnitDetails, "size_square_metres" | "view_item_id" | "notes"> {
   const size = text(data, "size");
   return {
     size_square_metres: size === "" ? null : Number(size).toFixed(2),
-    bedrooms: optionalNumber(data, "bedrooms"),
-    bathrooms: optionalNumber(data, "bathrooms"),
     view_item_id: text(data, "view") || null,
-    kitchen_item_id: text(data, "kitchen") || null,
     notes: text(data, "notes") || null,
-    room_feature_ids: data
-      .getAll("features")
-      .filter((value): value is string => typeof value === "string"),
   };
 }
 
@@ -121,8 +116,8 @@ function DetailFields({
   unit: UnitResource | null;
 }) {
   const optionalSelect = (
-    kind: "VIEW" | "KITCHEN",
-    name: "view" | "kitchen",
+    kind: "VIEW",
+    name: "view",
     current: string | null,
   ) => (
     <div className="ui-field">
@@ -136,10 +131,6 @@ function DetailFields({
         ))}
       </select>
     </div>
-  );
-  const features = lists.lists.ROOM_FEATURE.filter(
-    (item) =>
-      !item.removed || unit?.room_feature_ids.includes(item.item_id) === true,
   );
   const types = lists.lists.UNIT_TYPE.filter(
     (item) => !item.removed || item.code === unit?.unit_type,
@@ -175,56 +166,7 @@ function DetailFields({
           />
         </div>
       </div>
-      <div className="ui-row2">
-        <div className="ui-field">
-          <label htmlFor="unit-bedrooms">{ut(language, "beds")}</label>
-          <input
-            defaultValue={unit?.bedrooms ?? ""}
-            id="unit-bedrooms"
-            inputMode="numeric"
-            max="20"
-            min="0"
-            name="bedrooms"
-            step="1"
-            type="number"
-          />
-        </div>
-        <div className="ui-field">
-          <label htmlFor="unit-bathrooms">{ut(language, "baths")}</label>
-          <input
-            defaultValue={unit?.bathrooms ?? ""}
-            id="unit-bathrooms"
-            inputMode="numeric"
-            max="20"
-            min="0"
-            name="bathrooms"
-            step="1"
-            type="number"
-          />
-        </div>
-      </div>
-      <div className="ui-row2">
-        {optionalSelect("VIEW", "view", unit?.view_item_id ?? null)}
-        {optionalSelect("KITCHEN", "kitchen", unit?.kitchen_item_id ?? null)}
-      </div>
-      <fieldset className="ui-radios">
-        <legend>{ut(language, "features")}</legend>
-        {features.length === 0 ? (
-          <p className="ui-small ui-muted">{ut(language, "no_features")}</p>
-        ) : (
-          features.map((item) => (
-            <label className="ui-chk" key={item.item_id}>
-              <input
-                defaultChecked={unit?.room_feature_ids.includes(item.item_id)}
-                name="features"
-                type="checkbox"
-                value={item.item_id}
-              />
-              <span>{itemLabel(item, language)}</span>
-            </label>
-          ))
-        )}
-      </fieldset>
+      {optionalSelect("VIEW", "view", unit?.view_item_id ?? null)}
       <div className="ui-field">
         <label htmlFor="unit-notes">{ut(language, "notes")}</label>
         <textarea
@@ -264,6 +206,8 @@ export function NewUnitDialog({
   const [rent, setRent] = useState("");
   const [chosen, setChosen] = useState<Set<string>>(new Set());
   const [rentProblem, setRentProblem] = useState<string | null>(null);
+  // V1.1 rework part 1 (owner 02/11/2026): For rent is chosen on New Unit too.
+  const [forRent, setForRent] = useState(true);
   // The Unit is saved but its Rent and Services were not; the next press only closes.
   const [saved, setSaved] = useState<UnitResource | null>(null);
   const [busy, setBusy] = useState(false);
@@ -313,22 +257,36 @@ export function NewUnitDialog({
         ...detailsFrom(data),
       })
       .then(
-        (unit) => {
-          if (cents === null && chosen.size === 0) {
-            onCreated(unit);
-            return;
-          }
-          api
-            .setRentTerms(unit, {
-              default_monthly_rent_usd_cents: cents,
-              required_service_ids: [...chosen],
-            })
-            .then(onCreated)
-            .catch(() => {
-              setSaved(unit);
-              setProblem(ut(language, "rt_new_not_saved", unit.unit_number));
-              setBusy(false);
-            });
+        (created) => {
+          // A Unit not for rent is set so right after it is saved, before its Rent terms.
+          const marked = forRent
+            ? Promise.resolve(created)
+            : api.setForRent(created, false).catch(() => {
+                setSaved(created);
+                setProblem(
+                  ut(language, "fr_new_not_saved", created.unit_number),
+                );
+                setBusy(false);
+                return null;
+              });
+          void marked.then((unit) => {
+            if (unit === null) return;
+            if (cents === null && chosen.size === 0) {
+              onCreated(unit);
+              return;
+            }
+            api
+              .setRentTerms(unit, {
+                default_monthly_rent_usd_cents: cents,
+                required_service_ids: [...chosen],
+              })
+              .then(onCreated)
+              .catch(() => {
+                setSaved(unit);
+                setProblem(ut(language, "rt_new_not_saved", unit.unit_number));
+                setBusy(false);
+              });
+          });
         },
         (error: unknown) => {
           setProblem(failure(language, error));
@@ -371,6 +329,7 @@ export function NewUnitDialog({
         />
       </div>
       <DetailFields language={language} lists={lists} unit={null} />
+      <ForRentField language={language} onChange={setForRent} value={forRent} />
       <RentTermsFields
         chosen={chosen}
         language={language}
@@ -407,6 +366,8 @@ export function UpdateUnitDialog({
   const [busy, setBusy] = useState(false);
   const [missingFloor, setMissingFloor] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
+  // V1.1 rework part 1 (owner 02/11/2026): For rent can be changed here too.
+  const [forRent, setForRent] = useState(isForRent(unit));
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -420,16 +381,27 @@ export function UpdateUnitDialog({
     }
     setBusy(true);
     setProblem(null);
-    void api
-      .update(unit, {
-        floor_item_id: floor,
-        unit_type: text(data, "type"),
-        ...detailsFrom(data),
-      })
+    // For rent goes first: a Unit in use for renting refuses it and nothing is saved.
+    const marked =
+      forRent === isForRent(unit)
+        ? Promise.resolve(unit)
+        : api.setForRent(unit, forRent);
+    void marked
+      .then((current) =>
+        api.update(current, {
+          floor_item_id: floor,
+          unit_type: text(data, "type"),
+          ...detailsFrom(data),
+        }),
+      )
       .then(onSaved)
       .catch((error: unknown) => {
-        setProblem(failure(language, error));
         setBusy(false);
+        if (error instanceof UnitInUseError) {
+          setProblem(ut(language, "fr_in_use"));
+          return;
+        }
+        setProblem(failure(language, error));
         if (error instanceof UnitConflictError) onConflict();
       });
   }
@@ -450,6 +422,12 @@ export function UpdateUnitDialog({
         missing={missingFloor}
       />
       <DetailFields language={language} lists={lists} unit={unit} />
+      <ForRentField
+        language={language}
+        locked={isInUse(unit)}
+        onChange={setForRent}
+        value={forRent}
+      />
       <p className="ui-small ui-muted">{ut(language, "edit_note")}</p>
       <Problem message={problem} />
     </Dialog>

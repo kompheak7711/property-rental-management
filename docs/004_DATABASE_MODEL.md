@@ -5547,11 +5547,11 @@ This Database Model is ready for Owner review when:
 ## DB-GL-001 — General Ledger (V1.1 part 8)
 
 Added by the owner's approval of the ledger database plan on 2026-11-02 21:08
-(https://claude.ai/artifact/5nttjeU5y5SaNSHU1etyuK), migrations `20270405_255` to
-`20270408_258`. Every relation is new and named `app.gl_*`; no V1 table changes. Money is whole
+(https://claude.ai/artifact/5nttjeU5y5SaNSHU1etyuK), migrations `20270409_259` to
+`20270412_262`. Every relation is new and named `app.gl_*`; no V1 table changes. Money is whole
 cents in `bigint` (Q1).
 
-- Core (`20270405_255`): `gl_accounts` (code, English and Khmer names, type, control source, tax
+- Core (`20270409_259`): `gl_accounts` (code, English and Khmer names, type, control source, tax
   lock, cash kind, balance-sheet section, cash-flow group; never deleted; code and type fixed
   once used), `gl_method_accounts`, `gl_suppliers`, `gl_fiscal_years`, `gl_periods` (months 1 to
   12 and a one-day period 13 on 31 December for the year-end close only), `gl_journal_entries`
@@ -5562,15 +5562,15 @@ cents in `bigint` (Q1).
   `gl_post_entry` (idempotent by `posting_key`), `gl_reverse_entry`, `gl_close_period` (every
   check true; months close in order and never reopen), `gl_close_year` (moves income, cost and
   expense balances to 3900 in period 13), `gl_open_fiscal_year`.
-- Records (`20270406_256`): Expense requests and their events, expenses, supplier bills and
+- Records (`20270410_260`): Expense requests and their events, expenses, supplier bills and
   payments, money moves, Owner money, petty cash top-ups, write-offs (a confirmed V1 charge
   reduction marked as a write-off, Q5), fixed assets, adjusting entries, opening balances,
   budgets, bank reconciliations, cash counts, riel revaluations and close runs. Status changes
   follow fixed steps; other fields change only with a step; nothing is deleted.
-- Reports (`20270407_257`): `gl_entry_lines_v`, `gl_account_balances`, `gl_trial_balance`,
+- Reports (`20270411_261`): `gl_entry_lines_v`, `gl_account_balances`, `gl_trial_balance`,
   `gl_ledger_detail`, `gl_profit_and_loss` (without the closing entry), `gl_balance_sheet` (with
   the profit not closed yet, so assets = liabilities + equity) and `gl_cash_flow` (direct).
-- Seed (`20270408_258`): `gl_chart_template` (the 59-account starter chart) and
+- Seed (`20270412_262`): `gl_chart_template` (the 59-account starter chart) and
   `gl_start_ledger(property, year, actor)`; the migration starts fiscal year 2027 for the
   existing Property (Q4).
 

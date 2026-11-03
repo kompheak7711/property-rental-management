@@ -97,6 +97,31 @@ const TEXT = {
   hasnt: ["No", "គ្មាន"],
   // new
   not_recorded: ["Not recorded", "មិនទាន់កត់ត្រា"],
+  // V1.1 (DL-115 (I)): the Unit's features.
+  uf_title: ["Unit features", "លក្ខណៈបន្ទប់"],
+  uf_none: ["No features recorded yet.", "មិនទាន់កត់ត្រាលក្ខណៈទេ។"],
+  uf_unknown: ["Removed feature", "លក្ខណៈដែលបានដកចេញ"],
+  uf_edit: ["Edit features", "កែលក្ខណៈ"],
+  uf_save: ["Save features", "រក្សាលក្ខណៈ"],
+  uf_less: ["One fewer {0}", "{0} តិចមួយ"],
+  uf_more: ["One more {0}", "{0} ច្រើនមួយ"],
+  uf_count: ["How many {0}", "ចំនួន {0}"],
+  uf_remove: ["Remove {0}", "ដក {0} ចេញ"],
+  uf_add_label: ["Add a feature", "បន្ថែមលក្ខណៈ"],
+  uf_add_pick: ["Add a feature…", "បន្ថែមលក្ខណៈ…"],
+  uf_add_none: [
+    "Every feature in Settings is already listed",
+    "លក្ខណៈទាំងអស់ក្នុងការកំណត់ មាននៅក្នុងបញ្ជីរួចហើយ",
+  ],
+  uf_add: ["Add", "បន្ថែម"],
+  uf_note: [
+    "Each feature can be 1 to 9. A shop or office lists only what it has, for example Main room ×1. New features are added in Settings → Unit setup. Every change is kept in History.",
+    "លក្ខណៈនីមួយៗអាចមានពី ១ ដល់ ៩។ ហាង ឬការិយាល័យ បង្ហាញតែអ្វីដែលវាមាន ឧទាហរណ៍ បន្ទប់ធំ ×១។ លក្ខណៈថ្មីត្រូវបន្ថែមនៅក្នុង ការកំណត់ → ការរៀបចំបន្ទប់។ ការផ្លាស់ប្តូរនីមួយៗត្រូវបានរក្សាក្នុងប្រវត្តិ។",
+  ],
+  uf_saved: [
+    "The features of Unit {0} are saved.",
+    "លក្ខណៈរបស់បន្ទប់ {0} ត្រូវបានរក្សាទុក។",
+  ],
   notes: ["Notes", "កំណត់ចំណាំ"],
   current_lease: ["Current Lease", "កិច្ចសន្យាបច្ចុប្បន្ន"],
   primary: ["Primary Tenant", "អ្នកជួលចម្បង"],
@@ -314,6 +339,52 @@ const TEXT = {
     "ថ្លៃឈ្នួល និងសេវារបស់ {0} ត្រូវបានរក្សាទុក។",
   ],
   h_rent_terms: ["Rent and Services changed", "ថ្លៃឈ្នួល និងសេវាត្រូវបានប្តូរ"],
+  // V1.1 rework part 1 (owner 2026-11-02, mock-up v53): For rent.
+  fr_col: ["For rent", "សម្រាប់ជួល"],
+  fr_yes: ["Yes", "បាទ/ចាស"],
+  fr_no: ["Not for rent", "មិនសម្រាប់ជួល"],
+  fr_help: [
+    "A Unit not for rent (for example the warehouse) is hidden from Home, Vacant lists, Reservations, Leases, billing, meter readings and reports.",
+    "បន្ទប់មិនសម្រាប់ជួល (ឧទាហរណ៍ ឃ្លាំង) ត្រូវបានលាក់ពីទំព័រដើម បញ្ជីទំនេរ ការកក់ កិច្ចសន្យា ការចេញវិក្កយបត្រ ការអានម៉ែត្រ និងរបាយការណ៍។",
+  ],
+  fr_unit_help: [
+    "Not for rent: it is left out of every renting screen. It can be switched to For rent later.",
+    "មិនសម្រាប់ជួល៖ វាមិនបង្ហាញក្នុងអេក្រង់ជួលណាមួយទេ។ អាចប្ដូរទៅ សម្រាប់ជួល នៅពេលក្រោយ។",
+  ],
+  fr_card: ["Units not for rent", "បន្ទប់មិនសម្រាប់ជួល"],
+  fr_card_s: [
+    "Kept out of every renting screen. Switch to For rent later if you want to rent it.",
+    "មិនបង្ហាញក្នុងទំព័រជួលណាមួយ។ ប្តូរទៅ សម្រាប់ជួល ពេលក្រោយ បើចង់ជួល។",
+  ],
+  fr_places: ["{0} places", "{0} កន្លែង"],
+  fr_places_col: ["Places", "កន្លែង"],
+  // new
+  fr_change: ["Change", "ប្តូរ"],
+  // new
+  fr_title: ["Change For rent", "ប្តូរ សម្រាប់ជួល"],
+  // new
+  fr_in_use: [
+    "This Unit has a Reservation or a Lease, so it stays for rent until they end.",
+    "បន្ទប់នេះមានការកក់ ឬកិច្ចសន្យា ដូច្នេះវានៅតែសម្រាប់ជួល រហូតដល់ពួកវាបញ្ចប់។",
+  ],
+  // new
+  fr_locked: [
+    "This Unit is Reserved or Occupied, so it stays for rent. You can change it after it is Vacant.",
+    "បន្ទប់នេះត្រូវបានកក់ ឬមានអ្នកស្នាក់នៅ ដូច្នេះវានៅតែសម្រាប់ជួល។ អាចប្តូរបាន ពេលវាទំនេរ។",
+  ],
+  // new
+  fr_new_not_saved: [
+    "Unit {0} is saved, but For rent is not. Change it on the Unit page.",
+    "បន្ទប់ {0} ត្រូវបានរក្សាទុក ប៉ុន្តែ សម្រាប់ជួល មិនទាន់។ សូមប្តូរវានៅទំព័របន្ទប់។",
+  ],
+  // new
+  fr_saved_yes: ["{0} is for rent now.", "{0} ឥឡូវសម្រាប់ជួល។"],
+  // new
+  fr_saved_no: ["{0} is not for rent now.", "{0} ឥឡូវមិនសម្រាប់ជួល។"],
+  // new
+  h_for_rent_yes: ["Set to For rent", "បានប្តូរទៅ សម្រាប់ជួល"],
+  // new
+  h_for_rent_no: ["Set to Not for rent", "បានប្តូរទៅ មិនសម្រាប់ជួល"],
 } as const;
 
 export type UnitTextKey = keyof typeof TEXT;

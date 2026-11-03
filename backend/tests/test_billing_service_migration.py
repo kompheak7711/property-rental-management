@@ -1645,9 +1645,9 @@ def test_v1_040_is_forward_only_and_is_the_migration_head(
     connection: Connection[tuple[object, ...]],
 ) -> None:
     assert connection.execute("SELECT version_num FROM alembic_version").fetchone() == (
-        "20270408_258",
+        "20270412_262",
     )
-    # The General Ledger migrations after 20270404_254 roll back while the ledger is empty (owner
+    # The General Ledger migrations after 20270408_258 roll back while the ledger is empty (owner
     # Q2 of 2026-11-02); going below them reaches a forward-only migration, and nothing changes.
     with pytest.raises(RuntimeError, match="forward-only"):
         command.downgrade(Config(str(Path(__file__).parents[1] / "alembic.ini")), "20270403_253")

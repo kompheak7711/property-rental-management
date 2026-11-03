@@ -54460,12 +54460,13 @@
       "upstream_ids": [
         "DL-074",
         "DL-075",
+        "DL-116",
         "UI-008"
       ],
       "test_level": "UI component",
       "test_path": "frontend/src/settings/UnitSetupTab.test.tsx",
       "status": "implemented",
-      "notes": "V1-058 R7b-2: Unit setup shows the five lists with how many Units use each item; an item in use offers no Remove; Floors have no Edit."
+      "notes": "V1-058 R7b-2; V1.1 rework part 1 (DL-116): Unit setup shows the tabs Floors, Unit Types, Unit features and Views with how many Units use each item; Unit features is one table (Order, Name, Khmer, Units, Edit); an item in use offers no Remove; Floors have no Edit."
     },
     {
       "test_id": "TEST-FE-941",
@@ -58720,7 +58721,7 @@
       "test_level": "migration",
       "test_path": "backend/tests/test_meter_history_migration.py",
       "status": "implemented",
-      "notes": "V1-061 Fix 4 (DL-114): migration 20270404_254 follows 20270403_253, was the head before the General Ledger migrations, and is forward-only."
+      "notes": "V1-061 Fix 4 (DL-114): migration 20270404_254 follows 20270403_253, was the head before V1.1, and is forward-only."
     },
     {
       "test_id": "TEST-FE-1117",
@@ -58794,6 +58795,238 @@
       "test_path": "frontend/src/units/UnitsPage.test.tsx",
       "status": "implemented",
       "notes": "V1-061 owner ask 29/10: the Unit page offers Add electricity meter and Add water meter for each kind with no meter, opens Add meter set to this Unit and kind, and shows nothing to a person who may not manage meters."
+    },
+    {
+      "test_id": "test_unit_features_are_set_by_a_manager_at_the_unit_version",
+      "upstream_ids": [
+        "DL-115"
+      ],
+      "test_level": "API",
+      "test_path": "backend/tests/test_unit_api.py",
+      "status": "implemented",
+      "notes": "V1.1 (DL-115 (I)): PUT /units/{unit_id}/features needs a Manager, the browser checks and If-Match; a count outside 1 to 9, a repeated feature, more than 50 or an unknown field answers 422; a stale version answers 412."
+    },
+    {
+      "test_id": "test_a_unit_feature_names_its_feature_type",
+      "upstream_ids": [
+        "DL-115"
+      ],
+      "test_level": "API",
+      "test_path": "backend/tests/test_unit_api.py",
+      "status": "implemented",
+      "notes": "V1.1 (DL-115 (I)): a Unit feature is created and changed with its Feature type, and the setup lists answer Feature types, Unit features and Item types."
+    },
+    {
+      "test_id": "test_each_property_has_the_default_lists",
+      "upstream_ids": [
+        "DL-115"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_unit_features_migration.py",
+      "status": "implemented",
+      "notes": "V1.1 (DL-115 (I)): every Property has the default Feature types, Unit features joined to their types, and Item types."
+    },
+    {
+      "test_id": "test_unit_features_are_set_at_the_unit_version_and_kept_in_history",
+      "upstream_ids": [
+        "DL-115"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_unit_features_migration.py",
+      "status": "implemented",
+      "notes": "V1.1 (DL-115 (I)): a Unit's features are set at the Unit version and move it on; a stale version, a count outside 1 to 9 or an item that is not a Unit feature changes nothing; each change is one unit.features_changed History event."
+    },
+    {
+      "test_id": "test_a_unit_feature_in_use_and_its_feature_type_cannot_be_removed",
+      "upstream_ids": [
+        "DL-115"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_unit_features_migration.py",
+      "status": "implemented",
+      "notes": "V1.1 (DL-115 (I)): a Unit feature a Unit uses, and the Feature type a feature names, cannot be removed."
+    },
+    {
+      "test_id": "test_a_unit_feature_type_when_given_is_a_feature_type_of_its_property",
+      "upstream_ids": [
+        "DL-115",
+        "DL-116"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_unit_features_migration.py",
+      "status": "implemented",
+      "notes": "V1.1 rework part 1 (DL-116): a Unit feature needs no Feature type; a type that is given must be a Feature type of its Property, and no other list item takes a Feature type."
+    },
+    {
+      "test_id": "test_runtime_role_cannot_write_unit_features_directly",
+      "upstream_ids": [
+        "DL-115"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_unit_features_migration.py",
+      "status": "implemented",
+      "notes": "V1.1 (DL-115 (I)): the runtime role cannot write app.unit_features; only app.set_unit_features changes them."
+    },
+    {
+      "test_id": "test_the_same_item_may_be_in_two_places",
+      "upstream_ids": [
+        "DL-115"
+      ],
+      "test_level": "API",
+      "test_path": "backend/tests/test_unit_inventory_api.py",
+      "status": "implemented",
+      "notes": "V1.1 (DL-115 (I)): Edit inventory lines name an Item type and an optional place; the same item may be saved in two places and is counted under its Item type."
+    },
+    {
+      "test_id": "test_lines_name_an_item_type_and_an_optional_place",
+      "upstream_ids": [
+        "DL-115"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_unit_inventory_items_migration.py",
+      "status": "implemented",
+      "notes": "V1.1 (DL-115 (I)): an inventory line names an Item type of the Unit's Property and optionally a Unit feature and which one (1 to 9); any other item is refused; an Item type in a Unit's current inventory cannot be removed."
+    },
+    {
+      "test_id": "test_a_record_saved_before_v1_1_reads_in_the_v1_1_form",
+      "upstream_ids": [
+        "DL-115"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_unit_inventory_items_migration.py",
+      "status": "implemented",
+      "notes": "V1.1 (DL-115 (I)): a record saved in the V1-058 form reads as Item types and places: Appliances as Appliance, the Kitchen group as Appliance in the Unit's kitchen."
+    },
+    {
+      "test_id": "test_runtime_role_cannot_write_inventory_items_directly",
+      "upstream_ids": [
+        "DL-115"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_unit_inventory_items_migration.py",
+      "status": "implemented",
+      "notes": "V1.1 (DL-115 (I)): the V1.1 inventory lines are append-only and the runtime role writes them only through app.record_unit_inventory_items."
+    },
+    {
+      "test_id": "TEST-FE-1124",
+      "upstream_ids": [
+        "DL-115",
+        "DL-116"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/settings/UnitSetupTab.test.tsx",
+      "status": "implemented",
+      "notes": "V1.1 rework part 1 (DL-116): a Unit feature is added and renamed with no Feature type; a type kept from before is not sent."
+    },
+    {
+      "test_id": "TEST-FE-1125",
+      "upstream_ids": [
+        "DL-115"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/units/UnitsPage.test.tsx",
+      "status": "implemented",
+      "notes": "V1.1 part 1 (DL-115 (I)): the Unit page lists its features with counts; Edit features changes counts 1 to 9, removes with x, adds from Settings and saves the whole list."
+    },
+    {
+      "test_id": "TEST-FE-1126",
+      "upstream_ids": [
+        "DL-115"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/units/UnitsPage.test.tsx",
+      "status": "implemented",
+      "notes": "V1.1 part 1 (DL-115 (I)): Edit features shows a refused list in the form and closes and reads the Unit again after someone else's change."
+    },
+    {
+      "test_id": "test_settings_keep_regular_services_with_a_set_price",
+      "upstream_ids": [
+        "DL-115"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_regular_services_migration.py",
+      "status": "implemented",
+      "notes": "V1.1 (DL-115 (I)): Settings keeps Regular services with a set price; a repeat answers the same service, two never share a name, a change bumps the version and a removed one leaves the list."
+    },
+    {
+      "test_id": "test_a_services_invoice_takes_each_price_from_settings",
+      "upstream_ids": [
+        "DL-115"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_regular_services_migration.py",
+      "status": "implemented",
+      "notes": "V1.1 (DL-115 (I)); owner 2026-10-29 decision card: a Services Invoice bills each Regular service at its Settings price times How many; a later price change never changes it; Edit items and removal this year are refused; its lines count in the Rent and Services report bar."
+    },
+    {
+      "test_id": "test_runtime_role_cannot_write_regular_services_directly",
+      "upstream_ids": [
+        "DL-115"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_regular_services_migration.py",
+      "status": "implemented",
+      "notes": "V1.1 (DL-115 (I)): only the Settings functions write Regular services."
+    },
+    {
+      "test_id": "test_services_invoice_route_takes_no_price_and_needs_invoices_create",
+      "upstream_ids": [
+        "DL-115"
+      ],
+      "test_level": "API",
+      "test_path": "backend/tests/test_invoice_api.py",
+      "status": "implemented",
+      "notes": "V1.1 (DL-115 (I)): the Services Invoice route takes a Regular service and How many, never a price, and needs invoices.create."
+    },
+    {
+      "test_id": "test_regular_services_are_read_for_invoices_and_changed_with_settings_access",
+      "upstream_ids": [
+        "DL-115"
+      ],
+      "test_level": "API",
+      "test_path": "backend/tests/test_service_settings_api.py",
+      "status": "implemented",
+      "notes": "V1.1 (DL-115 (I)): staff making Invoices read the Regular services; only Settings access changes them; a service used this year answers 409."
+    },
+    {
+      "test_id": "TEST-FE-1127",
+      "upstream_ids": [
+        "DL-115"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/settings/RegularServices.test.tsx",
+      "status": "implemented",
+      "notes": "V1.1 (DL-115 (I)): Settings lists Regular services with price and use this year; Add, Edit and Remove; one used this year cannot be removed."
+    },
+    {
+      "test_id": "TEST-FE-1128",
+      "upstream_ids": [
+        "DL-115"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/settings/RegularServices.test.tsx",
+      "status": "implemented",
+      "notes": "V1.1 (DL-115 (I)): without Settings access the prices show with no changes; the client reads only a well-formed answer."
+    },
+    {
+      "test_id": "TEST-FE-1129",
+      "upstream_ids": [
+        "DL-115"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/invoices/InvoicesPage.test.tsx",
+      "status": "implemented",
+      "notes": "V1.1 (DL-115 (I)): Create Invoice › Services takes each price from Settings, joins a service picked twice, checks every line and saves one Draft once."
+    },
+    {
+      "test_id": "TEST-FE-1130",
+      "upstream_ids": [
+        "DL-115"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/invoices/InvoicesPage.test.tsx",
+      "status": "implemented",
+      "notes": "V1.1 (DL-115 (I)): a Draft made from Regular services cannot use Edit items."
     },
     {
       "test_id": "test_make_reservation_saves_the_money_and_the_reservation_together",
@@ -58871,6 +59104,106 @@
       "test_path": "backend/tests/test_deposit_api.py",
       "status": "implemented",
       "notes": "V1-061 (DL-112): POST /api/v1/leases/{lease_id}/security-deposit/receive needs payments.record and payments.allocate, and deposits.manage for a new Security Deposit; another Deposit or a second Security Deposit is refused; the payer is the Primary Tenant."
+    },
+    {
+      "test_id": "test_for_rent_is_set_at_the_unit_version_and_kept_in_history",
+      "upstream_ids": [
+        "DL-116"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_unit_for_rent_migration.py",
+      "status": "implemented",
+      "notes": "V1.1 rework part 1 (DL-116): For rent is set at the Unit version, a repeat changes nothing, the Units list filters by it, and each change is in History."
+    },
+    {
+      "test_id": "test_a_unit_not_for_rent_gets_no_lease_and_is_not_counted",
+      "upstream_ids": [
+        "DL-116"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_unit_for_rent_migration.py",
+      "status": "implemented",
+      "notes": "V1.1 rework part 1 (DL-116): a Unit not for rent gets no Reservation and no Lease, and Home and the occupancy report leave it out."
+    },
+    {
+      "test_id": "test_a_unit_with_a_lease_cannot_be_set_not_for_rent",
+      "upstream_ids": [
+        "DL-116"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_unit_for_rent_migration.py",
+      "status": "implemented",
+      "notes": "V1.1 rework part 1 (DL-116): a Unit with a draft or signed Lease stays for rent."
+    },
+    {
+      "test_id": "test_runtime_role_cannot_change_for_rent_directly",
+      "upstream_ids": [
+        "DL-116"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_unit_for_rent_migration.py",
+      "status": "implemented",
+      "notes": "V1.1 rework part 1 (DL-116): only app.set_unit_for_rent changes For rent."
+    },
+    {
+      "test_id": "test_the_database_review_fixes_are_in_place",
+      "upstream_ids": [
+        "DL-116"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_unit_for_rent_migration.py",
+      "status": "implemented",
+      "notes": "Database review 01/11, fixes 2, 3 and 5 (DL-116 (C)): copied indexes dropped, list indexes added, Lease history and Receipt number checks added."
+    },
+    {
+      "test_id": "test_for_rent_is_set_by_a_manager_and_filters_the_list",
+      "upstream_ids": [
+        "DL-116"
+      ],
+      "test_level": "API",
+      "test_path": "backend/tests/test_unit_api.py",
+      "status": "implemented",
+      "notes": "V1.1 rework part 1 (DL-116): PUT /units/{unit_id}/for-rent needs a Manager, the browser checks and If-Match; a wrong body answers 422, a stale version 412, a Unit in use 409; the list filters by for_rent."
+    },
+    {
+      "test_id": "TEST-FE-1131",
+      "upstream_ids": [
+        "DL-116"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/units/UnitsPage.test.tsx",
+      "status": "implemented",
+      "notes": "V1.1 rework part 1 (DL-116): a Unit not for rent leaves the Units table and its counts and shows in the Units not for rent card with its places."
+    },
+    {
+      "test_id": "TEST-FE-1132",
+      "upstream_ids": [
+        "DL-116"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/units/UnitsPage.test.tsx",
+      "status": "implemented",
+      "notes": "V1.1 rework part 1 (DL-116): the Unit page shows For rent with Change; a Unit not for rent offers no Reservation or Lease; a Unit in use stays for rent."
+    },
+    {
+      "test_id": "TEST-FE-1133",
+      "upstream_ids": [
+        "DL-116"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/units/UnitsPage.test.tsx",
+      "status": "implemented",
+      "notes": "V1.1 rework part 1 (DL-116; owner retest 02/11): New Unit and Update Unit ask For rent; Not for rent is saved right after a new Unit, and a Unit in use refuses it before anything is saved."
+    },
+    {
+      "test_id": "TEST-FE-1134",
+      "upstream_ids": [
+        "DL-116"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/units/UnitsPage.test.tsx",
+      "status": "implemented",
+      "notes": "V1.1 rework part 1 (DL-116; owner 02/11): a Reserved or Occupied Unit keeps For rent locked; no Change on the Unit page and the choice is disabled in Update Unit."
     },
     {
       "test_id": "test_the_starter_chart_and_fiscal_year_2027_are_seeded_once",
@@ -58981,7 +59314,7 @@
       "test_level": "migration",
       "test_path": "backend/tests/test_general_ledger_migration.py",
       "status": "implemented",
-      "notes": "V1.1 part 8 General Ledger (owner approved 2026-11-02): Migrations 20270405_255 to 20270408_258 follow 20270404_254 and end at the head; they roll back while the ledger is empty and refuse once an entry is posted (owner Q2)."
+      "notes": "V1.1 part 8 General Ledger (owner approved 2026-11-02): Migrations 20270409_259 to 20270412_262 follow 20270408_258 (V1.1 rework part 1) and end at the head; they roll back while the ledger is empty and refuse once an entry is posted (owner Q2)."
     }
   ]
 }

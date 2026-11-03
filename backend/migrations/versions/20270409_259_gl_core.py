@@ -1,7 +1,7 @@
 """General Ledger core: accounts, fiscal years, periods, journal (V1.1 part 8; PR-GL).
 
-Revision ID: 20270405_255
-Revises: 20270404_254
+Revision ID: 20270409_259
+Revises: 20270408_258
 Create Date: 2026-11-02
 
 Owner approved the ledger database plan on 2026-11-02 21:08
@@ -42,8 +42,8 @@ from collections.abc import Sequence
 
 from alembic import op
 
-revision: str = "20270405_255"
-down_revision: str | None = "20270404_254"
+revision: str = "20270409_259"
+down_revision: str | None = "20270408_258"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

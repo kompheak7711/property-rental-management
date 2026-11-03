@@ -36,6 +36,7 @@ function item(
     removed: false,
     in_use: false,
     version: 1,
+    feature_type_item_id: null,
     ...extra,
   };
 }
@@ -55,6 +56,19 @@ const LISTS: UnitSetupLists = {
     ROOM_FEATURE: [
       item("ROOM_FEATURE", "BALCONY", "Balcony", { in_use: true }),
     ],
+    FEATURE_TYPE: [
+      item("FEATURE_TYPE", "ROOM", "Room"),
+      item("FEATURE_TYPE", "OUTDOOR", "Outdoor"),
+    ],
+    UNIT_FEATURE: [
+      item("UNIT_FEATURE", "BEDROOM", "Bedroom", {
+        feature_type_item_id: "FEATURE_TYPE-ROOM",
+      }),
+      item("UNIT_FEATURE", "TERRACE", "Terrace", {
+        feature_type_item_id: "FEATURE_TYPE-OUTDOOR",
+      }),
+    ],
+    ITEM_TYPE: [item("ITEM_TYPE", "KEYS", "Keys and remotes")],
   },
   can_manage: true,
 };
@@ -81,6 +95,7 @@ function unit(no: string, extra: Partial<UnitResource> = {}): UnitResource {
     kitchen_item_id: null,
     notes: null,
     room_feature_ids: ["ROOM_FEATURE-BALCONY"],
+    features: [{ item_id: "UNIT_FEATURE-BEDROOM", count: 2 }],
     ...extra,
   };
 }
@@ -150,16 +165,36 @@ function show(
 
 const list = (name: string) => screen.getByRole("region", { name });
 
+/** V1.1 rework part 1: the lists are tabs; one list shows at a time. */
+async function openTab(name: string) {
+  fireEvent.click(await screen.findByRole("button", { name, pressed: false }));
+  return screen.findByRole("region", { name });
+}
+
 describe("Settings: Unit setup", () => {
-  it("TEST-FE-940 shows the five lists with how many Units use each item; an item in use offers no Remove; Floors have no Edit", async () => {
+  it("TEST-FE-940 shows the lists as tabs Floors, Unit Types, Unit features and Views with how many Units use each item; an item in use offers no Remove; Floors have no Edit (V1.1 rework part 1: no Feature types or Item types)", async () => {
     const api = show();
     const floors = await screen.findByRole("region", { name: "Floors" });
     expect(api.setupLists).toHaveBeenCalledWith("property-1");
-    expect(
-      ["Floors", "Unit Types", "Views", "Kitchens", "Room features"].map(
-        (name) => list(name).querySelector("h2")?.textContent,
-      ),
-    ).toEqual(["Floors", "Unit Types", "Views", "Kitchens", "Room features"]);
+    const tabs = within(
+      screen.getByRole("group", { name: "Unit setup lists" }),
+    ).getAllByRole("button");
+    expect(tabs.map((tab) => tab.textContent)).toEqual([
+      "Floors",
+      "Unit Types",
+      "Unit features",
+      "Views",
+    ]);
+    expect(tabs[0]?.getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getAllByRole("region")).toHaveLength(1);
+    for (const gone of [
+      "Kitchens",
+      "Room features",
+      "Feature types",
+      "Item types",
+    ]) {
+      expect(screen.queryByRole("button", { name: gone })).toBeNull();
+    }
     const [first, second] = within(floors).getAllByRole("listitem");
     if (first === undefined || second === undefined) throw new Error("rows");
     const rows = [first, second];
@@ -171,18 +206,44 @@ describe("Settings: Unit setup", () => {
       }),
     ).toBeTruthy();
     expect(rows[1]?.textContent).toContain("No Units yet");
-    expect(list("Room features").textContent).toContain("Balcony1 Unit");
+
+    const features = await openTab("Unit features");
+    const [header, bedroom, terrace] = within(features).getAllByRole("row");
     expect(
-      within(list("Unit Types")).getByRole("button", { name: "Edit: Studio" }),
+      within(header ?? features)
+        .getAllByRole("columnheader")
+        .map((cell) => cell.textContent),
+    ).toEqual(["Order", "Name", "Khmer", "Units", "Edit"]);
+    expect(
+      within(bedroom ?? features)
+        .getAllByRole("cell")
+        .slice(0, 4)
+        .map((cell) => cell.textContent),
+    ).toEqual(["1", "Bedroom", "", "2"]);
+    expect(terrace?.textContent).toContain("Terrace");
+    // The type a feature had before is not shown any more.
+    expect(features.textContent).not.toContain("Outdoor");
+    expect(
+      within(features).queryByRole("button", { name: "Remove: Bedroom" }),
+    ).toBeNull();
+    expect(
+      within(features).getByRole("button", { name: "Remove: Terrace" }),
     ).toBeTruthy();
-    expect(list("Unit Types").textContent).toContain(
+    expect(features.textContent).toContain("A Unit feature is always a place");
+
+    const types = await openTab("Unit Types");
+    expect(
+      within(types).getByRole("button", { name: "Edit: Studio" }),
+    ).toBeTruthy();
+    expect(types.textContent).toContain(
       "Rename keeps every Unit of this type.",
     );
+    expect(list("Unit Types")).toBe(types);
   });
 
   it("TEST-FE-941 Add asks a name (and checks it is not in the list yet), a Floor asks its number; Edit renames; Remove asks first; the lists are read again", async () => {
     const api = show();
-    await screen.findByRole("region", { name: "Views" });
+    await openTab("Views");
     fireEvent.click(screen.getByRole("button", { name: "Add: View" }));
     let dialog = screen.getByRole("dialog", { name: "Add · View" });
     fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
@@ -209,6 +270,7 @@ describe("Settings: Unit setup", () => {
     });
     expect(api.setupLists).toHaveBeenCalledTimes(2);
 
+    await openTab("Floors");
     fireEvent.click(screen.getByRole("button", { name: "Add: Floor" }));
     dialog = screen.getByRole("dialog", { name: "Add · Floor" });
     fireEvent.change(within(dialog).getByLabelText("Floor number"), {
@@ -237,6 +299,7 @@ describe("Settings: Unit setup", () => {
       sort_order: 30,
     });
 
+    await openTab("Unit Types");
     fireEvent.click(screen.getByRole("button", { name: "Edit: One Bedroom" }));
     dialog = screen.getByRole("dialog", { name: "Edit · Unit Type" });
     fireEvent.change(within(dialog).getByLabelText(/Name in English/), {
@@ -249,16 +312,49 @@ describe("Settings: Unit setup", () => {
       name_km: null,
     });
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "Remove: Kitchenette" }),
-    );
-    dialog = screen.getByRole("dialog", { name: "Remove · Kitchenette" });
+    await openTab("Unit features");
+    fireEvent.click(screen.getByRole("button", { name: "Remove: Terrace" }));
+    dialog = screen.getByRole("dialog", { name: "Remove · Terrace" });
     expect(dialog.textContent).toContain(
-      "Remove Kitchenette? This cannot be undone. Records made before keep it.",
+      "Remove Terrace? This cannot be undone. Records made before keep it.",
     );
     fireEvent.click(within(dialog).getByRole("button", { name: "Remove" }));
-    expect(await screen.findByText("Kitchenette removed.")).toBeTruthy();
-    expect(api.removeSetupItem).toHaveBeenCalledWith(LISTS.lists.KITCHEN[0]);
+    expect(await screen.findByText("Terrace removed.")).toBeTruthy();
+    expect(api.removeSetupItem).toHaveBeenCalledWith(
+      LISTS.lists.UNIT_FEATURE[1],
+    );
+  });
+
+  it("TEST-FE-1124 a Unit feature is added and renamed with no Feature type (V1.1 rework part 1)", async () => {
+    const api = show();
+    await openTab("Unit features");
+    fireEvent.click(screen.getByRole("button", { name: "Add: Unit feature" }));
+    let dialog = screen.getByRole("dialog", { name: "Add · Unit feature" });
+    expect(within(dialog).queryByLabelText(/Feature type/)).toBeNull();
+    fireEvent.change(within(dialog).getByLabelText(/Name in English/), {
+      target: { value: "Cabinet" },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    await screen.findByText("Saved.");
+    expect(api.createSetupItem).toHaveBeenCalledWith("property-1", {
+      list_kind: "UNIT_FEATURE",
+      name_en: "Cabinet",
+      name_km: null,
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit: Terrace" }));
+    dialog = screen.getByRole("dialog", { name: "Edit · Unit feature" });
+    expect(within(dialog).queryByLabelText(/Feature type/)).toBeNull();
+    fireEvent.change(within(dialog).getByLabelText(/Name in English/), {
+      target: { value: "Pallet Racking" },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    await screen.findByText("Saved.");
+    // The type kept from before is not sent, so it stays as it was.
+    expect(api.updateSetupItem).toHaveBeenCalledWith(
+      LISTS.lists.UNIT_FEATURE[1],
+      { name_en: "Pallet Racking", name_km: null },
+    );
   });
 
   it("TEST-FE-942 a change refused because the list changed says so and reads again; without the right to change, the lists show with no buttons; a failed read offers Retry", async () => {
@@ -310,7 +406,10 @@ describe("Settings: Unit setup", () => {
 
     show(apiOf(() => Promise.resolve({ ...LISTS, can_manage: false })));
     await screen.findByRole("region", { name: "Floors" });
-    expect(screen.queryAllByRole("button")).toHaveLength(0);
+    // Only the four list tabs are buttons.
+    expect(screen.queryAllByRole("button")).toHaveLength(4);
+    await openTab("Unit features");
+    expect(screen.queryAllByRole("button")).toHaveLength(4);
     expect(
       screen.getByText(
         "You can read these lists. Only the Owner or a user the Owner allows can change them.",
@@ -341,7 +440,7 @@ describe("Settings: Unit setup", () => {
 
   it("TEST-FE-1006 a Unit Type with no move-out cleaning rate shows a No cleaning rate chip; when the rates cannot be read no chip shows", async () => {
     show(apiOf(), "en", cleaningOf(["ONE_BEDROOM"]));
-    const types = await screen.findByRole("region", { name: "Unit Types" });
+    const types = await openTab("Unit Types");
     const one = within(types).getByText("One Bedroom").closest("li");
     await within(one ?? types).findByText("No cleaning rate");
     const studio = within(types).getByText("Studio").closest("li");
@@ -350,7 +449,7 @@ describe("Settings: Unit setup", () => {
     const failing = cleaningOf(["ONE_BEDROOM"]);
     failing.read.mockImplementation(() => Promise.reject(new Error("down")));
     show(apiOf(), "en", failing);
-    const again = await screen.findByRole("region", { name: "Unit Types" });
+    const again = await openTab("Unit Types");
     expect(within(again).queryByText("No cleaning rate")).toBeNull();
   });
 });

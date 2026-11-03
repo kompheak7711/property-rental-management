@@ -1,7 +1,7 @@
 """General Ledger starter chart of accounts and the 2027 fiscal year (PR-GL-001; owner Q4).
 
-Revision ID: 20270408_258
-Revises: 20270407_257
+Revision ID: 20270412_262
+Revises: 20270411_261
 Create Date: 2026-11-02
 
 Owner approved the ledger database plan on 2026-11-02 21:08
@@ -20,7 +20,7 @@ current fiscal year, as the owner asked:
   database has no Property yet, so nothing is seeded until the function is called.
 
 Downgrade removes the function and the template only. Seeded accounts and the fiscal year
-stay (they are never deleted); migration 20270405_255's downgrade removes them with the
+stay (they are never deleted); migration 20270409_259's downgrade removes them with the
 ledger while no entry exists.
 """
 
@@ -28,8 +28,8 @@ from collections.abc import Sequence
 
 from alembic import op
 
-revision: str = "20270408_258"
-down_revision: str | None = "20270407_257"
+revision: str = "20270412_262"
+down_revision: str | None = "20270411_261"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
