@@ -30,6 +30,7 @@ class Connection:
         self.batches = batches
         self.asked: list[tuple[object, ...]] = []
         self.commits = 0
+        self.years_kept = 0
 
     def __enter__(self) -> Connection:
         return self
@@ -38,6 +39,9 @@ class Connection:
         return None
 
     def execute(self, sql: str, parameters: tuple[object, ...]) -> Result:
+        if "app.gl_keep_years_open" in sql:
+            self.years_kept += 1
+            return Result(None)
         assert "app.gl_post_app_records" in sql
         self.asked.append(parameters)
         batch = self.batches.pop(0)
@@ -64,7 +68,8 @@ def test_batches_run_until_one_posts_nothing_new_and_each_batch_commits(
     job, connection = job_with(monkeypatch, [(3, 0), (2, 1), (0, 1)], batch=3)
     assert job.run(until=date(2027, 1, 5)) == LedgerPostingResult(5, 1)
     assert [asked[2:] for asked in connection.asked] == [(date(2027, 1, 5), 3)] * 3
-    assert connection.commits == 3
+    # The year of today is kept open first, in its own commit.
+    assert (connection.years_kept, connection.commits) == (1, 4)
     # A short batch means nothing is left.
     job, connection = job_with(monkeypatch, [(2, 0)], batch=3)
     assert job.run(until=date(2027, 1, 5)) == LedgerPostingResult(2, 0)

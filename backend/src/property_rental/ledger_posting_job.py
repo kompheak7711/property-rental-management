@@ -2,7 +2,8 @@
 
 The billing worker runs this after the day's billing and late-payment charges, under its lock.
 Each batch calls `app.gl_post_app_records` with the money login and commits; a record posts once,
-by its posting key. A record that cannot post yet stays in "Needs check"
+by its posting key. Before the first batch the year that holds today is opened when it is new
+(phase 6 step 4). A record that cannot post yet stays in "Needs check"
 (`app.gl_posting_problems`) and is tried again on every pass.
 """
 
@@ -59,6 +60,11 @@ class LedgerPostingJob:
         needs_check = 0
         try:
             with psycopg.connect(self._url) as connection:
+                # The year that holds today stays open, so a new year's records have a month.
+                connection.execute(
+                    "SELECT app.gl_keep_years_open(%s,%s)", (self._property_id, self._actor_id)
+                )
+                connection.commit()
                 for _ in range(self._max_batches):
                     row = connection.execute(
                         "SELECT posted, needs_check FROM app.gl_post_app_records(%s,%s,%s,%s)",

@@ -69,7 +69,7 @@ ASSIGN = (
 class Books:
     """One Property with the ledger open this year and an Owner, a Manager and a Staff."""
 
-    def __init__(self, connection: Connection, property_id: UUID) -> None:
+    def __init__(self, connection: Connection, property_id: UUID, *, start: bool = True) -> None:
         self.connection = connection
         self.property_id = property_id
         ledger_rights = {
@@ -87,10 +87,11 @@ class Books:
             "WHERE id = %s",
             (property_id,),
         )
-        connection.execute(
-            "SELECT app.gl_start_ledger(%s, %s::smallint, %s)",
-            (property_id, self.today.year, self.owner),
-        )
+        if start:
+            connection.execute(
+                "SELECT app.gl_start_ledger(%s, %s::smallint, %s)",
+                (property_id, self.today.year, self.owner),
+            )
 
     def _person(self, account_class: str, rights: set[str]) -> UUID:
         actor = uuid4()

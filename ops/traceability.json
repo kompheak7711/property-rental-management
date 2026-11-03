@@ -59516,7 +59516,7 @@
       "test_level": "unit",
       "test_path": "backend/tests/test_ledger_posting_job.py",
       "status": "implemented",
-      "notes": "General Ledger phase 6 step 2 (owner plan 2026-11-03 06:56, L3 and L4): The job posts in committed batches until a batch posts nothing new or is short."
+      "notes": "General Ledger phase 6 step 2 (owner plan 2026-11-03 06:56, L3 and L4): The job posts in committed batches until a batch posts nothing new or is short; the year of today is kept open first, in its own commit (step 4)."
     },
     {
       "test_id": "test_the_pass_stops_after_its_bound_and_a_database_error_is_one_code",
@@ -59703,6 +59703,149 @@
       "test_path": "backend/tests/test_ledger_money_api.py",
       "status": "implemented",
       "notes": "General Ledger phase 6 step 3 (owner plan 2026-11-03 06:56; Manager approves to the limit 07:03): Staff see their own Expense requests, an approver or recorder sees all; expenses and supplier bills need ledger.read."
+    },
+    {
+      "test_id": "test_an_adjusting_entry_needs_another_approver_and_never_a_control_account",
+      "upstream_ids": [
+        "DB-GL-004",
+        "PR-GL-037",
+        "SEC-016"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_close_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 4 part 1 (owner plan 2026-11-03 06:56; asset rules 10:26): An adjusting entry has a reason and 2 to 500 balanced lines, never a control account; nobody approves their own; a refusal needs a note; a waiting entry is voided with a reason; the Owner's own entry posts at once with a note."
+    },
+    {
+      "test_id": "test_opening_balances_balance_and_are_fixed_once_posted",
+      "upstream_ids": [
+        "DB-GL-004",
+        "PR-GL-043"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_close_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 4 part 1 (owner plan 2026-11-03 06:56; asset rules 10:26): The Owner starts the ledger on 1 January of a year, types the accounts that are not control accounts, posts only a balanced opening entry, and the opening balances are fixed once posted."
+    },
+    {
+      "test_id": "test_the_app_works_out_the_control_accounts_from_its_lists",
+      "upstream_ids": [
+        "DB-GL-004",
+        "PR-GL-043",
+        "PR-GL-050"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_close_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 4 part 1 (owner plan 2026-11-03 06:56; asset rules 10:26): The opening entry carries each control account as the app's own list holds it (a Customer's $510 debt goes to 1100), so the Books check agrees from the first day."
+    },
+    {
+      "test_id": "test_the_books_check_has_eight_lines",
+      "upstream_ids": [
+        "DB-GL-004",
+        "PR-GL-050"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_close_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 4 part 1 (owner plan 2026-11-03 06:56; asset rules 10:26): The Books check has its eight lines: six control accounts against their app lists, every record posted and every entry balanced."
+    },
+    {
+      "test_id": "test_a_month_closes_in_order_after_its_last_day_when_every_check_is_green",
+      "upstream_ids": [
+        "DB-GL-004",
+        "PR-GL-050",
+        "PR-GL-051",
+        "SEC-016"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_close_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 4 part 1 (owner plan 2026-11-03 06:56; asset rules 10:26): Only the Owner closes; months close in order after their last day and only when every check is green (a red try is kept and answers closed false); a waiting adjusting entry or an uncounted cash account holds a month open; the year closes profit into 3900 and opens the next year."
+    },
+    {
+      "test_id": "test_the_year_of_today_is_kept_open",
+      "upstream_ids": [
+        "DB-GL-004"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_close_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 4 part 1 (owner plan 2026-11-03 06:56; asset rules 10:26): The year that holds today is opened once when the ledger has started, so new records always have a month."
+    },
+    {
+      "test_id": "test_asset_life_rules_are_seeded_for_the_owner_to_change",
+      "upstream_ids": [
+        "DB-GL-004",
+        "DB-BR-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_close_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 4 part 1 (owner plan 2026-11-03 06:56; asset rules 10:26): The asset life Business rules are seeded: Building 20 years, Furniture and appliances in Units 5 years, Office equipment 3 years (owner 2026-11-03 10:26)."
+    },
+    {
+      "test_id": "test_the_runtime_login_closes_only_through_the_checked_functions",
+      "upstream_ids": [
+        "DB-GL-004",
+        "SEC-016"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_close_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 4 part 1 (owner plan 2026-11-03 06:56; asset rules 10:26): The runtime login closes and starts the ledger only through the checked functions; the internal posting helper, the keep-years-open job function and the period table are refused to it."
+    },
+    {
+      "test_id": "test_the_migration_follows_money_records",
+      "upstream_ids": [
+        "DB-GL-004"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_close_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 4 part 1 (owner plan 2026-11-03 06:56; asset rules 10:26): Migration 20270417_267 follows 20270416_266."
+    },
+    {
+      "test_id": "test_the_close_api_flow_calls_each_function_and_reads_the_records",
+      "upstream_ids": [
+        "API-GL-003",
+        "DB-GL-004"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_close_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 4 part 1 (owner plan 2026-11-03 06:56; asset rules 10:26): The API flow calls each close function with the Property check and reads adjusting entries, the Books check, the months and a month's close checks."
+    },
+    {
+      "test_id": "test_each_close_change_needs_its_right_and_the_browser_checks",
+      "upstream_ids": [
+        "API-GL-003",
+        "SEC-016"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_ledger_close_api.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 4 part 1 (owner plan 2026-11-03 06:56; asset rules 10:26): Each close change needs its main right for the Property and the browser mutation checks; lines reach the database by account code; an approver may void an adjusting entry too."
+    },
+    {
+      "test_id": "test_bodies_are_strict_and_a_red_close_answers_with_its_checks",
+      "upstream_ids": [
+        "API-GL-003"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_ledger_close_api.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 4 part 1 (owner plan 2026-11-03 06:56; asset rules 10:26): Bodies are strict (two lines or more, one side each, 4-digit codes, ISO dates, no extra field); a red close answers 200 with closed false and its checks; refusals keep their meaning."
+    },
+    {
+      "test_id": "test_reads_need_the_ledger_right_and_are_not_cached",
+      "upstream_ids": [
+        "API-GL-003"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_ledger_close_api.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 4 part 1 (owner plan 2026-11-03 06:56; asset rules 10:26): Every close read needs ledger.read and is private, no-store."
     }
   ]
 }

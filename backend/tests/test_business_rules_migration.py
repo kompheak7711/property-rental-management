@@ -39,6 +39,10 @@ LEDGER_RULES = {
     "BUDGET_PCT": ("PERCENT", 1000),
     "BUDGET_MIN": ("USD_CENTS", 5000),
     "SUPPLIER_BILL_DAYS": ("DAYS", 30),
+    # Phase 6 step 4 (migration 20270417_267, owner 2026-11-03 10:26): years each kind lasts.
+    "ASSET_LIFE_1510": ("COUNT", 20),
+    "ASSET_LIFE_1520": ("COUNT", 5),
+    "ASSET_LIFE_1530": ("COUNT", 3),
 }
 
 
