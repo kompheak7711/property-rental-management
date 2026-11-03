@@ -138,8 +138,9 @@ def test_the_capability_catalog_names_every_capability_the_code_checks() -> None
     assert NON_CAPABILITY_LABELS <= found
     # The 68 capabilities the application checks today are all in the catalog (login sub-slice
     # L5: `service_rates.manage` and `utility_rates.manage` no longer open a route), with the
-    # three V1-057 report and export rights, and V1-061 `rent.below_default`.
-    assert len(found - NON_CAPABILITY_LABELS) == 71
+    # three V1-057 report and export rights, V1-061 `rent.below_default`, and the ledger
+    # posting routes' `ledger.read` and `ledger.accounts.manage` (General Ledger phase 6 step 2).
+    assert len(found - NON_CAPABILITY_LABELS) == 73
     # Review round 1: a capability constant added to the catalog module itself is a catalog name.
     assert dotted_constants(SOURCE / "access_control.py") - set(CAPABILITY_CATALOG) == set()
 

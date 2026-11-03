@@ -187,6 +187,12 @@ from property_rental.lease_signing_api import (
     UnavailableLeaseSigningFlow,
     create_lease_signing_router,
 )
+from property_rental.ledger_posting_api import (
+    LedgerPostingFlow,
+    PostgresLedgerPostingFlow,
+    UnavailableLedgerPostingFlow,
+    create_ledger_posting_router,
+)
 from property_rental.logging import create_application_logger
 from property_rental.move_out_api import (
     MoveOutFlow,
@@ -527,6 +533,7 @@ def create_app(
     customer_resource_flow: CustomerResourceFlow | None = None,
     configuration_flow: ConfigurationFlow | None = None,
     business_rule_flow: BusinessRuleFlow | None = None,
+    ledger_posting_flow: LedgerPostingFlow | None = None,
     exchange_rate_provider: ExchangeRateProvider | None = None,
     reservation_resource_flow: ReservationResourceFlow | None = None,
     lease_resource_flow: LeaseResourceFlow | None = None,
@@ -1165,6 +1172,18 @@ def create_app(
                 PostgresBusinessRuleFlow(resolved_settings.database_url.get_secret_value())
                 if resolved_settings.database_url is not None
                 else UnavailableBusinessRuleFlow()
+            ),
+            resolved_settings,
+        )
+    )
+    include_signed_in(
+        create_ledger_posting_router(
+            actor_resolver,
+            ledger_posting_flow
+            or (
+                PostgresLedgerPostingFlow(resolved_settings.database_url.get_secret_value())
+                if resolved_settings.database_url is not None
+                else UnavailableLedgerPostingFlow()
             ),
             resolved_settings,
         )

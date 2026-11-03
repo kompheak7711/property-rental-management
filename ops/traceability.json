@@ -59414,6 +59414,129 @@
       "test_path": "backend/tests/test_business_rules_api.py",
       "status": "implemented",
       "notes": "General Ledger phase 6 step 1 (owner 2026-11-03 06:56 and 07:03): A new rule answers 201 and is not used yet; a repeated code answers 409 and a bad code, unit or area 422."
+    },
+    {
+      "test_id": "test_an_invoice_payment_and_allocation_post_once_with_the_right_accounts",
+      "upstream_ids": [
+        "DB-GL-002",
+        "PR-GL-020",
+        "PR-GL-021"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_auto_posting_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 2 (owner plan 2026-11-03 06:56, L3 and L4): An issued Invoice posts DR 1100 and CR 4010 Rent and 4020 Services; a Payment posts DR its method's cash account and CR 2210; an allocation and its reversal move 2210 and 1100; a second run posts nothing again."
+    },
+    {
+      "test_id": "test_a_method_without_an_account_waits_in_needs_check_until_it_is_set",
+      "upstream_ids": [
+        "DB-GL-002",
+        "PR-GL-021"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_auto_posting_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 2 (owner plan 2026-11-03 06:56, L3 and L4): A Payment whose method has no ledger account waits in Needs check with the reason, and posts by itself after the Owner sets the account (audited)."
+    },
+    {
+      "test_id": "test_a_record_in_a_closed_month_posts_in_the_first_open_month_with_a_note",
+      "upstream_ids": [
+        "DB-GL-002",
+        "PR-GL-020"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_auto_posting_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 2 (owner plan 2026-11-03 06:56, L3 and L4): L4: records dated in a closed month post on the first day of the first open month, with a note."
+    },
+    {
+      "test_id": "test_credit_refund_and_deposit_receipts_move_money_not_used_yet",
+      "upstream_ids": [
+        "DB-GL-002",
+        "PR-GL-022",
+        "PR-GL-023"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_auto_posting_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 2 (owner plan 2026-11-03 06:56, L3 and L4): Customer Credit (DR 2210, CR 2200), a Refund from a Payment (DR 2210, CR the Refund method's account, Needs check until set), Pet Deposit receipts (DR 2210, CR 2110) and a receipt reversal post with the right accounts."
+    },
+    {
+      "test_id": "test_rent_billed_for_a_later_month_waits_in_rent_billed_in_advance",
+      "upstream_ids": [
+        "DB-GL-002",
+        "PR-GL-020"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_auto_posting_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 2 (owner plan 2026-11-03 06:56, L3 and L4): Rent of a month that starts after the billing month goes to 2050 Rent billed in advance; otherwise to 4010."
+    },
+    {
+      "test_id": "test_only_the_financial_role_posts_and_methods_go_to_cash_accounts",
+      "upstream_ids": [
+        "DB-GL-002",
+        "SEC-001",
+        "SEC-016"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_auto_posting_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 2 (owner plan 2026-11-03 06:56, L3 and L4): Only the money login runs the posting; the runtime reads Needs check; a method goes to one active cash or bank account; the job posts nothing before the ledger starts."
+    },
+    {
+      "test_id": "test_needs_check_and_method_accounts_need_ledger_read",
+      "upstream_ids": [
+        "API-GL-001",
+        "SEC-001"
+      ],
+      "test_level": "API",
+      "test_path": "backend/tests/test_ledger_posting_api.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 2 (owner plan 2026-11-03 06:56, L3 and L4): Needs check and the method accounts need ledger.read for the Property and are not cached."
+    },
+    {
+      "test_id": "test_only_ledger_accounts_manage_sets_a_method_account",
+      "upstream_ids": [
+        "API-GL-001",
+        "SEC-001",
+        "SEC-016"
+      ],
+      "test_level": "API",
+      "test_path": "backend/tests/test_ledger_posting_api.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 2 (owner plan 2026-11-03 06:56, L3 and L4): Only ledger.accounts.manage (Owner) with the browser checks sets a method's account; refusals map to 404 and 422."
+    },
+    {
+      "test_id": "test_batches_run_until_one_posts_nothing_new_and_each_batch_commits",
+      "upstream_ids": [
+        "DB-GL-002",
+        "PR-GL-020"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_ledger_posting_job.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 2 (owner plan 2026-11-03 06:56, L3 and L4): The job posts in committed batches until a batch posts nothing new or is short."
+    },
+    {
+      "test_id": "test_the_pass_stops_after_its_bound_and_a_database_error_is_one_code",
+      "upstream_ids": [
+        "DB-GL-002"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_ledger_posting_job.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 2 (owner plan 2026-11-03 06:56, L3 and L4): The job stops after its bound of batches; a database error becomes one SQLSTATE code; bad bounds are refused."
+    },
+    {
+      "test_id": "test_the_worker_loop_reports_the_ledger_pass_and_fails_only_when_it_cannot_run",
+      "upstream_ids": [
+        "DB-GL-002"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_ledger_posting_job.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 2 (owner plan 2026-11-03 06:56, L3 and L4): The billing worker loop prints posted and Needs check counts; Needs check is not a failure, a failed pass is."
     }
   ]
 }
