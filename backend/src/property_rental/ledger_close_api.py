@@ -1,17 +1,24 @@
-"""General Ledger close API (phase 6 step 4, part 1).
+"""General Ledger close API (phase 6 step 4, parts 1 and 2).
 
 Owner decisions: the round 22 screens of DESIGN.md (Adjusting entries, Opening balances,
-Month-end close, Year-end close), gap G2 (the Books check) and the phase 6 plan L3.
+Month-end close, Year-end close, Fixed assets, Bank matching, Budgets), gaps G2 (the Books check)
+and G7 (riel at month end), the phase 6 plan L3, and the owner's answers of 03/11/2026 10:26
+(equipment years as Business rules, changeable per item).
 
-Every change goes through one checked database function (migration `20270417_267`), which checks
-the actor's right for the Property again. The route checks the main right first.
+Every change goes through one checked database function (migrations `20270417_267` and
+`20270418_268`), which checks the actor's right for the Property again. The route checks the
+main right first.
 
 Reads (`ledger.read`, `private, no-store`): adjusting entries, the opening balances with the
-entry they would post, the Books check, the months, and one month's close checks.
+entry they would post, the Books check, the months, one month's close checks, the fixed assets
+with their value now, a bank account's lines not yet matched up to a month, the bank matches,
+and the budgets.
 
 Changes (browser mutation checks): prepare, approve or refuse, and void an adjusting entry;
-start the ledger, type the opening balances and post them; close a month; close a year. A month
-whose checks are not all green answers `closed: false` with the checks, and the try is kept.
+start the ledger, type the opening balances and post them; run a month's month-end work; close a
+month; close a year. A month whose checks are not all green answers `closed: false` with the
+checks, and the try is kept. Change one item's years; mark a month's bank lines as matched to
+the statement; send a budget, and approve it or send it back with a reason.
 """
 
 from __future__ import annotations
@@ -21,7 +28,7 @@ from typing import Annotated, Any, Protocol
 from uuid import UUID, uuid4
 
 import psycopg
-from fastapi import APIRouter, HTTPException, Request, Response, status
+from fastapi import APIRouter, HTTPException, Path, Request, Response, status
 from psycopg.types.json import Jsonb
 from pydantic import Field, model_validator
 
@@ -50,6 +57,10 @@ PREPARE = "ledger.adjustments.prepare"
 APPROVE = "ledger.adjustments.approve"
 OPENING = "ledger.opening_balances"
 CLOSE = "ledger.close"
+FIXED_ASSETS = "ledger.fixed_assets"
+RECONCILE = "ledger.reconcile"
+BUDGET_PREPARE = "ledger.budgets.prepare"
+BUDGET_APPROVE = "ledger.budgets.approve"
 
 LineCents = Annotated[int, Field(ge=0, le=9 * 10**15)]
 
@@ -117,12 +128,61 @@ class NoBody(Body):
     pass
 
 
+class AssetLifeBody(Body):
+    years: Annotated[int, Field(ge=1, le=100)]
+    reason: Words
+
+
+class BankLine(Body):
+    line_id: Id
+    statement_date: IsoDate | None = None
+    reference: Annotated[str, Field(max_length=100)] | None = None
+
+    def as_json(self) -> dict[str, Any]:
+        return {
+            "line_id": str(self.line_id),
+            "statement_date": None
+            if self.statement_date is None
+            else self.statement_date.isoformat(),
+            "reference": self.reference,
+        }
+
+
+class BankMatchBody(Body):
+    account_code: Code
+    period_id: Id
+    statement_balance_cents: Annotated[int, Field(ge=-(9 * 10**15), le=9 * 10**15)]
+    lines: Annotated[list[BankLine], Field(max_length=5000)]
+
+
+class BudgetLine(Body):
+    account_code: Code
+    month_no: Annotated[int, Field(ge=1, le=12)]
+    amount_cents: Annotated[int, Field(ge=0, le=10**13)]
+
+    def as_json(self) -> dict[str, Any]:
+        return {
+            "account": self.account_code,
+            "month_no": self.month_no,
+            "amount_cents": self.amount_cents,
+        }
+
+
+class BudgetBody(Body):
+    fiscal_year: Annotated[int, Field(ge=2000, le=2100)]
+    lines: Annotated[list[BudgetLine], Field(min_length=1, max_length=5000)]
+    own_note: Note | None = None
+
+
 @dataclass(frozen=True, slots=True)
 class Action:
     function: str
     target: str | None
     fields: tuple[str, ...]
-    year_field: str | None = None
+    smallint_field: str | None = None
+
+
+JSON_FIELDS = frozenset({"lines", "items"})
 
 
 ACTIONS: dict[str, Action] = {
@@ -133,11 +193,25 @@ ACTIONS: dict[str, Action] = {
         "gl_decide_adjusting_entry", "gl_adjusting_entries", ("approve", "note")
     ),
     "void_adjustment": Action("gl_void_adjusting_entry", "gl_adjusting_entries", ("reason",)),
-    "begin_ledger": Action("gl_begin_ledger", None, ("first_year",), year_field="first_year"),
+    "begin_ledger": Action("gl_begin_ledger", None, ("first_year",), smallint_field="first_year"),
     "set_opening_lines": Action("gl_set_opening_lines", None, ("lines",)),
     "post_opening": Action("gl_post_opening_balances", None, ()),
     "close_month": Action("gl_close_month", "gl_periods", ()),
     "close_year": Action("gl_close_fiscal_year", "gl_fiscal_years", ()),
+    "run_month_end": Action("gl_run_month_end", "gl_periods", ()),
+    "change_asset_life": Action(
+        "gl_change_asset_life", "gl_fixed_assets", ("years", "reason"), smallint_field="years"
+    ),
+    "match_bank": Action(
+        "gl_match_bank", None, ("account_code", "period_id", "statement_cents", "items")
+    ),
+    "prepare_budget": Action(
+        "gl_prepare_budget",
+        None,
+        ("fiscal_year", "lines", "own_note"),
+        smallint_field="fiscal_year",
+    ),
+    "decide_budget": Action("gl_decide_budget", "gl_budgets", ("approve", "note")),
 }
 
 
@@ -152,7 +226,11 @@ class LedgerCloseFlow(Protocol):
     ) -> Any: ...
 
     def rows(
-        self, view: str, property_id: UUID, target_id: UUID | None = None
+        self,
+        view: str,
+        property_id: UUID,
+        target_id: UUID | None = None,
+        extra: dict[str, Any] | None = None,
     ) -> tuple[dict[str, Any], ...]: ...
 
 
@@ -216,6 +294,53 @@ VIEWS = {
         CROSS JOIN LATERAL app.gl_month_close_checks(period.id) AS item
         WHERE period.id = %(target)s AND period.property_id = %(prop)s
     """,
+    "fixed-assets": """
+        SELECT asset.*,
+            (SELECT json_agg(json_build_object('useful_life_years', change.useful_life_years,
+                    'starts_on', change.starts_on, 'value_cents', change.value_cents,
+                    'months_left', change.months_left, 'reason', change.reason,
+                    'created_by', change.created_by, 'created_at', change.created_at)
+                    ORDER BY change.created_at)
+             FROM app.gl_fixed_asset_life_changes AS change
+             WHERE change.fixed_asset_id = asset.id) AS life_changes
+        FROM app.gl_asset_values(%(prop)s) AS asset
+        ORDER BY asset.asset_number
+    """,
+    "bank-lines": """
+        SELECT line.*
+        FROM app.gl_periods AS period
+        CROSS JOIN LATERAL app.gl_bank_lines(%(prop)s, %(account)s, period.id) AS line
+        WHERE period.id = %(target)s AND period.property_id = %(prop)s
+    """,
+    "bank-matches": """
+        SELECT match.id, account.code AS account_code, match.period_id, period.ends_on,
+            match.statement_balance_cents, match.status, match.created_by, match.created_at,
+            match.matched_by, match.matched_at,
+            (SELECT count(*) FROM app.gl_bank_reconciliation_items AS item
+             WHERE item.reconciliation_id = match.id) AS lines
+        FROM app.gl_bank_reconciliations AS match
+        JOIN app.gl_accounts AS account ON account.id = match.account_id
+        JOIN app.gl_periods AS period ON period.id = match.period_id
+        WHERE match.property_id = %(prop)s
+        ORDER BY period.ends_on DESC, account.code
+        LIMIT 500
+    """,
+    "budgets": """
+        SELECT budget.id, year.fiscal_year, budget.version, budget.status, budget.created_by,
+            budget.created_at, budget.approved_by, budget.approved_at, budget.decision_note,
+            budget.own_budget_note,
+            (SELECT json_agg(json_build_object('account_code', account.code,
+                    'account_name', account.name_en, 'month_no', line.month_no,
+                    'amount_cents', line.amount_cents) ORDER BY account.code, line.month_no)
+             FROM app.gl_budget_lines AS line
+             JOIN app.gl_accounts AS account ON account.id = line.account_id
+             WHERE line.budget_id = budget.id) AS lines
+        FROM app.gl_budgets AS budget
+        JOIN app.gl_fiscal_years AS year ON year.id = budget.fiscal_year_id
+        WHERE budget.property_id = %(prop)s
+        ORDER BY year.fiscal_year DESC, budget.version DESC
+        LIMIT 200
+    """,
 }
 
 
@@ -243,12 +368,12 @@ class PostgresLedgerCloseFlow:
         arguments: list[Any] = []
         for name in step.fields:
             value = values.get(name)
-            if name == "lines":
+            if name in JSON_FIELDS:
                 value = Jsonb(value)
             arguments.append(value)
         marks = ["%s"] * (len(arguments) + 3)
-        if step.year_field is not None:
-            marks[2 + step.fields.index(step.year_field)] = "%s::smallint"
+        if step.smallint_field is not None:
+            marks[2 + step.fields.index(step.smallint_field)] = "%s::smallint"
         try:
             with psycopg.connect(self._database_url) as connection:
                 self._property(connection, property_id)
@@ -271,12 +396,18 @@ class PostgresLedgerCloseFlow:
         return None if row is None else row[0]
 
     def rows(
-        self, view: str, property_id: UUID, target_id: UUID | None = None
+        self,
+        view: str,
+        property_id: UUID,
+        target_id: UUID | None = None,
+        extra: dict[str, Any] | None = None,
     ) -> tuple[dict[str, Any], ...]:
         try:
             with psycopg.connect(self._database_url) as connection:
                 self._property(connection, property_id)
-                cursor = connection.execute(VIEWS[view], {"prop": property_id, "target": target_id})
+                cursor = connection.execute(
+                    VIEWS[view], {**(extra or {}), "prop": property_id, "target": target_id}
+                )
                 names = [column.name for column in cursor.description or ()]
                 return tuple(
                     {name: _json(value) for name, value in zip(names, row, strict=True)}
@@ -319,11 +450,12 @@ def create_ledger_close_router(
         property_id: UUID,
         view: str,
         target_id: UUID | None = None,
+        extra: dict[str, Any] | None = None,
     ) -> dict[str, object]:
         _require(request, resolver, LEDGER_READ, property_id)
         response.headers["Cache-Control"] = "private, no-store"
         try:
-            rows = flow.rows(view, property_id, target_id)
+            rows = flow.rows(view, property_id, target_id, extra)
         except FLOW_ERRORS as exc:
             raise _http(exc) from exc
         return {
@@ -429,5 +561,81 @@ def create_ledger_close_router(
         del body
         entry = change(request, property_id, (CLOSE,), "close_year", {}, year_id)
         return answer(request, {"entry_id": None if entry is None else str(entry)})
+
+    @router.post("/periods/{period_id}/month-end")
+    def run_month_end(
+        property_id: UUID, period_id: UUID, body: NoBody, request: Request
+    ) -> dict[str, object]:
+        # The month's depreciation and riel valuation; what is missing is refused with words.
+        del body
+        result = change(request, property_id, (CLOSE,), "run_month_end", {}, period_id)
+        return answer(request, result)
+
+    @router.get("/fixed-assets")
+    def list_fixed_assets(
+        property_id: UUID, request: Request, response: Response
+    ) -> dict[str, object]:
+        return read(request, response, property_id, "fixed-assets")
+
+    @router.post("/fixed-assets/{asset_id}/life", status_code=status.HTTP_201_CREATED)
+    def change_asset_life(
+        property_id: UUID, asset_id: UUID, body: AssetLifeBody, request: Request
+    ) -> dict[str, object]:
+        made = change(
+            request, property_id, (FIXED_ASSETS,), "change_asset_life", body.model_dump(), asset_id
+        )
+        return answer(request, {"id": str(made)})
+
+    @router.get("/periods/{period_id}/bank-lines/{account_code}")
+    def bank_lines(
+        property_id: UUID,
+        period_id: UUID,
+        account_code: Annotated[str, Path(pattern=r"^[0-9]{4}$")],
+        request: Request,
+        response: Response,
+    ) -> dict[str, object]:
+        return read(
+            request, response, property_id, "bank-lines", period_id, {"account": account_code}
+        )
+
+    @router.get("/bank-matches")
+    def list_bank_matches(
+        property_id: UUID, request: Request, response: Response
+    ) -> dict[str, object]:
+        return read(request, response, property_id, "bank-matches")
+
+    @router.post("/bank-matches", status_code=status.HTTP_201_CREATED)
+    def match_bank(property_id: UUID, body: BankMatchBody, request: Request) -> dict[str, object]:
+        values = {
+            "account_code": body.account_code,
+            "period_id": body.period_id,
+            "statement_cents": body.statement_balance_cents,
+            "items": [line.as_json() for line in body.lines],
+        }
+        made = change(request, property_id, (RECONCILE,), "match_bank", values)
+        return answer(request, {"id": str(made)})
+
+    @router.get("/budgets")
+    def list_budgets(property_id: UUID, request: Request, response: Response) -> dict[str, object]:
+        return read(request, response, property_id, "budgets")
+
+    @router.post("/budgets", status_code=status.HTTP_201_CREATED)
+    def prepare_budget(property_id: UUID, body: BudgetBody, request: Request) -> dict[str, object]:
+        values = {
+            "fiscal_year": body.fiscal_year,
+            "lines": [line.as_json() for line in body.lines],
+            "own_note": body.own_note,
+        }
+        made = change(request, property_id, (BUDGET_PREPARE,), "prepare_budget", values)
+        return answer(request, {"id": str(made)})
+
+    @router.post("/budgets/{budget_id}/decision")
+    def decide_budget(
+        property_id: UUID, budget_id: UUID, body: DecisionBody, request: Request
+    ) -> dict[str, object]:
+        change(
+            request, property_id, (BUDGET_APPROVE,), "decide_budget", body.model_dump(), budget_id
+        )
+        return answer(request, {"id": str(budget_id)})
 
     return router

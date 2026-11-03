@@ -357,6 +357,7 @@ database_test_suites='
   tests/test_gl_auto_posting_migration.py
   tests/test_gl_money_records_migration.py
   tests/test_gl_close_migration.py
+  tests/test_gl_assets_migration.py
 '
 
 for database_test_file in $database_test_suites; do

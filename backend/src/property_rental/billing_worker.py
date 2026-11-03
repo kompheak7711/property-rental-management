@@ -293,7 +293,11 @@ def run_bounded_loop(
         if result.ledger_posting is not None:
             # A record in "Needs check" waits for the Owner; it is not a failed pass.
             ledger = result.ledger_posting
-            print(f"ledger:posted={ledger.posted},needs_check={ledger.needs_check}", flush=True)
+            print(
+                f"ledger:posted={ledger.posted},needs_check={ledger.needs_check},"
+                f"month_end={ledger.month_end_done}",
+                flush=True,
+            )
         if iteration + 1 < max_iterations:
             sleep(poll_interval_seconds)
     return all_succeeded

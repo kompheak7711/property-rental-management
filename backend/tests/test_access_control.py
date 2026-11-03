@@ -143,8 +143,9 @@ def test_the_capability_catalog_names_every_capability_the_code_checks() -> None
     # and the 8 rights of the money record routes (step 3: `expenses.request`, `.approve`,
     # `.record`, `supplier_bills.pay`, `ledger.money_move`, `.owner_money`, `.petty_cash`,
     # `.cash_count`), and the 4 rights of the close routes (step 4: `ledger.adjustments.prepare`,
-    # `.adjustments.approve`, `.opening_balances`, `.close`).
-    assert len(found - NON_CAPABILITY_LABELS) == 85
+    # `.adjustments.approve`, `.opening_balances`, `.close`), and the 4 rights of the step 4
+    # part 2 routes (`ledger.fixed_assets`, `.reconcile`, `.budgets.prepare`, `.budgets.approve`).
+    assert len(found - NON_CAPABILITY_LABELS) == 89
     # Review round 1: a capability constant added to the catalog module itself is a catalog name.
     assert dotted_constants(SOURCE / "access_control.py") - set(CAPABILITY_CATALOG) == set()
 

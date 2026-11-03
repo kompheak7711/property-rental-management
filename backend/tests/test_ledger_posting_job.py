@@ -31,6 +31,7 @@ class Connection:
         self.asked: list[tuple[object, ...]] = []
         self.commits = 0
         self.years_kept = 0
+        self.month_ends = 0
 
     def __enter__(self) -> Connection:
         return self
@@ -42,6 +43,9 @@ class Connection:
         if "app.gl_keep_years_open" in sql:
             self.years_kept += 1
             return Result(None)
+        if "app.gl_month_end_work" in sql:
+            self.month_ends += 1
+            return Result((2, 0))
         assert "app.gl_post_app_records" in sql
         self.asked.append(parameters)
         batch = self.batches.pop(0)
@@ -66,13 +70,14 @@ def test_batches_run_until_one_posts_nothing_new_and_each_batch_commits(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     job, connection = job_with(monkeypatch, [(3, 0), (2, 1), (0, 1)], batch=3)
-    assert job.run(until=date(2027, 1, 5)) == LedgerPostingResult(5, 1)
+    assert job.run(until=date(2027, 1, 5)) == LedgerPostingResult(5, 1, 2)
     assert [asked[2:] for asked in connection.asked] == [(date(2027, 1, 5), 3)] * 3
-    # The year of today is kept open first, in its own commit.
-    assert (connection.years_kept, connection.commits) == (1, 4)
+    # The year of today is kept open first and the month-end work runs last, each in its own
+    # commit.
+    assert (connection.years_kept, connection.month_ends, connection.commits) == (1, 1, 5)
     # A short batch means nothing is left.
     job, connection = job_with(monkeypatch, [(2, 0)], batch=3)
-    assert job.run(until=date(2027, 1, 5)) == LedgerPostingResult(2, 0)
+    assert job.run(until=date(2027, 1, 5)) == LedgerPostingResult(2, 0, 2)
     assert len(connection.asked) == 1
 
 
@@ -80,7 +85,7 @@ def test_the_pass_stops_after_its_bound_and_a_database_error_is_one_code(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     job, connection = job_with(monkeypatch, [(1, 0)] * 5, batch=1, max_batches=2)
-    assert job.run(until=date(2027, 1, 5)) == LedgerPostingResult(2, 0)
+    assert job.run(until=date(2027, 1, 5)) == LedgerPostingResult(2, 0, 2)
     assert len(connection.asked) == 2
     job, _ = job_with(monkeypatch, [psycopg.errors.InsufficientPrivilege("denied")])
     with pytest.raises(LedgerPostingError, match="42501"):
@@ -111,7 +116,7 @@ def test_the_worker_loop_reports_the_ledger_pass_and_fails_only_when_it_cannot_r
     captured = capsys.readouterr()
     assert captured.out.splitlines() == [
         "succeeded:0",
-        "ledger:posted=4,needs_check=2",
+        "ledger:posted=4,needs_check=2,month_end=0",
         "succeeded:0",
     ]
     assert captured.err == "ledger:error:42501\n"

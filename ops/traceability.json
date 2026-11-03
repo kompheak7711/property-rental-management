@@ -59846,6 +59846,129 @@
       "test_path": "backend/tests/test_ledger_close_api.py",
       "status": "implemented",
       "notes": "General Ledger phase 6 step 4 part 1 (owner plan 2026-11-03 06:56; asset rules 10:26): Every close read needs ledger.read and is private, no-store."
+    },
+    {
+      "test_id": "test_a_purchase_from_the_asset_limit_is_equipment_and_below_it_an_expense",
+      "upstream_ids": [
+        "DB-GL-005"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_assets_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 4 part 2 (owner 2026-11-03 10:26): A purchase under the Asset limit is refused as equipment (recorded or requested); cash, control and contra accounts never take spending, 1200 does; each equipment expense adds its item with years from the Business rules (Land none) and depreciation from the next month."
+    },
+    {
+      "test_id": "test_depreciation_is_the_same_each_month_and_the_last_month_takes_the_cents_left",
+      "upstream_ids": [
+        "DB-GL-005"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_assets_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 4 part 2 (owner 2026-11-03 10:26): Straight-line depreciation is the same each month, the last month takes the cents left and the value ends at $0; one DR 6140 / CR 1590 entry a month; Land is never depreciated; the close check turns green; the posting job does every ended month once."
+    },
+    {
+      "test_id": "test_an_item_years_change_spreads_the_value_left_over_the_months_left",
+      "upstream_ids": [
+        "DB-GL-005"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_assets_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 4 part 2 (owner 2026-11-03 10:26): One item's years change needs the fixed assets right and a reason; from the month after the last depreciation the value left is spread over the months left; the change is kept; an item with depreciation posted cannot be voided."
+    },
+    {
+      "test_id": "test_voiding_an_equipment_expense_before_depreciation_voids_the_item",
+      "upstream_ids": [
+        "DB-GL-005"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_assets_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 4 part 2 (owner 2026-11-03 10:26): Voiding an equipment expense before any depreciation voids its item; Land has no years to change."
+    },
+    {
+      "test_id": "test_riel_cash_is_valued_at_the_month_end_rate",
+      "upstream_ids": [
+        "DB-GL-005"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_assets_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 4 part 2 (owner 2026-11-03 10:26): Riel cash is valued at the system rate in force at month end from the month's riel count and the riel moved after it; the difference goes to 4100; a month without its riel count is left by the job and refused with words at Month-end close."
+    },
+    {
+      "test_id": "test_the_bank_is_matched_month_by_month_to_the_statement",
+      "upstream_ids": [
+        "DB-GL-005"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_assets_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 4 part 2 (owner 2026-11-03 10:26): Bank matching needs the reconcile right, a bank account and earlier months matched first; the marked lines must equal the statement; a line is on one statement only; matched lines leave the list and the close check turns green."
+    },
+    {
+      "test_id": "test_a_budget_is_prepared_and_the_owner_approves_it",
+      "upstream_ids": [
+        "DB-GL-005"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_assets_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 4 part 2 (owner 2026-11-03 10:26): A budget has 1 to 5000 income, cost or expense lines by month; the Owner's own is approved at once with a note; another's waits, one at a time, and is approved or sent back with a reason; an approved budget is replaced by the next and keeps its approver."
+    },
+    {
+      "test_id": "test_the_runtime_login_runs_month_end_only_through_the_checked_functions",
+      "upstream_ids": [
+        "DB-GL-005",
+        "SEC-016"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_assets_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 4 part 2 (owner 2026-11-03 10:26): The runtime login reaches month-end work, years changes, bank matching and budgets only through the checked functions; the job's month-end work, the depreciation and riel helpers and the life change table are refused to it."
+    },
+    {
+      "test_id": "test_the_migration_follows_the_close",
+      "upstream_ids": [
+        "DB-GL-005"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_assets_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 4 part 2 (owner 2026-11-03 10:26): Migration 20270418_268 follows 20270417_267."
+    },
+    {
+      "test_id": "test_the_api_flow_runs_month_end_matches_the_bank_and_sends_budgets",
+      "upstream_ids": [
+        "API-GL-004",
+        "DB-GL-005"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_assets_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 4 part 2 (owner 2026-11-03 10:26): The API flow runs a month's month-end work, lists and changes fixed assets, lists and matches bank lines, and sends and approves a budget through the checked functions."
+    },
+    {
+      "test_id": "test_part_two_changes_need_their_right_and_reach_the_database_in_its_shape",
+      "upstream_ids": [
+        "API-GL-004",
+        "SEC-016"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_ledger_close_api.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 4 part 2 (owner 2026-11-03 10:26): Each part 2 change needs its main right and the browser mutation checks; bodies are strict (years 1 to 100 with a reason, budget months 1 to 12, amounts 0 or more, 4-digit codes, line ids) and reach the database in its shape."
+    },
+    {
+      "test_id": "test_part_two_reads_need_the_ledger_right",
+      "upstream_ids": [
+        "API-GL-004"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_ledger_close_api.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 4 part 2 (owner 2026-11-03 10:26): Fixed assets, bank lines, bank matches and budgets need ledger.read and are private, no-store; a bank line read names a 4-digit account."
     }
   ]
 }

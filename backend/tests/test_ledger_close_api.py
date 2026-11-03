@@ -62,10 +62,20 @@ class InMemoryClose:
         return self.answer if self.answer is not None else uuid4()
 
     def rows(
-        self, view: str, property_id: UUID, target_id: UUID | None = None
+        self,
+        view: str,
+        property_id: UUID,
+        target_id: UUID | None = None,
+        extra: dict[str, Any] | None = None,
     ) -> tuple[dict[str, Any], ...]:
         assert property_id == self.property_id
-        return ({"view": view, "target": None if target_id is None else str(target_id)},)
+        return (
+            {
+                "view": view,
+                "target": None if target_id is None else str(target_id),
+                **(extra or {}),
+            },
+        )
 
 
 def client(flow: InMemoryClose, *capabilities: str) -> TestClient:
@@ -200,3 +210,91 @@ def test_reads_need_the_ledger_right_and_are_not_cached() -> None:
     assert reader.get(f"{base}/periods/{period}/close-checks").json()["data"][0]["target"] == str(
         period
     )
+
+
+def test_part_two_changes_need_their_right_and_reach_the_database_in_its_shape() -> None:
+    flow = InMemoryClose()
+    base = f"/api/v1/properties/{flow.property_id}/ledger"
+    target, month, line = uuid4(), uuid4(), uuid4()
+    rent: dict[str, Any] = {"account_code": "4010", "month_no": 1, "amount_cents": 300_000}
+    budget = {"fiscal_year": 2027, "lines": [rent], "own_note": "My plan"}
+    match = {
+        "account_code": "1020",
+        "period_id": str(month),
+        "statement_balance_cents": -2_500,
+        "lines": [{"line_id": str(line), "statement_date": "2027-01-31", "reference": "ABA 7"}],
+    }
+    for method, path, right, body in (
+        ("post", f"/periods/{target}/month-end", "ledger.close", {}),
+        (
+            "post",
+            f"/fixed-assets/{target}/life",
+            "ledger.fixed_assets",
+            {"years": 8, "reason": "Wears out fast"},
+        ),
+        ("post", "/bank-matches", "ledger.reconcile", match),
+        ("post", "/budgets", "ledger.budgets.prepare", budget),
+        (
+            "post",
+            f"/budgets/{target}/decision",
+            "ledger.budgets.approve",
+            {"approve": False, "note": "Repairs look low"},
+        ),
+    ):
+        reader = client(flow, "ledger.read")
+        assert reader.request(method, base + path, json=body, headers=HEADERS).status_code == 403
+        holder = client(flow, right)
+        assert holder.request(method, base + path, json=body).status_code == 403
+        answer = holder.request(method, base + path, json=body, headers=HEADERS)
+        assert answer.status_code in (200, 201), (path, answer.text)
+    assert [write[0] for write in flow.writes] == [
+        "run_month_end",
+        "change_asset_life",
+        "match_bank",
+        "prepare_budget",
+        "decide_budget",
+    ]
+    assert flow.writes[1][1:] == ({"years": 8, "reason": "Wears out fast"}, target)
+    assert flow.writes[2][1] == {
+        "account_code": "1020",
+        "period_id": month,
+        "statement_cents": -2_500,
+        "items": [{"line_id": str(line), "statement_date": "2027-01-31", "reference": "ABA 7"}],
+    }
+    assert flow.writes[3][1] == {
+        "fiscal_year": 2027,
+        "lines": [{"account": "4010", "month_no": 1, "amount_cents": 300_000}],
+        "own_note": "My plan",
+    }
+    owner = client(flow, "ledger.fixed_assets", "ledger.budgets.prepare", "ledger.reconcile")
+    for path, bad in (
+        (f"/fixed-assets/{target}/life", {"years": 0, "reason": "x"}),
+        (f"/fixed-assets/{target}/life", {"years": 101, "reason": "x"}),
+        (f"/fixed-assets/{target}/life", {"years": 5, "reason": ""}),
+        ("/budgets", {**budget, "lines": []}),
+        ("/budgets", {**budget, "lines": [{**rent, "month_no": 13}]}),
+        ("/budgets", {**budget, "lines": [{**rent, "amount_cents": -1}]}),
+        ("/bank-matches", {**match, "account_code": "BANK"}),
+        ("/bank-matches", {**match, "lines": [{"line_id": "x"}]}),
+    ):
+        assert owner.post(base + path, json=bad, headers=HEADERS).status_code == 422, (path, bad)
+
+
+def test_part_two_reads_need_the_ledger_right() -> None:
+    flow = InMemoryClose()
+    base = f"/api/v1/properties/{flow.property_id}/ledger"
+    month = uuid4()
+    reader = client(flow, "ledger.read")
+    for path, view in (
+        ("/fixed-assets", "fixed-assets"),
+        ("/bank-matches", "bank-matches"),
+        ("/budgets", "budgets"),
+        (f"/periods/{month}/bank-lines/1020", "bank-lines"),
+    ):
+        answer = reader.get(base + path)
+        assert answer.status_code == 200 and answer.headers["Cache-Control"] == "private, no-store"
+        assert answer.json()["data"][0]["view"] == view
+        assert client(flow, "expenses.request").get(base + path).status_code == 403
+    lines = reader.get(f"{base}/periods/{month}/bank-lines/1020").json()["data"][0]
+    assert (lines["target"], lines["account"]) == (str(month), "1020")
+    assert reader.get(f"{base}/periods/{month}/bank-lines/10x0").status_code == 422
