@@ -31,29 +31,81 @@ down_revision = "20270412_262"
 branch_labels = None
 depends_on = None
 
-UNITS = ("USD_CENTS", "PERCENT", "DAYS", "DAY_OF_MONTH", "COUNT")
-AREAS = ("BILLING", "RESERVATIONS", "PRICES", "QUOTATIONS", "RIEL_RATE", "LEDGER", "STAFF",
-         "ATTENDANCE", "OTHER")
+UNITS = (
+    "USD_CENTS",
+    "PERCENT",
+    "DAYS",
+    "DAY_OF_MONTH",
+    "COUNT",
+    "MINUTES",
+    "HOURS",
+    "METRES",
+    "YES_NO",
+    "TIME_OF_DAY",
+)
+AREAS = (
+    "BILLING",
+    "RESERVATIONS",
+    "PRICES",
+    "QUOTATIONS",
+    "RIEL_RATE",
+    "LEDGER",
+    "STAFF",
+    "ATTENDANCE",
+    "OTHER",
+)
 
 # code, area, unit, value, English name, Khmer name
 LEDGER_RULES = (
-    ("EXPENSE_LIMIT", "LEDGER", "USD_CENTS", 10000,
-     "Expense limit: the Accountant approves up to this, the Owner above",
-     "កម្រិតចំណាយ៖ គណនេយ្យករអនុម័តរហូតដល់ចំនួននេះ ម្ចាស់អនុម័តលើសនេះ"),
-    ("ASSET_LIMIT", "LEDGER", "USD_CENTS", 50000,
-     "A purchase from this amount is an asset",
-     "ការទិញចាប់ពីចំនួននេះជាទ្រព្យសកម្ម"),
-    ("PETTY_CASH", "LEDGER", "USD_CENTS", 20000,
-     "Petty cash amount", "ចំនួនសាច់ប្រាក់រាយ"),
-    ("EXP_REPORT_DAYS", "LEDGER", "DAYS", 3,
-     "Expense report due after spending", "របាយការណ៍ចំណាយផុតកំណត់ក្រោយចំណាយ"),
-    ("BUDGET_PCT", "LEDGER", "PERCENT", 1000,
-     "Budget warning: percent off", "ការព្រមានថវិកា៖ ភាគរយខុស"),
-    ("BUDGET_MIN", "LEDGER", "USD_CENTS", 5000,
-     "Budget warning: smallest amount off", "ការព្រមានថវិកា៖ ចំនួនខុសតិចបំផុត"),
-    ("SUPPLIER_BILL_DAYS", "LEDGER", "DAYS", 30,
-     "Pay-later Supplier bill due after the bill date",
-     "វិក្កយបត្រអ្នកផ្គត់ផ្គង់បង់ក្រោយ ផុតកំណត់ក្រោយថ្ងៃវិក្កយបត្រ"),
+    (
+        "EXPENSE_LIMIT",
+        "LEDGER",
+        "USD_CENTS",
+        10000,
+        "Expense limit: the Accountant approves up to this, the Owner above",
+        "កម្រិតចំណាយ៖ គណនេយ្យករអនុម័តរហូតដល់ចំនួននេះ ម្ចាស់អនុម័តលើសនេះ",
+    ),
+    (
+        "ASSET_LIMIT",
+        "LEDGER",
+        "USD_CENTS",
+        50000,
+        "A purchase from this amount is an asset",
+        "ការទិញចាប់ពីចំនួននេះជាទ្រព្យសកម្ម",
+    ),
+    ("PETTY_CASH", "LEDGER", "USD_CENTS", 20000, "Petty cash amount", "ចំនួនសាច់ប្រាក់រាយ"),
+    (
+        "EXP_REPORT_DAYS",
+        "LEDGER",
+        "DAYS",
+        3,
+        "Expense report due after spending",
+        "របាយការណ៍ចំណាយផុតកំណត់ក្រោយចំណាយ",
+    ),
+    (
+        "BUDGET_PCT",
+        "LEDGER",
+        "PERCENT",
+        1000,
+        "Budget warning: percent off",
+        "ការព្រមានថវិកា៖ ភាគរយខុស",
+    ),
+    (
+        "BUDGET_MIN",
+        "LEDGER",
+        "USD_CENTS",
+        5000,
+        "Budget warning: smallest amount off",
+        "ការព្រមានថវិកា៖ ចំនួនខុសតិចបំផុត",
+    ),
+    (
+        "SUPPLIER_BILL_DAYS",
+        "LEDGER",
+        "DAYS",
+        30,
+        "Pay-later Supplier bill due after the bill date",
+        "វិក្កយបត្រអ្នកផ្គត់ផ្គង់បង់ក្រោយ ផុតកំណត់ក្រោយថ្ងៃវិក្កយបត្រ",
+    ),
 )
 SEED_REASON = "First value: owner decisions 01-02/11/2026 (General Ledger PRD v2)"
 
@@ -82,7 +134,8 @@ def upgrade() -> None:
         COMMENT ON COLUMN app.business_rule_names.value_unit IS
             'How the whole-number value reads: USD_CENTS money in US cents; PERCENT in hundredths '
             'of a percent (10% = 1000, 0.5% = 50); DAYS a number of days; DAY_OF_MONTH 1 to 31; '
-            'COUNT a plain number. New units are added to this list only.';
+            'COUNT a plain number; MINUTES, HOURS, METRES; YES_NO 1 = Yes, 0 = No; TIME_OF_DAY '
+            'minutes after midnight (22:00 = 1320). New units are added to this list only.';
         COMMENT ON COLUMN app.business_rule_names.used_by_app IS
             'false = the program does not use this rule yet ("Not used yet" on the Settings page).';
 
@@ -143,7 +196,11 @@ def upgrade() -> None:
             IF (v_unit = 'DAY_OF_MONTH' AND NEW.value NOT BETWEEN 1 AND 31)
                 OR (v_unit = 'PERCENT' AND NEW.value > 1000000)
                 OR (v_unit = 'DAYS' AND NEW.value > 3660)
-                OR (v_unit = 'USD_CENTS' AND NEW.value > 100000000000) THEN
+                OR (v_unit = 'USD_CENTS' AND NEW.value > 100000000000)
+                OR (v_unit = 'YES_NO' AND NEW.value > 1)
+                OR (v_unit = 'TIME_OF_DAY' AND NEW.value > 1439)
+                OR (v_unit = 'MINUTES' AND NEW.value > 525600)
+                OR (v_unit = 'HOURS' AND NEW.value > 8784) THEN
                 RAISE EXCEPTION 'The business rule value does not fit its unit'
                     USING ERRCODE = '22023';
             END IF;

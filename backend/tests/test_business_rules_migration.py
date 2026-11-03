@@ -184,6 +184,8 @@ def test_the_owner_adds_a_rule_the_program_does_not_use_yet(
         (code, "DAYS", 1, psycopg.errors.UniqueViolation),
         (f"{code}_B", "WEEKS", 1, psycopg.errors.CheckViolation),
         (f"{code}_C", "DAY_OF_MONTH", 32, psycopg.errors.InvalidParameterValue),
+        (f"{code}_D", "YES_NO", 2, psycopg.errors.InvalidParameterValue),
+        (f"{code}_E", "TIME_OF_DAY", 1440, psycopg.errors.InvalidParameterValue),
     ):
         refused(
             connection,

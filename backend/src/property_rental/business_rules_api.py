@@ -32,7 +32,18 @@ from property_rental.identity import (
 from property_rental.settings import Settings
 
 CONFIGURATION_READ = "configuration.read"
-ValueUnit = Literal["USD_CENTS", "PERCENT", "DAYS", "DAY_OF_MONTH", "COUNT"]
+ValueUnit = Literal[
+    "USD_CENTS",
+    "PERCENT",
+    "DAYS",
+    "DAY_OF_MONTH",
+    "COUNT",
+    "MINUTES",
+    "HOURS",
+    "METRES",
+    "YES_NO",
+    "TIME_OF_DAY",
+]
 Area = Literal[
     "BILLING",
     "RESERVATIONS",
