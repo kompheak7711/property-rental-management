@@ -26,11 +26,11 @@ import {
 import { DateInput, isDay } from "../shell/DateInput";
 import { dayText, todayInPhnomPenh, usdFromCents } from "../shell/format";
 import { Icon } from "../shell/icons";
+import { hashForPage } from "../shell/navigation";
 import { Chip, Dialog } from "../shell/ui";
 import type { Language } from "../signInText";
 import { Problem } from "./BusinessTab";
 import { CleaningRatesCard } from "./CleaningRates";
-import { RegularServicesCard } from "./RegularServices";
 import {
   failureText,
   Field,
@@ -43,8 +43,6 @@ import {
 import {
   type CleaningSettingsApi,
   cleaningSettingsApi,
-  type RegularServicesApi,
-  regularServicesApi,
   type ServiceSetting,
   ServiceSettingsError,
   type ServiceSettings,
@@ -178,7 +176,6 @@ export function RatesTab({
   api,
   services: servicesApi = serviceSettingsApi,
   cleaning = cleaningSettingsApi,
-  regular = regularServicesApi,
   today: fixedToday,
 }: {
   language: Language;
@@ -189,8 +186,6 @@ export function RatesTab({
   services?: ServiceSettingsApi;
   /** The move-out cleaning rates; the real server when not given. */
   cleaning?: CleaningSettingsApi;
-  /** V1.1: the Regular services; the real server when not given. */
-  regular?: RegularServicesApi;
   /** For tests; otherwise today in Phnom Penh. */
   today?: string;
 }) {
@@ -733,12 +728,14 @@ export function RatesTab({
             types={ready.service_types}
           />
         )}
-        <RegularServicesCard
-          active={active}
-          api={regular}
-          language={language}
-          propertyId={propertyId}
-        />
+        {/* V1.1 part 6 (DL-123): the Regular services are Service products now. */}
+        <div className="ui-notice" role="note">
+          <Icon name="info" />
+          <p>
+            {sst(language, "rs_moved")}{" "}
+            <a href={hashForPage("products")}>{sst(language, "rs_moved_go")}</a>
+          </p>
+        </div>
         <CleaningRatesCard
           active={active}
           api={cleaning}
