@@ -52,7 +52,17 @@ from test_unit_migration import insert_actor, insert_property
 def fresh(migrated_database_url: str, monkeypatch: pytest.MonkeyPatch) -> Iterator[Books]:
     """A new Property with no ledger yet, lent to the read inside a savepoint."""
     with psycopg.connect(migrated_database_url) as connection:
-        property_id = insert_property(connection, insert_actor(connection))
+        # The Property is a singleton: earlier suites may have kept theirs.
+        existing = connection.execute("SELECT id FROM app.properties").fetchone()
+        if existing is None:
+            property_id = insert_property(connection, insert_actor(connection))
+        else:
+            property_id = UUID(str(existing[0]))
+            started = connection.execute(
+                "SELECT 1 FROM app.gl_fiscal_years WHERE property_id = %s", (property_id,)
+            ).fetchone()
+            if started is not None:
+                pytest.skip("The kept Property already has a ledger")
         books = Books(connection, property_id, start=False)
         monkeypatch.setattr(psycopg, "connect", lambda *_a, **_k: Borrowed(connection))
         yield books
