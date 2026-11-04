@@ -5752,3 +5752,14 @@ Added by DL-125 (migration `20270430_281`, forward-only).
 - `app.telegram_outbox` (bot, chat, fixed `text_code`, language, details) and `app.telegram_outbox_attempts` (each try: SENT, FAILED or GAVE_UP; at most one final try per message). The status is the latest try.
 - `app.relay_pull_runs` (each pull: times, outcome, items received and saved, relay waiting and dropped counts).
 - All are append-only (updates and deletes refused, truncate refused). Functions (security definer, for the pull and send jobs; each checks the actor's right): `app.telegram_record_pulled_item`, `app.telegram_record_pull_run`, `app.telegram_queue_message`, `app.telegram_outbox_due`, `app.telegram_record_send_attempt`, `app.telegram_remove_old_payloads`, `app.telegram_health`. New rights `telegram.read` and `telegram.operate` (group Administration), for the Owner and Manager bundles.
+
+## DB-TG-002 — Tenant bot linking (bots step 2a)
+
+Added by DL-126 (migration `20270520_282`, forward-only).
+
+- `app.telegram_language_choices` (bot, Telegram account, km or en; the newest row counts).
+- `app.telegram_chat_steps` (bot, Telegram account, step name, small step data up to 4 KB; the newest row counts).
+- `app.tenant_link_attempts` (each try: typed name, typed Unit, shared phone, result LINKED, NO_MATCH, BLOCKED or NO_PHONE). Rows may be removed only after 90 days.
+- `app.tenant_telegram_links` (Telegram account, Customer, Lease, Unit) and `app.tenant_telegram_link_endings` (one ending per link: LEASE_ENDED, REMOVED with a note, or NEW_LINK).
+- `app.telegram_outbox` gains `keyboard` (a fixed keyboard code or `remove`).
+- All are append-only (updates refused, truncate refused). The runtime login cannot read these tables; only the functions can. Functions: `app.telegram_bot_state`, `app.telegram_bot_reply` (saves the next step and queues up to 5 messages in one call), `app.telegram_choose_language`, `app.telegram_tenant_link`, `app.telegram_tenant_end_finished_links`, `app.telegram_tenant_link_remove` (Owner and Manager), `app.telegram_tenant_links_read` (`telegram.read`), `app.telegram_tenant_access_list`, `app.telegram_remove_old_link_attempts`; `app.telegram_outbox_due` now returns the keyboard. Helpers `app.phone_e164`, `app.tenant_names_match`, `app.tenant_unit_key`.

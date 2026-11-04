@@ -2571,6 +2571,22 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **Links:** DL-071, DL-115, DL-124.
 - **Decision date:** 2026-11-04.
 
+## DL-126 — Telegram bots: the Tenant bot links a tenant (bots step 2a)
+
+- **Type:** `OWNER BUSINESS DECISION`
+- **Status:** `STEP 2A BUILT ON BRANCH claude/telegram-bots; WAITS FOR THE OWNER'S TEST`
+- **Source:** the owner's rules for the Tenant bot "CHETANA Residence support" (2 and 3 Nov 2026, tenant mock-up v15) and the owner's OK of the Telegram bots tech and database plan (3 Nov 2026 08:36). Technical choices by Claude under the owner's 2026-10-23 22:30 rule.
+- **(A) Start and language.** Start greets the person in Khmer and English and asks for Khmer or English. The choice is saved per bot. Before a choice, every message asks again.
+- **(B) Who can link.** A person who is not linked sees only "Link my Lease". Linking asks, in order, for the person's own Telegram phone number (Telegram's share button; a typed number or someone else's contact does not count), the full name, and the Unit. All three must match one person (primary tenant, signer or current occupant) on a signed Lease that has not ended. Capitals, spaces, punctuation and word order in the name do not matter; "Unit", "Room", "No" or "#" before the Unit number do not matter. The phone is matched against each number on the Customer.
+- **(C) Wrong tries.** Each answer tells the person how many tries are left. 5 wrong tries in 24 hours block linking for 24 hours. Every try is kept for 90 days, then removed.
+- **(D) The link.** The link shows a short privacy line. A link ends when its Lease ends (checked every minute by the pull job), when staff remove it with a note (Owner and Manager), or when the person links again to someone else. History is never changed.
+- **(E) After linking.** A linked tenant sees the menu: Problem report, My requests, FAQ and Contact office. These open in steps 2b and 2d; until then they answer "opens soon".
+- **(F) Keyboards.** Each queued message can carry a fixed keyboard code (language buttons, share phone, menu, or remove). The send job shows the buttons in the person's language.
+- **Open:** a Customer "Other name" for the name check is not built (the check uses the legal name only). The Khmer texts need a native-speaker check.
+- **Built:** migration `20270520_282` (DB-TG-002); `telegram_tenant_bot.py`; tenant texts and keyboards in `telegram_texts.py`.
+- **Links:** DL-125, DL-124.
+- **Decision date:** 2026-11-04.
+
 ## DL-130 — Problem reports: repair cost and its Expense report
 
 - **Type:** `OWNER BUSINESS DECISION`

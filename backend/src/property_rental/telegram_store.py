@@ -1,5 +1,5 @@
-"""The database calls of the Telegram jobs (migration 20270430_281). Each call is one SQL
-function that checks the job's account holds the right on the Property."""
+"""The database calls of the Telegram jobs (migrations 20270430_281 and 20270520_282). Each call
+is one SQL function that checks the job's account holds the right on the Property."""
 
 from __future__ import annotations
 
@@ -26,6 +26,27 @@ class TelegramStore(Protocol):
     ) -> str: ...
 
     def health(self) -> dict[str, Any]: ...
+
+    def bot_state(self, bot: str, user: int) -> dict[str, Any]: ...
+
+    def bot_reply(
+        self,
+        bot: str,
+        user: int,
+        chat: int,
+        step: str | None,
+        data: dict[str, Any] | None,
+        language: str,
+        messages: list[dict[str, Any]],
+    ) -> None: ...
+
+    def choose_language(self, bot: str, user: int, language: str) -> None: ...
+
+    def tenant_link(self, user: int, name: str, unit: str) -> dict[str, Any]: ...
+
+    def tenant_end_finished_links(self) -> int: ...
+
+    def remove_old_link_attempts(self) -> int: ...
 
 
 class PostgresTelegramStore:
@@ -102,3 +123,73 @@ class PostgresTelegramStore:
         result = self._one("SELECT app.telegram_health(%s, %s)", self._property, self._actor)
         assert isinstance(result, dict)
         return result
+
+    def bot_state(self, bot: str, user: int) -> dict[str, Any]:
+        result = self._one(
+            "SELECT app.telegram_bot_state(%s, %s, %s, %s)", self._property, bot, user, self._actor
+        )
+        assert isinstance(result, dict)
+        return result
+
+    def bot_reply(
+        self,
+        bot: str,
+        user: int,
+        chat: int,
+        step: str | None,
+        data: dict[str, Any] | None,
+        language: str,
+        messages: list[dict[str, Any]],
+    ) -> None:
+        self._one(
+            "SELECT app.telegram_bot_reply(%s, %s, %s, %s, %s, %s::jsonb, %s, %s::jsonb, %s)",
+            self._property,
+            bot,
+            user,
+            chat,
+            step,
+            None if data is None else json.dumps(data),
+            language,
+            json.dumps(messages),
+            self._actor,
+        )
+
+    def choose_language(self, bot: str, user: int, language: str) -> None:
+        self._one(
+            "SELECT app.telegram_choose_language(%s, %s, %s, %s, %s) IS NULL",
+            self._property,
+            bot,
+            user,
+            language,
+            self._actor,
+        )
+
+    def tenant_link(self, user: int, name: str, unit: str) -> dict[str, Any]:
+        result = self._one(
+            "SELECT app.telegram_tenant_link(%s, %s, %s, %s, %s)",
+            self._property,
+            user,
+            name,
+            unit,
+            self._actor,
+        )
+        assert isinstance(result, dict)
+        return result
+
+    def tenant_end_finished_links(self) -> int:
+        return int(
+            self._one(
+                "SELECT app.telegram_tenant_end_finished_links(%s, %s)",
+                self._property,
+                self._actor,
+            )
+        )
+
+    def remove_old_link_attempts(self) -> int:
+        return int(
+            self._one(
+                "SELECT app.telegram_remove_old_link_attempts(%s, %s)",
+                self._property,
+                self._actor,
+            )
+        )

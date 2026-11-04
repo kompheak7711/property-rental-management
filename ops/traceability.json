@@ -62707,6 +62707,112 @@
       "test_path": "backend/tests/test_telegram_seal.py",
       "status": "implemented",
       "notes": "Telegram bots step 1: What the relay's TypeScript code seals opens with the Python office code (skipped without Node.js 22.6)."
+    },
+    {
+      "test_id": "test_a_tenant_links_with_phone_name_and_unit_in_any_order",
+      "upstream_ids": [
+        "DL-126",
+        "DB-TG-002"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_telegram_tenant_link_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 2a: A tenant links with the shared phone, the name in any order and the Unit; the same link is kept on a second try, the person is on the access list, and Staff cannot read the Linked tenants list."
+    },
+    {
+      "test_id": "test_a_wrong_part_is_refused_and_five_wrong_tries_block_for_a_day",
+      "upstream_ids": [
+        "DL-126",
+        "DB-TG-002"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_telegram_tenant_link_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 2a: A wrong phone, name or Unit is refused with the tries left; 5 wrong tries in 24 hours block linking."
+    },
+    {
+      "test_id": "test_links_end_with_the_lease_or_when_staff_remove_them",
+      "upstream_ids": [
+        "DL-126",
+        "DB-TG-002"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_telegram_tenant_link_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 2a: A link stops when its Lease is over and the job records the end; staff remove a link with a reason, once."
+    },
+    {
+      "test_id": "test_the_bot_answer_saves_the_step_and_queues_the_messages",
+      "upstream_ids": [
+        "DL-126",
+        "DB-TG-002"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_telegram_tenant_link_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 2a: A bot answer saves the person's step and queues its messages with their keyboard in one call; only the job account may call it."
+    },
+    {
+      "test_id": "test_typed_names_and_phones_stay_behind_the_functions",
+      "upstream_ids": [
+        "DL-126",
+        "DB-TG-002"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_telegram_tenant_link_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 2a: The runtime login cannot read the link tables; link tries are never changed and are removed only after 90 days."
+    },
+    {
+      "test_id": "test_start_asks_for_the_language_then_offers_only_linking",
+      "upstream_ids": [
+        "DL-126"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_tenant_bot.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 2a: Start asks for Khmer or English; a person not linked is offered only Link my Lease."
+    },
+    {
+      "test_id": "test_linking_asks_for_the_own_phone_then_name_then_unit",
+      "upstream_ids": [
+        "DL-126"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_tenant_bot.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 2a: Linking asks for the person's own shared phone, then the name, then the Unit, and answers with the result."
+    },
+    {
+      "test_id": "test_the_fifth_wrong_try_says_linking_is_blocked",
+      "upstream_ids": [
+        "DL-126"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_tenant_bot.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 2a: The fifth wrong try says linking is blocked for 24 hours."
+    },
+    {
+      "test_id": "test_groups_other_bots_and_the_test_message_are_left_alone",
+      "upstream_ids": [
+        "DL-126"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_tenant_bot.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 2a: The Tenant bot answers only private chats of its own bot and leaves the test message to the shared base."
+    },
+    {
+      "test_id": "test_the_send_job_shows_the_keyboard_in_the_persons_language",
+      "upstream_ids": [
+        "DL-126",
+        "DL-125"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_tenant_bot.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 2a: The send job shows each message's keyboard in the person's language; an unknown keyboard is a fixed failure code."
     }
   ]
 }

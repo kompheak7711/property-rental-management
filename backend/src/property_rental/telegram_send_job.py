@@ -26,7 +26,7 @@ from property_rental.operations_config import OperationsConfigError, load_operat
 from property_rental.operations_status import format_time, utc_now, write_status
 from property_rental.telegram_alerts import TELEGRAM_TOKEN_PATTERN
 from property_rental.telegram_store import PostgresTelegramStore, TelegramStore
-from property_rental.telegram_texts import TextError, render
+from property_rental.telegram_texts import TextError, keyboard_markup, render
 
 SEND_TIMEOUT_SECONDS: Final = 10
 # A sender posts JSON to an address and returns (HTTP status, answer). Tests replace it.
@@ -98,6 +98,7 @@ def run_send(
             continue
         try:
             text = render(message["text_code"], message["language"], message.get("details") or {})
+            markup = keyboard_markup(message.get("keyboard"), message["language"])
         except TextError:
             outcome = store.record_attempt(message["id"], "FAILED", "text_unknown", None)
             result.gave_up += outcome == "GAVE_UP"
@@ -107,6 +108,8 @@ def run_send(
         body: dict[str, Any] = {"chat_id": message["chat_id"], "text": text}
         if message.get("buttons"):
             body["reply_markup"] = {"inline_keyboard": message["buttons"]}
+        elif markup is not None:
+            body["reply_markup"] = markup
         address = f"https://{api_host}/bot{token}/sendMessage"
         try:
             status, answer = post_json(address, body)

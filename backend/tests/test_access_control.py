@@ -30,6 +30,8 @@ from property_rental.access_control import (
     capability_grant_path,
 )
 from property_rental.identity import CapabilityGrant
+from property_rental.telegram_tenant_bot import TENANT_STEPS
+from property_rental.telegram_texts import KEYBOARDS, TEXTS
 
 SOURCE = Path(__file__).parents[1] / "src" / "property_rental"
 DOTTED = re.compile(r"^[a-z][a-z_]*(\.[a-z][a-z_]*)+$")
@@ -46,8 +48,8 @@ NON_CAPABILITY_LABELS = frozenset(
         "application.started",
         "application.stopping",
         "backup.config_invalid",
-        # Telegram bots step 1: a fixed text code and the bots' configuration fields.
-        "base.ping_reply",
+        # Telegram bots step 1: the bots' configuration fields (their text codes, keyboards and
+        # chat steps are left out in application_constants).
         "backup.database_url_file",
         "backup.directory",
         "backup.encryption_key_file",
@@ -135,7 +137,8 @@ def application_constants() -> set[str]:
     for path in SOURCE.rglob("*.py"):
         if path.name != "access_control.py":
             found |= dotted_constants(path)
-    return found
+    # The Telegram bots' fixed text codes, keyboards and chat steps are names of their own.
+    return found - set(TEXTS) - set(KEYBOARDS) - TENANT_STEPS
 
 
 def test_the_capability_catalog_names_every_capability_the_code_checks() -> None:

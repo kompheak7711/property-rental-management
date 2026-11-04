@@ -36,6 +36,7 @@ from property_rental.telegram_phone import normalize_phone
 from property_rental.telegram_relay_client import RelayClient, RelayError, RelayItem, read_pull_key
 from property_rental.telegram_seal import SealError, load_office_private_key, open_sealed
 from property_rental.telegram_store import PostgresTelegramStore, TelegramStore
+from property_rental.telegram_tenant_bot import handle_tenant_update
 
 MEDIA_TYPES: Final = frozenset(
     {"image/jpeg", "image/png", "image/webp", "video/mp4", "audio/ogg", "audio/mpeg", "audio/mp4"}
@@ -81,7 +82,7 @@ def _ping(bot: str, plain: dict[str, Any], saved: dict[str, Any], store: Telegra
         )
 
 
-HANDLERS: Final[dict[str, list[Handler]]] = {"update": [_ping]}
+HANDLERS: Final[dict[str, list[Handler]]] = {"update": [_ping, handle_tenant_update]}
 
 
 def store_media(directory: Path, sha256: str, data: bytes) -> str:
@@ -311,6 +312,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         key = load_office_private_key(bots.office_private_key_file)
         result = run_pull(client=client, key=key, store=store, media_directory=bots.media_directory)
         store.remove_old_payloads()
+        store.tenant_end_finished_links()
+        store.remove_old_link_attempts()
     except (RelayError, SealError) as error:
         code = error.code if isinstance(error, RelayError) else "office_key_unreadable"
         print(f"telegram_pull:failed:{code}", file=sys.stderr, flush=True)

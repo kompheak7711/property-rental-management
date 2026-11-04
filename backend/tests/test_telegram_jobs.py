@@ -95,6 +95,14 @@ class FakeStore:
         self.queued: list[dict[str, Any]] = []
         self.due: list[dict[str, Any]] = []
         self.attempts: list[tuple[str, str, str | None, int | None]] = []
+        # The Tenant bot side (migration 20270520_282), kept in memory.
+        self.languages: dict[int, str] = {}
+        self.steps: dict[int, tuple[str, dict[str, Any]]] = {}
+        self.replies: list[dict[str, Any]] = []
+        self.phones: set[int] = set()
+        self.links: dict[int, dict[str, Any]] = {}
+        self.link_answers: list[dict[str, Any]] = []
+        self.link_tries: list[tuple[int, str, str]] = []
 
     def record_item(self, item: dict[str, Any]) -> dict[str, Any]:
         if item["relay_item_id"] in self.items:
@@ -122,6 +130,48 @@ class FakeStore:
 
     def health(self) -> dict[str, Any]:
         return {}
+
+    def bot_state(self, bot: str, user: int) -> dict[str, Any]:
+        step, data = self.steps.get(user, (None, {}))
+        return {
+            "language": self.languages.get(user),
+            "has_phone": user in self.phones,
+            "step": step,
+            "data": data,
+            "link": self.links.get(user),
+            "blocked_until": None,
+        }
+
+    def bot_reply(
+        self,
+        bot: str,
+        user: int,
+        chat: int,
+        step: str | None,
+        data: dict[str, Any] | None,
+        language: str,
+        messages: list[dict[str, Any]],
+    ) -> None:
+        if step is not None:
+            self.steps[user] = (step, data or {})
+        for message in messages:
+            self.replies.append({"bot": bot, "chat_id": chat, "language": language, **message})
+
+    def choose_language(self, bot: str, user: int, language: str) -> None:
+        self.languages[user] = language
+
+    def tenant_link(self, user: int, name: str, unit: str) -> dict[str, Any]:
+        self.link_tries.append((user, name, unit))
+        answer = self.link_answers.pop(0)
+        if answer["result"] == "LINKED":
+            self.links[user] = {"name": answer["name"], "unit_number": answer["unit_number"]}
+        return answer
+
+    def tenant_end_finished_links(self) -> int:
+        return 0
+
+    def remove_old_link_attempts(self) -> int:
+        return 0
 
 
 def _client(relay: FakeRelay) -> RelayClient:
