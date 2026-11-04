@@ -269,7 +269,7 @@ function show(
 }
 
 describe("Journal entries", () => {
-  it("TEST-FE-1152 lists entries newest first with the record they came from", async () => {
+  it("TEST-FE-1190 lists entries newest first with the record they came from", async () => {
     const api = fakeApi();
     show("journal", api);
     const table = await screen.findByRole("table");
@@ -284,7 +284,7 @@ describe("Journal entries", () => {
     expect(screen.getByText(/Newest 2 entries/)).toBeInTheDocument();
   });
 
-  it("TEST-FE-1153 reads one month when a month is picked", async () => {
+  it("TEST-FE-1191 reads one month when a month is picked", async () => {
     const api = fakeApi();
     show("journal", api);
     const month = await screen.findByLabelText("Month");
@@ -294,7 +294,7 @@ describe("Journal entries", () => {
     });
   });
 
-  it("TEST-FE-1154 opens one entry from the address with its lines and totals", async () => {
+  it("TEST-FE-1192 opens one entry from the address with its lines and totals", async () => {
     window.location.hash = "#/journal/JE270002";
     const api = fakeApi();
     show("journal", api);
@@ -311,7 +311,7 @@ describe("Journal entries", () => {
     expect(screen.getByText(/Recorded by: The app/)).toBeInTheDocument();
   });
 
-  it("TEST-FE-1155 says when the entry is not in the ledger", async () => {
+  it("TEST-FE-1193 says when the entry is not in the ledger", async () => {
     window.location.hash = "#/journal/JE279999";
     show(
       "journal",
@@ -326,7 +326,7 @@ describe("Journal entries", () => {
 });
 
 describe("Chart of accounts", () => {
-  it("TEST-FE-1156 groups accounts by type with their balance and marks", async () => {
+  it("TEST-FE-1194 groups accounts by type with their balance and marks", async () => {
     show("chart", fakeApi());
     const assets = await screen.findByRole("heading", { name: "Assets" });
     expect(assets).toBeInTheDocument();
