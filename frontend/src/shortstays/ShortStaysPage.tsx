@@ -1,7 +1,7 @@
 // Daily and weekly rent, phase 6 step 2: Tenants › Short stays (mock-up rounds 28, 31, 35).
 // "#/shortstays" shows the Calendar (one row per Unit, one square per night) and the Bookings
 // list; "#/shortstays/new" (or "new:<Unit id>:<day>" from a free square) is New booking and
-// "#/shortstays/st:<id>" one booking. Buttons show only to a person who holds the right; the
+// "#/shortstays/st:<id>" one booking. Step 4a adds the Cleaning tab (one day's cleans). Buttons show only to a person who holds the right; the
 // server checks every right and every night again.
 
 import "../shell/screens.css";
@@ -20,6 +20,7 @@ import { openPageInAddress, useHashDetail } from "../shell/useHashPage";
 import { Chip, type Tone } from "../shell/ui";
 import type { Language } from "../signInText";
 import { BookingDetail } from "./BookingDetail";
+import { CleaningList } from "./CleaningList";
 import { NewBookingForm } from "./NewBooking";
 import { nightOf } from "./nights";
 import {
@@ -95,7 +96,7 @@ function weekday(language: Language, day: string): string {
   }).format(new Date(`${day}T00:00:00Z`));
 }
 
-type Tab = "cal" | "list";
+type Tab = "cal" | "list" | "clean";
 
 export function ShortStaysPage({
   language,
@@ -119,7 +120,7 @@ export function ShortStaysPage({
   const sequence = useRef(0);
 
   const load = useCallback(() => {
-    if (propertyId === "") return;
+    if (propertyId === "" || tab === "clean") return;
     const operation = ++sequence.current;
     setFailed(false);
     const read =
@@ -536,7 +537,7 @@ export function ShortStaysPage({
       </div>
       <div className="ui-filters">
         <div aria-label={st(language, "tabs")} className="ui-seg" role="group">
-          {(["cal", "list"] as const).map((value) => (
+          {(["cal", "list", "clean"] as const).map((value) => (
             <button
               aria-pressed={tab === value}
               key={value}
@@ -545,12 +546,25 @@ export function ShortStaysPage({
               }}
               type="button"
             >
-              {st(language, value === "cal" ? "tab_cal" : "tab_list")}
+              {st(language, `tab_${value}`)}
             </button>
           ))}
         </div>
       </div>
-      {tab === "cal" ? calendarView : listView}
+      {tab === "cal" ? (
+        calendarView
+      ) : tab === "list" ? (
+        listView
+      ) : (
+        <CleaningList
+          api={api}
+          key={propertyId}
+          language={language}
+          may={may}
+          propertyId={propertyId}
+          today={today}
+        />
+      )}
     </>
   );
 }

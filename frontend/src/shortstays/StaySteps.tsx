@@ -2,17 +2,25 @@
 // 20270602_312). Payment (the booking's Invoice, paid on Receive payment, or paid on the booking
 // site), the deposit (cash or a card hold, never a card number), check-in, check-out, the room
 // check with any damage, the Manager's decision on damage and the end of the deposit. Each button
-// shows only to a person who holds its right; the server checks every step again.
+// shows only to a person who holds its right; the server checks every step again. Step 4a adds the
+// early check-in and late check-out fee, extending the stay and the fee and extension Invoices.
 
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
+
+import { DateInput } from "../shell/DateInput";
 
 import { dayText, momentText, usdFromCents } from "../shell/format";
 import { Icon } from "../shell/icons";
 import { hashForPage } from "../shell/navigation";
 import { Chip, type Tone } from "../shell/ui";
 import type { Language } from "../signInText";
-import type { Booking, PaymentState, StayStep } from "./shortStaysClient";
-import { st } from "./text";
+import {
+  addDays,
+  type Booking,
+  type PaymentState,
+  type StayStep,
+} from "./shortStaysClient";
+import { hasText, st, type StaysTextKey } from "./text";
 
 export interface StepsProps {
   language: Language;
@@ -23,6 +31,14 @@ export interface StepsProps {
   /** Runs one step; the page shows the booking the server answers with. */
   onStep: (step: StayStep, body: Record<string, unknown> | null) => void;
   onDecide: (damageId: string, approve: boolean, note: string) => void;
+  /** The whole stay's new total for another check-out day (fees kept); null when it fails. */
+  onPrice: (checkOut: string) => Promise<number | null>;
+}
+
+/** Minutes after midnight as "14:00". */
+export function timeText(minutes: number): string {
+  const hours = Math.floor(minutes / 60);
+  return `${String(hours).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
 }
 
 const PAY_TONES: Record<PaymentState, Tone> = {
@@ -84,6 +100,30 @@ export function PaymentCard({
             {usdFromCents(booking.invoice.total_usd_cents)}
           </span>
         </p>
+      )}
+      {booking.extra_invoices.length > 0 && (
+        <ul className="ui-plain ss-ready">
+          {booking.extra_invoices.map((extra) => (
+            <li key={extra.invoice_id}>
+              <a href={hashForPage("invoices", `inv:${extra.invoice_id}`)}>
+                {st(
+                  language,
+                  "pay_extra",
+                  st(language, `x_${extra.kind}`),
+                  extra.invoice_number,
+                )}
+              </a>
+              <span className="ui-num">
+                {usdFromCents(extra.total_usd_cents)}
+              </span>
+              <Chip tone={extra.status === "PAID" ? "ok" : "warn"}>
+                {hasText(`inv_${extra.status}`)
+                  ? st(language, `inv_${extra.status}` as StaysTextKey)
+                  : extra.status}
+              </Chip>
+            </li>
+          ))}
+        </ul>
       )}
       {open && <p className="ui-small ui-muted">{st(language, "bill_s")}</p>}
       <div className="ui-actions">
@@ -651,6 +691,159 @@ export function DamagesCard({
           );
         })}
       </ul>
+    </section>
+  );
+}
+
+export function FeesCard({ language, booking, may, busy, onStep }: StepsProps) {
+  const early = booking.status === "BOOKED" && !booking.early_check_in;
+  const late =
+    (booking.status === "BOOKED" || booking.status === "CHECKED_IN") &&
+    !booking.late_check_out;
+  const until = timeText(booking.late_check_out_until);
+  if (!early && !late && !booking.early_check_in && !booking.late_check_out)
+    return null;
+  return (
+    <section aria-labelledby="ss-fee" className="ui-card">
+      <h2 id="ss-fee">{st(language, "fee_t")}</h2>
+      <p className="ui-small ui-muted">
+        {booking.fee_usd_cents > 0
+          ? st(language, "fee_cost", usdFromCents(booking.fee_usd_cents))
+          : st(language, "fee_free")}
+      </p>
+      {(booking.early_check_in || booking.late_check_out) && (
+        <ul className="ui-plain ss-ready">
+          {booking.early_check_in && (
+            <Done ok text={st(language, "fee_has_early")} />
+          )}
+          {booking.late_check_out && (
+            <Done ok text={st(language, "fee_has_late", until)} />
+          )}
+        </ul>
+      )}
+      {may("short_stays.desk") && (early || late) && (
+        <div className="ui-actions">
+          {early && (
+            <button
+              className="ui-btn"
+              disabled={busy}
+              onClick={() => {
+                onStep("fee", {
+                  version: booking.version,
+                  kind: "EARLY_CHECK_IN",
+                });
+              }}
+              type="button"
+            >
+              {st(language, "fee_early")}
+            </button>
+          )}
+          {late && (
+            <button
+              className="ui-btn"
+              disabled={busy}
+              onClick={() => {
+                onStep("fee", {
+                  version: booking.version,
+                  kind: "LATE_CHECK_OUT",
+                });
+              }}
+              type="button"
+            >
+              {st(language, "fee_late", until)}
+            </button>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
+export function ExtendCard({
+  language,
+  booking,
+  may,
+  busy,
+  onStep,
+  onPrice,
+}: StepsProps) {
+  const first = addDays(booking.check_out_on, 1);
+  const [out, setOut] = useState(first);
+  const [total, setTotal] = useState<number | null | "pricing">("pricing");
+  const open =
+    (booking.status === "BOOKED" || booking.status === "CHECKED_IN") &&
+    may("short_stays.desk");
+  const valid = out > booking.check_out_on;
+  useEffect(() => {
+    if (!open || !valid) return;
+    let current = true;
+    setTotal("pricing");
+    void onPrice(out).then((found) => {
+      if (current) setTotal(found);
+    });
+    return () => {
+      current = false;
+    };
+  }, [open, valid, out, onPrice]);
+  if (!open) return null;
+  const billed = booking.payment !== "NOT_BILLED";
+  return (
+    <section aria-labelledby="ss-ext" className="ui-card">
+      <h2 id="ss-ext">{st(language, "ext_t")}</h2>
+      <div className="ui-field">
+        <label htmlFor="ss-ext-out">{st(language, "ext_out")}</label>
+        <DateInput
+          calendarLabel={st(language, "tab_cal")}
+          describedBy={valid ? undefined : "ss-ext-err"}
+          disabled={busy}
+          id="ss-ext-out"
+          invalid={!valid}
+          language={language}
+          min={first}
+          onChange={(value) => {
+            setOut(value);
+          }}
+          value={out}
+        />
+        {!valid && (
+          <p className="ui-error" id="ss-ext-err">
+            <Icon name="alert" small />
+            <span>{st(language, "e_out", dayText(booking.check_out_on))}</span>
+          </p>
+        )}
+      </div>
+      {valid && (
+        <p aria-live="polite" className="ui-small">
+          {total === "pricing"
+            ? st(language, "ext_pricing")
+            : total === null
+              ? null
+              : total > booking.total_usd_cents
+                ? st(
+                    language,
+                    "ext_price",
+                    usdFromCents(total),
+                    usdFromCents(total - booking.total_usd_cents),
+                  )
+                : st(language, "ext_same", usdFromCents(total))}
+        </p>
+      )}
+      {billed && (
+        <p className="ui-small ui-muted">{st(language, "ext_bill")}</p>
+      )}
+      <div className="ui-actions">
+        <button
+          className="ui-btn primary"
+          disabled={busy || !valid}
+          onClick={() => {
+            onStep("extend", { version: booking.version, check_out_on: out });
+          }}
+          type="button"
+        >
+          <Icon name="calendar" small />
+          {st(language, "ext_b")}
+        </button>
+      </div>
     </section>
   );
 }

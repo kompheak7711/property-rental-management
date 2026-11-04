@@ -6,7 +6,10 @@ the Unit cannot be booked), and `GET .../short-stays/bookings` and `.../bookings
 bookings (`short_stays.read`). `POST .../short-stays/bookings` makes a booking for a guest who is a
 Customer (`short_stays.desk`). Step 3 adds the booking's actions: bill, paid on the site,
 deposit, check-in, check-out and ending the deposit (`short_stays.desk`), the room check
-(`short_stays.housekeeping`) and the decision on damage (`short_stays.approve`). The database
+(`short_stays.housekeeping`) and the decision on damage (`short_stays.approve`). Step 4a adds the
+early check-in and late check-out fee and extending a stay (`short_stays.desk`), and the cleaning
+list of a day (`GET .../housekeeping`, `short_stays.read`) with its done or skipped cleans
+(`short_stays.housekeeping`). The database
 functions check the rights again, price the stay from the owner's rules and keep one booking per
 Unit and night.
 """
@@ -52,6 +55,9 @@ Action = Literal[
     "room_check",
     "decide",
     "end_deposit",
+    "fee",
+    "extend",
+    "finish_task",
 ]
 # Step 3 (migration 20270602_312): each action is one database function that checks the right
 # again. "version" is the booking version the screen read (refused with 412 when it changed).
@@ -64,6 +70,10 @@ ACTION_SQL: dict[str, str] = {
     "room_check": "SELECT app.check_short_stay_room(%(p)s, %(t)s, %(b)s, %(a)s, %(c)s)",
     "decide": "SELECT app.decide_short_stay_damage(%(p)s, %(t)s, %(b)s, %(a)s, %(c)s)",
     "end_deposit": "SELECT app.end_short_stay_deposit(%(p)s, %(t)s, %(a)s, %(c)s)",
+    # Step 4a (migration 20270603_313).
+    "fee": "SELECT app.add_short_stay_fee(%(p)s, %(t)s, %(b)s ->> 'kind', %(v)s, %(a)s, %(c)s)",
+    "extend": "SELECT app.extend_short_stay(%(p)s, %(t)s, %(b)s, %(v)s, %(a)s, %(c)s)",
+    "finish_task": "SELECT app.finish_housekeeping_task(%(p)s, %(t)s, %(b)s, %(a)s, %(c)s)",
 }
 
 
@@ -79,6 +89,8 @@ class ShortStayFlow(Protocol):
     def booking(self, property_id: UUID, booking_id: UUID, *, actor_id: str) -> Json: ...
 
     def book(self, property_id: UUID, booking: Json, *, actor_id: str) -> UUID: ...
+
+    def housekeeping(self, property_id: UUID, day: date, *, actor_id: str) -> Json: ...
 
     def act(
         self, property_id: UUID, action: Action, target: UUID, body: Json, *, actor_id: str
@@ -101,6 +113,9 @@ class UnavailableShortStayFlow:
         raise ProductUnavailable
 
     def book(self, property_id: UUID, booking: Json, **_: object) -> UUID:
+        raise ProductUnavailable
+
+    def housekeeping(self, property_id: UUID, day: date, **_: object) -> Json:
         raise ProductUnavailable
 
     def act(self, property_id: UUID, action: Action, target: UUID, body: Json, **_: object) -> Json:
@@ -169,6 +184,14 @@ class PostgresShortStayFlow:
         )
         return UUID(str(made))
 
+    def housekeeping(self, property_id: UUID, day: date, *, actor_id: str) -> Json:
+        return _json(
+            self._one(
+                "SELECT app.short_stay_housekeeping(%s, %s, %s)",
+                (property_id, day, UUID(actor_id)),
+            )
+        )
+
     def act(
         self, property_id: UUID, action: Action, target: UUID, body: Json, *, actor_id: str
     ) -> Json:
@@ -236,6 +259,22 @@ class Decision(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
 
     approve: bool
+    note: Note | None = None
+
+
+class Fee(Version):
+    kind: Literal["EARLY_CHECK_IN", "LATE_CHECK_OUT"]
+
+
+class Extend(Version):
+    check_out_on: Day
+
+
+class Finish(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    # A skipped clean says why ("do not disturb"); the database refuses one without a note.
+    skip: bool = False
     note: Note | None = None
 
 
@@ -382,6 +421,35 @@ def create_short_stays_router(
         property_id: UUID, damage_id: UUID, body: Decision, request: Request
     ) -> Json:
         return act(request, property_id, SHORT_STAYS_APPROVE, "decide", damage_id, body)
+
+    @router.post("/bookings/{booking_id}/fee")
+    def add_short_stay_fee(
+        property_id: UUID, booking_id: UUID, body: Fee, request: Request
+    ) -> Json:
+        return act(request, property_id, SHORT_STAYS_DESK, "fee", booking_id, body)
+
+    @router.post("/bookings/{booking_id}/extend")
+    def extend_short_stay(
+        property_id: UUID, booking_id: UUID, body: Extend, request: Request
+    ) -> Json:
+        return act(request, property_id, SHORT_STAYS_DESK, "extend", booking_id, body)
+
+    @router.get("/housekeeping")
+    def short_stay_housekeeping(
+        property_id: UUID, request: Request, response: Response, day: date
+    ) -> Json:
+        actor = _require(request, resolver, SHORT_STAYS_READ, property_id)
+        response.headers["Cache-Control"] = "private, no-store"
+        try:
+            return envelope(request, flow.housekeeping(property_id, day, actor_id=actor.actor_id))
+        except REFUSED as exc:
+            raise _http(exc) from exc
+
+    @router.post("/housekeeping/{task_id}")
+    def finish_housekeeping_task(
+        property_id: UUID, task_id: UUID, body: Finish, request: Request
+    ) -> Json:
+        return act(request, property_id, SHORT_STAYS_HOUSEKEEPING, "finish_task", task_id, body)
 
     return router
 

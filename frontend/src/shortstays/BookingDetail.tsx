@@ -22,9 +22,12 @@ import {
   CheckOutCard,
   DamagesCard,
   DepositCard,
+  ExtendCard,
+  FeesCard,
   PaymentCard,
   RoomCheckCard,
   type StepsProps,
+  timeText,
 } from "./StaySteps";
 import { hasText, st, type StaysTextKey } from "./text";
 
@@ -120,6 +123,21 @@ export function BookingDetail({
       });
   };
 
+  // The new total for a later check-out: the stay priced again, with its fees kept.
+  const unitId = booking?.unit_id ?? "";
+  const checkIn = booking?.check_in_on ?? "";
+  const kept = (booking?.lines ?? [])
+    .filter((line) => line.kind !== "NIGHTS" && line.kind !== "WEEKS")
+    .reduce((sum, line) => sum + line.amount_usd_cents, 0);
+  const priceFor = useCallback(
+    (checkOut: string) =>
+      api
+        .price(propertyId, unitId, checkIn, checkOut)
+        .then((found) => found.total_usd_cents + kept)
+        .catch(() => null),
+    [api, propertyId, unitId, checkIn, kept],
+  );
+
   const back = (
     <button
       className="ui-crumb"
@@ -174,6 +192,7 @@ export function BookingDetail({
         }),
       );
     },
+    onPrice: priceFor,
   };
   // The cards keep what was typed until the booking changes.
   const cards = `${booking.booking_id}:${String(booking.version)}`;
@@ -230,7 +249,17 @@ export function BookingDetail({
                 )}
               </dd>
               <dt>{st(language, "d_nights")}</dt>
-              <dd>{nightsText(language, booking.nights)}</dd>
+              <dd>
+                {nightsText(language, booking.nights)}
+                <span className="ui-sub2 ui-num">
+                  {st(
+                    language,
+                    "d_times",
+                    timeText(booking.check_in_time),
+                    timeText(booking.check_out_time),
+                  )}
+                </span>
+              </dd>
               <dt>{st(language, "d_guests")}</dt>
               <dd className="ui-num">{booking.guest_count}</dd>
               <dt>{st(language, "d_source")}</dt>
@@ -252,6 +281,7 @@ export function BookingDetail({
           </section>
           <PaymentCard key={`pay:${cards}`} {...steps} />
           <DepositCard key={`dep:${cards}`} {...steps} />
+          <FeesCard key={`fee:${cards}`} {...steps} />
           <section aria-labelledby="ss-price" className="ui-card">
             <h2 id="ss-price">{st(language, "d_price")}</h2>
             <PriceLines language={language} lines={booking.lines} />
@@ -264,6 +294,7 @@ export function BookingDetail({
         <div className="ui-stack">
           <CheckInCard key={`in:${cards}`} {...steps} />
           <CheckOutCard key={`out:${cards}`} {...steps} />
+          <ExtendCard key={`ext:${cards}`} {...steps} />
           <RoomCheckCard key={`room:${cards}`} {...steps} />
           <DamagesCard key={`dmg:${cards}`} {...steps} />
           <section aria-labelledby="ss-guest" className="ui-card">

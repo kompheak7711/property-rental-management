@@ -147,8 +147,8 @@ def refused(url: str, state: str, *statements: tuple[str, tuple[Any, ...]]) -> N
 
 BOOK = (
     "INSERT INTO app.short_stay_bookings (id, property_id, unit_id, booking_number, customer_id, "
-    "guest_count, check_in_on, check_out_on, source, total_usd_cents, created_by) "
-    "VALUES (%s, %s, %s, %s, %s, 1, %s, %s, 'WALK_IN', %s, %s)"
+    "guest_count, check_in_on, check_out_on, source, site_name, total_usd_cents, created_by) "
+    "VALUES (%s, %s, %s, %s, %s, 1, %s, %s, %s, %s, %s, %s)"
 )
 LINE = (
     "INSERT INTO app.short_stay_price_lines (booking_id, price_version, line_position, kind, "
@@ -158,7 +158,12 @@ LINE = (
 
 
 def booking_statements(
-    db: StayDatabase, unit: uuid.UUID, start: date, nights: int, total: int | None = None
+    db: StayDatabase,
+    unit: uuid.UUID,
+    start: date,
+    nights: int,
+    total: int | None = None,
+    site: str | None = None,
 ) -> tuple[uuid.UUID, list[tuple[str, tuple[Any, ...]]]]:
     booking = uuid.uuid4()
     amount = 2900 * nights
@@ -174,6 +179,8 @@ def booking_statements(
                 db.guest,
                 start,
                 start + timedelta(days=nights),
+                "WALK_IN" if site is None else "BOOKING_SITE",
+                site,
                 amount if total is None else total,
                 db.staff,
             ),
@@ -182,8 +189,10 @@ def booking_statements(
     ]
 
 
-def book(db: StayDatabase, unit: uuid.UUID, start: date, nights: int) -> uuid.UUID:
-    booking, statements = booking_statements(db, unit, start, nights)
+def book(
+    db: StayDatabase, unit: uuid.UUID, start: date, nights: int, site: str | None = None
+) -> uuid.UUID:
+    booking, statements = booking_statements(db, unit, start, nights, site=site)
     with psycopg.connect(db.owner_url) as connection:
         for sql, params in statements:
             connection.execute(sql, params)
@@ -351,7 +360,8 @@ def test_a_booking_only_moves_forward_and_the_unit_status_follows_the_guest(
 ) -> None:
     db = stay_database
     unit = db.units[5]
-    booking = book(db, unit, db.today, 2)
+    # Paid on the booking site, so the check-in needs (step 3, migration 312) are met.
+    booking = book(db, unit, db.today, 2, site="Agoda")
     # Only a check-in makes the Unit Short stay.
     refused(
         db.owner_url,
@@ -365,7 +375,8 @@ def test_a_booking_only_moves_forward_and_the_unit_status_follows_the_guest(
     with psycopg.connect(db.owner_url) as connection:
         connection.execute(
             "UPDATE app.short_stay_bookings SET status = 'CHECKED_IN', checked_in_at = now(), "
-            "checked_in_by = %s, version = version + 1 WHERE id = %s",
+            "checked_in_by = %s, paid_on_site = true, id_copy_made = true, "
+            "house_rules_signed = true, version = version + 1 WHERE id = %s",
             (db.staff, booking),
         )
         connection.execute(
@@ -472,7 +483,8 @@ def test_a_card_number_is_never_saved_and_steps_move_forward_once(
     with psycopg.connect(db.owner_url) as connection:
         connection.execute(
             "UPDATE app.short_stay_damages SET status = 'APPROVED', decided_at = now(), "
-            "decided_by = %s, version = version + 1 WHERE booking_id = %s",
+            "decided_by = %s, from_deposit_usd_cents = 300, version = version + 1 "
+            "WHERE booking_id = %s",
             (db.manager, booking),
         )
         connection.execute(

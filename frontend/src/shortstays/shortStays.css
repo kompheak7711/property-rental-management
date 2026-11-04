@@ -159,3 +159,14 @@ td.ss-unpaid {
   display: grid;
   gap: 8px;
 }
+
+/* Step 4a: the cleaning list of a day. */
+.ss-clean {
+  display: grid;
+  gap: 8px;
+}
+
+.ss-clean > li .ui-hrow {
+  flex-wrap: wrap;
+  gap: 8px;
+}

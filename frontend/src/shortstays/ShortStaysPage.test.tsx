@@ -90,7 +90,7 @@ const LINE: PriceLine = {
 };
 const LINES = [LINE];
 
-function price(extra: Partial<StayPrice> = {}): StayPrice {
+function price0(extra: Partial<StayPrice> = {}): StayPrice {
   return {
     unit_id: "u-503",
     unit_number: "U503",
@@ -149,6 +149,14 @@ const BOOKING: Booking = {
   deposit: null,
   room_check: null,
   damages: [],
+  extra_invoices: [],
+  early_check_in: false,
+  late_check_out: false,
+  fee_usd_cents: 500,
+  check_in_time: 840,
+  check_out_time: 720,
+  late_check_out_until: 1080,
+  cleans: [],
 };
 
 /** Booking b-1 checks in today (04/11) for 3 nights. */
@@ -182,7 +190,7 @@ function fakeApi(overrides: Partial<ShortStaysApi> = {}): ShortStaysApi {
     calendar: vi.fn((_: string, from: string, days: number) =>
       Promise.resolve(calendar(from, days)),
     ),
-    price: vi.fn(() => Promise.resolve(price())),
+    price: vi.fn(() => Promise.resolve(price0())),
     list: vi.fn(() => Promise.resolve([BOOKING])),
     get: vi.fn(() => Promise.resolve(BOOKING)),
     book: vi.fn((_: string, body: NewBooking) =>
@@ -195,6 +203,12 @@ function fakeApi(overrides: Partial<ShortStaysApi> = {}): ShortStaysApi {
     ),
     step: vi.fn(() => Promise.resolve(BOOKING)),
     decide: vi.fn(() => Promise.resolve(BOOKING)),
+    cleaning: vi.fn((_: string, day: string) =>
+      Promise.resolve({ day, today: "2026-11-04", tasks: [] }),
+    ),
+    finishTask: vi.fn(() =>
+      Promise.resolve({ day: "2026-11-04", today: "2026-11-04", tasks: [] }),
+    ),
     ...overrides,
   };
 }
@@ -350,7 +364,7 @@ describe("Daily and weekly rent: Short stays", () => {
     const api = fakeApi({
       price: vi.fn(() =>
         Promise.resolve(
-          price({
+          price0({
             nights: 3,
             check_out_on: "2026-11-09",
             lines: LINES,
@@ -406,7 +420,7 @@ describe("Daily and weekly rent: Short stays", () => {
     const api = fakeApi({
       price: vi.fn(() =>
         Promise.resolve(
-          price({
+          price0({
             unit_id: "u-501",
             unit_number: "U501",
             suggest_month: true,
@@ -814,6 +828,187 @@ describe("Daily and weekly rent: Short stays", () => {
     );
     expect(step).toHaveBeenCalledWith("p-1", "b-1", "deposit/end", null);
     expect(await screen.findByText(/Kept \$50\.00/)).toBeInTheDocument();
+  });
+
+  it("TEST-FE-1611 adds a late check-out and shows its own Invoice once the stay is billed", async () => {
+    const billed: Booking = {
+      ...TODAY_STAY,
+      payment: "PAID",
+      invoice: INVOICE,
+    };
+    const step = vi.fn(() =>
+      Promise.resolve({
+        ...billed,
+        payment: "UNPAID" as const,
+        late_check_out: true,
+        version: 2,
+        extra_invoices: [
+          {
+            invoice_id: "i-3",
+            invoice_number: "INV-000125",
+            status: "UNPAID",
+            kind: "LATE_CHECK_OUT" as const,
+            total_usd_cents: 500,
+          },
+        ],
+      }),
+    );
+    show({
+      api: fakeApi({ get: vi.fn(() => Promise.resolve(billed)), step }),
+    });
+    go("#/shortstays/st:b-1");
+    expect(
+      await screen.findByText("Check-in from 14:00, check-out by 12:00"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("$5.00 each for this stay.")).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add late check-out (until 18:00)" }),
+    );
+    expect(step).toHaveBeenCalledWith("p-1", "b-1", "fee", {
+      version: 1,
+      kind: "LATE_CHECK_OUT",
+    });
+    expect(
+      await screen.findByRole("link", {
+        name: "Late check-out: Invoice INV-000125",
+      }),
+    ).toHaveAttribute("href", "#/invoices/inv%3Ai-3");
+    expect(
+      screen.getByText("Late check-out added (until 18:00)"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Add late check-out/ }),
+    ).toBeNull();
+    // Still one early check-in to offer before the guest is in.
+    expect(
+      screen.getByRole("button", { name: "Add early check-in" }),
+    ).toBeInTheDocument();
+  });
+
+  it("TEST-FE-1612 prices an extension before the desk extends the stay", async () => {
+    const price = vi.fn(() =>
+      Promise.resolve({ ...price0(), total_usd_cents: 12180 }),
+    );
+    const step = vi.fn(() =>
+      Promise.resolve({
+        ...TODAY_STAY,
+        check_out_on: "2026-11-10",
+        nights: 6,
+        total_usd_cents: 12180,
+        version: 2,
+      }),
+    );
+    show({
+      api: fakeApi({
+        get: vi.fn(() => Promise.resolve(TODAY_STAY)),
+        price,
+        step,
+      }),
+    });
+    go("#/shortstays/st:b-1");
+    const card = within(
+      await screen.findByRole("region", { name: "Extend the stay" }),
+    );
+    // The first day offered is the day after the check-out day.
+    await waitFor(() => {
+      expect(price).toHaveBeenCalledWith(
+        "p-1",
+        "u-501",
+        "2026-11-04",
+        "2026-11-08",
+      );
+    });
+    fireEvent.change(card.getByLabelText("New check-out day"), {
+      target: { value: "2026-11-10" },
+    });
+    await waitFor(() => {
+      expect(price).toHaveBeenLastCalledWith(
+        "p-1",
+        "u-501",
+        "2026-11-04",
+        "2026-11-10",
+      );
+    });
+    expect(
+      await card.findByText("New total $121.80: $60.90 more."),
+    ).toBeInTheDocument();
+    fireEvent.click(card.getByRole("button", { name: /Extend/ }));
+    expect(step).toHaveBeenCalledWith("p-1", "b-1", "extend", {
+      version: 1,
+      check_out_on: "2026-11-10",
+    });
+    expect(await screen.findByText("6 nights")).toBeInTheDocument();
+  });
+
+  it("TEST-FE-1613 lists the day's cleans and skips one only with a reason", async () => {
+    const day = {
+      day: "2026-11-04",
+      today: "2026-11-04",
+      tasks: [
+        {
+          task_id: "t-1",
+          kind: "DAILY_CLEAN" as const,
+          task_on: "2026-11-04",
+          status: "TO_DO" as const,
+          note: null,
+          done_at: null,
+          unit_id: "u-501",
+          unit_number: "U501",
+          booking_id: "b-1",
+          booking_number: "ST260001",
+          guest_name: "Lim Dara",
+          late: false,
+        },
+        {
+          task_id: "t-2",
+          kind: "ROOM_CHECK" as const,
+          task_on: "2026-11-03",
+          status: "TO_DO" as const,
+          note: null,
+          done_at: null,
+          unit_id: "u-503",
+          unit_number: "U503",
+          booking_id: "b-9",
+          booking_number: "ST260009",
+          guest_name: "Meas Rina",
+          late: true,
+        },
+      ],
+    };
+    const cleaning = vi.fn(() => Promise.resolve(day));
+    const finishTask = vi.fn(() => Promise.resolve(day));
+    show({
+      api: fakeApi({ cleaning, finishTask }),
+      capabilities: new Set([...DESK, "short_stays.housekeeping"]),
+    });
+    fireEvent.click(await screen.findByRole("button", { name: "Cleaning" }));
+    expect(await screen.findByText("Daily clean")).toBeInTheDocument();
+    expect(cleaning).toHaveBeenCalledWith("p-1", "2026-11-04");
+    expect(screen.getByText("2 to do")).toBeInTheDocument();
+    expect(screen.getByText("Due 03/11/2026")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Do the room check" }),
+    ).toHaveAttribute("href", "#/shortstays/st%3Ab-9");
+    fireEvent.click(screen.getByRole("button", { name: "Skip" }));
+    fireEvent.click(screen.getByRole("button", { name: "Skip" }));
+    expect(
+      await screen.findByText("A skipped clean says why."),
+    ).toBeInTheDocument();
+    expect(finishTask).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByLabelText(/Why it is skipped/), {
+      target: { value: "Do not disturb" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Skip" }));
+    await waitFor(() => {
+      expect(finishTask).toHaveBeenCalledWith("p-1", "t-1", {
+        skip: true,
+        note: "Do not disturb",
+      });
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Next day/ }));
+    await waitFor(() => {
+      expect(cleaning).toHaveBeenLastCalledWith("p-1", "2026-11-05");
+    });
   });
 
   it("TEST-FE-1605 speaks Khmer and hides New booking without the front-desk right", async () => {

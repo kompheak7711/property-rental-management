@@ -191,6 +191,16 @@ export interface Booking {
   deposit: StayDeposit | null;
   room_check: RoomCheck | null;
   damages: StayDamage[];
+  extra_invoices: ExtraInvoice[];
+  early_check_in: boolean;
+  late_check_out: boolean;
+  /** What an early check-in or a late check-out costs this stay; 0 from 7 nights. */
+  fee_usd_cents: number;
+  /** Minutes after midnight. */
+  check_in_time: number;
+  check_out_time: number;
+  late_check_out_until: number;
+  cleans: DailyClean[];
 }
 
 /** Step 3: the actions on one booking; each answers with the booking as it is now. */
@@ -201,7 +211,48 @@ export type StayStep =
   | "deposit/end"
   | "check-in"
   | "check-out"
-  | "room-check";
+  | "room-check"
+  | "fee"
+  | "extend";
+
+/** Step 4a: an Invoice for a fee or an extension, made after the stay was billed. */
+export interface ExtraInvoice {
+  invoice_id: string;
+  invoice_number: string;
+  status: string;
+  kind: "EXTEND" | "EARLY_CHECK_IN" | "LATE_CHECK_OUT";
+  total_usd_cents: number;
+}
+
+export interface DailyClean {
+  task_id: string;
+  task_on: string;
+  status: "TO_DO" | "DONE" | "SKIPPED";
+  note: string | null;
+}
+
+/** Step 4a: one task on the cleaning list of a day. */
+export interface CleaningTask {
+  task_id: string;
+  kind: "DAILY_CLEAN" | "CHANGE_OVER" | "ROOM_CHECK";
+  task_on: string;
+  status: "TO_DO" | "DONE" | "SKIPPED";
+  note: string | null;
+  done_at: string | null;
+  unit_id: string;
+  unit_number: string;
+  booking_id: string | null;
+  booking_number: string | null;
+  guest_name: string | null;
+  /** Due on an earlier day and not done yet (shown today). */
+  late: boolean;
+}
+
+export interface CleaningDay {
+  day: string;
+  today: string;
+  tasks: CleaningTask[];
+}
 
 export interface NewBooking {
   unit_id: string;
@@ -241,6 +292,12 @@ export interface ShortStaysApi {
     damageId: string,
     decision: { approve: boolean; note?: string },
   ) => Promise<Booking>;
+  cleaning: (propertyId: string, day: string) => Promise<CleaningDay>;
+  finishTask: (
+    propertyId: string,
+    taskId: string,
+    finish: { skip: boolean; note?: string },
+  ) => Promise<CleaningDay>;
 }
 
 export class ShortStaysError extends Error {
@@ -501,6 +558,60 @@ export function bookingOf(value: unknown): Booking {
     deposit: depositOf(row.deposit),
     room_check: roomCheckOf(row.room_check),
     damages: list(row.damages).map(damageOf),
+    extra_invoices: list(row.extra_invoices).map((entry) => {
+      const extra = record(entry);
+      return {
+        invoice_id: text(extra.invoice_id),
+        invoice_number: text(extra.invoice_number),
+        status: text(extra.status),
+        kind: oneOf(EXTRA_KINDS, extra.kind),
+        total_usd_cents: whole(extra.total_usd_cents),
+      };
+    }),
+    early_check_in: row.early_check_in === true,
+    late_check_out: row.late_check_out === true,
+    fee_usd_cents: whole(row.fee_usd_cents),
+    check_in_time: whole(row.check_in_time),
+    check_out_time: whole(row.check_out_time),
+    late_check_out_until: whole(row.late_check_out_until),
+    cleans: list(row.cleans).map((entry) => {
+      const clean = record(entry);
+      return {
+        task_id: text(clean.task_id),
+        task_on: text(clean.task_on),
+        status: oneOf(TASK_STATUSES, clean.status),
+        note: maybeText(clean.note),
+      };
+    }),
+  };
+}
+
+const EXTRA_KINDS = ["EXTEND", "EARLY_CHECK_IN", "LATE_CHECK_OUT"] as const;
+const TASK_STATUSES = ["TO_DO", "DONE", "SKIPPED"] as const;
+const TASK_KINDS = ["DAILY_CLEAN", "CHANGE_OVER", "ROOM_CHECK"] as const;
+
+export function cleaningOf(value: unknown): CleaningDay {
+  const row = record(value);
+  return {
+    day: text(row.day),
+    today: text(row.today),
+    tasks: list(row.tasks).map((entry) => {
+      const task = record(entry);
+      return {
+        task_id: text(task.task_id),
+        kind: oneOf(TASK_KINDS, task.kind),
+        task_on: text(task.task_on),
+        status: oneOf(TASK_STATUSES, task.status),
+        note: maybeText(task.note),
+        done_at: maybeText(task.done_at),
+        unit_id: text(task.unit_id),
+        unit_number: text(task.unit_number),
+        booking_id: maybeText(task.booking_id),
+        booking_number: maybeText(task.booking_number),
+        guest_name: maybeText(task.guest_name),
+        late: task.late === true,
+      };
+    }),
   };
 }
 
@@ -556,6 +667,19 @@ export const shortStaysApi: ShortStaysApi = {
       await request(
         `${base(propertyId)}/damages/${encodeURIComponent(damageId)}/decision`,
         post(decision),
+      ),
+    ),
+  cleaning: async (propertyId, day) =>
+    cleaningOf(
+      await request(
+        `${base(propertyId)}/housekeeping?day=${encodeURIComponent(day)}`,
+      ),
+    ),
+  finishTask: async (propertyId, taskId, finish) =>
+    cleaningOf(
+      await request(
+        `${base(propertyId)}/housekeeping/${encodeURIComponent(taskId)}`,
+        post(finish),
       ),
     ),
 };

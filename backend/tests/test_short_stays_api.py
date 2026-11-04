@@ -62,6 +62,10 @@ class InMemoryStays:
         self.calls.append(("book", booking))
         return self.booking_id
 
+    def housekeeping(self, property_id: UUID, day: date, *, actor_id: str) -> Json:
+        self._check(property_id)
+        return {"day": str(day), "tasks": []}
+
     def act(
         self, property_id: UUID, action: Action, target: UUID, body: Json, *, actor_id: str
     ) -> Json:
@@ -158,6 +162,13 @@ def test_each_step_of_a_stay_needs_its_own_right() -> None:
         ),
         (damage, {"approve": True}, "short_stays.approve"),
         (f"{booking}/deposit/end", None, "short_stays.desk"),
+        (f"{booking}/fee", {"version": 5, "kind": "LATE_CHECK_OUT"}, "short_stays.desk"),
+        (f"{booking}/extend", {"version": 6, "check_out_on": "2026-11-12"}, "short_stays.desk"),
+        (
+            f"{base(flow)}/housekeeping/{uuid4()}",
+            {"skip": True, "note": "Do not disturb"},
+            "short_stays.housekeeping",
+        ),
     )
     for url, body, right in steps:
         others = {
@@ -180,6 +191,9 @@ def test_each_step_of_a_stay_needs_its_own_right() -> None:
         "room_check",
         "decide",
         "end_deposit",
+        "fee",
+        "extend",
+        "finish_task",
     ]
     desk = client(flow, "short_stays.desk")
     # A card number never reaches the database as last 4 digits; unknown fields are refused.
@@ -190,3 +204,21 @@ def test_each_step_of_a_stay_needs_its_own_right() -> None:
     ):
         assert desk.post(f"{booking}/deposit", json=wrong, headers=HEADERS).status_code == 422
     assert desk.post(f"{booking}/check-in", json={"version": 3}, headers=HEADERS).status_code == 422
+    for wrong_fee in ({"version": 5, "kind": "PARKING"}, {"kind": "LATE_CHECK_OUT"}):
+        assert desk.post(f"{booking}/fee", json=wrong_fee, headers=HEADERS).status_code == 422
+    assert (
+        desk.post(
+            f"{booking}/extend", json={"version": 6, "check_out_on": "soon"}, headers=HEADERS
+        ).status_code
+        == 422
+    )
+
+
+def test_the_cleaning_list_of_a_day_needs_the_read_right() -> None:
+    flow = InMemoryStays()
+    url = f"{base(flow)}/housekeeping?day=2026-11-05"
+    assert client(flow, "short_stays.housekeeping").get(url).status_code == 403
+    answer = client(flow, "short_stays.read").get(url)
+    assert answer.status_code == 200
+    assert answer.json()["data"] == {"day": "2026-11-05", "tasks": []}
+    assert answer.headers["Cache-Control"] == "private, no-store"
