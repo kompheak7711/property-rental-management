@@ -361,6 +361,7 @@ database_test_suites='
   tests/test_quotations_migration.py
   tests/test_problem_reports_migration.py
   tests/test_short_stay_migration.py
+  tests/test_short_stay_booking_migration.py
 '
 # The General Ledger suites run first, in a pytest run of their own on the new database: the other
 # suites leave balances on the one Property (up to the largest bigint) that no books can hold.

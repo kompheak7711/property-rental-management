@@ -1037,6 +1037,11 @@ def test_fastapi_openapi_inventory_has_no_bootstrap_or_unauthenticated_owner_res
         "/api/v1/properties/{property_id}/problem-reports/{report_id}": {"get"},
         "/api/v1/properties/{property_id}/problem-reports/{report_id}/steps": {"post"},
         "/api/v1/properties/{property_id}/problem-reports/{report_id}/tenant-answer": {"post"},
+        # Daily and weekly rent, phase 6 step 2.
+        "/api/v1/properties/{property_id}/short-stays/calendar": {"get"},
+        "/api/v1/properties/{property_id}/short-stays/price": {"get"},
+        "/api/v1/properties/{property_id}/short-stays/bookings": {"get", "post"},
+        "/api/v1/properties/{property_id}/short-stays/bookings/{booking_id}": {"get"},
         "/api/v1/properties/{property_id}/ledger/bank-cash": {"get"},
         "/api/v1/properties/{property_id}/ledger/month-end": {"get"},
         "/api/v1/properties/{property_id}/ledger/asset-register": {"get"},

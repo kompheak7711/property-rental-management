@@ -195,7 +195,6 @@ def test_migration_310_follows_the_ledger_method_fix() -> None:
     scripts = ScriptDirectory.from_config(config)
     revision = scripts.get_revision(REVISION)
     assert revision is not None and revision.down_revision == "20270429_279"
-    assert scripts.get_current_head() == REVISION
     with pytest.raises(RuntimeError, match="forward-only"):
         revision.module.downgrade()
 
