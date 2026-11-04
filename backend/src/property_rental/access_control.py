@@ -248,7 +248,7 @@ STAFF_QUOTATION_CAPABILITIES: Final = frozenset({"quotations.read"})
 STAFF_PROBLEM_REPORT_CAPABILITIES: Final = frozenset(
     {"problem_reports.read", "problem_reports.add"}
 )
-# Daily and weekly rent (phase 6 step 1, migration `20270430_280`): Staff see bookings, work the
+# Daily and weekly rent (phase 6 step 1, migration `20270531_310`): Staff see bookings, work the
 # front desk and do housekeeping; the Owner and the Manager also approve and give Credit.
 STAFF_SHORT_STAY_CAPABILITIES: Final = frozenset(
     {"short_stays.read", "short_stays.desk", "short_stays.housekeeping"}

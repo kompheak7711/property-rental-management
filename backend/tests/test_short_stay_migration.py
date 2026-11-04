@@ -1,4 +1,4 @@
-"""Daily and weekly rent on the real database (migration 20270430_280, phase 6 step 1).
+"""Daily and weekly rent on the real database (migration 20270531_310, phase 6 step 1).
 
 One Unit never has two bookings, or a booking and a signed Lease, on the same night; the booking
 wins over a new Lease. The total of a booking is the sum of its price lines. Quotes, price lines,
@@ -28,7 +28,7 @@ from test_move_in_migration import migrated_database_url as migrated_database_ur
 from test_move_in_migration import runtime_database_url
 from test_role_bundle_migration import add_account, the_property
 
-REVISION = "20270430_280"
+REVISION = "20270531_310"
 GRANTS = "SELECT capability_id FROM app.actor_capability_grants(%s)"
 RIGHTS = {
     "short_stays.read",
@@ -190,7 +190,7 @@ def book(db: StayDatabase, unit: uuid.UUID, start: date, nights: int) -> uuid.UU
     return booking
 
 
-def test_migration_280_follows_the_ledger_method_fix() -> None:
+def test_migration_310_follows_the_ledger_method_fix() -> None:
     config = Config(str(Path(__file__).parents[1] / "alembic.ini"))
     scripts = ScriptDirectory.from_config(config)
     revision = scripts.get_revision(REVISION)

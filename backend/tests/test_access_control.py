@@ -300,7 +300,7 @@ STAFF_APPROVED = frozenset(
         # V1.1 part 7 (DL-124): Staff see and add Problem reports.
         "problem_reports.read",
         "problem_reports.add",
-        # Daily and weekly rent (migration 20270430_280): see, front desk and housekeeping.
+        # Daily and weekly rent (migration 20270531_310): see, front desk and housekeeping.
         "short_stays.read",
         "short_stays.desk",
         "short_stays.housekeeping",
