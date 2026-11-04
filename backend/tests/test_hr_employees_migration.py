@@ -216,7 +216,8 @@ def test_rights_follow_the_plan(hr_database: HrDatabase) -> None:
             "app.business_rule_names AS name WHERE name.area = 'STAFF' ORDER BY name.code",
             (db.today,),
         ).fetchall()
-        assert rules == [("LOAN_PCT", 5000), ("PAY_DAY", 5)]
+        # Migration 301 adds LOAN_OPEN_MAX (open loans per person).
+        assert rules == [("LOAN_OPEN_MAX", 1), ("LOAN_PCT", 5000), ("PAY_DAY", 5)]
         numbers = connection.execute(
             "SELECT DISTINCT document_type, format FROM app.number_rules "
             "WHERE document_type IN ('SALARY_LOAN', 'PAYROLL', 'OVERTIME') ORDER BY 1"
