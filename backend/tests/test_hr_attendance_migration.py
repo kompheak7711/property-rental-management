@@ -490,7 +490,7 @@ def test_payroll_takes_the_sheet_and_locks_the_month(att_database: HrDatabase) -
         db, "SELECT app.hr_make_payroll(%s, %s, %s, NULL)", db.property_id, month, db.accountant
     )
     with psycopg.connect(db.owner_url) as connection:
-        lines = dict(
+        lines: dict[str, int] = dict(
             connection.execute(
                 "SELECT component_code, amount_usd_cents FROM app.payroll_lines "
                 "WHERE payroll_run_id = %s AND employee_id = %s",
@@ -528,3 +528,23 @@ def test_payroll_takes_the_sheet_and_locks_the_month(att_database: HrDatabase) -
         db.manager,
     )
     assert scan(db, 7031, "IN", qr, at(db, spare, "06:35"))["reason"] == "MONTH_LOCKED"
+
+
+def test_the_api_calls_only_runtime_functions_with_their_arguments(
+    att_database: HrDatabase,
+) -> None:
+    from property_rental.hr_api import FUNCTIONS, PostgresHrFlow
+
+    db = att_database
+    with psycopg.connect(db.owner_url) as connection:
+        found = dict(
+            connection.execute(
+                "SELECT proc.proname::text, proc.pronargs::integer FROM pg_catalog.pg_proc AS proc "
+                "WHERE proc.pronamespace = 'app'::regnamespace AND proc.proname = ANY(%s) "
+                "AND has_function_privilege('prm_runtime', proc.oid, 'EXECUTE')",
+                (list(FUNCTIONS),),
+            ).fetchall()
+        )
+    assert found == FUNCTIONS
+    choices = PostgresHrFlow(db.runtime_url).call("hr_choices", (db.property_id, db.manager))
+    assert isinstance(choices, dict)

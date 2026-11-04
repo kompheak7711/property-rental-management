@@ -136,6 +136,12 @@ from property_rental.financial_reference_api import (
     FinancialReferenceFlow,
     create_financial_reference_router,
 )
+from property_rental.hr_api import (
+    HrFlow,
+    PostgresHrFlow,
+    UnavailableHrFlow,
+    create_hr_router,
+)
 from property_rental.identity import (
     ActorResolver,
     deny_unauthenticated_actor,
@@ -621,6 +627,7 @@ def create_app(
     product_flow: ProductFlow | None = None,
     quotation_flow: QuotationFlow | None = None,
     problem_report_flow: ProblemReportFlow | None = None,
+    hr_flow: HrFlow | None = None,
     ledger_posting_flow: LedgerPostingFlow | None = None,
     ledger_money_flow: LedgerMoneyFlow | None = None,
     ledger_close_flow: LedgerCloseFlow | None = None,
@@ -1311,6 +1318,18 @@ def create_app(
                 )
                 if resolved_settings.database_url is not None
                 else UnavailableProblemReportFlow()
+            ),
+            resolved_settings,
+        )
+    )
+    include_signed_in(
+        create_hr_router(
+            actor_resolver,
+            hr_flow
+            or (
+                PostgresHrFlow(resolved_settings.database_url.get_secret_value())
+                if resolved_settings.database_url is not None
+                else UnavailableHrFlow()
             ),
             resolved_settings,
         )
