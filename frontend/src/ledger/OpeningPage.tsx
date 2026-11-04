@@ -354,6 +354,11 @@ function DraftCards({
             {lt(language, "ob_off", money(Math.abs(off)))}
           </p>
         )}
+        {all.debit === 0 && all.credit === 0 && (
+          <p className="ui-muted" role="status">
+            {lt(language, "ob_empty")}
+          </p>
+        )}
         {data.needs_check > 0 && (
           <p className="ui-error" role="status">
             {lt(language, "ob_nc", String(data.needs_check))}{" "}

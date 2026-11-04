@@ -82,8 +82,10 @@ POSTED: Final = """
     WHERE line.entry_id = %(entry)s
     ORDER BY line.line_no
 """
+# The same records `app.gl_post_opening_balances` refuses for: the kept Needs check list and the
+# app records with a problem the posting job has not met yet (migration 20270427_277).
 NEEDS_CHECK: Final = """
-    SELECT count(*) FROM app.gl_posting_problems AS problem WHERE problem.property_id = %(prop)s
+    SELECT count(*) FROM app.gl_waiting_records(%(prop)s)
 """
 
 

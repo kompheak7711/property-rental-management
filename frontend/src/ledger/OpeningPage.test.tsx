@@ -13,6 +13,12 @@ import type { Chart, LedgerApi } from "./ledgerClient";
 import type { OpeningApi, OpeningLine, OpeningSheet } from "./openingClient";
 import { OpeningBalances } from "./OpeningPage";
 
+function at<T>(items: readonly T[], index: number): T {
+  const item = items[index];
+  if (item === undefined) throw new Error(`missing item ${String(index)}`);
+  return item;
+}
+
 beforeEach(() => {
   window.location.hash = "";
 });
@@ -222,22 +228,22 @@ describe("Opening balances", () => {
     const debits = within(dialog).getAllByLabelText("Debit");
     const credits = within(dialog).getAllByLabelText("Credit");
     // The same account twice, and a line with both sides, are refused.
-    fireEvent.change(accounts[1] as HTMLElement, { target: { value: "1010" } });
-    fireEvent.change(debits[1] as HTMLElement, { target: { value: "5" } });
-    fireEvent.change(credits[1] as HTMLElement, { target: { value: "5" } });
+    fireEvent.change(at(accounts, 1), { target: { value: "1010" } });
+    fireEvent.change(at(debits, 1), { target: { value: "5" } });
+    fireEvent.change(at(credits, 1), { target: { value: "5" } });
     fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
     expect(
       await within(dialog).findByText("Each account goes in once."),
     ).toBeInTheDocument();
-    fireEvent.change(accounts[1] as HTMLElement, { target: { value: "3000" } });
+    fireEvent.change(at(accounts, 1), { target: { value: "3000" } });
     fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
     expect(
       await within(dialog).findByText(
         "Type a debit or a credit, more than zero, not both.",
       ),
     ).toBeInTheDocument();
-    fireEvent.change(debits[1] as HTMLElement, { target: { value: "" } });
-    fireEvent.change(credits[1] as HTMLElement, { target: { value: "800" } });
+    fireEvent.change(at(debits, 1), { target: { value: "" } });
+    fireEvent.change(at(credits, 1), { target: { value: "800" } });
     fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
     expect(
       await screen.findByText("Opening balances saved."),
@@ -299,6 +305,18 @@ describe("Opening balances", () => {
     expect(
       screen.queryByRole("button", { name: "Type the opening balances" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("TEST-FE-1290 says why Post is closed before anything is typed", async () => {
+    show(fakeApi({ ...DRAFT, typed: [], worked_out: [] }));
+    expect(
+      await screen.findByText(
+        "Type the opening balances first. Post opens when Debit and Credit are equal.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Post opening balances" }),
+    ).toBeDisabled();
   });
 
   it("TEST-FE-1218 holds posting while records wait in Needs check and shows the Owner-only note to others", async () => {

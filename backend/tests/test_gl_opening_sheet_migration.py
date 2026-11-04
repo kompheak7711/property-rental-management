@@ -8,7 +8,8 @@ once posted, the entry's lines, who posted it and when. Read with the runtime lo
 from __future__ import annotations
 
 from collections.abc import Iterator
-from uuid import uuid4
+from typing import Any
+from uuid import UUID, uuid4
 
 import psycopg
 import pytest
@@ -25,6 +26,8 @@ from property_rental.ledger_opening_api import (
     WORKED_OUT,
     PostgresLedgerOpening,
 )
+from property_rental.ledger_posting_api import PostgresLedgerPostingFlow
+from test_gl_auto_posting_migration import SET_ACCOUNT, invoice_paid, method_of, problem
 from test_gl_close_migration import capital, worked_out_net
 from test_gl_money_records_migration import Books, Borrowed
 from test_move_in_migration import migrated_database_url as migrated_database_url
@@ -95,6 +98,44 @@ def test_the_opening_sheet_follows_the_books_from_start_to_posted(fresh: Books) 
         for line in posted["posted"]
     )
     assert posted["needs_check"] == 0
+
+
+__all__ = ["invoice_paid"]
+
+
+def test_records_the_posting_job_has_not_met_keep_post_closed_and_show_in_needs_check(
+    invoice_paid: tuple[psycopg.Connection[Any], UUID, UUID, UUID, UUID, UUID],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Owner test 04/11/2026: Post said "Clear the Needs check list first" while the screen
+    showed nothing waiting, because the posting job had not run since the books started."""
+    connection, prop, human, _, payment, _ = invoice_paid
+    key = f"payment:{payment}"
+    connection.execute(
+        "INSERT INTO app.gl_opening_balances (id, property_id, start_date, status, created_by) "
+        "VALUES (gen_random_uuid(), %s, DATE '2026-01-01', 'DRAFT', %s)",
+        (prop, human),
+    )
+    monkeypatch.setattr(psycopg, "connect", lambda *_a, **_k: Borrowed(connection))
+    opening = PostgresLedgerOpening("postgresql://unused")
+    needs = PostgresLedgerPostingFlow("postgresql://unused")
+    # The Payment Method has no ledger account and the posting job has not run: nothing is kept.
+    assert problem(connection, key) is None
+    waiting = {row.posting_key: row for row in needs.needs_check(prop)}
+    assert "No ledger account is set for the Payment Method" in waiting[key].problem
+    assert waiting[key].source_link == {"page": "payments", "detail": f"receipt:{payment}"}
+    assert opening.sheet(prop)["needs_check"] == len(waiting) > 0
+    owner = Books(connection, prop, start=False).owner
+    with pytest.raises(psycopg.Error, match="Clear the Needs check list first"):
+        with connection.transaction():
+            connection.execute(
+                "SELECT app.gl_post_opening_balances(%s, %s, gen_random_uuid())", (prop, owner)
+            )
+    # Once the method has its account the record can post, so it no longer waits.
+    connection.execute(SET_ACCOUNT, (prop, method_of(connection, payment), None, "1010", human))
+    waiting = {row.posting_key: row for row in needs.needs_check(prop)}
+    assert key not in waiting
+    assert opening.sheet(prop)["needs_check"] == len(waiting)
 
 
 def test_the_runtime_login_can_run_the_opening_read(migrated_database_url: str) -> None:

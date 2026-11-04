@@ -5,7 +5,8 @@ Manager); setting the ledger account of a Payment Method or Refund method needs
 `ledger.accounts.manage` (Owner only) and the browser mutation checks.
 
 - `GET /api/v1/properties/{property_id}/ledger/needs-check` lists the money records the automatic
-  posting could not post yet, with the reason.
+  posting could not post yet, with the reason: the kept list and the records with a problem the
+  posting job has not met yet (`app.gl_waiting_records`, owner test 04/11/2026).
 - `GET /api/v1/properties/{property_id}/ledger/method-accounts` lists every Payment Method and
   Refund method with the ledger account it posts to today (none = its records wait in "Needs
   check").
@@ -129,8 +130,7 @@ class PostgresLedgerPostingFlow:
                     "SELECT problem.posting_key, problem.source_type, problem.source_id, "
                     "problem.event_date, problem.problem, problem.first_seen_at, "
                     f"problem.last_seen_at, ({source_sql('problem', None)}), "
-                    f"({link_sql('problem')}) FROM app.gl_posting_problems AS problem "
-                    "WHERE problem.property_id = %s "
+                    f"({link_sql('problem')}) FROM app.gl_waiting_records(%s) AS problem "
                     "ORDER BY problem.event_date, problem.posting_key",
                     (property_id,),
                 ).fetchall()

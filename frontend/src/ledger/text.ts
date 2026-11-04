@@ -1130,6 +1130,10 @@ const TEXT = {
     "{0} records wait in Needs check. Clear that list before you post.",
     "កំណត់ត្រា {0} កំពុងរង់ចាំក្នុង ត្រូវពិនិត្យ។ សូមដោះស្រាយបញ្ជីនោះ មុនពេលប្រកាស។",
   ],
+  ob_empty: [
+    "Type the opening balances first. Post opens when Debit and Credit are equal.",
+    "សូមវាយបញ្ចូលសមតុល្យដើមជាមុនសិន។ ប៊ូតុងប្រកាសបើកពេលឥណពន្ធ និងឥណទានស្មើគ្នា។",
+  ],
   ob_post: ["Post opening balances", "ប្រកាសសមតុល្យដើម"],
   ob_post_n: [
     "This posts one entry dated {0}. After that the opening balances are locked; a later fix goes in as an adjusting entry.",

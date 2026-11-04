@@ -61021,7 +61021,7 @@
       "notes": "V1.1 part 6: the Postgres flow of Quotations makes, reads, signs (412 for a stale version, 409 while an Item is not in stock, then the Invoice) and refuses through the database functions."
     },
     {
-      "test_id": "test_migration_276_is_the_head",
+      "test_id": "test_migration_276_follows_the_quotations",
       "upstream_ids": [
         "DL-124",
         "DB-PR-001"
@@ -62250,6 +62250,28 @@
       "test_path": "backend/tests/test_ledger_opening.py",
       "status": "implemented",
       "notes": "General Ledger phase 6 step 6 (Opening balances): only ledger readers see the opening sheet; no query values are taken."
+    },
+    {
+      "test_id": "TEST-FE-1290",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-014"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/OpeningPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 (Opening balances, owner test 04/11/2026): says why Post is closed before anything is typed."
+    },
+    {
+      "test_id": "test_records_the_posting_job_has_not_met_keep_post_closed_and_show_in_needs_check",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-014"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_gl_opening_sheet_migration.py",
+      "status": "implemented",
+      "notes": "Owner test 04/11/2026: records with a problem that the posting job has not met yet (migration 20270427_277, app.gl_waiting_records) count in the Opening balances sheet and show in Needs check, as the Post refusal does; they leave once the method has its ledger account."
     }
   ]
 }
