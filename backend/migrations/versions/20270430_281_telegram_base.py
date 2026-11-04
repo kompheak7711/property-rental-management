@@ -30,7 +30,7 @@ from collections.abc import Sequence
 from alembic import op
 
 revision: str = "20270430_281"
-down_revision: str | None = "20270429_279"
+down_revision: str | None = "20270512_292"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
