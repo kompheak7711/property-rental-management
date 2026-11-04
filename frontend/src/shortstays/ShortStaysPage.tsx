@@ -170,6 +170,7 @@ export function ShortStaysPage({
           setFlash(null);
         }}
         propertyId={propertyId}
+        today={today}
       />
     );
   }
@@ -306,7 +307,11 @@ export function ShortStaysPage({
                           const booking = night.booking;
                           return (
                             <td
-                              className={`ss-night ss-${booking.status.toLowerCase()}`}
+                              className={`ss-night ss-${booking.status.toLowerCase()}${
+                                booking.status === "BOOKED" && !booking.paid
+                                  ? " ss-unpaid"
+                                  : ""
+                              }`}
                               key={day}
                             >
                               <a
@@ -334,7 +339,10 @@ export function ShortStaysPage({
                                         language,
                                         booking.status === "CHECKED_IN"
                                           ? "cal_in"
-                                          : `st_${booking.status}`,
+                                          : booking.status === "BOOKED" &&
+                                              !booking.paid
+                                            ? "cal_unpaid"
+                                            : `st_${booking.status}`,
                                       )}
                                 </span>
                               </a>

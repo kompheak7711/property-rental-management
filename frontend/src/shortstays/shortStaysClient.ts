@@ -80,6 +80,8 @@ export interface CalendarBooking {
   source: BookingSource;
   check_in_on: string;
   check_out_on: string;
+  /** Paid in full (or on the booking site); an unpaid booking shows a dashed square. */
+  paid: boolean;
 }
 
 export interface CalendarUnit {
@@ -107,6 +109,53 @@ export interface BookingHistoryEntry {
   note: string | null;
 }
 
+/** Step 3: how the stay is paid. */
+export type PaymentState =
+  | "NOT_BILLED"
+  | "UNPAID"
+  | "PARTIALLY_PAID"
+  | "PAID"
+  | "PAID_ON_SITE";
+const PAYMENTS: readonly PaymentState[] = [
+  "NOT_BILLED",
+  "UNPAID",
+  "PARTIALLY_PAID",
+  "PAID",
+  "PAID_ON_SITE",
+];
+
+export interface StayDeposit {
+  deposit_id: string;
+  kind: "CASH" | "CARD_HOLD";
+  amount_usd_cents: number;
+  hold_reference: string | null;
+  card_last4: string | null;
+  status: "HELD" | "RETURNED" | "KEPT";
+  kept_usd_cents: number;
+  taken_at: string;
+  ended_at: string | null;
+}
+
+export interface RoomCheck {
+  task_id: string;
+  task_on: string;
+  status: "TO_DO" | "DONE" | "SKIPPED";
+  note: string | null;
+  done_at: string | null;
+}
+
+export interface StayDamage {
+  damage_id: string;
+  description: string;
+  amount_usd_cents: number;
+  status: "WAITING" | "APPROVED" | "REFUSED";
+  decided_at: string | null;
+  decision_note: string | null;
+  from_deposit_usd_cents: number;
+  invoice_id: string | null;
+  invoice_number: string | null;
+}
+
 export interface Booking {
   booking_id: string;
   booking_number: string;
@@ -130,7 +179,29 @@ export interface Booking {
   created_at: string;
   lines: PriceLine[];
   history: BookingHistoryEntry[];
+  unit_status: string;
+  guest_has_id: boolean;
+  payment: PaymentState;
+  invoice: {
+    invoice_id: string;
+    invoice_number: string;
+    status: string;
+    total_usd_cents: number;
+  } | null;
+  deposit: StayDeposit | null;
+  room_check: RoomCheck | null;
+  damages: StayDamage[];
 }
+
+/** Step 3: the actions on one booking; each answers with the booking as it is now. */
+export type StayStep =
+  | "bill"
+  | "paid-on-site"
+  | "deposit"
+  | "deposit/end"
+  | "check-in"
+  | "check-out"
+  | "room-check";
 
 export interface NewBooking {
   unit_id: string;
@@ -159,6 +230,17 @@ export interface ShortStaysApi {
   list: (propertyId: string) => Promise<Booking[]>;
   get: (propertyId: string, bookingId: string) => Promise<Booking>;
   book: (propertyId: string, booking: NewBooking) => Promise<Booking>;
+  step: (
+    propertyId: string,
+    bookingId: string,
+    step: StayStep,
+    body: Record<string, unknown> | null,
+  ) => Promise<Booking>;
+  decide: (
+    propertyId: string,
+    damageId: string,
+    decision: { approve: boolean; note?: string },
+  ) => Promise<Booking>;
 }
 
 export class ShortStaysError extends Error {
@@ -308,6 +390,7 @@ export function calendarOf(value: unknown): StayCalendar {
             source: oneOf(SOURCES, booking.source),
             check_in_on: text(booking.check_in_on),
             check_out_on: text(booking.check_out_on),
+            paid: booking.paid === true,
           };
         }),
         leases: list(unit.leases).map((item) => {
@@ -324,8 +407,55 @@ export function calendarOf(value: unknown): StayCalendar {
   };
 }
 
+function depositOf(value: unknown): StayDeposit | null {
+  if (value === null || value === undefined) return null;
+  const row = record(value);
+  return {
+    deposit_id: text(row.deposit_id),
+    kind: oneOf(["CASH", "CARD_HOLD"] as const, row.kind),
+    amount_usd_cents: whole(row.amount_usd_cents),
+    hold_reference: maybeText(row.hold_reference),
+    card_last4: maybeText(row.card_last4),
+    status: oneOf(["HELD", "RETURNED", "KEPT"] as const, row.status),
+    kept_usd_cents: whole(row.kept_usd_cents),
+    taken_at: text(row.taken_at),
+    ended_at: maybeText(row.ended_at),
+  };
+}
+
+function roomCheckOf(value: unknown): RoomCheck | null {
+  if (value === null || value === undefined) return null;
+  const row = record(value);
+  return {
+    task_id: text(row.task_id),
+    task_on: text(row.task_on),
+    status: oneOf(["TO_DO", "DONE", "SKIPPED"] as const, row.status),
+    note: maybeText(row.note),
+    done_at: maybeText(row.done_at),
+  };
+}
+
+function damageOf(value: unknown): StayDamage {
+  const row = record(value);
+  return {
+    damage_id: text(row.damage_id),
+    description: text(row.description),
+    amount_usd_cents: whole(row.amount_usd_cents),
+    status: oneOf(["WAITING", "APPROVED", "REFUSED"] as const, row.status),
+    decided_at: maybeText(row.decided_at),
+    decision_note: maybeText(row.decision_note),
+    from_deposit_usd_cents: whole(row.from_deposit_usd_cents),
+    invoice_id: maybeText(row.invoice_id),
+    invoice_number: maybeText(row.invoice_number),
+  };
+}
+
 export function bookingOf(value: unknown): Booking {
   const row = record(value);
+  const invoice =
+    row.invoice === null || row.invoice === undefined
+      ? null
+      : record(row.invoice);
   return {
     booking_id: text(row.booking_id),
     booking_number: text(row.booking_number),
@@ -356,11 +486,37 @@ export function bookingOf(value: unknown): Booking {
         note: maybeText(event.note),
       };
     }),
+    unit_status: text(row.unit_status),
+    guest_has_id: row.guest_has_id === true,
+    payment: oneOf(PAYMENTS, row.payment),
+    invoice:
+      invoice === null
+        ? null
+        : {
+            invoice_id: text(invoice.invoice_id),
+            invoice_number: text(invoice.invoice_number),
+            status: text(invoice.status),
+            total_usd_cents: whole(invoice.total_usd_cents),
+          },
+    deposit: depositOf(row.deposit),
+    room_check: roomCheckOf(row.room_check),
+    damages: list(row.damages).map(damageOf),
   };
 }
 
 function base(propertyId: string): string {
   return `/api/v1/properties/${encodeURIComponent(propertyId)}/short-stays`;
+}
+
+function post(body: unknown): RequestInit {
+  return {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRF-Token": csrfToken(),
+    },
+    ...(body === null ? {} : { body: JSON.stringify(body) }),
+  };
 }
 
 export const shortStaysApi: ShortStaysApi = {
@@ -387,15 +543,20 @@ export const shortStaysApi: ShortStaysApi = {
       ),
     ),
   book: async (propertyId, booking) =>
+    bookingOf(await request(`${base(propertyId)}/bookings`, post(booking))),
+  step: async (propertyId, bookingId, step, body) =>
     bookingOf(
-      await request(`${base(propertyId)}/bookings`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": csrfToken(),
-        },
-        body: JSON.stringify(booking),
-      }),
+      await request(
+        `${base(propertyId)}/bookings/${encodeURIComponent(bookingId)}/${step}`,
+        post(body),
+      ),
+    ),
+  decide: async (propertyId, damageId, decision) =>
+    bookingOf(
+      await request(
+        `${base(propertyId)}/damages/${encodeURIComponent(damageId)}/decision`,
+        post(decision),
+      ),
     ),
 };
 

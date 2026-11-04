@@ -57,6 +57,7 @@ function calendar(from: string, days: number): StayCalendar {
             source: "WALK_IN",
             check_in_on: "2026-11-05",
             check_out_on: "2026-11-08",
+            paid: false,
           },
         ],
         leases: [],
@@ -141,6 +142,39 @@ const BOOKING: Booking = {
   history: [
     { kind: "BOOKED", occurred_at: "2026-11-04T02:00:00Z", note: null },
   ],
+  unit_status: "VACANT",
+  guest_has_id: true,
+  payment: "NOT_BILLED",
+  invoice: null,
+  deposit: null,
+  room_check: null,
+  damages: [],
+};
+
+/** Booking b-1 checks in today (04/11) for 3 nights. */
+const TODAY_STAY: Booking = {
+  ...BOOKING,
+  check_in_on: "2026-11-04",
+  check_out_on: "2026-11-07",
+};
+
+const INVOICE = {
+  invoice_id: "i-1",
+  invoice_number: "INV-000123",
+  status: "ISSUED",
+  total_usd_cents: 6090,
+};
+
+const DEPOSIT: NonNullable<Booking["deposit"]> = {
+  deposit_id: "d-1",
+  kind: "CASH",
+  amount_usd_cents: 5000,
+  hold_reference: null,
+  card_last4: null,
+  status: "HELD",
+  kept_usd_cents: 0,
+  taken_at: "2026-11-04T03:00:00Z",
+  ended_at: null,
 };
 
 function fakeApi(overrides: Partial<ShortStaysApi> = {}): ShortStaysApi {
@@ -159,6 +193,8 @@ function fakeApi(overrides: Partial<ShortStaysApi> = {}): ShortStaysApi {
         unit_id: body.unit_id,
       }),
     ),
+    step: vi.fn(() => Promise.resolve(BOOKING)),
+    decide: vi.fn(() => Promise.resolve(BOOKING)),
     ...overrides,
   };
 }
@@ -264,9 +300,10 @@ describe("Daily and weekly rent: Short stays", () => {
     expect(
       within(u501).getByRole("link", { name: /Lim Dara/ }),
     ).toHaveAttribute("href", "#/shortstays/st%3Ab-1");
-    expect(within(u501).getAllByRole("link", { name: /Booked/ })).toHaveLength(
-      2,
-    );
+    // Not paid yet: the next nights say so.
+    expect(
+      within(u501).getAllByRole("link", { name: /Not paid/ }),
+    ).toHaveLength(2);
     // Today is free: the square opens New booking for that Unit and night.
     expect(
       within(u501).getByRole("link", {
@@ -493,6 +530,290 @@ describe("Daily and weekly rent: Short stays", () => {
     ).toBeInTheDocument();
     expect(customerApi.create).toHaveBeenCalledTimes(2);
     expect(book.mock.calls[1]?.[1].customer_id).toBe("c-new");
+  });
+
+  it("TEST-FE-1606 makes the Invoice, then sends the desk to Receive payment", async () => {
+    const step = vi.fn(() =>
+      Promise.resolve({
+        ...TODAY_STAY,
+        payment: "UNPAID" as const,
+        invoice: INVOICE,
+        version: 2,
+      }),
+    );
+    show({
+      api: fakeApi({ get: vi.fn(() => Promise.resolve(TODAY_STAY)), step }),
+      capabilities: new Set([...DESK, "payments.record"]),
+    });
+    go("#/shortstays/st:b-1");
+    expect(await screen.findByText("Not billed yet")).toBeInTheDocument();
+    // A walk-in cannot be marked paid on a booking site.
+    expect(
+      screen.queryByRole("button", { name: "Paid on the booking site" }),
+    ).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Make the Invoice" }));
+    expect(step).toHaveBeenCalledWith("p-1", "b-1", "bill", { version: 1 });
+    expect(
+      await screen.findByRole("link", { name: "Open Invoice INV-000123" }),
+    ).toHaveAttribute("href", "#/invoices/inv%3Ai-1");
+    expect(
+      screen.getByRole("link", { name: /Receive payment/ }),
+    ).toHaveAttribute("href", "#/payments/receive%3Ac-1");
+    expect(screen.getByText("Not paid")).toBeInTheDocument();
+  });
+
+  it("TEST-FE-1607 takes a card hold without the card number, then checks in when all is ready", async () => {
+    let now: Booking = { ...TODAY_STAY, payment: "PAID", invoice: INVOICE };
+    const step = vi.fn(
+      (_: string, __: string, which: string, body: unknown) => {
+        if (which === "deposit")
+          now = {
+            ...now,
+            deposit: {
+              ...DEPOSIT,
+              kind: "CARD_HOLD",
+              hold_reference: "HOLD-7781",
+              card_last4: "1234",
+            },
+          };
+        if (which === "check-in") {
+          expect(body).toEqual({
+            version: 1,
+            id_copy_made: true,
+            house_rules_signed: true,
+          });
+          now = { ...now, status: "CHECKED_IN", version: 2 };
+        }
+        return Promise.resolve(now);
+      },
+    );
+    show({ api: fakeApi({ get: vi.fn(() => Promise.resolve(now)), step }) });
+    go("#/shortstays/st:b-1");
+    const checkIn = within(
+      await screen.findByRole("region", { name: "Check-in" }),
+    );
+    const button = checkIn.getByRole("button", { name: "Check in" });
+    expect(button).toBeDisabled();
+    expect(checkIn.getByText("The deposit is taken").closest("li")).toHaveClass(
+      "ss-todo",
+    );
+    fireEvent.click(screen.getByLabelText("Card hold"));
+    const take = screen.getByRole("button", { name: "Take the deposit" });
+    expect(take).toBeDisabled();
+    expect(screen.getByText("Never type the card number.")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText(/Hold reference/), {
+      target: { value: " HOLD-7781 " },
+    });
+    fireEvent.change(screen.getByLabelText(/last 4 digits/), {
+      target: { value: "1234" },
+    });
+    fireEvent.click(take);
+    expect(step).toHaveBeenCalledWith("p-1", "b-1", "deposit", {
+      kind: "CARD_HOLD",
+      hold_reference: "HOLD-7781",
+      card_last4: "1234",
+    });
+    expect(await screen.findByText(/•••• 1234/)).toBeInTheDocument();
+    const ready = within(screen.getByRole("region", { name: "Check-in" }));
+    expect(ready.getByText("The deposit is taken").closest("li")).toHaveClass(
+      "ss-ok",
+    );
+    fireEvent.click(
+      ready.getByLabelText("I made a copy of the ID or passport"),
+    );
+    expect(ready.getByRole("button", { name: "Check in" })).toBeDisabled();
+    fireEvent.click(ready.getByLabelText("The guest signed the house rules"));
+    fireEvent.click(ready.getByRole("button", { name: "Check in" }));
+    expect(await screen.findByText("Checked in")).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Check-in" })).toBeNull();
+    expect(
+      screen.getByRole("button", { name: /Check out/ }),
+    ).toBeInTheDocument();
+  });
+
+  it("TEST-FE-1608 shows a stale screen as it is now and says why", async () => {
+    const get = vi.fn(() =>
+      Promise.resolve({
+        ...TODAY_STAY,
+        payment: "UNPAID" as const,
+        invoice: INVOICE,
+      }),
+    );
+    show({
+      api: fakeApi({
+        get: vi.fn().mockResolvedValueOnce(TODAY_STAY).mockImplementation(get),
+        step: vi.fn(() => Promise.reject(new ShortStaysError(412))),
+      }),
+    });
+    go("#/shortstays/st:b-1");
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Make the Invoice" }),
+    );
+    expect(
+      await screen.findByText(
+        "This booking changed meanwhile. It is shown as it is now.",
+      ),
+    ).toBeInTheDocument();
+    expect(await screen.findByText("Not paid")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Make the Invoice" }),
+    ).toBeNull();
+  });
+
+  it("TEST-FE-1609 records the room check with damage and lets only the Manager decide", async () => {
+    const out: Booking = {
+      ...TODAY_STAY,
+      status: "CHECKED_OUT",
+      payment: "PAID",
+      invoice: INVOICE,
+      deposit: DEPOSIT,
+      room_check: {
+        task_id: "t-1",
+        task_on: "2026-11-04",
+        status: "TO_DO",
+        note: null,
+        done_at: null,
+      },
+    };
+    const waiting: Booking = {
+      ...out,
+      room_check: {
+        ...(out.room_check ?? { task_id: "", task_on: "" }),
+        status: "DONE",
+        done_at: "2026-11-04T04:00:00Z",
+        note: null,
+      },
+      damages: [
+        {
+          damage_id: "g-1",
+          description: "Broken lamp",
+          amount_usd_cents: 8000,
+          status: "WAITING",
+          decided_at: null,
+          decision_note: null,
+          from_deposit_usd_cents: 0,
+          invoice_id: null,
+          invoice_number: null,
+        },
+      ],
+    };
+    const step = vi.fn(() => Promise.resolve(waiting));
+    show({
+      api: fakeApi({ get: vi.fn(() => Promise.resolve(out)), step }),
+      capabilities: new Set([...DESK, "short_stays.housekeeping"]),
+    });
+    go("#/shortstays/st:b-1");
+    fireEvent.click(await screen.findByLabelText("Damage found"));
+    fireEvent.change(screen.getByLabelText(/What is damaged/), {
+      target: { value: "Broken lamp" },
+    });
+    fireEvent.change(screen.getByLabelText(/Cost to fix/), {
+      target: { value: "80,5" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Room check done/ }));
+    expect(
+      screen.getByText("Type the cost in dollars, for example 80 or 80.50."),
+    ).toBeInTheDocument();
+    expect(step).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByLabelText(/Cost to fix/), {
+      target: { value: "80" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Room check done/ }));
+    expect(step).toHaveBeenCalledWith("p-1", "b-1", "room-check", {
+      damage: "Broken lamp",
+      damage_usd_cents: 8000,
+    });
+    expect(
+      await screen.findByText("Waits for the Manager"),
+    ).toBeInTheDocument();
+    // Without the approve right there is nothing to press; the deposit waits.
+    expect(screen.queryByRole("button", { name: "Approve" })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /Return the deposit/ }),
+    ).toBeNull();
+  });
+
+  it("TEST-FE-1610 approves damage from the deposit, then keeps it", async () => {
+    const damage = {
+      damage_id: "g-1",
+      description: "Broken lamp",
+      amount_usd_cents: 8000,
+      status: "WAITING" as const,
+      decided_at: null,
+      decision_note: null,
+      from_deposit_usd_cents: 0,
+      invoice_id: null,
+      invoice_number: null,
+    };
+    const checked: Booking = {
+      ...TODAY_STAY,
+      status: "CHECKED_OUT",
+      payment: "PAID",
+      invoice: INVOICE,
+      deposit: DEPOSIT,
+      room_check: {
+        task_id: "t-1",
+        task_on: "2026-11-04",
+        status: "DONE",
+        note: null,
+        done_at: "2026-11-04T04:00:00Z",
+      },
+      damages: [damage],
+    };
+    const approved: Booking = {
+      ...checked,
+      damages: [
+        {
+          ...damage,
+          status: "APPROVED",
+          decision_note: "Photo on file",
+          from_deposit_usd_cents: 5000,
+          invoice_id: "i-2",
+          invoice_number: "INV-000124",
+        },
+      ],
+    };
+    const decide = vi.fn(() => Promise.resolve(approved));
+    const step = vi.fn(() =>
+      Promise.resolve({
+        ...approved,
+        deposit: { ...DEPOSIT, status: "KEPT" as const, kept_usd_cents: 5000 },
+      }),
+    );
+    show({
+      api: fakeApi({
+        get: vi.fn(() => Promise.resolve(checked)),
+        decide,
+        step,
+      }),
+      capabilities: new Set([...DESK, "short_stays.approve"]),
+    });
+    go("#/shortstays/st:b-1");
+    // A refusal needs a reason.
+    fireEvent.click(await screen.findByRole("button", { name: "Refuse" }));
+    expect(screen.getByText("A refusal says why.")).toBeInTheDocument();
+    expect(decide).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByPlaceholderText("Reason"), {
+      target: { value: "Photo on file" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Approve" }));
+    expect(decide).toHaveBeenCalledWith("p-1", "g-1", {
+      approve: true,
+      note: "Photo on file",
+    });
+    expect(
+      await screen.findByText(/\$50\.00 from the deposit/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Invoice INV-000124 for the rest" }),
+    ).toHaveAttribute("href", "#/invoices/inv%3Ai-2");
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Keep $50.00 for damage, return $0.00",
+      }),
+    );
+    expect(step).toHaveBeenCalledWith("p-1", "b-1", "deposit/end", null);
+    expect(await screen.findByText(/Kept \$50\.00/)).toBeInTheDocument();
   });
 
   it("TEST-FE-1605 speaks Khmer and hides New booking without the front-desk right", async () => {

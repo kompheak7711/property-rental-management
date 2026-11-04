@@ -1,4 +1,4 @@
-"""Daily and weekly rent API (phase 6 step 2).
+"""Daily and weekly rent API (phase 6 steps 2 and 3).
 
 Reading the calendar, a price and bookings needs `short_stays.read`; a new booking needs
 `short_stays.desk` and the browser mutation checks. The database refusals map to 404, 409 and
@@ -16,6 +16,7 @@ from fastapi.testclient import TestClient
 from property_rental.app import create_app
 from property_rental.identity import AuthenticatedActor, CapabilityGrant
 from property_rental.products_api import Json, ProductConflict, ProductNotFound
+from property_rental.short_stays_api import Action
 
 HEADERS = {
     "Origin": "https://localhost",
@@ -60,6 +61,13 @@ class InMemoryStays:
             raise ProductConflict("The Unit is already booked on one of these nights")
         self.calls.append(("book", booking))
         return self.booking_id
+
+    def act(
+        self, property_id: UUID, action: Action, target: UUID, body: Json, *, actor_id: str
+    ) -> Json:
+        self._check(property_id)
+        self.calls.append((action, (target, body)))
+        return {"booking_id": str(target), "status": "BOOKED"}
 
 
 def client(flow: InMemoryStays, *capabilities: str) -> TestClient:
@@ -123,3 +131,62 @@ def test_a_booking_needs_the_desk_right_and_a_valid_form() -> None:
     assert sent["note"] == "Late arrival" and "site_name" not in sent
     flow.taken = True
     assert desk.post(url, json=body, headers=HEADERS).status_code == 409
+
+
+def test_each_step_of_a_stay_needs_its_own_right() -> None:
+    flow = InMemoryStays()
+    booking = f"{base(flow)}/bookings/{flow.booking_id}"
+    damage = f"{base(flow)}/damages/{uuid4()}/decision"
+    steps = (
+        (f"{booking}/bill", {"version": 1}, "short_stays.desk"),
+        (f"{booking}/paid-on-site", {"version": 2}, "short_stays.desk"),
+        (
+            f"{booking}/deposit",
+            {"kind": "CARD_HOLD", "hold_reference": "HOLD-1"},
+            "short_stays.desk",
+        ),
+        (
+            f"{booking}/check-in",
+            {"version": 3, "id_copy_made": True, "house_rules_signed": True},
+            "short_stays.desk",
+        ),
+        (f"{booking}/check-out", {"version": 4}, "short_stays.desk"),
+        (
+            f"{booking}/room-check",
+            {"damage": "Broken lamp", "damage_usd_cents": 8000},
+            "short_stays.housekeeping",
+        ),
+        (damage, {"approve": True}, "short_stays.approve"),
+        (f"{booking}/deposit/end", None, "short_stays.desk"),
+    )
+    for url, body, right in steps:
+        others = {
+            "short_stays.read",
+            "short_stays.desk",
+            "short_stays.housekeeping",
+            "short_stays.approve",
+        } - {right}
+        assert client(flow, *others).post(url, json=body, headers=HEADERS).status_code == 403, url
+        answer = client(flow, right).post(url, json=body, headers=HEADERS)
+        assert answer.status_code == 200, url
+        assert client(flow, right).post(url, json=body).status_code == 403  # no CSRF
+    actions = [call[0] for call in flow.calls]
+    assert actions == [
+        "bill",
+        "paid_on_site",
+        "deposit",
+        "check_in",
+        "check_out",
+        "room_check",
+        "decide",
+        "end_deposit",
+    ]
+    desk = client(flow, "short_stays.desk")
+    # A card number never reaches the database as last 4 digits; unknown fields are refused.
+    for wrong in (
+        {"kind": "CARD_HOLD", "card_last4": "41111"},
+        {"kind": "CHEQUE"},
+        {"kind": "CASH", "card_number": "4111"},
+    ):
+        assert desk.post(f"{booking}/deposit", json=wrong, headers=HEADERS).status_code == 422
+    assert desk.post(f"{booking}/check-in", json={"version": 3}, headers=HEADERS).status_code == 422

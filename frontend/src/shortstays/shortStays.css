@@ -133,3 +133,29 @@ td.ss-closed {
   gap: 8px;
   padding: 4px 0;
 }
+
+/* Step 3: a booking not paid yet shows a dashed square on the calendar. */
+td.ss-unpaid {
+  border-style: dashed;
+  border-width: 2px;
+}
+
+.ss-ready li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+}
+
+.ss-ready li.ss-ok {
+  color: var(--ok);
+}
+
+.ss-ready li.ss-todo {
+  color: var(--warn);
+}
+
+.ss-damage {
+  display: grid;
+  gap: 8px;
+}

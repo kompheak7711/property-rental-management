@@ -4,8 +4,11 @@
 1 to 62 days, `GET .../short-stays/price` prices a stay in one Unit (with the monthly hint and why
 the Unit cannot be booked), and `GET .../short-stays/bookings` and `.../bookings/{id}` read
 bookings (`short_stays.read`). `POST .../short-stays/bookings` makes a booking for a guest who is a
-Customer (`short_stays.desk`). The database functions check the rights again, price the stay from
-the owner's rules and keep one booking per Unit and night.
+Customer (`short_stays.desk`). Step 3 adds the booking's actions: bill, paid on the site,
+deposit, check-in, check-out and ending the deposit (`short_stays.desk`), the room check
+(`short_stays.housekeeping`) and the decision on damage (`short_stays.approve`). The database
+functions check the rights again, price the stay from the owner's rules and keep one booking per
+Unit and night.
 """
 
 from __future__ import annotations
@@ -35,9 +38,33 @@ from property_rental.settings import Settings
 
 SHORT_STAYS_READ = "short_stays.read"
 SHORT_STAYS_DESK = "short_stays.desk"
+SHORT_STAYS_HOUSEKEEPING = "short_stays.housekeeping"
+SHORT_STAYS_APPROVE = "short_stays.approve"
 SiteText = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=80)]
 Note = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=500)]
 Day = Annotated[date, Field(strict=False)]
+Action = Literal[
+    "bill",
+    "paid_on_site",
+    "deposit",
+    "check_in",
+    "check_out",
+    "room_check",
+    "decide",
+    "end_deposit",
+]
+# Step 3 (migration 20270602_312): each action is one database function that checks the right
+# again. "version" is the booking version the screen read (refused with 412 when it changed).
+ACTION_SQL: dict[str, str] = {
+    "bill": "SELECT app.bill_short_stay(%(p)s, %(t)s, %(v)s, %(a)s, %(c)s)",
+    "paid_on_site": "SELECT app.mark_short_stay_paid_on_site(%(p)s, %(t)s, %(v)s, %(a)s, %(c)s)",
+    "deposit": "SELECT app.take_short_stay_deposit(%(p)s, %(t)s, %(b)s, %(a)s, %(c)s)",
+    "check_in": "SELECT app.check_in_short_stay(%(p)s, %(t)s, %(b)s, %(v)s, %(a)s, %(c)s)",
+    "check_out": "SELECT app.check_out_short_stay(%(p)s, %(t)s, %(v)s, %(a)s, %(c)s)",
+    "room_check": "SELECT app.check_short_stay_room(%(p)s, %(t)s, %(b)s, %(a)s, %(c)s)",
+    "decide": "SELECT app.decide_short_stay_damage(%(p)s, %(t)s, %(b)s, %(a)s, %(c)s)",
+    "end_deposit": "SELECT app.end_short_stay_deposit(%(p)s, %(t)s, %(a)s, %(c)s)",
+}
 
 
 class ShortStayFlow(Protocol):
@@ -52,6 +79,10 @@ class ShortStayFlow(Protocol):
     def booking(self, property_id: UUID, booking_id: UUID, *, actor_id: str) -> Json: ...
 
     def book(self, property_id: UUID, booking: Json, *, actor_id: str) -> UUID: ...
+
+    def act(
+        self, property_id: UUID, action: Action, target: UUID, body: Json, *, actor_id: str
+    ) -> Json: ...
 
 
 class UnavailableShortStayFlow:
@@ -72,6 +103,9 @@ class UnavailableShortStayFlow:
     def book(self, property_id: UUID, booking: Json, **_: object) -> UUID:
         raise ProductUnavailable
 
+    def act(self, property_id: UUID, action: Action, target: UUID, body: Json, **_: object) -> Json:
+        raise ProductUnavailable
+
 
 def _json(value: object) -> Json:
     if not isinstance(value, dict):
@@ -83,7 +117,7 @@ class PostgresShortStayFlow:
     def __init__(self, database_url: str) -> None:
         self._database_url = database_url
 
-    def _one(self, query: str, parameters: tuple[object, ...]) -> object:
+    def _one(self, query: str, parameters: tuple[object, ...] | dict[str, object]) -> object:
         try:
             with psycopg.connect(self._database_url) as connection:
                 row = connection.execute(query, parameters).fetchone()
@@ -135,6 +169,24 @@ class PostgresShortStayFlow:
         )
         return UUID(str(made))
 
+    def act(
+        self, property_id: UUID, action: Action, target: UUID, body: Json, *, actor_id: str
+    ) -> Json:
+        version = body.pop("version", None)
+        return _json(
+            self._one(
+                ACTION_SQL[action],
+                {
+                    "p": property_id,
+                    "t": target,
+                    "v": version,
+                    "b": Jsonb(body),
+                    "a": UUID(actor_id),
+                    "c": uuid4(),
+                },
+            )
+        )
+
 
 class NewBooking(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
@@ -147,6 +199,43 @@ class NewBooking(BaseModel):
     source: Literal["WALK_IN", "PHONE", "TELEGRAM", "WEBSITE", "BOOKING_SITE"]
     site_name: SiteText | None = None
     site_reference: SiteText | None = None
+    note: Note | None = None
+
+
+class Version(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    version: Annotated[int, Field(ge=1)]
+
+
+class CheckIn(Version):
+    id_copy_made: bool
+    house_rules_signed: bool
+
+
+class Deposit(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    kind: Literal["CASH", "CARD_HOLD"]
+    # Only the card machine's hold reference; a card number is refused by the database.
+    hold_reference: (
+        Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=60)] | None
+    ) = None
+    card_last4: Annotated[str, StringConstraints(pattern=r"^[0-9]{4}$")] | None = None
+
+
+class RoomCheck(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    note: Note | None = None
+    damage: Note | None = None
+    damage_usd_cents: Annotated[int, Field(ge=1, le=100_000_000)] | None = None
+
+
+class Decision(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    approve: bool
     note: Note | None = None
 
 
@@ -229,6 +318,70 @@ def create_short_stays_router(
         except REFUSED as exc:
             raise _http(exc) from exc
         return one(property_id, made, actor.actor_id, request)
+
+    def act(
+        request: Request,
+        property_id: UUID,
+        right: str,
+        action: Action,
+        target: UUID,
+        body: BaseModel | None,
+    ) -> Json:
+        actor = _require(request, resolver, right, property_id)
+        require_browser_mutation(request, settings)
+        sent: Json = {} if body is None else body.model_dump(mode="json", exclude_none=True)
+        try:
+            return envelope(
+                request, flow.act(property_id, action, target, sent, actor_id=actor.actor_id)
+            )
+        except REFUSED as exc:
+            raise _http(exc) from exc
+
+    @router.post("/bookings/{booking_id}/bill")
+    def bill_short_stay(
+        property_id: UUID, booking_id: UUID, body: Version, request: Request
+    ) -> Json:
+        return act(request, property_id, SHORT_STAYS_DESK, "bill", booking_id, body)
+
+    @router.post("/bookings/{booking_id}/paid-on-site")
+    def short_stay_paid_on_site(
+        property_id: UUID, booking_id: UUID, body: Version, request: Request
+    ) -> Json:
+        return act(request, property_id, SHORT_STAYS_DESK, "paid_on_site", booking_id, body)
+
+    @router.post("/bookings/{booking_id}/deposit")
+    def take_short_stay_deposit(
+        property_id: UUID, booking_id: UUID, body: Deposit, request: Request
+    ) -> Json:
+        return act(request, property_id, SHORT_STAYS_DESK, "deposit", booking_id, body)
+
+    @router.post("/bookings/{booking_id}/deposit/end")
+    def end_short_stay_deposit(property_id: UUID, booking_id: UUID, request: Request) -> Json:
+        return act(request, property_id, SHORT_STAYS_DESK, "end_deposit", booking_id, None)
+
+    @router.post("/bookings/{booking_id}/check-in")
+    def check_in_short_stay(
+        property_id: UUID, booking_id: UUID, body: CheckIn, request: Request
+    ) -> Json:
+        return act(request, property_id, SHORT_STAYS_DESK, "check_in", booking_id, body)
+
+    @router.post("/bookings/{booking_id}/check-out")
+    def check_out_short_stay(
+        property_id: UUID, booking_id: UUID, body: Version, request: Request
+    ) -> Json:
+        return act(request, property_id, SHORT_STAYS_DESK, "check_out", booking_id, body)
+
+    @router.post("/bookings/{booking_id}/room-check")
+    def check_short_stay_room(
+        property_id: UUID, booking_id: UUID, body: RoomCheck, request: Request
+    ) -> Json:
+        return act(request, property_id, SHORT_STAYS_HOUSEKEEPING, "room_check", booking_id, body)
+
+    @router.post("/damages/{damage_id}/decision")
+    def decide_short_stay_damage(
+        property_id: UUID, damage_id: UUID, body: Decision, request: Request
+    ) -> Json:
+        return act(request, property_id, SHORT_STAYS_APPROVE, "decide", damage_id, body)
 
     return router
 

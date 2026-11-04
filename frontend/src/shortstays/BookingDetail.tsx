@@ -1,6 +1,6 @@
-// Daily and weekly rent, phase 6 step 2: one booking (Tenants › Short stays › ST…). It shows the
-// stay, the guest, the price lines kept at booking time and the history. Payment, check-in and
-// check-out come in step 3.
+// Daily and weekly rent, phase 6 steps 2 and 3: one booking (Tenants › Short stays › ST…). It shows
+// the stay, the guest, the price lines kept at booking time and the history, and (step 3) the steps
+// of the stay: payment, deposit, check-in, check-out, room check and damage.
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -15,8 +15,35 @@ import {
   type Booking,
   type ShortStaysApi,
   ShortStaysError,
+  type StayStep,
 } from "./shortStaysClient";
-import { hasText, st } from "./text";
+import {
+  CheckInCard,
+  CheckOutCard,
+  DamagesCard,
+  DepositCard,
+  PaymentCard,
+  RoomCheckCard,
+  type StepsProps,
+} from "./StaySteps";
+import { hasText, st, type StaysTextKey } from "./text";
+
+/** The words for a refused step; 412 and 409 also show the booking as it is now. */
+function stepProblem(error: unknown): StaysTextKey {
+  if (!(error instanceof ShortStaysError)) return "f_failed";
+  switch (error.status) {
+    case 412:
+      return "f_stale";
+    case 409:
+      return "f_not_now";
+    case 403:
+      return "f_step_right";
+    case 422:
+      return "f_step_refused";
+    default:
+      return "f_failed";
+  }
+}
 
 export function BookingDetail({
   language,
@@ -24,6 +51,7 @@ export function BookingDetail({
   bookingId,
   api,
   may,
+  today,
   flash,
   onFlashShown,
 }: {
@@ -32,13 +60,17 @@ export function BookingDetail({
   bookingId: string;
   api: ShortStaysApi;
   may: (capability: string) => boolean;
+  /** Today in Phnom Penh, for the check-in day. */
+  today: string;
   /** "Booking ST… made." after New booking, shown once. */
   flash: string | null;
   onFlashShown: () => void;
 }) {
   const [booking, setBooking] = useState<Booking | null>(null);
   const [problem, setProblem] = useState<"missing" | "failed" | null>(null);
-  const [notice] = useState<string | null>(flash);
+  const [notice, setNotice] = useState<string | null>(flash);
+  const [busy, setBusy] = useState(false);
+  const [stepError, setStepError] = useState<StaysTextKey | null>(null);
   const sequence = useRef(0);
 
   useEffect(() => {
@@ -66,6 +98,27 @@ export function BookingDetail({
   useEffect(() => {
     load();
   }, [load]);
+
+  const run = (work: () => Promise<Booking>) => {
+    if (busy) return;
+    const operation = ++sequence.current;
+    setBusy(true);
+    setStepError(null);
+    setNotice(null);
+    void work()
+      .then((answer) => {
+        if (operation === sequence.current) setBooking(answer);
+      })
+      .catch((error: unknown) => {
+        if (operation !== sequence.current) return;
+        const key = stepProblem(error);
+        setStepError(key);
+        if (key === "f_stale" || key === "f_not_now") load();
+      })
+      .finally(() => {
+        setBusy(false);
+      });
+  };
 
   const back = (
     <button
@@ -104,6 +157,27 @@ export function BookingDetail({
       </>
     );
 
+  const steps: StepsProps = {
+    language,
+    booking,
+    today,
+    may,
+    busy,
+    onStep: (step: StayStep, body) => {
+      run(() => api.step(propertyId, booking.booking_id, step, body));
+    },
+    onDecide: (damageId, approve, note) => {
+      run(() =>
+        api.decide(propertyId, damageId, {
+          approve,
+          ...(note === "" ? {} : { note }),
+        }),
+      );
+    },
+  };
+  // The cards keep what was typed until the booking changes.
+  const cards = `${booking.booking_id}:${String(booking.version)}`;
+
   const source =
     booking.source === "BOOKING_SITE" && booking.site_name !== null
       ? booking.site_name
@@ -128,6 +202,12 @@ export function BookingDetail({
         <div className="ui-notice ok" role="status">
           <Icon name="check" />
           <p>{notice}</p>
+        </div>
+      )}
+      {stepError !== null && (
+        <div className="ui-notice warn" role="alert">
+          <Icon name="alert" />
+          <p>{st(language, stepError)}</p>
         </div>
       )}
       <div className="ui-split">
@@ -170,6 +250,8 @@ export function BookingDetail({
               )}
             </dl>
           </section>
+          <PaymentCard key={`pay:${cards}`} {...steps} />
+          <DepositCard key={`dep:${cards}`} {...steps} />
           <section aria-labelledby="ss-price" className="ui-card">
             <h2 id="ss-price">{st(language, "d_price")}</h2>
             <PriceLines language={language} lines={booking.lines} />
@@ -180,6 +262,10 @@ export function BookingDetail({
           </section>
         </div>
         <div className="ui-stack">
+          <CheckInCard key={`in:${cards}`} {...steps} />
+          <CheckOutCard key={`out:${cards}`} {...steps} />
+          <RoomCheckCard key={`room:${cards}`} {...steps} />
+          <DamagesCard key={`dmg:${cards}`} {...steps} />
           <section aria-labelledby="ss-guest" className="ui-card">
             <h2 id="ss-guest">{st(language, "d_guest")}</h2>
             <p>

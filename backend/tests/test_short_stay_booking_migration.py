@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import uuid
 from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import date, timedelta
 from pathlib import Path
@@ -50,10 +51,10 @@ class BookingDatabase:
     today: date
 
 
-@pytest.fixture(scope="module")
-def booking_database(migrated_database_url: str) -> Iterator[BookingDatabase]:
-    assert migrated_database_url
-    with _temporary_migration_database("prm_short_stay_bookings") as temporary:
+@contextmanager
+def short_stay_database(name: str) -> Iterator[BookingDatabase]:
+    """A migrated database with the Units, staff, a guest and a Lease the short-stay tests use."""
+    with _temporary_migration_database(name) as temporary:
         assert _run_alembic("upgrade", "head").returncode == 0
         name = urlsplit(temporary).path.lstrip("/")
         runtime_url = _url_with_database(runtime_database_url(), name)
@@ -124,6 +125,13 @@ def booking_database(migrated_database_url: str) -> Iterator[BookingDatabase]:
         )
 
 
+@pytest.fixture(scope="module")
+def booking_database(migrated_database_url: str) -> Iterator[BookingDatabase]:
+    assert migrated_database_url
+    with short_stay_database("prm_short_stay_bookings") as database:
+        yield database
+
+
 def run(url: str, sql: str, *params: Any) -> Any:
     with psycopg.connect(url) as connection:
         row = connection.execute(sql, params).fetchone()
@@ -158,7 +166,6 @@ def test_migration_311_follows_step_1() -> None:
     scripts = ScriptDirectory.from_config(config)
     revision = scripts.get_revision(REVISION)
     assert revision is not None and revision.down_revision == "20270531_310"
-    assert scripts.get_current_head() == REVISION
     with pytest.raises(RuntimeError, match="forward-only"):
         revision.module.downgrade()
 
@@ -327,4 +334,4 @@ def test_a_new_booking_keeps_its_price_and_history(booking_database: BookingData
         db.owner_url,
         "SELECT count(*) FROM app.business_rule_names WHERE area = 'SHORT_STAYS' AND used_by_app",
     )
-    assert rules == 12
+    assert rules >= 12  # step 2 uses 12; later steps use more
