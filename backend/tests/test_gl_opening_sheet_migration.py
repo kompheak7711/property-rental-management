@@ -30,11 +30,17 @@ from property_rental.ledger_opening_api import (
 )
 from property_rental.ledger_posting_api import (
     METHOD_ACCOUNTS,
-    LedgerPostingInvalid,
     PostgresLedgerPostingFlow,
 )
 from property_rental.ledger_posting_api import NEEDS_CHECK as NEEDS_CHECK_LIST
-from test_gl_auto_posting_migration import SET_ACCOUNT, invoice_paid, method_of, problem
+from test_gl_auto_posting_migration import (
+    SET_ACCOUNT,
+    invoice_paid,
+    lines,
+    method_of,
+    post,
+    problem,
+)
 from test_gl_close_migration import capital, worked_out_net
 from test_gl_money_records_migration import Books, Borrowed
 from test_move_in_migration import migrated_database_url as migrated_database_url
@@ -140,16 +146,27 @@ def test_records_the_posting_job_has_not_met_keep_post_closed_and_show_in_needs_
             )
     # Once the method has its account the record can post, so it no longer waits.
     connection.execute(SET_ACCOUNT, (prop, method_of(connection, payment), None, "1010", human))
-    # A second account from the same day is refused in words, not "not saved".
-    with pytest.raises(LedgerPostingInvalid, match="already has an account from that day"):
-        needs.set_method_account(
-            prop,
-            kind="PAYMENT",
-            method_id=method_of(connection, payment),
-            account_code="1020",
-            effective_from=date(2026, 1, 1),
-            actor_id=str(human),
-        )
+    # Owner card 04/11/2026 12:12: a second save from the same day wins; both rows stay.
+    needs.set_method_account(
+        prop,
+        kind="PAYMENT",
+        method_id=method_of(connection, payment),
+        account_code="1020",
+        effective_from=date(2026, 1, 1),
+        actor_id=str(human),
+    )
+    method = method_of(connection, payment)
+    assert [
+        row.account_code
+        for row in needs.method_accounts(prop)
+        if row.kind == "PAYMENT" and row.method_id == method
+    ] == ["1020"]
+    saved = connection.execute(
+        "SELECT count(*) FROM app.gl_method_accounts WHERE payment_method_id = %s", (method,)
+    ).fetchone()
+    assert saved == (2,)
+    post(connection, prop, human)
+    assert ("1020", 30000, 0) in lines(connection, key)
     waiting = {row.posting_key: row for row in needs.needs_check(prop)}
     assert key not in waiting
     assert opening.sheet(prop)["needs_check"] == len(waiting)

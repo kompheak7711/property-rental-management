@@ -2208,6 +2208,8 @@ Changed by DL-117 (owner test 04/11/2026; migration `20270427_277`): `needs_chec
 
 Changed by DL-117 (owner test 04/11/2026; migration `20270428_278`): `GET .../ledger/method-accounts` reads `app.gl_method_list`, because the runtime login may not read `refund_methods`; before this the Needs check page could not be read on any Property. The write-off list of API-GL-005 reads its `final_settlement_id` through `app.gl_write_off_settlement` for the same reason; a write-off without a Settlement correction is now listed too, with a null `final_settlement_id`.
 
+Changed by DL-117 (owner card 04/11/2026 12:12; migration `20270429_279`): `PUT .../ledger/method-accounts` may save a method again from the same day; the newest save of that day wins in `GET .../method-accounts` and in the posting.
+
 ### API-BS-001 Settings › Business: numbering and Invoice types — 2026-11-03
 
 Added by DL-118 (V1.1 part 2; migration `20270421_271`, DB-BS-001). `GET /api/v1/properties/{property_id}/number-rules` (`configuration.read`, `private, no-store`) answers each document with `document_type`, `letters`, `format`, `year`, `last_number` (this year) and `next_number`. `PUT .../number-rules/{document_type}` (`settings.manage`; browser mutation checks; strict body `letters`, 2 to 5 capitals) changes the letters and answers the list; letters another document uses answer 409, an unknown document 404. `GET .../invoice-types` (`configuration.read`) answers `code`, `name_en`, `name_kh`, `late_payment`, `version`; `PUT .../invoice-types/{code}` (`settings.manage`; strict body `late_payment`, `reason`) switches late payment and answers the list. `PATCH /properties/{property_id}` also takes `description` and `business_name`; a field left out keeps its value.

@@ -208,11 +208,6 @@ class PostgresLedgerPostingFlow:
                 )
         except psycopg.errors.ForeignKeyViolation as exc:
             raise LedgerPostingNotFound("The method was not found") from exc
-        except psycopg.errors.UniqueViolation as exc:
-            # Owner test 04/11/2026: a second account from the same day only said "not saved".
-            raise LedgerPostingInvalid(
-                "This method already has an account from that day; pick another day"
-            ) from exc
         except (psycopg.errors.InvalidParameterValue, psycopg.errors.CheckViolation) as exc:
             raise LedgerPostingInvalid(str(exc).splitlines()[0]) from exc
         except psycopg.Error as exc:
