@@ -250,11 +250,23 @@ export async function supplierId(
 ): Promise<string | null> {
   const name = typed.trim();
   if (name === "") return null;
+  const key = name.toLowerCase();
   const known = form.suppliers.find(
-    (supplier) => supplier.name.toLowerCase() === name.toLowerCase(),
+    (supplier) => supplier.name.trim().toLowerCase() === key,
   );
-  return known?.id ?? (await api.addSupplier(propertyId, name));
+  if (known !== undefined) return known.id;
+  // A supplier added on a save the app then refused is used again on the next try, not added
+  // twice: the form is read again only after a save goes through.
+  const added = addedSuppliers.get(form) ?? new Map<string, string>();
+  addedSuppliers.set(form, added);
+  const again = added.get(key);
+  if (again !== undefined) return again;
+  const made = await api.addSupplier(propertyId, name);
+  added.set(key, made);
+  return made;
 }
+
+const addedSuppliers = new WeakMap<SpendingForm, Map<string, string>>();
 
 export function SupplierField({
   id,
@@ -292,9 +304,18 @@ export function SupplierField({
         value={value}
       />
       <datalist id={`${id}-list`}>
-        {form.suppliers.map((supplier) => (
-          <option key={supplier.id} value={supplier.name} />
-        ))}
+        {form.suppliers
+          .filter(
+            (supplier, at, all) =>
+              all.findIndex(
+                (other) =>
+                  other.name.trim().toLowerCase() ===
+                  supplier.name.trim().toLowerCase(),
+              ) === at,
+          )
+          .map((supplier) => (
+            <option key={supplier.id} value={supplier.name} />
+          ))}
       </datalist>
       <FieldError id={`${id}-e`} text={error} />
     </div>

@@ -123,7 +123,11 @@ export function useRead<T>(
         if (operation === sequence.current) setData(value);
       },
       () => {
-        if (operation === sequence.current) setFailed(true);
+        // Never keep showing an old list as if it were new: the page shows the failure instead.
+        if (operation === sequence.current) {
+          setData(null);
+          setFailed(true);
+        }
       },
     );
   }, [read]);

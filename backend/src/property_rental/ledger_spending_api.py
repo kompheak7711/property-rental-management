@@ -47,7 +47,7 @@ SPEND_ACCOUNTS: Final = """
     WHERE account.property_id = %(prop)s AND account.is_active AND account.is_postable
       AND ((account.account_type = 'EXPENSE'
             AND account.code NOT IN ('6030', '6040', '6140', '6160', '6170', '6180'))
-           OR account.code IN ('1200', '1300', '1510', '1520', '1530'))
+           OR account.code IN ('1200', '1510', '1520', '1530'))
     ORDER BY account.code
 """
 MONEY_ACCOUNTS: Final = """

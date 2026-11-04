@@ -911,6 +911,62 @@ describe("Supplier bills", () => {
     ).toBeInTheDocument();
   });
 
+  it("TEST-FE-1211 adds a new supplier once when the app refuses the first save", async () => {
+    const recordExpense = vi
+      .fn<SpendingApi["recordExpense"]>()
+      .mockRejectedValueOnce(
+        new LedgerError(422, "Account 6010 cannot take an expense"),
+      )
+      .mockResolvedValue("x-2");
+    const api = fakeApi({ recordExpense });
+    show("bills", api);
+    await press("Add supplier bill");
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.change(within(dialog).getByLabelText(/^Supplier\s?Required$/), {
+      target: { value: "Mattress" },
+    });
+    fireEvent.change(within(dialog).getByLabelText(/^Amount/), {
+      target: { value: "50" },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    expect(
+      await within(dialog).findByText(/Account 6010 cannot take an expense/),
+    ).toBeInTheDocument();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    await waitFor(() => {
+      expect(recordExpense).toHaveBeenCalledTimes(2);
+    });
+    expect(api.addSupplier).toHaveBeenCalledTimes(1);
+    expect(recordExpense.mock.calls[1]?.[1].supplier_id).toBe("sup-new");
+  });
+
+  it("TEST-FE-1212 shows that the bills could not be read again instead of the old list", async () => {
+    const bills = vi
+      .fn<SpendingApi["bills"]>()
+      .mockResolvedValueOnce([])
+      .mockRejectedValue(new LedgerError(500, null));
+    const api = fakeApi({ bills });
+    show("bills", api);
+    expect(
+      await screen.findByText("No supplier bills here."),
+    ).toBeInTheDocument();
+    await press("Add supplier bill");
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.change(within(dialog).getByLabelText(/^Supplier\s?Required$/), {
+      target: { value: "Marady" },
+    });
+    fireEvent.change(within(dialog).getByLabelText(/^Amount/), {
+      target: { value: "50" },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    expect(
+      await screen.findByText("This list could not be read just now."),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("No supplier bills here."),
+    ).not.toBeInTheDocument();
+  });
+
   it("TEST-FE-1210 shows each payment under its bill and reverses one with a reason", async () => {
     const reversedBills: SupplierBill[] = BILLS.map((bill) =>
       bill.id === "b-2"

@@ -54,7 +54,8 @@ def test_the_form_answers_the_rules_accounts_suppliers_and_units(borrowed: Books
     assert form["report_days"] >= 1 and form["bill_days"] >= 1
     codes = [row["code"] for row in form["accounts"]]
     assert "6050" in codes and "1520" in codes
-    assert not {"6030", "6140", "6160", "1010"} & set(codes)
+    # 1300 Stock of products cannot take an expense (gl_spend_account), so it is not offered.
+    assert not {"6030", "6140", "6160", "1010", "1300"} & set(codes)
     assert {row["code"] for row in form["money_accounts"]} >= {"1010", "1011", "1020", "1030"}
     assert all(row["code"].startswith("10") for row in form["money_accounts"])
     assert form["suppliers"] and all(row["name"] for row in form["suppliers"])
@@ -103,6 +104,9 @@ def test_the_lists_name_people_units_entries_and_bill_payments(borrowed: Books) 
     bills = money.rows("supplier-bills", books.property_id)
     bill = next(row for row in bills if row["id"] == str(made["bill"]))
     assert bill["account_code"] == "6050" and bill["entry_number"]
+    # Sums of cents go to the screen as whole numbers, never as strings (owner 04/11/2026).
+    assert type(bill["still_to_pay_cents"]) is int
+    assert all(type(row["owed_to_staff_cents"]) is int for row in requests)
     assert bill["payments"][0]["amount_cents"] == 1_000
     assert bill["payments"][0]["paid_from_code"] == "1020"
     assert bill["payments"][0]["reversed"] is False

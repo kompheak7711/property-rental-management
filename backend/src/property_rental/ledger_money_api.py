@@ -25,6 +25,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date, datetime
+from decimal import Decimal
 from typing import Annotated, Any, Literal, Protocol
 from uuid import UUID, uuid4
 
@@ -342,7 +343,7 @@ REQUESTS_QUERY = """
         coalesce((SELECT sum(line.credit_cents - line.debit_cents)
                   FROM app.gl_journal_lines AS line
                   JOIN app.gl_accounts AS owed ON owed.id = line.account_id
-                  WHERE line.expense_request_id = request.id AND owed.code = '2310'), 0)
+                  WHERE line.expense_request_id = request.id AND owed.code = '2310'), 0)::bigint
             AS owed_to_staff_cents
     FROM app.gl_expense_requests AS request
     JOIN app.properties AS property ON property.id = request.property_id
@@ -403,7 +404,7 @@ VIEWS = {
                 WHERE payment.supplier_bill_id = bill.id
                   AND NOT EXISTS (SELECT 1 FROM app.gl_bill_payment_reversals AS reversal
                                   WHERE reversal.bill_payment_id = payment.id)), 0)
-                AS still_to_pay_cents,
+                ::bigint AS still_to_pay_cents,
             account.code AS account_code, account.name_en AS account_name,
             account.name_km AS account_name_km, entry.entry_number,
             coalesce((
@@ -445,6 +446,9 @@ def _json(value: Any) -> Any:
         return value.isoformat()
     if isinstance(value, UUID):
         return str(value)
+    # A SQL sum of cents is numeric: send it as a whole number, never as a string.
+    if isinstance(value, Decimal) and value == value.to_integral_value():
+        return int(value)
     return value
 
 

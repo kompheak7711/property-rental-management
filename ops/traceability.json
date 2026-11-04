@@ -62033,6 +62033,28 @@
       "test_path": "frontend/src/ledger/SpendingPage.test.tsx",
       "status": "implemented",
       "notes": "General Ledger phase 6 step 6 (Void Expense and Reverse bill payment; mock-up v77): Shows each payment under its bill and reverses one with a reason."
+    },
+    {
+      "test_id": "TEST-FE-1211",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-008"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/SpendingPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger owner test fix (04/11/2026): a new supplier typed on a bill is added once, even when the app refuses the first save."
+    },
+    {
+      "test_id": "TEST-FE-1212",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-008"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/SpendingPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger owner test fix (04/11/2026): when the bills cannot be read again after a save, the screen says so instead of showing the old list."
     }
   ]
 }
