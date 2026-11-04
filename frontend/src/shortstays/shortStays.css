@@ -1,0 +1,135 @@
+/* Daily and weekly rent: the calendar (one row per Unit, one square per night) and the price
+   box. Every square has an icon and a word, never colour only (mock-up round 28). */
+
+table.ss-cal {
+  border-collapse: separate;
+  border-spacing: 3px;
+  min-width: 100%;
+  font-size: 0.82rem;
+}
+
+table.ss-cal th {
+  font-weight: 600;
+  color: var(--text-2);
+  text-align: center;
+  white-space: nowrap;
+  padding: 4px 2px;
+}
+
+table.ss-cal thead th span {
+  display: block;
+}
+
+table.ss-cal thead th.today {
+  color: var(--primary);
+}
+
+table.ss-cal tbody th {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--surface);
+  text-align: left;
+  padding: 4px 8px;
+  min-width: 96px;
+}
+
+.ss-wd {
+  font-weight: 400;
+}
+
+td.ss-night {
+  min-width: 64px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--sunken);
+  vertical-align: middle;
+}
+
+td.ss-night > a,
+td.ss-night > span {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-height: 44px;
+  padding: 2px 4px;
+  overflow: hidden;
+  color: var(--text);
+  text-decoration: none;
+}
+
+td.ss-night > a > span:last-child,
+td.ss-night > span > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+td.ss-free {
+  background: var(--surface);
+  border-style: dashed;
+}
+
+td.ss-free > a {
+  color: var(--link);
+  justify-content: center;
+}
+
+td.ss-free > a:hover {
+  background: var(--hover);
+}
+
+td.ss-booked {
+  background: var(--info-bg);
+  border-color: var(--info);
+}
+
+td.ss-checked_in {
+  background: var(--ok-bg);
+  border-color: var(--ok);
+}
+
+td.ss-checked_out {
+  background: var(--sunken);
+}
+
+td.ss-lease,
+td.ss-reserved {
+  background: var(--warn-bg);
+  border-color: var(--warn);
+}
+
+td.ss-not_for_rent,
+td.ss-closed {
+  color: var(--text-2);
+}
+
+.ss-lines li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 0;
+}
+
+.ss-lines li + li {
+  border-top: 1px solid var(--border);
+}
+
+.ss-total {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-strong);
+}
+
+.ss-found li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 0;
+}
