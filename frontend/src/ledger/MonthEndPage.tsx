@@ -99,7 +99,7 @@ function lineOf(language: Language, data: MonthEnd, check: CloseCheck): Line {
         ) : (
           lt(language, "cl_dep_0")
         ),
-        go: "journal",
+        go: "fassets",
       };
     case "RIEL_VALUED":
       return {

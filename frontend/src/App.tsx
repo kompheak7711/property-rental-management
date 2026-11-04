@@ -147,6 +147,10 @@ import { UnitsPage } from "./units/UnitsPage";
 import { LedgerPage } from "./ledger/LedgerPage";
 import { BankCashPage } from "./ledger/BankCashPage";
 import type { CashApi } from "./ledger/cashClient";
+import type { AssetsApi } from "./ledger/assetsClient";
+import type { BudgetApi } from "./ledger/budgetClient";
+import { BudgetPage } from "./ledger/BudgetPage";
+import { FixedAssetsPage } from "./ledger/FixedAssetsPage";
 import { MonthEndPage } from "./ledger/MonthEndPage";
 import type { MonthEndApi } from "./ledger/monthEndClient";
 import { SpendingPage } from "./ledger/SpendingPage";
@@ -175,6 +179,8 @@ export interface AppProps {
   spendingApi?: SpendingApi;
   cashApi?: CashApi;
   monthEndApi?: MonthEndApi;
+  assetsApi?: AssetsApi;
+  budgetApi?: BudgetApi;
   /** V1.1 part 6: Office › Invoices › Quotations; the real server when not given. */
   quotationsApi?: QuotationsApi;
   propertyApi?: PropertyConfigurationApi;
@@ -657,6 +663,8 @@ export function App({
   spendingApi,
   cashApi,
   monthEndApi,
+  assetsApi,
+  budgetApi,
   quotationsApi,
   propertyApi = propertyConfigurationApi,
   unitApi,
@@ -1932,6 +1940,30 @@ export function App({
           capabilities={capabilities}
           language={language}
           propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
+        />
+      </div>
+      <div className="shell-page" data-page="budget" hidden={!shown("budget")}>
+        <BudgetPage
+          active={shown("budget")}
+          actorId={sessionActorId}
+          api={budgetApi}
+          capabilities={capabilities}
+          language={language}
+          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
+        />
+      </div>
+      <div
+        className="shell-page"
+        data-page="fassets"
+        hidden={!shown("fassets")}
+      >
+        <FixedAssetsPage
+          active={shown("fassets")}
+          api={assetsApi}
+          capabilities={capabilities}
+          language={language}
+          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
+          spendingApi={spendingApi}
         />
       </div>
       <div className="shell-page" data-page="lclose" hidden={!shown("lclose")}>

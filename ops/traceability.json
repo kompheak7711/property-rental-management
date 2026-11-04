@@ -61723,6 +61723,182 @@
       "test_path": "frontend/src/ledger/MonthEndPage.test.tsx",
       "status": "implemented",
       "notes": "General Ledger phase 6 step 6 part 4 (Month-end close; mock-up v76): Tells a reader without the close right that only the Owner closes."
+    },
+    {
+      "test_id": "test_the_ledger_readers_see_the_fixed_asset_register",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-011"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_ledger_assets.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 4 (Fixed asset register read for the ledger screen): The ledger readers see the fixed asset register."
+    },
+    {
+      "test_id": "test_the_register_lists_each_item_with_its_value_and_the_1590_balance",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-011"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_asset_register_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 4 (Fixed asset register read for the ledger screen): The register lists each item with its value and the 1590 balance."
+    },
+    {
+      "test_id": "test_the_runtime_login_can_run_the_register_read",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-011"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_asset_register_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 4 (Fixed asset register read for the ledger screen): The runtime login can run the register read."
+    },
+    {
+      "test_id": "test_the_ledger_readers_see_the_budget_sheet",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-012"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_ledger_budget.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 4 (Budget read for the ledger screen): The ledger readers see the budget sheet."
+    },
+    {
+      "test_id": "test_the_budget_sheet_shows_the_years_budgets_and_last_years_lines",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-012"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_budget_sheet_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 4 (Budget read for the ledger screen): The budget sheet shows the year's budgets and last year's lines."
+    },
+    {
+      "test_id": "test_the_runtime_login_can_run_the_budget_read",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-012"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_budget_sheet_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 4 (Budget read for the ledger screen): The runtime login can run the budget read."
+    },
+    {
+      "test_id": "TEST-FE-1199",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-011"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/FixedAssetsPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 4 (Fixed assets; mock-up v76): Shows the register with its totals and the 1590 check."
+    },
+    {
+      "test_id": "TEST-FE-1200",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-011"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/FixedAssetsPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 4 (Fixed assets; mock-up v76): Refuses an item below the Asset limit and adds one at or above it."
+    },
+    {
+      "test_id": "TEST-FE-1201",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-011"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/FixedAssetsPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 4 (Fixed assets; mock-up v76): Sets other years and a supplier bill when paid later."
+    },
+    {
+      "test_id": "TEST-FE-1202",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-011"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/FixedAssetsPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 4 (Fixed assets; mock-up v76): Shows the register without Add to a reader who cannot record."
+    },
+    {
+      "test_id": "TEST-FE-1203",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-012"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/BudgetPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 4 (Budget; mock-up v76): Shows a waiting budget by month with totals and lets the Owner approve it."
+    },
+    {
+      "test_id": "TEST-FE-1204",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-012"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/BudgetPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 4 (Budget; mock-up v76): Sends a budget back with a reason."
+    },
+    {
+      "test_id": "TEST-FE-1205",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-012"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/BudgetPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 4 (Budget; mock-up v76): Tells the sender someone else must approve."
+    },
+    {
+      "test_id": "TEST-FE-1206",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-012"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/BudgetPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 4 (Budget; mock-up v76): Lets the Accountant type a sent-back budget again and send it."
+    },
+    {
+      "test_id": "TEST-FE-1207",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-012"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/BudgetPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 4 (Budget; mock-up v76): Asks the Owner for a note on their own budget and shows it approved and locked."
+    },
+    {
+      "test_id": "TEST-FE-1208",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-012"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/BudgetPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 4 (Budget; mock-up v76): Switches the year."
     }
   ]
 }

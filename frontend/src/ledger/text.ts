@@ -909,6 +909,123 @@ const TEXT = {
     "The year's profit moves to 3900. Income and expense accounts start the new year at zero.",
     "ចំណេញនៃឆ្នាំផ្ទេរទៅ 3900។ គណនីចំណូល និងចំណាយចាប់ផ្ដើមឆ្នាំថ្មីពីសូន្យ។",
   ],
+  // Fixed assets (step 6 part 4; mock-up v76 vFassets).
+  fa_t: ["Fixed assets", "ទ្រព្យសកម្មរយៈពេលវែង"],
+  fa_sub: [
+    "Equipment and building items of the asset limit or more. The app makes the depreciation entry at the end of each month.",
+    "ឧបករណ៍ និងរបស់ក្នុងអគារដែលមានតម្លៃចាប់ពីកម្រិតទ្រព្យសកម្មឡើងទៅ។ កម្មវិធីបង្កើតធាតុរំលោះនៅចុងខែនីមួយៗ។",
+  ],
+  fa_new: ["Add fixed asset", "បន្ថែមទ្រព្យសកម្មរយៈពេលវែង"],
+  fa_list: ["Register", "បញ្ជី"],
+  fa_item: ["Item", "របស់"],
+  fa_cost: ["Cost", "ថ្លៃដើម"],
+  fa_life: ["Useful life (years)", "អាយុប្រើប្រាស់ (ឆ្នាំ)"],
+  fa_years: ["{0} years", "{0} ឆ្នាំ"],
+  fa_mon: ["Each month", "ប្រចាំខែ"],
+  fa_sofar: ["Depreciation so far", "រំលោះរហូតមកដល់ពេលនេះ"],
+  fa_now: ["Value now", "តម្លៃបច្ចុប្បន្ន"],
+  fa_date: ["Date bought", "កាលបរិច្ឆេទទិញ"],
+  fa_check: [
+    "Depreciation so far equals Accumulated depreciation (1590): {0}.",
+    "រំលោះរហូតមកដល់ពេលនេះ ស្មើរំលោះបង្គរ (1590)៖ {0}។",
+  ],
+  fa_note: [
+    "Business rule: items of {0} or more go here. Depreciation is the same each month, from the month after the item is bought.",
+    "ច្បាប់អាជីវកម្ម៖ របស់ដែលមានតម្លៃ {0} ឬច្រើនជាងនេះ ដាក់ទីនេះ។ រំលោះស្មើគ្នាជារៀងរាល់ខែ ចាប់ពីខែបន្ទាប់ពីទិញ។",
+  ],
+  fa_last: [
+    "Last depreciation entry: {0}, {1}.",
+    "ធាតុរំលោះចុងក្រោយ៖ {0}, {1}។",
+  ],
+  fa_e_name: ["Type the item name.", "សូមវាយឈ្មោះរបស់។"],
+  fa_e_life: [
+    "Type the number of years, 1 to 50.",
+    "សូមវាយចំនួនឆ្នាំ ពី ១ ដល់ ៥០។",
+  ],
+  fa_e_small: [
+    "Below {0}: record it on Expenses instead.",
+    "តិចជាង {0}៖ សូមកត់ត្រានៅចំណាយជំនួសវិញ។",
+  ],
+  fa_new_n: [
+    "Items of {0} or more only.",
+    "តែរបស់ដែលមានតម្លៃ {0} ឬច្រើនជាងនេះ។",
+  ],
+  fa_new_m: [
+    "Depreciation: {0} each month, first on {1}.",
+    "រំលោះ៖ {0} ប្រចាំខែ លើកដំបូងនៅ {1}។",
+  ],
+  fa_saved: [
+    "Fixed asset {0} added. Entry {1}.",
+    "បានបន្ថែមទ្រព្យសកម្ម {0}។ ធាតុ {1}។",
+  ],
+  // new: the reason kept when the years typed differ from Business rules.
+  fa_life_why: [
+    "Years set when the item was added.",
+    "ចំនួនឆ្នាំកំណត់នៅពេលបន្ថែមរបស់។",
+  ],
+  // new
+  fa_none: ["No fixed assets yet.", "មិនទាន់មានទ្រព្យសកម្មរយៈពេលវែងទេ។"],
+  // new
+  fa_land: ["Not depreciated", "មិនរំលោះ"],
+  // Budget (step 6 part 4; mock-up v76 vBudget).
+  bu_t: ["Budget", "ថវិកា"],
+  bu_sub: [
+    "The Accountant prepares the budget by month for the year. The Owner approves it. Budget vs actual is under Financial statements.",
+    "គណនេយ្យកររៀបចំថវិកាតាមខែសម្រាប់មួយឆ្នាំ។ ម្ចាស់អនុម័ត។ ថវិកាធៀបនឹងជាក់ស្ដែង នៅក្នុងរបាយការណ៍ហិរញ្ញវត្ថុ។",
+  ],
+  bu_year: ["Year", "ឆ្នាំ"],
+  bu_for: ["Budget {0}", "ថវិកា {0}"],
+  bu_st_OK: ["Approved", "បានអនុម័ត"],
+  bu_st_WAIT: ["Waits for the Owner", "រង់ចាំម្ចាស់"],
+  bu_st_DRAFT: ["Draft", "សេចក្ដីព្រាង"],
+  bu_send: ["Send to the Owner", "ផ្ញើទៅម្ចាស់"],
+  bu_ok: ["Approve budget", "អនុម័តថវិកា"],
+  bu_back: ["Send back", "ផ្ញើត្រឡប់"],
+  bu_ti: ["Total income", "ចំណូលសរុប"],
+  bu_tx: ["Total expenses", "ចំណាយសរុប"],
+  bu_pr: ["Profit", "ចំណេញ"],
+  bu_who: ["Prepared by {0}, {1}", "រៀបចំដោយ {0}, {1}"],
+  bu_who_ok: [
+    "Prepared by {0}, {1}. Approved by {2}, {3}.",
+    "រៀបចំដោយ {0}, {1}។ អនុម័តដោយ {2}, {3}។",
+  ],
+  bu_self: [
+    "You sent this budget. Someone else must approve it.",
+    "អ្នកបានផ្ញើថវិកានេះ។ អ្នកផ្សេងត្រូវអនុម័តវា។",
+  ],
+  bu_wait: ["Waits for the Owner to approve.", "រង់ចាំម្ចាស់អនុម័ត។"],
+  bu_locked: [
+    "An approved budget is locked.",
+    "ថវិកាដែលបានអនុម័តត្រូវបានចាក់សោ។",
+  ],
+  bu_edit_n: [
+    "Tap an account to type its amounts for each month.",
+    "ចុចលើគណនី ដើម្បីវាយចំនួនសម្រាប់ខែនីមួយៗ។",
+  ],
+  bu_backed: ["Sent back by {0}: {1}", "ផ្ញើត្រឡប់ដោយ {0}៖ {1}"],
+  bu_edit_t: ["Budget: {0}", "ថវិកា៖ {0}"],
+  bu_same: ["Same amount every month", "ចំនួនដូចគ្នារៀងរាល់ខែ"],
+  bu_fill: ["Fill all months", "បំពេញគ្រប់ខែ"],
+  bu_saved: ["Budget amounts saved.", "បានរក្សាទុកចំនួនថវិកា។"],
+  bu_sent: ["Budget {0} sent to the Owner.", "បានផ្ញើថវិកា {0} ទៅម្ចាស់។"],
+  bu_done: ["Budget {0} approved.", "បានអនុម័តថវិកា {0}។"],
+  bu_backed_t: ["Budget {0} sent back.", "បានផ្ញើថវិកា {0} ត្រឡប់។"],
+  // new: the Owner's own budget is approved at once (PR-GL-054).
+  bu_own_n: [
+    "Your own budget is approved at once. Add a note for the record.",
+    "ថវិកាផ្ទាល់ខ្លួនរបស់អ្នកត្រូវបានអនុម័តភ្លាមៗ។ សូមបន្ថែមកំណត់ចំណាំសម្រាប់កំណត់ត្រា។",
+  ],
+  // new
+  bu_e_note: ["Add a note.", "សូមបន្ថែមកំណត់ចំណាំ។"],
+  // new
+  bu_e_amt: ["Type an amount of 0 or more.", "សូមវាយចំនួនចាប់ពី ០ ឡើងទៅ។"],
+  // new
+  bu_no_year: [
+    "The ledger has no year yet.",
+    "សៀវភៅបញ្ជីមិនទាន់មានឆ្នាំនៅឡើយទេ។",
+  ],
+  // new
+  bu_closed: ["The year {0} is closed.", "ឆ្នាំ {0} ត្រូវបានបិទ។"],
 } as const satisfies Record<string, readonly [string, string]>;
 
 export type LedgerTextKey = keyof typeof TEXT;
@@ -957,4 +1074,17 @@ export function monthLabel(language: Language, day: string): string {
   return names === undefined
     ? day
     : `${names[language === "en" ? 0 : 1]} ${year}`;
+}
+
+/** Month 1 to 12 short: "Jan" in English, the full name in Khmer (as in mock-up v76). */
+export function monthShort(language: Language, month: number): string {
+  const names = MONTHS[month - 1];
+  if (names === undefined) return String(month);
+  return language === "en" ? names[0].slice(0, 3) : names[1];
+}
+
+/** Month 1 to 12 in full. */
+export function monthName(language: Language, month: number): string {
+  const names = MONTHS[month - 1];
+  return names === undefined ? String(month) : names[language === "en" ? 0 : 1];
 }

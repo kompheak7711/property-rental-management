@@ -78,7 +78,7 @@ function named(
   return `${code} · ${accountName(language, { name_en: en, name_km: km })}`;
 }
 
-function addDays(day: string, days: number): string {
+export function addDays(day: string, days: number): string {
   const [year = 0, month = 1, date = 1] = day.split("-").map(Number);
   const moved = new Date(Date.UTC(year, month - 1, date + days));
   return moved.toISOString().slice(0, 10);
@@ -234,14 +234,14 @@ function MoneyFrom({
   );
 }
 
-function pick(accounts: readonly SpendAccount[], code: string): string {
+export function pick(accounts: readonly SpendAccount[], code: string): string {
   return accounts.some((account) => account.code === code)
     ? code
     : (accounts[0]?.code ?? "");
 }
 
 /** The supplier's id, adding the supplier when the typed name is new. */
-async function supplierId(
+export async function supplierId(
   api: SpendingApi,
   propertyId: string,
   form: SpendingForm,
@@ -255,7 +255,7 @@ async function supplierId(
   return known?.id ?? (await api.addSupplier(propertyId, name));
 }
 
-function SupplierField({
+export function SupplierField({
   id,
   label,
   form,
