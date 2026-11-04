@@ -199,6 +199,12 @@ from property_rental.ledger_books_api import (
     UnavailableLedgerBooks,
     create_ledger_books_router,
 )
+from property_rental.ledger_cash_api import (
+    LedgerCashFlow,
+    PostgresLedgerCash,
+    UnavailableLedgerCash,
+    create_ledger_cash_router,
+)
 from property_rental.ledger_close_api import (
     LedgerCloseFlow,
     PostgresLedgerCloseFlow,
@@ -590,6 +596,7 @@ def create_app(
     ledger_report_flow: LedgerReportFlow | None = None,
     ledger_books_flow: LedgerBooksFlow | None = None,
     ledger_spending_flow: LedgerSpendingFlow | None = None,
+    ledger_cash_flow: LedgerCashFlow | None = None,
     exchange_rate_provider: ExchangeRateProvider | None = None,
     reservation_resource_flow: ReservationResourceFlow | None = None,
     lease_resource_flow: LeaseResourceFlow | None = None,
@@ -1339,6 +1346,17 @@ def create_app(
                 PostgresLedgerSpending(resolved_settings.database_url.get_secret_value())
                 if resolved_settings.database_url is not None
                 else UnavailableLedgerSpending()
+            ),
+        )
+    )
+    include_signed_in(
+        create_ledger_cash_router(
+            actor_resolver,
+            ledger_cash_flow
+            or (
+                PostgresLedgerCash(resolved_settings.database_url.get_secret_value())
+                if resolved_settings.database_url is not None
+                else UnavailableLedgerCash()
             ),
         )
     )

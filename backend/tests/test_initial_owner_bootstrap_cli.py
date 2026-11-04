@@ -1032,6 +1032,8 @@ def test_fastapi_openapi_inventory_has_no_bootstrap_or_unauthenticated_owner_res
         "/api/v1/properties/{property_id}/business-rules/{code}": {"put"},
         "/api/v1/properties/{property_id}/expense-requests": {"get", "post"},
         "/api/v1/properties/{property_id}/expense-requests/form": {"get"},
+        "/api/v1/properties/{property_id}/ledger/bank-cash": {"get"},
+        "/api/v1/properties/{property_id}/ledger/money-entries/{kind}/{record_id}": {"get"},
         "/api/v1/properties/{property_id}/expense-requests/{request_number}": {"get"},
         "/api/v1/properties/{property_id}/expense-requests/{request_id}/advance": {"post"},
         "/api/v1/properties/{property_id}/expense-requests/{request_id}/bill": {"post"},
