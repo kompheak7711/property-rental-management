@@ -30,6 +30,7 @@ from property_rental.ledger_opening_api import (
 )
 from property_rental.ledger_posting_api import (
     METHOD_ACCOUNTS,
+    LedgerPostingInvalid,
     PostgresLedgerPostingFlow,
 )
 from property_rental.ledger_posting_api import NEEDS_CHECK as NEEDS_CHECK_LIST
@@ -139,6 +140,16 @@ def test_records_the_posting_job_has_not_met_keep_post_closed_and_show_in_needs_
             )
     # Once the method has its account the record can post, so it no longer waits.
     connection.execute(SET_ACCOUNT, (prop, method_of(connection, payment), None, "1010", human))
+    # A second account from the same day is refused in words, not "not saved".
+    with pytest.raises(LedgerPostingInvalid, match="already has an account from that day"):
+        needs.set_method_account(
+            prop,
+            kind="PAYMENT",
+            method_id=method_of(connection, payment),
+            account_code="1020",
+            effective_from=date(2026, 1, 1),
+            actor_id=str(human),
+        )
     waiting = {row.posting_key: row for row in needs.needs_check(prop)}
     assert key not in waiting
     assert opening.sheet(prop)["needs_check"] == len(waiting)
