@@ -45,7 +45,7 @@ export interface HomeScreenProps {
   active: boolean;
   homeApi: HomeApi;
   capabilities: ReadonlySet<string> | null;
-  /** DL-126: the Problem reports card, read only by a person who may see Problem reports. */
+  /** DL-131: the Problem reports card, read only by a person who may see Problem reports. */
   problemsApi?: Pick<ProblemsApi, "summary">;
 }
 

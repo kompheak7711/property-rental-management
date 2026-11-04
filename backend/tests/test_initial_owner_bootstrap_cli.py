@@ -1033,6 +1033,7 @@ def test_fastapi_openapi_inventory_has_no_bootstrap_or_unauthenticated_owner_res
         "/api/v1/properties/{property_id}/expense-requests": {"get", "post"},
         "/api/v1/properties/{property_id}/expense-requests/form": {"get"},
         "/api/v1/properties/{property_id}/problem-report-choices": {"get"},
+        "/api/v1/properties/{property_id}/problem-report-findings/{finding_id}": {"get"},
         "/api/v1/properties/{property_id}/problem-report-month": {"get"},
         "/api/v1/properties/{property_id}/problem-report-summary": {"get"},
         "/api/v1/properties/{property_id}/problem-reports": {"get", "post"},

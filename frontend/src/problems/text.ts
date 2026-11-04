@@ -544,7 +544,7 @@ const TEXT = {
     "This was not saved. Check the connection and try again.",
     "មិនបានរក្សាទុកទេ។ ពិនិត្យការតភ្ជាប់ ហើយសាកម្តងទៀត។",
   ],
-  // Repair cost (DL-125, mock-up round 32 A5). Khmer here is new and needs the native check.
+  // Repair cost (DL-130, mock-up round 32 A5). Khmer here is new and needs the native check.
   cost_h: ["Repair cost", "ថ្លៃជួសជុល"],
   cost_none: [
     "No cost typed yet. Type parts and outside workers only; our own staff are paid by payroll.",
@@ -685,6 +685,27 @@ const TEXT = {
   m_by_type: ["Reports by type", "របាយការណ៍តាមប្រភេទ"],
   m_by_place: ["Reports by place", "របាយការណ៍តាមទីកន្លែង"],
   m_late: ["Late now", "យឺតឥឡូវនេះ"],
+  fi_from: [
+    "From the move-out inspection of {0}, finding {1}. The Unit and the text come from the finding; you may change the text.",
+    "ពីការត្រួតពិនិត្យពេលចាកចេញ ថ្ងៃ {0} ការរកឃើញទី {1}។ បន្ទប់ និងអត្ថបទ មកពីការរកឃើញ អ្នកអាចកែអត្ថបទបាន។",
+  ],
+  fi_has: [
+    "This finding already has a Problem report:",
+    "ការរកឃើញនេះមានរបាយការណ៍បញ្ហារួចហើយ៖",
+  ],
+  fi_replaced: [
+    "This inspection was replaced by a newer one. Make the report from a finding of the newer inspection.",
+    "ការត្រួតពិនិត្យនេះត្រូវបានជំនួសដោយការត្រួតពិនិត្យថ្មី។ សូមបង្កើតរបាយការណ៍ពីការរកឃើញនៃការត្រួតពិនិត្យថ្មី។",
+  ],
+  fi_missing: [
+    "This inspection finding was not found.",
+    "រកមិនឃើញការរកឃើញនៃការត្រួតពិនិត្យនេះទេ។",
+  ],
+  fi_link: [
+    "From the move-out inspection of {0}: {1}",
+    "ពីការត្រួតពិនិត្យពេលចាកចេញ ថ្ងៃ {0}៖ {1}",
+  ],
+  fi_open: ["Open the move-out", "បើកការចាកចេញ"],
 } as const satisfies Record<string, readonly [string, string]>;
 
 export type ProblemsTextKey = keyof typeof TEXT;

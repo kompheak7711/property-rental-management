@@ -92,7 +92,7 @@ export interface CostLine {
   amount_minor: number;
 }
 
-/** DL-125: the latest repair cost typed for a report, its check and its Expense reports. */
+/** DL-130: the latest repair cost typed for a report, its check and its Expense reports. */
 export interface RepairCost {
   set_no: number;
   no_cost: boolean;
@@ -188,6 +188,8 @@ export interface ProblemReport {
     amount_usd_cents: number;
   } | null;
   done_at: string | null;
+  /** DL-132: the move-out inspection finding the report was made from. */
+  finding: InspectionLink | null;
   /** Only on one report read with its history; null on the list. */
   cost: RepairCost | null;
   closes_on: string | null;
@@ -212,9 +214,29 @@ export interface ProblemReport {
   history: HistoryEntry[] | null;
 }
 
+/** DL-132: the move-out inspection finding a report was made from. */
+export interface InspectionLink {
+  finding_id: string;
+  inspection_id: string;
+  lease_id: string;
+  inspection_date: string;
+  ordinal: number;
+  description: string;
+}
+
+/** What a New Problem report copies from a finding, and the report it already has. */
+export interface FindingSource extends InspectionLink {
+  pet_related: boolean;
+  unit_id: string;
+  unit_number: string;
+  /** The inspection was replaced by a newer one: its findings make no report. */
+  replaced: boolean;
+  report: ReportLink | null;
+}
+
 export interface NewProblemReport {
   kind: ProblemKind;
-  source: "PHONE" | "WALKIN" | "SEEN";
+  source: "PHONE" | "WALKIN" | "SEEN" | "INSPECTION";
   problem_type_id: string;
   description: string;
   urgent: boolean;
@@ -227,6 +249,8 @@ export interface NewProblemReport {
   best_time?: BestTime;
   reported_by?: string;
   same_as?: string;
+  /** Only with the source INSPECTION. */
+  finding_id?: string;
 }
 
 export type StepName =
@@ -271,7 +295,7 @@ export interface TenantAnswer {
   after_refusal: "OWNER_PAYS" | "MOVE_OUT" | null;
 }
 
-/** DL-126: the Home card. */
+/** DL-131: the Home card. */
 export interface ProblemSummary {
   open: number;
   urgent: number;
@@ -302,7 +326,7 @@ export interface TypeRef {
   icon: string;
 }
 
-/** DL-126: the Monthly report of one month. */
+/** DL-131: the Monthly report of one month. */
 export interface ProblemMonth {
   month: string;
   received: number;
@@ -368,6 +392,7 @@ export interface ProblemsApi {
   summary: (propertyId: string) => Promise<ProblemSummary>;
   /** `month` is "yyyy-mm". */
   month: (propertyId: string, month: string) => Promise<ProblemMonth>;
+  finding: (propertyId: string, findingId: string) => Promise<FindingSource>;
 }
 
 export class ProblemsError extends Error {
@@ -493,6 +518,37 @@ const SOURCES: readonly ProblemSource[] = [
 ];
 
 const CURRENCIES = ["USD", "KHR"] as const;
+
+function linkOfInspection(value: unknown): InspectionLink {
+  const row = record(value);
+  return {
+    finding_id: text(row.finding_id),
+    inspection_id: text(row.inspection_id),
+    lease_id: text(row.lease_id),
+    inspection_date: text(row.inspection_date),
+    ordinal: whole(row.ordinal),
+    description: text(row.description),
+  };
+}
+
+export function findingOf(value: unknown): FindingSource {
+  const row = record(value);
+  const report = row.report == null ? null : record(row.report);
+  return {
+    ...linkOfInspection(row),
+    pet_related: flag(row.pet_related),
+    unit_id: text(row.unit_id),
+    unit_number: text(row.unit_number),
+    replaced: flag(row.replaced),
+    report:
+      report === null
+        ? null
+        : {
+            report_id: text(report.report_id),
+            report_number: text(report.report_number),
+          },
+  };
+}
 
 function costOf(value: unknown): RepairCost | null {
   if (value === null || value === undefined) return null;
@@ -660,6 +716,7 @@ export function reportOf(value: unknown): ProblemReport {
             amount_usd_cents: whole(damage.amount_usd_cents),
           },
     done_at: maybeText(row.done_at),
+    finding: row.finding == null ? null : linkOfInspection(row.finding),
     cost: costOf(row.cost),
     closes_on: maybeText(row.closes_on),
     closed_at: maybeText(row.closed_at),
@@ -909,6 +966,12 @@ export const problemsApi: ProblemsApi = {
     monthOf(
       await request(
         `${base(propertyId)}/problem-report-month?month=${encodeURIComponent(month)}`,
+      ),
+    ),
+  finding: async (propertyId, findingId) =>
+    findingOf(
+      await request(
+        `${base(propertyId)}/problem-report-findings/${encodeURIComponent(findingId)}`,
       ),
     ),
   checkCost: async (propertyId, report, check) =>

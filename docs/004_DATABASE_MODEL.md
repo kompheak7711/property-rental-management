@@ -5720,7 +5720,7 @@ Added by DL-124 (migration `20270426_276`, forward-only).
 
 ## DB-PR-002 — Problem report repair cost
 
-Added by DL-125 (migration `20270510_290`, forward-only).
+Added by DL-130 (migration `20270510_290`, forward-only).
 
 - `app.problem_report_cost_sets` (`report_id`, `set_no`, `no_cost`, `note`, entered at and by) and `app.problem_report_cost_lines` (`line_no` 1 to 20, `kind` PARTS or OUTSIDE_WORKER, `description` at most 200, `currency` USD or KHR, `amount_minor`: cents or whole riel). The latest set is the cost shown.
 - `app.problem_report_cost_checks` (one per set: `receipt_seen` always true, `spent_on`, `paid_how` OWN_MONEY or CASH, checked at and by) and `app.problem_report_cost_expense_requests` (the check, the currency and the Expense request it made, unique). All four are append-only, no truncate.
@@ -5728,7 +5728,15 @@ Added by DL-125 (migration `20270510_290`, forward-only).
 
 ## DB-PR-003 — Problem report Home card and Monthly report
 
-Added by DL-126 (migration `20270511_291`, forward-only, read only).
+Added by DL-131 (migration `20270511_291`, forward-only, read only).
 
 - `app.problem_report_summary(property, actor)` (`problem_reports.read`): `open`, `urgent`, `late`, and `costs_to_check` (each latest cost entry, not No cost, with no check yet: report, kind, Unit or shared place, when typed, totals by currency).
-- `app.problem_report_month(property, actor, month)` (`problem_reports.plan`; `month` is a first day, from 2026-01-01 to this month, else 22023): the counts, `by_type`, `by_place`, `repeats`, `late_now`, `cost_by_unit` and `cost_by_type` of DL-126. Helpers `app.problem_report_late` and `app.problem_report_cost_parts` (not granted).
+- `app.problem_report_month(property, actor, month)` (`problem_reports.plan`; `month` is a first day, from 2026-01-01 to this month, else 22023): the counts, `by_type`, `by_place`, `repeats`, `late_now`, `cost_by_unit` and `cost_by_type` of DL-131. Helpers `app.problem_report_late` and `app.problem_report_cost_parts` (not granted).
+
+## DB-PR-004 — Problem report from an inspection finding
+
+Added by DL-132 (migration `20270512_292`, forward-only).
+
+- `app.problem_report_inspection_links` (`report_id` primary key, `finding_id` unique, created at and by): append-only, no truncate. One report per finding.
+- `app.add_problem_report` takes the source `INSPECTION` only with a `finding_id`: a Unit Problem in the inspected Lease's Unit, from an inspection not replaced, and a finding with no report yet (22023 or 55000 otherwise). `app.problem_report_json` gains `finding` (inspection, Lease, day, number and text).
+- `app.problem_report_finding(property, actor, finding)` (`problem_reports.add`, runtime): what the form copies (Unit, text, day), whether the inspection was replaced, and the report the finding already has.

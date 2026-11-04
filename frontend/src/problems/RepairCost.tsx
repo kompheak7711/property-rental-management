@@ -1,4 +1,4 @@
-// DL-125 (mock-up round 32, A5): the Repair cost box of one Problem report. Staff type what the
+// DL-130 (mock-up round 32, A5): the Repair cost box of one Problem report. Staff type what the
 // repair cost (parts and outside workers, in dollars or riel; own staff are paid by payroll), or
 // No cost. A Manager ("Check repair costs") checks it with the receipt; the server then makes
 // one Expense report (money already spent) per currency, which follows the normal Expense

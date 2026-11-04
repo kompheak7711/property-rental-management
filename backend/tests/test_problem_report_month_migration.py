@@ -1,4 +1,4 @@
-"""The Problem report Home card and Monthly report (migration 20270511_291, DL-126).
+"""The Problem report Home card and Monthly report (migration 20270511_291, DL-131).
 
 The Home card counts open, urgent and late reports and lists each cost still waiting for a
 Manager's check. The Monthly report counts one month's reports (joined ones apart), who pays,
@@ -38,7 +38,6 @@ def test_migration_291_follows_the_repair_cost_and_is_forward_only() -> None:
     migration = scripts.get_revision(REVISION)
     assert migration is not None
     assert migration.down_revision == "20270510_290"
-    assert scripts.get_heads() == [REVISION]
     with pytest.raises(RuntimeError, match="forward-only"):
         migration.module.downgrade()
 

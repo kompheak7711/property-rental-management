@@ -9,11 +9,14 @@ latest reports, `GET .../problem-reports/{id}` reads one with its history and
 `POST .../problem-reports/{id}/tenant-answer` records the tenant's answer: Agree makes the Damage
 Invoice draft at once for the amount the Manager set, so it runs on the financial connection.
 `POST .../problem-reports/{id}/cost` records what a done repair cost, in dollars or riel
-(`problem_reports.add`, DL-125). `POST .../problem-reports/{id}/cost-check` is a Manager's check
+(`problem_reports.add`, DL-130). `POST .../problem-reports/{id}/cost-check` is a Manager's check
 with the receipt (`problem_reports.costs`); it makes the Expense reports (already spent) that then
 follow the normal Expense approval.
 `GET .../problem-report-summary` answers the Home card (`problem_reports.read`) and
-`GET .../problem-report-month?month=yyyy-mm` the Monthly report (`problem_reports.plan`, DL-126).
+`GET .../problem-report-month?month=yyyy-mm` the Monthly report (`problem_reports.plan`, DL-131).
+`GET .../problem-report-findings/{finding_id}` gives what a New Problem report copies from a
+move-out inspection finding, and `POST .../problem-reports` with the source INSPECTION and the
+`finding_id` makes the report from it (`problem_reports.add`, DL-132).
 
 The database functions check the rights again and keep what was reported unchanged.
 """
@@ -103,6 +106,8 @@ class ProblemReportFlow(Protocol):
 
     def month(self, property_id: UUID, first_day: date, *, actor_id: str) -> Json: ...
 
+    def finding(self, property_id: UUID, finding_id: UUID, *, actor_id: str) -> Json: ...
+
 
 class UnavailableProblemReportFlow:
     def reports(self, property_id: UUID, **_: object) -> list[Json]:
@@ -141,6 +146,9 @@ class UnavailableProblemReportFlow:
         raise ProductUnavailable
 
     def month(self, property_id: UUID, first_day: date, **_: object) -> Json:
+        raise ProductUnavailable
+
+    def finding(self, property_id: UUID, finding_id: UUID, **_: object) -> Json:
         raise ProductUnavailable
 
 
@@ -268,6 +276,15 @@ class PostgresProblemReportFlow:
             )
         )
 
+    def finding(self, property_id: UUID, finding_id: UUID, *, actor_id: str) -> Json:
+        return _json(
+            self._one(
+                self._database_url,
+                "SELECT app.problem_report_finding(%s, %s, %s)",
+                (property_id, UUID(actor_id), finding_id),
+            )
+        )
+
 
 class _Body(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
@@ -275,7 +292,7 @@ class _Body(BaseModel):
 
 class NewProblemReport(_Body):
     kind: Literal["UNIT", "BUILDING"]
-    source: Literal["PHONE", "WALKIN", "SEEN"]
+    source: Literal["PHONE", "WALKIN", "SEEN", "INSPECTION"]
     problem_type_id: Id
     description: Description
     urgent: bool
@@ -288,6 +305,8 @@ class NewProblemReport(_Body):
     best_time: Literal["AM", "PM", "ANY"] = "ANY"
     reported_by: Name | None = None
     same_as: Id | None = None
+    # DL-132: only with the source INSPECTION; the database checks the Unit and the finding.
+    finding_id: Id | None = None
 
 
 class ProblemStep(_Body):
@@ -390,6 +409,17 @@ def create_problem_reports_router(
         first_day = date(int(month[:4]), int(month[5:]), 1)
         try:
             return envelope(request, flow.month(property_id, first_day, actor_id=actor.actor_id))
+        except REFUSED as exc:
+            raise _http(exc) from exc
+
+    @router.get("/problem-report-findings/{finding_id}")
+    def problem_report_finding(
+        property_id: UUID, finding_id: UUID, request: Request, response: Response
+    ) -> Json:
+        actor = _require(request, resolver, PROBLEM_REPORTS_ADD, property_id)
+        response.headers["Cache-Control"] = "private, no-store"
+        try:
+            return envelope(request, flow.finding(property_id, finding_id, actor_id=actor.actor_id))
         except REFUSED as exc:
             raise _http(exc) from exc
 

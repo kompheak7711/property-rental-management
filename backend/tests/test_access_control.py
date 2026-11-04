@@ -351,7 +351,7 @@ STAFF_NEVER = frozenset(
         # reports and records the tenant's answer.
         "problem_reports.plan",
         "problem_reports.join",
-        # DL-125: only a Manager or the Owner checks repair costs.
+        # DL-130: only a Manager or the Owner checks repair costs.
         "problem_reports.costs",
     }
 )

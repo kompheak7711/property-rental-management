@@ -1,7 +1,8 @@
 // V1.1 part 7 (DL-124): Building › Problem reports (mock-up round 32). "#/problems" is the one
 // list of Unit Problems (UP) and Building problems (BP) with the tabs Open, Urgent, Late and Done;
 // "#/problems/pr:<id>" one report; "#/problems/new" New Problem report; "#/problems/month" the
-// Monthly report (DL-126). Buttons show only to a
+// Monthly report (DL-131); "#/problems/finding:<id>" a report from a move-out inspection finding
+// (DL-132). Buttons show only to a
 // person who holds the right; the server checks every right again.
 
 import "../shell/screens.css";
@@ -14,7 +15,10 @@ import { openPageInAddress, useHashDetail } from "../shell/useHashPage";
 import { Chip, type Tone } from "../shell/ui";
 import type { Language } from "../signInText";
 import { MonthlyReport } from "./MonthlyReport";
-import { NewProblemReportForm } from "./NewProblemReport";
+import {
+  NewProblemReportForm,
+  NewProblemReportFromFinding,
+} from "./NewProblemReport";
 import { ProblemReportDetail } from "./ProblemReportDetail";
 import {
   type ProblemReport,
@@ -186,7 +190,11 @@ export function ProblemReportsPage({
 
   // Read again each time the list is opened, so it shows what others changed meanwhile.
   useEffect(() => {
-    if (active && (detail === null || detail === "new")) load();
+    if (
+      active &&
+      (detail === null || detail === "new" || detail.startsWith("finding:"))
+    )
+      load();
   }, [active, detail, load]);
 
   if (propertyId === "") {
@@ -227,25 +235,39 @@ export function ProblemReportsPage({
       />
     );
   }
+  const saved = (made: ProblemReport) => {
+    setFlash(
+      made.joined_to === null
+        ? pt(language, "added", made.report_number)
+        : pt(
+            language,
+            "added_same",
+            made.report_number,
+            made.joined_to.report_number,
+          ),
+    );
+    openPageInAddress("problems", true, `pr:${made.report_id}`);
+  };
+  if (detail?.startsWith("finding:") === true && may("problem_reports.add")) {
+    return (
+      <NewProblemReportFromFinding
+        api={api}
+        findingId={detail.slice(8)}
+        key={`${detail}:${propertyId}`}
+        language={language}
+        onSaved={saved}
+        propertyId={propertyId}
+        reports={reports ?? []}
+      />
+    );
+  }
   if (detail === "new" && may("problem_reports.add")) {
     return (
       <NewProblemReportForm
         api={api}
         key={propertyId}
         language={language}
-        onSaved={(made) => {
-          setFlash(
-            made.joined_to === null
-              ? pt(language, "added", made.report_number)
-              : pt(
-                  language,
-                  "added_same",
-                  made.report_number,
-                  made.joined_to.report_number,
-                ),
-          );
-          openPageInAddress("problems", true, `pr:${made.report_id}`);
-        }}
+        onSaved={saved}
         propertyId={propertyId}
         reports={reports ?? []}
       />

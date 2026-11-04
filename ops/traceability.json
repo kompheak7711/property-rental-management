@@ -61190,7 +61190,7 @@
     {
       "test_id": "test_only_the_owner_and_manager_check_repair_costs",
       "upstream_ids": [
-        "DL-125",
+        "DL-130",
         "DB-PR-002",
         "DL-120"
       ],
@@ -61202,7 +61202,7 @@
     {
       "test_id": "test_migration_290_follows_the_ledger_and_is_forward_only",
       "upstream_ids": [
-        "DL-125",
+        "DL-130",
         "DB-PR-002"
       ],
       "test_level": "DB",
@@ -61213,7 +61213,7 @@
     {
       "test_id": "test_staff_type_the_cost_and_a_manager_check_makes_the_expense_reports",
       "upstream_ids": [
-        "DL-125",
+        "DL-130",
         "DB-PR-002",
         "DL-117"
       ],
@@ -61225,7 +61225,7 @@
     {
       "test_id": "test_an_approved_repair_cost_is_posted_to_repairs_for_the_unit",
       "upstream_ids": [
-        "DL-125",
+        "DL-130",
         "DB-PR-002",
         "DL-117"
       ],
@@ -61237,7 +61237,7 @@
     {
       "test_id": "test_cost_history_is_never_changed",
       "upstream_ids": [
-        "DL-125",
+        "DL-130",
         "DB-PR-002"
       ],
       "test_level": "DB",
@@ -61248,7 +61248,7 @@
     {
       "test_id": "test_the_repair_cost_needs_the_add_right_and_its_check_the_costs_right",
       "upstream_ids": [
-        "DL-125",
+        "DL-130",
         "API-PR-002"
       ],
       "test_level": "API",
@@ -61259,7 +61259,7 @@
     {
       "test_id": "TEST-FE-1291",
       "upstream_ids": [
-        "DL-125",
+        "DL-130",
         "API-PR-002"
       ],
       "test_level": "UI component",
@@ -61270,7 +61270,7 @@
     {
       "test_id": "TEST-FE-1292",
       "upstream_ids": [
-        "DL-125",
+        "DL-130",
         "API-PR-002"
       ],
       "test_level": "UI component",
@@ -61281,7 +61281,7 @@
     {
       "test_id": "test_migration_291_follows_the_repair_cost_and_is_forward_only",
       "upstream_ids": [
-        "DL-126",
+        "DL-131",
         "DB-PR-003"
       ],
       "test_level": "DB",
@@ -61292,7 +61292,7 @@
     {
       "test_id": "test_the_home_card_and_the_monthly_report",
       "upstream_ids": [
-        "DL-126",
+        "DL-131",
         "DB-PR-003"
       ],
       "test_level": "DB",
@@ -61303,7 +61303,7 @@
     {
       "test_id": "test_the_home_card_needs_read_and_the_monthly_report_the_plan_right",
       "upstream_ids": [
-        "DL-126",
+        "DL-131",
         "API-PR-003"
       ],
       "test_level": "API",
@@ -61314,7 +61314,7 @@
     {
       "test_id": "TEST-FE-1293",
       "upstream_ids": [
-        "DL-126",
+        "DL-131",
         "API-PR-003"
       ],
       "test_level": "UI component",
@@ -61325,13 +61325,68 @@
     {
       "test_id": "TEST-FE-1294",
       "upstream_ids": [
-        "DL-126",
+        "DL-131",
         "API-PR-003"
       ],
       "test_level": "UI component",
       "test_path": "frontend/src/home/HomeScreen.test.tsx",
       "status": "implemented",
       "notes": "Home Problem reports card: open, urgent and late for a person who may read reports; repair costs to check with links for a person with Check repair costs; nothing read without the right."
+    },
+    {
+      "test_id": "test_migration_292_follows_the_monthly_report_and_is_forward_only",
+      "upstream_ids": [
+        "DL-132",
+        "DB-PR-004"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_problem_report_from_finding_migration.py",
+      "status": "implemented",
+      "notes": "Problem report from a finding: migration 20270512_292 follows 291, is the one head and is forward-only."
+    },
+    {
+      "test_id": "test_a_finding_makes_one_problem_report_in_the_inspected_unit",
+      "upstream_ids": [
+        "DL-132",
+        "DB-PR-004"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_problem_report_from_finding_migration.py",
+      "status": "implemented",
+      "notes": "Problem report from a move-out inspection finding: the form source gives the Unit and text; the source Inspection needs the finding and the inspected Unit; one report per finding, never changed; a replaced inspection makes none; reading a finding needs the add right."
+    },
+    {
+      "test_id": "test_a_report_from_an_inspection_finding_needs_the_add_right",
+      "upstream_ids": [
+        "DL-132",
+        "API-PR-004"
+      ],
+      "test_level": "API",
+      "test_path": "backend/tests/test_problem_reports_api.py",
+      "status": "implemented",
+      "notes": "Problem report from a finding: reading the finding needs problem_reports.add; the new report is sent with the source INSPECTION and the finding."
+    },
+    {
+      "test_id": "TEST-FE-1295",
+      "upstream_ids": [
+        "DL-132",
+        "API-PR-004"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/problems/ProblemReportsPage.test.tsx",
+      "status": "implemented",
+      "notes": "New Problem report from a finding: the form keeps the Unit, copies the text and saves with the source Inspection and the finding; a finding with a report links to it; the report page links back to the move-out."
+    },
+    {
+      "test_id": "TEST-FE-1296",
+      "upstream_ids": [
+        "DL-132",
+        "API-PR-004"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/moveout/MoveoutPage.test.tsx",
+      "status": "implemented",
+      "notes": "Move-out step 4: a finding shows its Problem report or Make a Problem report to a person who may add one; without the read right no reports are read."
     },
     {
       "test_id": "TEST-FE-1225",

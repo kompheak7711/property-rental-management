@@ -394,6 +394,22 @@ export function ProblemReportDetail({
           <p>{notice}</p>
         </div>
       )}
+      {report.finding !== null && (
+        <div className="ui-notice" role="note">
+          <Icon name="info" />
+          <p>
+            {pt(
+              language,
+              "fi_link",
+              dayText(report.finding.inspection_date),
+              report.finding.description,
+            )}{" "}
+            <a href={hashForPage("moveout", report.finding.lease_id)}>
+              {pt(language, "fi_open")}
+            </a>
+          </p>
+        </div>
+      )}
       {report.late !== null && (
         <div className="ui-notice err" role="note">
           <Icon name="clock" />

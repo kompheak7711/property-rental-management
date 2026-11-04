@@ -2194,6 +2194,7 @@ export function App({
         <MoveoutPage
           active={shown("moveout")}
           capabilities={capabilities}
+          problemsApi={problemsApi}
           depositApi={depositApi}
           language={language}
           leaseApi={leaseApi}

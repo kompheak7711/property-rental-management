@@ -10,6 +10,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ProblemReportsPage } from "./ProblemReportsPage";
 import {
+  type FindingSource,
   type ProblemChoices,
   type ProblemMonth,
   type ProblemReport,
@@ -93,6 +94,7 @@ function report(extra: Partial<ProblemReport>): ProblemReport {
     tenant_can_answer: true,
     damage: null,
     done_at: null,
+    finding: null,
     cost: null,
     closes_on: null,
     closed_at: null,
@@ -230,6 +232,20 @@ const MANAGER = new Set([
   "problem_reports.join",
 ]);
 
+const FINDING: FindingSource = {
+  finding_id: "f-1",
+  inspection_id: "i-1",
+  lease_id: "lease-1",
+  inspection_date: "2026-11-03",
+  ordinal: 2,
+  description: "Bedroom door handle broken",
+  pet_related: false,
+  unit_id: "u-101",
+  unit_number: "U101",
+  replaced: false,
+  report: null,
+};
+
 function apiOf(overrides: Partial<ProblemsApi> = {}): ProblemsApi {
   return {
     list: vi.fn(() => Promise.resolve([UP1, UP2, BP1, BP2, DONE])),
@@ -250,6 +266,7 @@ function apiOf(overrides: Partial<ProblemsApi> = {}): ProblemsApi {
       Promise.resolve({ open: 0, urgent: 0, late: 0, costs_to_check: [] }),
     ),
     month: vi.fn(() => Promise.reject(new ProblemsError(403))),
+    finding: vi.fn(() => Promise.resolve(FINDING)),
     ...overrides,
   };
 }
@@ -1052,5 +1069,102 @@ describe("Building › Problem reports (V1.1 part 7, DL-124)", () => {
       expect(month).toHaveBeenLastCalledWith("property-1", "2026-10");
     });
     expect(screen.getAllByRole("option")).toHaveLength(12);
+  });
+
+  it("TEST-FE-1295 Make a Problem report from a move-out inspection finding: the form says where it comes from, keeps the Unit, copies the text and saves with the source Inspection and the finding; a finding with a report links to it; the report page links back to the move-out", async () => {
+    window.location.hash = "#/problems/finding:f-1";
+    const add = vi.fn(() =>
+      Promise.resolve(report({ report_id: "r-9", report_number: "UP260009" })),
+    );
+    const finding = vi.fn(() => Promise.resolve(FINDING));
+    show(apiOf({ add, finding }), STAFF);
+    expect(
+      await screen.findByText(
+        "From the move-out inspection of 03/11/2026, finding 2. The Unit and the text come from the finding; you may change the text.",
+      ),
+    ).toBeTruthy();
+    expect(finding).toHaveBeenCalledWith("property-1", "f-1");
+    const unit = element(
+      document.getElementById("np-unit"),
+    ) as HTMLSelectElement;
+    expect(unit.value).toBe("u-101");
+    expect(unit.disabled).toBe(true);
+    expect(screen.queryByLabelText("Walk-in")).toBeNull();
+    expect(
+      screen.getByLabelText<HTMLTextAreaElement>(/^What is wrong/).value,
+    ).toBe("Bedroom door handle broken");
+    fireEvent.click(screen.getByLabelText(/Water/));
+    const urgent = document.querySelectorAll<HTMLInputElement>(
+      'input[name="np-urgent"]',
+    );
+    fireEvent.click(element(urgent[1] ?? null));
+    fireEvent.click(screen.getByRole("button", { name: "Save report" }));
+    await waitFor(() => {
+      expect(add).toHaveBeenCalledWith("property-1", {
+        kind: "UNIT",
+        source: "INSPECTION",
+        problem_type_id: "t-water",
+        description: "Bedroom door handle broken",
+        urgent: false,
+        unit_id: "u-101",
+        may_enter: false,
+        best_time: "ANY",
+        finding_id: "f-1",
+      });
+    });
+    cleanup();
+
+    window.location.hash = "#/problems/finding:f-1";
+    show(
+      apiOf({
+        finding: vi.fn(() =>
+          Promise.resolve({
+            ...FINDING,
+            report: { report_id: "r-7", report_number: "UP260007" },
+          }),
+        ),
+      }),
+      STAFF,
+    );
+    expect(
+      await screen.findByText("This finding already has a Problem report:"),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("link", { name: "UP260007" }).getAttribute("href"),
+    ).toBe("#/problems/pr%3Ar-7");
+    expect(screen.queryByRole("button", { name: "Save report" })).toBeNull();
+    cleanup();
+
+    window.location.hash = "#/problems/pr:r-1";
+    show(
+      apiOf({
+        get: vi.fn(() =>
+          Promise.resolve(
+            report({
+              source: "INSPECTION",
+              finding: {
+                finding_id: "f-1",
+                inspection_id: "i-1",
+                lease_id: "lease-1",
+                inspection_date: "2026-11-03",
+                ordinal: 2,
+                description: "Bedroom door handle broken",
+              },
+            }),
+          ),
+        ),
+      }),
+      STAFF,
+    );
+    expect(
+      await screen.findByText(
+        /From the move-out inspection of 03\/11\/2026: Bedroom door handle broken/,
+      ),
+    ).toBeTruthy();
+    expect(
+      screen
+        .getByRole("link", { name: "Open the move-out" })
+        .getAttribute("href"),
+    ).toBe("#/moveout/lease-1");
   });
 });
