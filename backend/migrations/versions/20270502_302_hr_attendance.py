@@ -891,6 +891,36 @@ FUNCTIONS = """
         RETURN v_code;
     END $$;
 
+    -- The Employee card box: every card printed, newest first; only the newest works, and only
+    -- while the person works for us.
+    CREATE FUNCTION app.hr_employee_card(p_property uuid, p_employee uuid, p_actor uuid)
+    RETURNS jsonb
+    LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = pg_catalog AS $$
+    DECLARE
+        v_today date := timezone(app.hr_zone(), statement_timestamp())::date;
+    BEGIN
+        IF NOT (app.hr_can(p_actor, p_property, 'hr.attendance.read')
+                OR app.hr_can(p_actor, p_property, 'hr.employees.read')) THEN
+            RAISE EXCEPTION 'You cannot see employee cards' USING ERRCODE = '42501';
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM app.employees AS employee
+                WHERE employee.id = p_employee AND employee.property_id = p_property) THEN
+            RAISE EXCEPTION 'The employee was not found' USING ERRCODE = '22023';
+        END IF;
+        RETURN jsonb_build_object(
+            'works', app.hr_works_on(p_employee, v_today),
+            'left_on', app.hr_left_on(p_employee),
+            'can_replace', app.hr_can(p_actor, p_property, 'hr.attendance.manage'),
+            'cards', coalesce((SELECT jsonb_agg(jsonb_build_object('number', card.number,
+                    'since', card.created_at, 'reason', card.reason, 'by', account.display_name)
+                    ORDER BY card.number DESC)
+                FROM (SELECT qr.*, row_number() OVER (ORDER BY qr.created_at) AS number
+                      FROM app.employee_card_qr_codes AS qr
+                      WHERE qr.employee_id = p_employee) AS card
+                LEFT JOIN app.user_accounts AS account ON account.actor_id = card.created_by),
+                '[]'::jsonb));
+    END $$;
+
     CREATE FUNCTION app.hr_distance_m(p_lat1 double precision, p_lon1 double precision,
         p_lat2 double precision, p_lon2 double precision) RETURNS integer
     LANGUAGE sql IMMUTABLE SET search_path = pg_catalog AS $$
@@ -1312,6 +1342,7 @@ RUNTIME = (
     "app.hr_set_place_pin(uuid, uuid, double precision, double precision, text, uuid, uuid)",
     "app.hr_new_place_qr(uuid, uuid, text, uuid, uuid)",
     "app.hr_new_card_qr(uuid, uuid, text, uuid, uuid)",
+    "app.hr_employee_card(uuid, uuid, uuid)",
     "app.record_staff_check_scan(uuid, bigint, jsonb, timestamptz, uuid)",
     "app.hr_card_lookup(uuid, bigint, text, uuid)",
     "app.record_card_check_scan(uuid, bigint, jsonb, timestamptz, uuid)",

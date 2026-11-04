@@ -120,6 +120,7 @@ FUNCTIONS = {
     "hr_set_place_pin": 7,
     "hr_new_place_qr": 5,
     "hr_new_card_qr": 5,
+    "hr_employee_card": 3,
 }
 
 
@@ -406,6 +407,15 @@ def create_hr_router(resolver: ActorResolver, flow: HrFlow, settings: Settings) 
         actor = _require(request, resolver, right, property_id)
         require_browser_mutation(request, settings)
         return UUID(actor.actor_id)
+
+    def _require_any(request: Request, property_id: UUID, *rights: str) -> UUID:
+        for right in rights[:-1]:
+            try:
+                return UUID(_require(request, resolver, right, property_id).actor_id)
+            except HTTPException as exc:
+                if exc.status_code != status.HTTP_403_FORBIDDEN:
+                    raise
+        return UUID(_require(request, resolver, rights[-1], property_id).actor_id)
 
     def body(model: BaseModel) -> Json:
         return model.model_dump(mode="json", exclude_none=True)
@@ -710,6 +720,14 @@ def create_hr_router(resolver: ActorResolver, flow: HrFlow, settings: Settings) 
         response.headers["Cache-Control"] = "private, no-store"
         code = ask("hr_new_place_qr", property_id, place_id, form.reason, actor, uuid4())
         return envelope(request, {"place_id": str(place_id), "code": code})
+
+    @router.get("/employees/{employee_id}/card")
+    def employee_card(
+        property_id: UUID, employee_id: UUID, request: Request, response: Response
+    ) -> Json:
+        actor = _require_any(request, property_id, ATTENDANCE_READ, EMPLOYEES_READ)
+        response.headers["Cache-Control"] = "private, no-store"
+        return envelope(request, ask("hr_employee_card", property_id, employee_id, actor))
 
     @router.post("/employees/{employee_id}/card-qr", status_code=status.HTTP_201_CREATED)
     def new_card_qr(

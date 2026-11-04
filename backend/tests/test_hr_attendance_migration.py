@@ -254,6 +254,20 @@ def test_card_scan_needs_reason_and_photo(att_database: HrDatabase) -> None:
     card = str(call(db, CARD_QR, db.property_id, no_phone, "Card lost", db.manager))
     own = str(call(db, CARD_QR, db.property_id, caretaker, "First card", db.manager))
     assert card.startswith("CHETANA-E-")
+    shown = call(
+        db, "SELECT app.hr_employee_card(%s, %s, %s)", db.property_id, no_phone, db.manager
+    )
+    assert [item["number"] for item in shown["cards"]] == [2, 1]
+    assert shown["cards"][0]["reason"] == "Card lost"
+    assert shown["works"] is True
+    refused(
+        db.runtime_url,
+        "42501",
+        "SELECT app.hr_employee_card(%s, %s, %s)",
+        db.property_id,
+        no_phone,
+        db.staff,
+    )
 
     def lookup(telegram: int, code: str) -> dict[str, Any]:
         found = call(db, CARD_LOOKUP, db.property_id, telegram, code, db.bot)
@@ -537,7 +551,7 @@ def test_the_api_calls_only_runtime_functions_with_their_arguments(
 
     db = att_database
     with psycopg.connect(db.owner_url) as connection:
-        found = dict(
+        found: dict[str, int] = dict(
             connection.execute(
                 "SELECT proc.proname::text, proc.pronargs::integer FROM pg_catalog.pg_proc AS proc "
                 "WHERE proc.pronamespace = 'app'::regnamespace AND proc.proname = ANY(%s) "

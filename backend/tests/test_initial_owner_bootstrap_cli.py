@@ -1067,6 +1067,7 @@ def test_fastapi_openapi_inventory_has_no_bootstrap_or_unauthenticated_owner_res
         "/api/v1/properties/{property_id}/hr/attendance/places": {"get"},
         "/api/v1/properties/{property_id}/hr/attendance/places/{place_id}/pin": {"post"},
         "/api/v1/properties/{property_id}/hr/attendance/places/{place_id}/qr": {"post"},
+        "/api/v1/properties/{property_id}/hr/employees/{employee_id}/card": {"get"},
         "/api/v1/properties/{property_id}/hr/employees/{employee_id}/card-qr": {"post"},
         "/api/v1/properties/{property_id}/ledger/bank-cash": {"get"},
         "/api/v1/properties/{property_id}/ledger/month-end": {"get"},
