@@ -369,6 +369,7 @@ ledger_database_test_suites='
   tests/test_gl_write_off_migration.py
   tests/test_gl_reports_migration.py
   tests/test_gl_books_migration.py
+  tests/test_gl_spending_migration.py
 '
 
 for database_test_file in $database_test_suites $ledger_database_test_suites; do
