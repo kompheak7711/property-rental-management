@@ -792,6 +792,123 @@ const TEXT = {
   ],
   // new
   bc_closed: ["This month is closed.", "ខែនេះបានបិទ។"],
+  // Month-end close (step 6 part 4; mock-up app22 and app26)
+  gl_c_t: ["Month-end close", "ការបិទចុងខែ"],
+  gl_c_closed: ["Closed", "បានបិទ"],
+  gl_c_open: ["Open", "បើក"],
+  gl_c_by: ["Closed by {0}, {1}", "បិទដោយ {0}, {1}"],
+  gl_c_sub: [
+    "When a month is closed, nothing can be dated in it. A later fix goes into the open month, linked to the first record.",
+    "ពេលខែត្រូវបានបិទ គ្មានអ្វីអាចដាក់កាលបរិច្ឆេទក្នុងខែនោះទេ។ ការកែក្រោយចូលខែបើក ភ្ជាប់ទៅកំណត់ត្រាដំបូង។",
+  ],
+  gl_c_btn: ["Close month", "បិទខែ"],
+  gl_c_done: ["{0} closed.", "បានបិទ {0}។"],
+  br_by: ["Recorded by", "កត់ត្រាដោយ"],
+  gl_src: ["From", "ពី"],
+  cl_head: [
+    "The app checks each line itself. A month can be closed only when every line is green.",
+    "កម្មវិធីពិនិត្យបន្ទាត់នីមួយៗដោយខ្លួនឯង។ អាចបិទខែបានតែពេលគ្រប់បន្ទាត់ពណ៌បៃតង។",
+  ],
+  cl_next: ["Close {0}", "បិទ {0}"],
+  cl_sub: [
+    "Checked now, each time you open this page.",
+    "ពិនិត្យឥឡូវ រាល់ពេលអ្នកបើកទំព័រនេះ។",
+  ],
+  cl_ok: ["Done", "រួចរាល់"],
+  cl_bad: ["Not done", "មិនទាន់រួច"],
+  cl_bad_n: ["{0} to fix", "{0} ត្រូវកែ"],
+  cl_all_ok: ["Ready to close", "រួចរាល់ដើម្បីបិទ"],
+  cl_fix: ["Open", "បើក"],
+  cl_books: ["Books check", "ការត្រួតពិនិត្យសៀវភៅ"],
+  cl_books_d: [
+    "Every record has its entry, every entry is balanced, Customer debt equals the unpaid Invoices.",
+    "កំណត់ត្រានីមួយៗមានធាតុ ធាតុនីមួយៗមានតុល្យភាព បំណុលអតិថិជនស្មើវិក្កយបត្រមិនទាន់បង់។",
+  ],
+  cl_wait: ["No request waiting", "គ្មានសំណើរង់ចាំ"],
+  cl_wait_n: [
+    "{0} Expense requests or adjusting entries dated in the month still wait for approval.",
+    "សំណើចំណាយ ឬធាតុកែតម្រូវ {0} ក្នុងខែនៅរង់ចាំការអនុម័ត។",
+  ],
+  cl_wait_0: ["Nothing waits for approval.", "គ្មានអ្វីរង់ចាំការអនុម័ត។"],
+  cl_late: ["No late report or advance", "គ្មានរបាយការណ៍ ឬប្រាក់បុរេប្រទានយឺត"],
+  cl_late_n: [
+    "{0} staff advances are past the report days.",
+    "ប្រាក់បុរេប្រទាន {0} ហួសថ្ងៃរាយការណ៍។",
+  ],
+  cl_late_0: ["No advance is late.", "គ្មានប្រាក់បុរេប្រទានយឺត។"],
+  cl_bank: ["Bank matched", "ធនាគារត្រូវគ្នា"],
+  cl_bank_n: [
+    "Match the bank book to the ABA statement of {0}.",
+    "ផ្ទៀងសៀវភៅធនាគារជាមួយរបាយការណ៍ ABA នៃ {0}។",
+  ],
+  cl_cash: ["Cash counted", "បានរាប់សាច់ប្រាក់"],
+  cl_cash_n: [
+    "Count the office cash and petty cash of {0}.",
+    "រាប់សាច់ប្រាក់ការិយាល័យ និងសាច់ប្រាក់រាយនៃ {0}។",
+  ],
+  cl_dep: ["Depreciation done", "រំលោះរួចរាល់"],
+  cl_dep_n: [
+    "The depreciation entry for the month is missing.",
+    "ខ្វះធាតុរំលោះសម្រាប់ខែ។",
+  ],
+  cl_dep_0: ["No fixed asset to depreciate.", "គ្មានទ្រព្យសកម្មត្រូវរំលោះ។"],
+  cl_btn: ["Close {0}", "បិទ {0}"],
+  cl_btn_n: ["Fix the red lines first.", "សូមកែបន្ទាត់ពណ៌ក្រហមជាមុនសិន។"],
+  cl_owner: ["Only the Owner closes a month.", "មានតែម្ចាស់ទេដែលបិទខែ។"],
+  cl_none: [
+    "No month is ready to close. {0} ends on {1}.",
+    "គ្មានខែណារួចរាល់ដើម្បីបិទ។ {0} បញ្ចប់នៅ {1}។",
+  ],
+  cl_months: ["Months", "ខែ"],
+  cl_now: ["To close now", "ត្រូវបិទឥឡូវ"],
+  cl_conf: [
+    "Every check is green. After closing, nothing can be dated in {0}. A later fix goes into the open month.",
+    "គ្រប់ការពិនិត្យពណ៌បៃតង។ ក្រោយបិទ គ្មានអ្វីអាចដាក់កាលបរិច្ឆេទក្នុង {0} ទៀតទេ។ ការកែក្រោយចូលខែដែលបើក។",
+  ],
+  ye_t: ["Year-end close", "បិទចុងឆ្នាំ"],
+  ye_sub: [
+    "After December is closed, the Owner closes the year. The year's profit moves to 3900 Profit kept from past years.",
+    "ក្រោយបិទខែធ្នូ ម្ចាស់បិទឆ្នាំ។ ចំណេញនៃឆ្នាំផ្ទេរទៅ 3900 ចំណេញរក្សាទុកពីឆ្នាំមុន។",
+  ],
+  ye_year: ["Year", "ឆ្នាំ"],
+  ye_profit: ["Profit moved to 3900", "ចំណេញផ្ទេរទៅ 3900"],
+  ye_closed: ["Closed", "បានបិទ"],
+  ye_btn: ["Close year", "បិទឆ្នាំ"],
+  ye_wait: [
+    "You can close {0} after December {0} is closed.",
+    "អ្នកអាចបិទ {0} ក្រោយបិទខែធ្នូ {0}។",
+  ],
+  ye_conf: [
+    "The profit of {0}, {1}, moves to 3900. Income and expense accounts start the new year at zero.",
+    "ចំណេញនៃ {0} គឺ {1} ផ្ទេរទៅ 3900។ គណនីចំណូល និងចំណាយចាប់ផ្ដើមឆ្នាំថ្មីពីសូន្យ។",
+  ],
+  ye_done: ["Year {0} closed. Entry {1}.", "បានបិទឆ្នាំ {0}។ ធាតុ {1}។"],
+  cl_pay: ["Payroll approved", "បញ្ជីប្រាក់ខែបានអនុម័ត"],
+  cl_pay_none: [
+    "No payroll for this month.",
+    "គ្មានបញ្ជីប្រាក់ខែសម្រាប់ខែនេះ។",
+  ],
+  cl_fx: [
+    "Riel cash valued at month-end rate",
+    "សាច់ប្រាក់រៀលវាយតម្លៃតាមអត្រាចុងខែ",
+  ],
+  cl_fx_0: [
+    "No change: the riel value is the same.",
+    "គ្មានការប្ដូរ៖ តម្លៃរៀលដូចដើម។",
+  ],
+  cl_fx_n: ["The app makes this entry on {0}.", "កម្មវិធីធ្វើធាតុនេះនៅ {0}។"],
+  // new
+  cl_done_n: ["Done.", "រួចរាល់។"],
+  // new
+  cl_not_closed: [
+    "{0} is not closed yet. Fix the red lines, then try again.",
+    "{0} មិនទាន់បានបិទទេ។ កែបន្ទាត់ពណ៌ក្រហម រួចសាកម្តងទៀត។",
+  ],
+  // new
+  ye_conf_n: [
+    "The year's profit moves to 3900. Income and expense accounts start the new year at zero.",
+    "ចំណេញនៃឆ្នាំផ្ទេរទៅ 3900។ គណនីចំណូល និងចំណាយចាប់ផ្ដើមឆ្នាំថ្មីពីសូន្យ។",
+  ],
 } as const satisfies Record<string, readonly [string, string]>;
 
 export type LedgerTextKey = keyof typeof TEXT;

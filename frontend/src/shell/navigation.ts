@@ -30,6 +30,7 @@ export type PageId =
   | "chart"
   | "statements"
   | "bankcash"
+  | "lclose"
   | "account";
 
 export type IconName =
@@ -117,7 +118,7 @@ export const MENU: readonly MenuGroup[] = [
     items: [
       // General Ledger phase 6 step 6 (mock-up v76, Administration › Ledger): its tabs in the
       // mock-up's order. Every role sees Expense requests; the other tabs need ledger.read.
-      // Budget, Fixed assets and Month-end close come with the next part.
+      // Budget and Fixed assets come next.
       {
         page: "exreqs",
         icon: "list",
@@ -131,6 +132,7 @@ export const MENU: readonly MenuGroup[] = [
           "chart",
           "statements",
           "bankcash",
+          "lclose",
         ],
       },
       { page: "reports", icon: "reports" },
@@ -172,6 +174,7 @@ const PAGE_NAMES: Record<PageId, readonly [string, string]> = {
   chart: ["Chart of accounts", "តារាងគណនី"],
   statements: ["Financial statements", "របាយការណ៍ហិរញ្ញវត្ថុ"],
   bankcash: ["Bank and cash", "ធនាគារ និងសាច់ប្រាក់"],
+  lclose: ["Month-end close", "ការបិទចុងខែ"],
   // new
   account: ["My account", "គណនីរបស់ខ្ញុំ"],
 };
@@ -223,6 +226,7 @@ const PAGE_NEEDS: Record<PageId, readonly string[] | null> = {
   chart: ["ledger.read"],
   statements: ["ledger.read"],
   bankcash: ["ledger.read"],
+  lclose: ["ledger.read"],
   account: null,
 };
 

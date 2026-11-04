@@ -61646,6 +61646,83 @@
       "test_path": "frontend/src/ledger/BankCashPage.test.tsx",
       "status": "implemented",
       "notes": "General Ledger phase 6 step 6 part 3 (Bank and cash; mock-up v76): Lets only the Owner record Owner money, with a note."
+    },
+    {
+      "test_id": "test_the_ledger_readers_see_the_month_end_checks",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-010"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_ledger_month_end.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 4 (Month-end close read for the ledger screen): The ledger readers see the month end checks."
+    },
+    {
+      "test_id": "test_the_month_to_close_shows_its_checks_and_closed_months_say_who",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-010"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_month_end_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 4 (Month-end close read for the ledger screen): The month to close shows its checks and closed months say who."
+    },
+    {
+      "test_id": "test_the_runtime_login_can_run_the_month_end_read",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-010"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_month_end_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 4 (Month-end close read for the ledger screen): The runtime login can run the month end read."
+    },
+    {
+      "test_id": "TEST-FE-1195",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-010"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/MonthEndPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 4 (Month-end close; mock-up v76): Shows each check of the month to close and keeps Close off while one is red."
+    },
+    {
+      "test_id": "TEST-FE-1196",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-010"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/MonthEndPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 4 (Month-end close; mock-up v76): Closes the month when every line is green."
+    },
+    {
+      "test_id": "TEST-FE-1197",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-010"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/MonthEndPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 4 (Month-end close; mock-up v76): Closes a year after December and says the entry."
+    },
+    {
+      "test_id": "TEST-FE-1198",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-010"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/MonthEndPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 4 (Month-end close; mock-up v76): Tells a reader without the close right that only the Owner closes."
     }
   ]
 }

@@ -147,6 +147,8 @@ import { UnitsPage } from "./units/UnitsPage";
 import { LedgerPage } from "./ledger/LedgerPage";
 import { BankCashPage } from "./ledger/BankCashPage";
 import type { CashApi } from "./ledger/cashClient";
+import { MonthEndPage } from "./ledger/MonthEndPage";
+import type { MonthEndApi } from "./ledger/monthEndClient";
 import { SpendingPage } from "./ledger/SpendingPage";
 import type { SpendingApi } from "./ledger/spendingClient";
 import type { LedgerApi } from "./ledger/ledgerClient";
@@ -172,6 +174,7 @@ export interface AppProps {
   /** General Ledger step 6 part 2: Expense requests, Expenses, Supplier bills. */
   spendingApi?: SpendingApi;
   cashApi?: CashApi;
+  monthEndApi?: MonthEndApi;
   /** V1.1 part 6: Office › Invoices › Quotations; the real server when not given. */
   quotationsApi?: QuotationsApi;
   propertyApi?: PropertyConfigurationApi;
@@ -653,6 +656,7 @@ export function App({
   generalLedgerApi,
   spendingApi,
   cashApi,
+  monthEndApi,
   quotationsApi,
   propertyApi = propertyConfigurationApi,
   unitApi,
@@ -1925,6 +1929,15 @@ export function App({
         <BankCashPage
           active={shown("bankcash")}
           api={cashApi}
+          capabilities={capabilities}
+          language={language}
+          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
+        />
+      </div>
+      <div className="shell-page" data-page="lclose" hidden={!shown("lclose")}>
+        <MonthEndPage
+          active={shown("lclose")}
+          api={monthEndApi}
           capabilities={capabilities}
           language={language}
           propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
