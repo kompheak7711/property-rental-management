@@ -169,6 +169,8 @@ def test_each_step_of_a_stay_needs_its_own_right() -> None:
             {"skip": True, "note": "Do not disturb"},
             "short_stays.housekeeping",
         ),
+        (f"{booking}/cancel", {"version": 7, "reason": "Flight changed"}, "short_stays.desk"),
+        (f"{booking}/credit", {"amount_usd_cents": 2000, "note": "Sick"}, "short_stays.credit"),
     )
     for url, body, right in steps:
         others = {
@@ -176,6 +178,7 @@ def test_each_step_of_a_stay_needs_its_own_right() -> None:
             "short_stays.desk",
             "short_stays.housekeeping",
             "short_stays.approve",
+            "short_stays.credit",
         } - {right}
         assert client(flow, *others).post(url, json=body, headers=HEADERS).status_code == 403, url
         answer = client(flow, right).post(url, json=body, headers=HEADERS)
@@ -194,6 +197,8 @@ def test_each_step_of_a_stay_needs_its_own_right() -> None:
         "fee",
         "extend",
         "finish_task",
+        "cancel",
+        "credit",
     ]
     desk = client(flow, "short_stays.desk")
     # A card number never reaches the database as last 4 digits; unknown fields are refused.
@@ -204,6 +209,7 @@ def test_each_step_of_a_stay_needs_its_own_right() -> None:
     ):
         assert desk.post(f"{booking}/deposit", json=wrong, headers=HEADERS).status_code == 422
     assert desk.post(f"{booking}/check-in", json={"version": 3}, headers=HEADERS).status_code == 422
+    assert desk.post(f"{booking}/cancel", json={"version": 7}, headers=HEADERS).status_code == 422
     for wrong_fee in ({"version": 5, "kind": "PARKING"}, {"kind": "LATE_CHECK_OUT"}):
         assert desk.post(f"{booking}/fee", json=wrong_fee, headers=HEADERS).status_code == 422
     assert (

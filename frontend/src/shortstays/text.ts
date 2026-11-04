@@ -464,6 +464,44 @@ const TEXT = {
   cl_room: ["Do the room check", "ធ្វើការពិនិត្យបន្ទប់"],
   e_skip: ["A skipped clean says why.", "ការរំលងការសម្អាតត្រូវប្រាប់មូលហេតុ។"],
   cl_saved: ["{0}: {1}.", "{0}៖ {1}។"],
+  // Step 4b: cancel and credit
+  can_t: ["Cancel", "លុបចោល"],
+  can_free: [
+    "Free cancel until {0} at 23:59: the money paid comes back.",
+    "លុបចោលដោយឥតគិតថ្លៃរហូតដល់ {0} ម៉ោង 23:59៖ ប្រាក់ដែលបានបង់នឹងបានមកវិញ។",
+  ],
+  can_late: [
+    "Free cancel ended on {0}: the money paid is kept.",
+    "ការលុបចោលដោយឥតគិតថ្លៃបានបញ្ចប់នៅ {0}៖ ប្រាក់ដែលបានបង់ត្រូវរក្សាទុក។",
+  ],
+  can_site: [
+    "Paid on {0}: cancel there too, by the site's rules.",
+    "បានបង់លើ {0}៖ លុបចោលនៅទីនោះផងដែរ តាមច្បាប់របស់គេហទំព័រ។",
+  ],
+  can_reason: ["Why", "មូលហេតុ"],
+  can_b: ["Cancel the booking", "លុបចោលការកក់"],
+  can_no_show: ["The guest did not come", "ភ្ញៀវមិនបានមក"],
+  e_why: ["Say why.", "ប្រាប់មូលហេតុ។"],
+  can_back: [
+    "{0} is now Customer Credit of the guest. Pay it back on Refund of Credit.",
+    "{0} ឥឡូវជាឥណទានអតិថិជនរបស់ភ្ញៀវ។ ប្រគល់វិញតាមការសងឥណទាន។",
+  ],
+  can_open: ["Open the guest's credit", "បើកឥណទានរបស់ភ្ញៀវ"],
+  can_kept: ["{0} is kept.", "{0} ត្រូវរក្សាទុក។"],
+  can_nothing: ["No money was paid.", "មិនមានប្រាក់បានបង់ទេ។"],
+  cr_t: ["Credit for a later stay", "ឥណទានសម្រាប់ការស្នាក់នៅពេលក្រោយ"],
+  cr_s: [
+    "Turn some or all of the kept money into credit, for a stay or the first month of a Lease.",
+    "ប្ដូរប្រាក់ដែលរក្សាទុកខ្លះ ឬទាំងអស់ទៅជាឥណទាន សម្រាប់ការស្នាក់នៅ ឬខែដំបូងនៃកិច្ចសន្យា។",
+  ],
+  cr_amount: ["Credit (US$)", "ឥណទាន (US$)"],
+  cr_note: ["Why", "មូលហេតុ"],
+  cr_b: ["Give credit", "ផ្ដល់ឥណទាន"],
+  cr_given: ["{0} credit, to use by {1}.", "ឥណទាន {0} ប្រើបានរហូតដល់ {1}។"],
+  e_credit: ["Type an amount up to {0}.", "វាយចំនួនរហូតដល់ {0}។"],
+  ev_CANCELLED: ["Cancelled", "បានលុបចោល"],
+  ev_NO_SHOW: ["Did not come", "មិនបានមក"],
+  ev_CREDIT_GIVEN: ["Credit given", "បានផ្ដល់ឥណទាន"],
 } as const satisfies Record<string, readonly [string, string]>;
 
 export type StaysTextKey = keyof typeof TEXT;

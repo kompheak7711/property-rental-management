@@ -9,7 +9,8 @@ deposit, check-in, check-out and ending the deposit (`short_stays.desk`), the ro
 (`short_stays.housekeeping`) and the decision on damage (`short_stays.approve`). Step 4a adds the
 early check-in and late check-out fee and extending a stay (`short_stays.desk`), and the cleaning
 list of a day (`GET .../housekeeping`, `short_stays.read`) with its done or skipped cleans
-(`short_stays.housekeeping`). The database
+(`short_stays.housekeeping`). Step 4b adds cancel and no-show (`short_stays.desk`) and the
+late-cancel credit (`short_stays.credit`). The database
 functions check the rights again, price the stay from the owner's rules and keep one booking per
 Unit and night.
 """
@@ -43,6 +44,7 @@ SHORT_STAYS_READ = "short_stays.read"
 SHORT_STAYS_DESK = "short_stays.desk"
 SHORT_STAYS_HOUSEKEEPING = "short_stays.housekeeping"
 SHORT_STAYS_APPROVE = "short_stays.approve"
+SHORT_STAYS_CREDIT = "short_stays.credit"
 SiteText = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=80)]
 Note = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=500)]
 Day = Annotated[date, Field(strict=False)]
@@ -58,6 +60,8 @@ Action = Literal[
     "fee",
     "extend",
     "finish_task",
+    "cancel",
+    "credit",
 ]
 # Step 3 (migration 20270602_312): each action is one database function that checks the right
 # again. "version" is the booking version the screen read (refused with 412 when it changed).
@@ -74,6 +78,9 @@ ACTION_SQL: dict[str, str] = {
     "fee": "SELECT app.add_short_stay_fee(%(p)s, %(t)s, %(b)s ->> 'kind', %(v)s, %(a)s, %(c)s)",
     "extend": "SELECT app.extend_short_stay(%(p)s, %(t)s, %(b)s, %(v)s, %(a)s, %(c)s)",
     "finish_task": "SELECT app.finish_housekeeping_task(%(p)s, %(t)s, %(b)s, %(a)s, %(c)s)",
+    # Step 4b (migration 20270604_314).
+    "cancel": "SELECT app.cancel_short_stay(%(p)s, %(t)s, %(b)s, %(v)s, %(a)s, %(c)s)",
+    "credit": "SELECT app.give_short_stay_credit(%(p)s, %(t)s, %(b)s, %(a)s, %(c)s)",
 }
 
 
@@ -278,6 +285,18 @@ class Finish(BaseModel):
     note: Note | None = None
 
 
+class Cancel(Version):
+    reason: Note
+    no_show: bool = False
+
+
+class Credit(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    amount_usd_cents: Annotated[int, Field(ge=1, le=100_000_000)]
+    note: Note
+
+
 def create_short_stays_router(
     resolver: ActorResolver, flow: ShortStayFlow, settings: Settings
 ) -> APIRouter:
@@ -433,6 +452,18 @@ def create_short_stays_router(
         property_id: UUID, booking_id: UUID, body: Extend, request: Request
     ) -> Json:
         return act(request, property_id, SHORT_STAYS_DESK, "extend", booking_id, body)
+
+    @router.post("/bookings/{booking_id}/cancel")
+    def cancel_short_stay(
+        property_id: UUID, booking_id: UUID, body: Cancel, request: Request
+    ) -> Json:
+        return act(request, property_id, SHORT_STAYS_DESK, "cancel", booking_id, body)
+
+    @router.post("/bookings/{booking_id}/credit")
+    def give_short_stay_credit(
+        property_id: UUID, booking_id: UUID, body: Credit, request: Request
+    ) -> Json:
+        return act(request, property_id, SHORT_STAYS_CREDIT, "credit", booking_id, body)
 
     @router.get("/housekeeping")
     def short_stay_housekeeping(

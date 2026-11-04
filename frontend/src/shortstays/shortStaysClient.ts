@@ -201,6 +201,12 @@ export interface Booking {
   check_out_time: number;
   late_check_out_until: number;
   cleans: DailyClean[];
+  /** The last day of free cancel (until 23:59). */
+  free_cancel_until: string;
+  cancel_reason: string | null;
+  paid_usd_cents: number;
+  cancellation: StayCancellation | null;
+  credit: StayCredit | null;
 }
 
 /** Step 3: the actions on one booking; each answers with the booking as it is now. */
@@ -213,7 +219,26 @@ export type StayStep =
   | "check-out"
   | "room-check"
   | "fee"
-  | "extend";
+  | "extend"
+  | "cancel"
+  | "credit";
+
+/** Step 4b: how a cancelled booking ended. */
+export interface StayCancellation {
+  kind: "CANCELLED" | "NO_SHOW";
+  free: boolean;
+  paid_usd_cents: number;
+  /** Made Customer Credit, to pay back on Refund of Credit (free cancel). */
+  back_usd_cents: number;
+  /** Kept as income (late cancel or no-show). */
+  kept_usd_cents: number;
+}
+
+export interface StayCredit {
+  amount_usd_cents: number;
+  use_by: string;
+  note: string;
+}
 
 /** Step 4a: an Invoice for a fee or an extension, made after the stay was billed. */
 export interface ExtraInvoice {
@@ -583,6 +608,35 @@ export function bookingOf(value: unknown): Booking {
         note: maybeText(clean.note),
       };
     }),
+    free_cancel_until: text(row.free_cancel_until),
+    cancel_reason: maybeText(row.cancel_reason),
+    paid_usd_cents: whole(row.paid_usd_cents),
+    cancellation:
+      row.cancellation === null || row.cancellation === undefined
+        ? null
+        : cancellationOf(record(row.cancellation)),
+    credit:
+      row.credit === null || row.credit === undefined
+        ? null
+        : creditOf(record(row.credit)),
+  };
+}
+
+function cancellationOf(row: Record<string, unknown>): StayCancellation {
+  return {
+    kind: oneOf(["CANCELLED", "NO_SHOW"] as const, row.kind),
+    free: row.free === true,
+    paid_usd_cents: whole(row.paid_usd_cents),
+    back_usd_cents: whole(row.back_usd_cents),
+    kept_usd_cents: whole(row.kept_usd_cents),
+  };
+}
+
+function creditOf(row: Record<string, unknown>): StayCredit {
+  return {
+    amount_usd_cents: whole(row.amount_usd_cents),
+    use_by: text(row.use_by),
+    note: text(row.note),
   };
 }
 

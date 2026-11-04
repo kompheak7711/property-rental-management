@@ -847,3 +847,221 @@ export function ExtendCard({
     </section>
   );
 }
+
+export function CancelCard({
+  language,
+  booking,
+  today,
+  may,
+  busy,
+  onStep,
+}: StepsProps) {
+  const [reason, setReason] = useState("");
+  const [checked, setChecked] = useState(false);
+  if (booking.status !== "BOOKED" || !may("short_stays.desk")) return null;
+  const free = today <= booking.free_cancel_until;
+  const site =
+    booking.payment === "PAID_ON_SITE" ? (booking.site_name ?? "") : null;
+  const wrong = reason.trim() === "";
+  const send = (noShow: boolean) => {
+    setChecked(true);
+    if (wrong) return;
+    onStep("cancel", {
+      version: booking.version,
+      reason: reason.trim(),
+      ...(noShow ? { no_show: true } : {}),
+    });
+  };
+  return (
+    <section aria-labelledby="ss-can" className="ui-card">
+      <h2 id="ss-can">{st(language, "can_t")}</h2>
+      <p className="ui-small ui-muted">
+        {site !== null
+          ? st(language, "can_site", site)
+          : st(
+              language,
+              free ? "can_free" : "can_late",
+              dayText(booking.free_cancel_until),
+            )}
+      </p>
+      <div className="ui-field">
+        <label htmlFor="ss-can-why">
+          {st(language, "can_reason")}
+          <span className="req">{st(language, "required")}</span>
+        </label>
+        <input
+          aria-invalid={checked && wrong}
+          autoComplete="off"
+          disabled={busy}
+          id="ss-can-why"
+          maxLength={500}
+          onChange={(event) => {
+            setReason(event.currentTarget.value);
+          }}
+          value={reason}
+        />
+        {checked && wrong && (
+          <p className="ui-error">
+            <Icon name="alert" small />
+            <span>{st(language, "e_why")}</span>
+          </p>
+        )}
+      </div>
+      <div className="ui-actions">
+        <button
+          className="ui-btn"
+          disabled={busy}
+          onClick={() => {
+            send(false);
+          }}
+          type="button"
+        >
+          {st(language, "can_b")}
+        </button>
+        {today >= booking.check_in_on && (
+          <button
+            className="ui-btn"
+            disabled={busy}
+            onClick={() => {
+              send(true);
+            }}
+            type="button"
+          >
+            {st(language, "can_no_show")}
+          </button>
+        )}
+      </div>
+    </section>
+  );
+}
+
+export function CancelledCard({
+  language,
+  booking,
+  may,
+  busy,
+  onStep,
+}: StepsProps) {
+  const [amount, setAmount] = useState("");
+  const [note, setNote] = useState("");
+  const [checked, setChecked] = useState(false);
+  const done = booking.cancellation;
+  if (done === null) return null;
+  const mayCredit =
+    !done.free &&
+    done.kept_usd_cents > 0 &&
+    booking.credit === null &&
+    may("short_stays.credit");
+  const cents = centsOf(amount);
+  const wrongAmount = cents === null || cents > done.kept_usd_cents;
+  const wrongNote = note.trim() === "";
+  const give = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setChecked(true);
+    if (wrongAmount || wrongNote) return;
+    onStep("credit", { amount_usd_cents: cents, note: note.trim() });
+  };
+  return (
+    <section aria-labelledby="ss-can-done" className="ui-card">
+      <h2 id="ss-can-done">{st(language, `st_${done.kind}`)}</h2>
+      {booking.cancel_reason !== null && <p>{booking.cancel_reason}</p>}
+      <p className="ui-small">
+        {done.paid_usd_cents === 0
+          ? st(language, "can_nothing")
+          : done.free
+            ? st(language, "can_back", usdFromCents(done.back_usd_cents))
+            : st(language, "can_kept", usdFromCents(done.kept_usd_cents))}
+      </p>
+      {done.back_usd_cents > 0 && may("customers.read") && (
+        <div className="ui-actions">
+          <a
+            className="ui-btn"
+            href={hashForPage("customers", booking.customer_id)}
+          >
+            {st(language, "can_open")}
+          </a>
+        </div>
+      )}
+      {booking.credit !== null && (
+        <p>
+          <b>{st(language, "cr_t")}</b>
+          <span className="ui-sub2 ui-num">
+            {st(
+              language,
+              "cr_given",
+              usdFromCents(booking.credit.amount_usd_cents),
+              dayText(booking.credit.use_by),
+            )}
+          </span>
+          <span className="ui-sub2">{booking.credit.note}</span>
+        </p>
+      )}
+      {mayCredit && (
+        <form className="ui-form" noValidate onSubmit={give}>
+          <h3>{st(language, "cr_t")}</h3>
+          <p className="ui-small ui-muted">{st(language, "cr_s")}</p>
+          <div className="ui-row2">
+            <div className="ui-field">
+              <label htmlFor="ss-cr-amount">
+                {st(language, "cr_amount")}
+                <span className="req">{st(language, "required")}</span>
+              </label>
+              <input
+                aria-invalid={checked && wrongAmount}
+                autoComplete="off"
+                disabled={busy}
+                id="ss-cr-amount"
+                inputMode="decimal"
+                maxLength={10}
+                onChange={(event) => {
+                  setAmount(event.currentTarget.value);
+                }}
+                value={amount}
+              />
+              {checked && wrongAmount && (
+                <p className="ui-error">
+                  <Icon name="alert" small />
+                  <span>
+                    {st(
+                      language,
+                      "e_credit",
+                      usdFromCents(done.kept_usd_cents),
+                    )}
+                  </span>
+                </p>
+              )}
+            </div>
+            <div className="ui-field">
+              <label htmlFor="ss-cr-note">
+                {st(language, "cr_note")}
+                <span className="req">{st(language, "required")}</span>
+              </label>
+              <input
+                aria-invalid={checked && wrongNote}
+                autoComplete="off"
+                disabled={busy}
+                id="ss-cr-note"
+                maxLength={500}
+                onChange={(event) => {
+                  setNote(event.currentTarget.value);
+                }}
+                value={note}
+              />
+              {checked && wrongNote && (
+                <p className="ui-error">
+                  <Icon name="alert" small />
+                  <span>{st(language, "e_why")}</span>
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="ui-actions">
+            <button className="ui-btn primary" disabled={busy} type="submit">
+              {st(language, "cr_b")}
+            </button>
+          </div>
+        </form>
+      )}
+    </section>
+  );
+}

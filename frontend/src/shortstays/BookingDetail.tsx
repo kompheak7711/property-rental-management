@@ -18,6 +18,8 @@ import {
   type StayStep,
 } from "./shortStaysClient";
 import {
+  CancelCard,
+  CancelledCard,
   CheckInCard,
   CheckOutCard,
   DamagesCard,
@@ -295,6 +297,8 @@ export function BookingDetail({
           <CheckInCard key={`in:${cards}`} {...steps} />
           <CheckOutCard key={`out:${cards}`} {...steps} />
           <ExtendCard key={`ext:${cards}`} {...steps} />
+          <CancelCard key={`can:${cards}`} {...steps} />
+          <CancelledCard key={`done:${cards}`} {...steps} />
           <RoomCheckCard key={`room:${cards}`} {...steps} />
           <DamagesCard key={`dmg:${cards}`} {...steps} />
           <section aria-labelledby="ss-guest" className="ui-card">

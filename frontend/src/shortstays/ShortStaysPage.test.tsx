@@ -157,6 +157,11 @@ const BOOKING: Booking = {
   check_out_time: 720,
   late_check_out_until: 1080,
   cleans: [],
+  free_cancel_until: "2026-11-03",
+  cancel_reason: null,
+  paid_usd_cents: 0,
+  cancellation: null,
+  credit: null,
 };
 
 /** Booking b-1 checks in today (04/11) for 3 nights. */
@@ -1009,6 +1014,119 @@ describe("Daily and weekly rent: Short stays", () => {
     await waitFor(() => {
       expect(cleaning).toHaveBeenLastCalledWith("p-1", "2026-11-05");
     });
+  });
+
+  it("TEST-FE-1614 cancels with a reason and says the money comes back as credit", async () => {
+    const early: Booking = {
+      ...BOOKING,
+      check_in_on: "2026-11-10",
+      check_out_on: "2026-11-12",
+      free_cancel_until: "2026-11-08",
+      payment: "PAID",
+      invoice: INVOICE,
+    };
+    const step = vi.fn(() =>
+      Promise.resolve({
+        ...early,
+        status: "CANCELLED" as const,
+        cancel_reason: "Flight changed",
+        version: 2,
+        cancellation: {
+          kind: "CANCELLED" as const,
+          free: true,
+          paid_usd_cents: 6090,
+          back_usd_cents: 6090,
+          kept_usd_cents: 0,
+        },
+      }),
+    );
+    show({
+      api: fakeApi({ get: vi.fn(() => Promise.resolve(early)), step }),
+      capabilities: new Set([...DESK, "customers.read"]),
+    });
+    go("#/shortstays/st:b-1");
+    const card = within(await screen.findByRole("region", { name: "Cancel" }));
+    expect(
+      card.getByText(
+        "Free cancel until 08/11/2026 at 23:59: the money paid comes back.",
+      ),
+    ).toBeInTheDocument();
+    // Not the check-in day yet: no "did not come".
+    expect(
+      card.queryByRole("button", { name: "The guest did not come" }),
+    ).toBeNull();
+    fireEvent.click(card.getByRole("button", { name: "Cancel the booking" }));
+    expect(card.getByText("Say why.")).toBeInTheDocument();
+    expect(step).not.toHaveBeenCalled();
+    fireEvent.change(card.getByLabelText(/Why/), {
+      target: { value: "Flight changed" },
+    });
+    fireEvent.click(card.getByRole("button", { name: "Cancel the booking" }));
+    expect(step).toHaveBeenCalledWith("p-1", "b-1", "cancel", {
+      version: 1,
+      reason: "Flight changed",
+    });
+    expect(
+      await screen.findByText(
+        "$60.90 is now Customer Credit of the guest. Pay it back on Refund of Credit.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Cancel" })).toBeNull();
+    expect(
+      screen.getByRole("link", { name: "Open the guest's credit" }),
+    ).toHaveAttribute("href", "#/customers/c-1");
+  });
+
+  it("TEST-FE-1615 gives credit after a late cancel, up to the money kept", async () => {
+    const late: Booking = {
+      ...BOOKING,
+      status: "NO_SHOW",
+      cancel_reason: "Did not come",
+      payment: "PAID",
+      invoice: INVOICE,
+      cancellation: {
+        kind: "NO_SHOW",
+        free: false,
+        paid_usd_cents: 6090,
+        back_usd_cents: 0,
+        kept_usd_cents: 6090,
+      },
+    };
+    const step = vi.fn(() =>
+      Promise.resolve({
+        ...late,
+        credit: { amount_usd_cents: 2000, use_by: "2027-05-04", note: "Sick" },
+      }),
+    );
+    show({
+      api: fakeApi({ get: vi.fn(() => Promise.resolve(late)), step }),
+      capabilities: new Set([...DESK, "short_stays.credit"]),
+    });
+    go("#/shortstays/st:b-1");
+    expect(await screen.findByText("$60.90 is kept.")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText(/Credit \(US\$\)/), {
+      target: { value: "70" },
+    });
+    fireEvent.change(screen.getByLabelText(/^Why/), {
+      target: { value: "Sick" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Give credit" }));
+    expect(
+      screen.getByText("Type an amount up to $60.90."),
+    ).toBeInTheDocument();
+    expect(step).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByLabelText(/Credit \(US\$\)/), {
+      target: { value: "20" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Give credit" }));
+    expect(step).toHaveBeenCalledWith("p-1", "b-1", "credit", {
+      amount_usd_cents: 2000,
+      note: "Sick",
+    });
+    expect(
+      await screen.findByText("$20.00 credit, to use by 04/05/2027."),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Give credit" })).toBeNull();
   });
 
   it("TEST-FE-1605 speaks Khmer and hides New booking without the front-desk right", async () => {
