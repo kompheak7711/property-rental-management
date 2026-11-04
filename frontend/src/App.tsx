@@ -144,6 +144,8 @@ import { CustomersPage } from "./customers/CustomersPage";
 import { ReservationsPage } from "./reservations/ReservationsPage";
 import { ct } from "./customers/text";
 import { UnitsPage } from "./units/UnitsPage";
+import { LedgerPage } from "./ledger/LedgerPage";
+import type { LedgerApi } from "./ledger/ledgerClient";
 import { ProductsPage } from "./products/ProductsPage";
 import type { ProductsApi } from "./products/productsClient";
 import { type ActorAccessApi, actorAccessApi } from "./shell/accessClient";
@@ -159,6 +161,8 @@ export interface AppProps {
   rolesApi?: RolesApi;
   /** V1.1 part 4: Building › Products; the real server when not given. */
   productsApi?: ProductsApi;
+  /** General Ledger step 6: Office › Ledger; the real server when not given. */
+  generalLedgerApi?: LedgerApi;
   propertyApi?: PropertyConfigurationApi;
   unitApi?: UnitApi;
   businessSettingsApi?: BusinessSettingsApi;
@@ -635,6 +639,7 @@ export function App({
   administrationApi = accessAdministrationApi,
   rolesApi = accessRolesApi,
   productsApi,
+  generalLedgerApi,
   propertyApi = propertyConfigurationApi,
   unitApi,
   customerApi,
@@ -1791,6 +1796,58 @@ export function App({
           language={language}
           propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
           tab="locations"
+        />
+      </div>
+      <div
+        className="shell-page"
+        data-page="journal"
+        hidden={!shown("journal")}
+      >
+        <LedgerPage
+          active={shown("journal")}
+          api={generalLedgerApi}
+          capabilities={capabilities}
+          language={language}
+          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
+          tab="journal"
+        />
+      </div>
+      <div
+        className="shell-page"
+        data-page="needscheck"
+        hidden={!shown("needscheck")}
+      >
+        <LedgerPage
+          active={shown("needscheck")}
+          api={generalLedgerApi}
+          capabilities={capabilities}
+          language={language}
+          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
+          tab="needscheck"
+        />
+      </div>
+      <div className="shell-page" data-page="chart" hidden={!shown("chart")}>
+        <LedgerPage
+          active={shown("chart")}
+          api={generalLedgerApi}
+          capabilities={capabilities}
+          language={language}
+          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
+          tab="chart"
+        />
+      </div>
+      <div
+        className="shell-page"
+        data-page="statements"
+        hidden={!shown("statements")}
+      >
+        <LedgerPage
+          active={shown("statements")}
+          api={generalLedgerApi}
+          capabilities={capabilities}
+          language={language}
+          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
+          tab="statements"
         />
       </div>
       <div

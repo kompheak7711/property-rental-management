@@ -60806,6 +60806,237 @@
       "test_path": "frontend/src/products/ProductsPage.test.tsx",
       "status": "implemented",
       "notes": "V1.1 part 4: the price helper rounds up to the step and quantities follow the unit."
+    },
+    {
+      "test_id": "TEST-FE-1148",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-007"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/LedgerPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 1 (Ledger screens, mock-up v76): Lists entries newest first with the record they came from."
+    },
+    {
+      "test_id": "TEST-FE-1149",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-007"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/LedgerPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 1 (Ledger screens, mock-up v76): Reads one month when a month is picked."
+    },
+    {
+      "test_id": "TEST-FE-1150",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-007"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/LedgerPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 1 (Ledger screens, mock-up v76): Opens one entry from the address with its lines and totals."
+    },
+    {
+      "test_id": "TEST-FE-1151",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-007"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/LedgerPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 1 (Ledger screens, mock-up v76): Says when the entry is not in the ledger."
+    },
+    {
+      "test_id": "TEST-FE-1152",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-007"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/LedgerPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 1 (Ledger screens, mock-up v76): Groups accounts by type with their balance and marks."
+    },
+    {
+      "test_id": "TEST-FE-1153",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-007"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/LedgerPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 1 (Ledger screens, mock-up v76): Shows Khmer account names when the screen is in Khmer."
+    },
+    {
+      "test_id": "TEST-FE-1154",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-007"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/LedgerPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 1 (Ledger screens, mock-up v76): Opens an account with every line and the running balance."
+    },
+    {
+      "test_id": "TEST-FE-1155",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-007"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/LedgerPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 1 (Ledger screens, mock-up v76): Lists records waiting with a reason in the screen's words only."
+    },
+    {
+      "test_id": "TEST-FE-1156",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-007"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/LedgerPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 1 (Ledger screens, mock-up v76): Lets the Owner set a method's account from a date."
+    },
+    {
+      "test_id": "TEST-FE-1157",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-007"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/LedgerPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 1 (Ledger screens, mock-up v76): Says when nothing waits."
+    },
+    {
+      "test_id": "TEST-FE-1158",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-007"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/LedgerPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 1 (Ledger screens, mock-up v76): Shows a statement with its state and check line."
+    },
+    {
+      "test_id": "TEST-FE-1159",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-007"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/LedgerPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 1 (Ledger screens, mock-up v76): Asks each statement for its own values."
+    },
+    {
+      "test_id": "TEST-FE-1160",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-007"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/LedgerPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 1 (Ledger screens, mock-up v76): Downloads Excel and PDF files."
+    },
+    {
+      "test_id": "TEST-FE-1161",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-007"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/LedgerPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 1 (Ledger screens, mock-up v76): Shows the Books check lines."
+    },
+    {
+      "test_id": "test_the_books_need_the_ledger_right_and_are_not_cached",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-007"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_ledger_books.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 1 (books reads for the Ledger screens): The books need the ledger right and are not cached."
+    },
+    {
+      "test_id": "test_the_books_refuse_unknown_values_and_say_when_an_entry_is_not_there",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-007"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_ledger_books.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 1 (books reads for the Ledger screens): The books refuse unknown values and say when an entry is not there."
+    },
+    {
+      "test_id": "test_a_source_links_to_its_invoice_or_receipt_page",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-007"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_ledger_books.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 1 (books reads for the Ledger screens): A source links to its invoice or receipt page."
+    },
+    {
+      "test_id": "test_the_chart_shows_each_balance_on_its_normal_side",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-007"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_books_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 1 (books reads for the Ledger screens): The chart shows each balance on its normal side."
+    },
+    {
+      "test_id": "test_the_journal_lists_entries_newest_first_with_their_app_record",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-007"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_books_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 1 (books reads for the Ledger screens): The journal lists entries newest first with their app record."
+    },
+    {
+      "test_id": "test_one_entry_shows_its_lines_and_who_posted_it",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-007"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_books_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 1 (books reads for the Ledger screens): One entry shows its lines and who posted it."
+    },
+    {
+      "test_id": "test_the_runtime_login_can_read_what_the_books_read",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-007"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_books_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 1 (books reads for the Ledger screens): The runtime login can read what the books read."
     }
   ]
 }

@@ -21,6 +21,10 @@ export type PageId =
   | "reports"
   | "history"
   | "settings"
+  | "journal"
+  | "needscheck"
+  | "chart"
+  | "statements"
   | "account";
 
 export type IconName =
@@ -105,6 +109,15 @@ export const MENU: readonly MenuGroup[] = [
   {
     label: ["Office", "ការិយាល័យ"],
     items: [
+      // General Ledger phase 6 step 6 (mock-up v76, Administration › Ledger): its tabs. The
+      // other ledger tabs (Expense requests, Expenses, Supplier bills, Budget, Fixed assets,
+      // Bank and cash, Month-end close) come with the next parts.
+      {
+        page: "journal",
+        icon: "list",
+        label: ["Ledger", "សៀវភៅបញ្ជី"],
+        tabs: ["journal", "needscheck", "chart", "statements"],
+      },
       { page: "reports", icon: "reports" },
       { page: "history", icon: "history" },
       { page: "settings", icon: "settings" },
@@ -135,6 +148,10 @@ const PAGE_NAMES: Record<PageId, readonly [string, string]> = {
   reports: ["Reports", "របាយការណ៍"],
   history: ["History", "ប្រវត្តិ"],
   settings: ["Settings", "ការកំណត់"],
+  journal: ["Journal entries", "ធាតុទិនានុប្បវត្តិ"],
+  needscheck: ["Needs check", "ត្រូវពិនិត្យ"],
+  chart: ["Chart of accounts", "តារាងគណនី"],
+  statements: ["Financial statements", "របាយការណ៍ហិរញ្ញវត្ថុ"],
   // new
   account: ["My account", "គណនីរបស់ខ្ញុំ"],
 };
@@ -175,6 +192,11 @@ const PAGE_NEEDS: Record<PageId, readonly string[] | null> = {
     "identity.manage_access",
     "operations.status.read",
   ],
+  // General Ledger (owner plan 03/11/2026, rights table L1): Owner and Manager read the ledger.
+  journal: ["ledger.read"],
+  needscheck: ["ledger.read"],
+  chart: ["ledger.read"],
+  statements: ["ledger.read"],
   account: null,
 };
 
