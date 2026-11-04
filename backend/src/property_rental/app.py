@@ -193,11 +193,23 @@ from property_rental.lease_signing_api import (
     UnavailableLeaseSigningFlow,
     create_lease_signing_router,
 )
+from property_rental.ledger_assets_api import (
+    LedgerAssetsFlow,
+    PostgresLedgerAssets,
+    UnavailableLedgerAssets,
+    create_ledger_assets_router,
+)
 from property_rental.ledger_books_api import (
     LedgerBooksFlow,
     PostgresLedgerBooks,
     UnavailableLedgerBooks,
     create_ledger_books_router,
+)
+from property_rental.ledger_budget_api import (
+    LedgerBudgetFlow,
+    PostgresLedgerBudget,
+    UnavailableLedgerBudget,
+    create_ledger_budget_router,
 )
 from property_rental.ledger_cash_api import (
     LedgerCashFlow,
@@ -604,6 +616,8 @@ def create_app(
     ledger_spending_flow: LedgerSpendingFlow | None = None,
     ledger_cash_flow: LedgerCashFlow | None = None,
     ledger_month_end_flow: LedgerMonthEndFlow | None = None,
+    ledger_assets_flow: LedgerAssetsFlow | None = None,
+    ledger_budget_flow: LedgerBudgetFlow | None = None,
     exchange_rate_provider: ExchangeRateProvider | None = None,
     reservation_resource_flow: ReservationResourceFlow | None = None,
     lease_resource_flow: LeaseResourceFlow | None = None,
@@ -1375,6 +1389,28 @@ def create_app(
                 PostgresLedgerMonthEnd(resolved_settings.database_url.get_secret_value())
                 if resolved_settings.database_url is not None
                 else UnavailableLedgerMonthEnd()
+            ),
+        )
+    )
+    include_signed_in(
+        create_ledger_assets_router(
+            actor_resolver,
+            ledger_assets_flow
+            or (
+                PostgresLedgerAssets(resolved_settings.database_url.get_secret_value())
+                if resolved_settings.database_url is not None
+                else UnavailableLedgerAssets()
+            ),
+        )
+    )
+    include_signed_in(
+        create_ledger_budget_router(
+            actor_resolver,
+            ledger_budget_flow
+            or (
+                PostgresLedgerBudget(resolved_settings.database_url.get_secret_value())
+                if resolved_settings.database_url is not None
+                else UnavailableLedgerBudget()
             ),
         )
     )
