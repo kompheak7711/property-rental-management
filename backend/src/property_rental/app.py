@@ -217,6 +217,12 @@ from property_rental.ledger_money_api import (
     UnavailableLedgerMoneyFlow,
     create_ledger_money_router,
 )
+from property_rental.ledger_month_end_api import (
+    LedgerMonthEndFlow,
+    PostgresLedgerMonthEnd,
+    UnavailableLedgerMonthEnd,
+    create_ledger_month_end_router,
+)
 from property_rental.ledger_posting_api import (
     LedgerPostingFlow,
     PostgresLedgerPostingFlow,
@@ -597,6 +603,7 @@ def create_app(
     ledger_books_flow: LedgerBooksFlow | None = None,
     ledger_spending_flow: LedgerSpendingFlow | None = None,
     ledger_cash_flow: LedgerCashFlow | None = None,
+    ledger_month_end_flow: LedgerMonthEndFlow | None = None,
     exchange_rate_provider: ExchangeRateProvider | None = None,
     reservation_resource_flow: ReservationResourceFlow | None = None,
     lease_resource_flow: LeaseResourceFlow | None = None,
@@ -1357,6 +1364,17 @@ def create_app(
                 PostgresLedgerCash(resolved_settings.database_url.get_secret_value())
                 if resolved_settings.database_url is not None
                 else UnavailableLedgerCash()
+            ),
+        )
+    )
+    include_signed_in(
+        create_ledger_month_end_router(
+            actor_resolver,
+            ledger_month_end_flow
+            or (
+                PostgresLedgerMonthEnd(resolved_settings.database_url.get_secret_value())
+                if resolved_settings.database_url is not None
+                else UnavailableLedgerMonthEnd()
             ),
         )
     )
