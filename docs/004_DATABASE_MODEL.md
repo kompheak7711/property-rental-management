@@ -5717,3 +5717,15 @@ Added by DL-124 (migration `20270426_276`, forward-only).
 - `app.authorized_nonrecurring_obligations.problem_report_id` (unique): a Damage charge comes from a Move-out finding or from one Problem report, and must match its Lease, main tenant and amount.
 - Business rules area REPAIRS: REPEAT_COUNT, REPEAT_DAYS, TR_URGENT_HOURS, TR_PLAN_WORKDAYS, TR_AUTO_CLOSE_DAYS.
 - Functions: `app.problem_reports_read`, `app.problem_report_read`, `app.problem_report_choices`, `app.add_problem_report`, `app.problem_report_step` (runtime) and `app.record_problem_tenant_answer` (financial; AGREED makes the Damage Invoice draft). New rights `problem_reports.read`, `.add`, `.plan`, `.join` (group Operations); the default roles get a new version: the Owner and the Manager all four, Staff read and add.
+
+## DB-TG-001 — Telegram bots shared base (bots step 1)
+
+Added by DL-125 (migration `20270430_281`, forward-only).
+
+- `app.telegram_bots` (CUSTOMER, TENANT, STAFF; seeded, then fixed; no keys).
+- `app.telegram_accounts` (one row per Telegram account: `telegram_user_id`, language km or en, `phone_e164` when shared, first and last seen). Only the language, phone and last seen move forward; the account number never changes.
+- `app.telegram_inbound_events` (each relay item once by `relay_item_id`, each Telegram update once by bot and `telegram_update_id`; kind, received time, summary, raw payload). The only change allowed is removing the payload after 90 days (`payload_removed_at`).
+- `app.media_files` (each file once by `sha256`; content type from a fixed list, size up to 20 MB, `storage_path` `xx/<sha256>` under the media folder, width, height, duration, Telegram file id).
+- `app.telegram_outbox` (bot, chat, fixed `text_code`, language, details) and `app.telegram_outbox_attempts` (each try: SENT, FAILED or GAVE_UP; at most one final try per message). The status is the latest try.
+- `app.relay_pull_runs` (each pull: times, outcome, items received and saved, relay waiting and dropped counts).
+- All are append-only (updates and deletes refused, truncate refused). Functions (security definer, for the pull and send jobs; each checks the actor's right): `app.telegram_record_pulled_item`, `app.telegram_record_pull_run`, `app.telegram_queue_message`, `app.telegram_outbox_due`, `app.telegram_record_send_attempt`, `app.telegram_remove_old_payloads`, `app.telegram_health`. New rights `telegram.read` and `telegram.operate` (group Administration), for the Owner and Manager bundles.

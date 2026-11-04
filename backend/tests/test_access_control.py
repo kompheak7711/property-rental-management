@@ -46,6 +46,8 @@ NON_CAPABILITY_LABELS = frozenset(
         "application.started",
         "application.stopping",
         "backup.config_invalid",
+        # Telegram bots step 1: a fixed text code and the bots' configuration fields.
+        "base.ping_reply",
         "backup.database_url_file",
         "backup.directory",
         "backup.encryption_key_file",
@@ -108,6 +110,10 @@ NON_CAPABILITY_LABELS = frozenset(
         "sign_in_prune.config_invalid",
         "sign_in_prune.failed",
         "sign_in_prune.usage",
+        "telegram_bots.bots",
+        "telegram_bots.bots.token_file",
+        "telegram_bots.media_directory",
+        "telegram_bots.relay_host",
         # A SQL column name in ledger_books_api.source_sql, not a capability.
         "entry.id",
     }
@@ -156,7 +162,7 @@ def test_the_capability_catalog_names_every_capability_the_code_checks() -> None
 
 
 def test_the_catalog_holds_the_approved_new_names() -> None:
-    assert len(CAPABILITY_CATALOG) == 113
+    assert len(CAPABILITY_CATALOG) == 115
     assert list(CAPABILITY_CATALOG) == sorted(CAPABILITY_CATALOG)
     assert all(DOTTED.fullmatch(name) and len(name) <= 128 for name in CAPABILITY_CATALOG)
     assert all(description.strip() for description in CAPABILITY_CATALOG.values())
@@ -192,7 +198,7 @@ def test_each_capability_has_one_grant_path() -> None:
     assert paths["rent_nonpayment.evaluate"] == "service_principal"
     assert paths["billing.generate"] == "bundle"
     assert BUNDLE_CAPABILITIES == {c for c, path in paths.items() if path == "bundle"}
-    assert len(BUNDLE_CAPABILITIES) == 110
+    assert len(BUNDLE_CAPABILITIES) == 112
     with pytest.raises(KeyError):
         capability_grant_path("reports.export")
 
@@ -314,6 +320,9 @@ STAFF_NEVER = frozenset(
         "audit.export",
         "data.export",
         "operations.status.read",
+        # Telegram bots step 1: the bot jobs and their health are for the Owner and Manager.
+        "telegram.operate",
+        "telegram.read",
         "leases.warn",
         "utility_readings.correct",
         "utility_meters.manage",

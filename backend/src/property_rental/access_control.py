@@ -128,6 +128,8 @@ CAPABILITY_CATALOG: Final[dict[str, str]] = {
     "stock.transfer": "Move stock between places",
     "supplier_bills.manage": "Add Suppliers and record Supplier bills",
     "supplier_bills.pay": "Pay a Supplier bill and reverse a bill payment",
+    "telegram.operate": "Run the Telegram pull and send jobs",
+    "telegram.read": "See the Telegram bots health",
     "units.read": "Read Units and their history",
     "utility.calculate": "Run the Utility calculation",
     "utility.estimate": "Record a broken-Meter estimate",

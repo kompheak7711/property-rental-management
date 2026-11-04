@@ -2554,3 +2554,20 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **Links:** DL-118, DL-120, DL-123.
 - **Decision date:** 2026-11-04.
 
+
+## DL-125 — Telegram bots: the relay and the shared base (R1 to R4)
+
+- **Type:** `OWNER BUSINESS DECISION`
+- **Status:** `STEP 1 BUILT ON BRANCH claude/telegram-bots; WAITS FOR THE OWNER'S TEST`
+- **Source:** the owner's choice of 1 Nov 2026 (Telegram, then a small Cloudflare relay, then the office app pulls every minute), the owner's OK of the Telegram bots tech and database plan (answers T1 to T5 all as recommended, 3 Nov 2026 08:36; that OK also approves the entries R1 to R4 below), and the owner's message of 4 Nov 2026 asking to start the bots coding. Technical choices by Claude under the owner's 2026-10-23 22:30 rule.
+- **(R1) Outbound addresses.** The office computer may call `api.telegram.org` and, only while the bots are on (`telegram_bots.enabled`), one more address: our relay, a `*.workers.dev` address on Cloudflare. The deployment checker allows exactly these. Nothing on the internet connects in (DEPLOY-015 stays).
+- **(R2) What Telegram carries.** The three bots (Customer, Tenant, Staff) carry tenant and customer messages, photos, voice notes and shared phones. The relay seals every item and file with the office public key (RSA-OAEP 3072 bits or more, with AES-256-GCM tied to the item id) before it stores it, keeps it only until the office confirms it (7 days at most; what is removed unpulled is counted and warned on the health page), and never reads the database. Group posts still carry no tenant name or phone. The alert bot (DL-071 answer 8) stays as it is.
+- **(R3) Problem reports.** V1.1 adds Problem reports (UP and BP, DL-124). The Tenant bot and the Staff bot add reports to that same list (sources TENANT_BOT and STAFF_BOT).
+- **(R4) Visit requests.** A visit request can also come from the Customer bot, into the same list with the same rules as the website form (DL-115).
+- **(A) Shared base (step 1).** Tables `telegram_bots`, `telegram_accounts`, `telegram_inbound_events` (each relay item once, each Telegram update once; the raw message is removed after 90 days and the summary stays), `media_files` (each file once by its SHA-256 fingerprint, on the office disk under `/var/lib/prm/media`), `telegram_outbox` and `telegram_outbox_attempts` (every message waits in the outbox, every try is a row; a failed try waits 1, 2, 4 ... up to 60 minutes; after 7 days of failures the message is given up), and `relay_pull_runs`. History is never changed. Two new rights, `telegram.read` and `telegram.operate`, for the Owner and Manager bundles; the pull and send jobs run as such an account, like the billing worker.
+- **(B) Limits.** At most 30 messages a minute per person; photos at the largest Telegram size up to 1600 px; voice notes up to 60 seconds, videos up to 30 seconds, files up to 20 MB, 5 files per item. Mini App forms need a Telegram sign-in less than 24 hours old, and for the Tenant and Staff bots a person on the access list the office sends.
+- **(C) Health page.** New warnings: `telegram_bots_jobs_stale`, `telegram_bots_not_pulled`, `telegram_bots_relay_dropped`, `telegram_bots_send_failing` (12 hours), `telegram_bots_send_gave_up`. They show only after the bot jobs first run.
+- **Rules changed:** docs/009 DEPLOY-016 and docs/008 SEC-059 (each "Amended by DL-125").
+- **Built:** migration `20270430_281` (DB-TG-001); `relay/` (Cloudflare Worker, no packages); `telegram_pull_job.py`, `telegram_send_job.py`; host timers `prm-telegram-pull` and `prm-telegram-send`.
+- **Links:** DL-071, DL-115, DL-124.
+- **Decision date:** 2026-11-04.
