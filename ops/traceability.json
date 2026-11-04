@@ -62272,6 +62272,28 @@
       "test_path": "backend/tests/test_gl_opening_sheet_migration.py",
       "status": "implemented",
       "notes": "Owner test 04/11/2026: records with a problem that the posting job has not met yet (migration 20270427_277, app.gl_waiting_records) count in the Opening balances sheet and show in Needs check, as the Post refusal does; they leave once the method has its ledger account."
+    },
+    {
+      "test_id": "test_the_runtime_login_can_run_the_needs_check_reads",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-014"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_opening_sheet_migration.py",
+      "status": "implemented",
+      "notes": "Owner test 04/11/2026: Needs check failed for every Property because the runtime login may not read app.refund_methods; the runtime login runs the Needs check list and the method list (migration 20270428_278, app.gl_method_list) and sees Payment and Refund methods."
+    },
+    {
+      "test_id": "test_the_runtime_login_can_run_every_close_list",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-003"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_opening_sheet_migration.py",
+      "status": "implemented",
+      "notes": "Owner test 04/11/2026 follow-up: every close list (adjusting entries, periods, bank lines and matches, write-offs, budgets and the rest) runs with the runtime login; the write-off list reads the Final Settlement through app.gl_write_off_settlement (migration 20270428_278)."
     }
   ]
 }

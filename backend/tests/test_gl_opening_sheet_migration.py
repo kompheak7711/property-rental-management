@@ -8,6 +8,7 @@ once posted, the entry's lines, who posted it and when. Read with the runtime lo
 from __future__ import annotations
 
 from collections.abc import Iterator
+from datetime import date
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -15,6 +16,7 @@ import psycopg
 import pytest
 from psycopg.types.json import Jsonb
 
+from property_rental.ledger_close_api import VIEWS as CLOSE_VIEWS
 from property_rental.ledger_money_api import LedgerMoneyNotFound
 from property_rental.ledger_opening_api import (
     ACCOUNTS,
@@ -26,7 +28,11 @@ from property_rental.ledger_opening_api import (
     WORKED_OUT,
     PostgresLedgerOpening,
 )
-from property_rental.ledger_posting_api import PostgresLedgerPostingFlow
+from property_rental.ledger_posting_api import (
+    METHOD_ACCOUNTS,
+    PostgresLedgerPostingFlow,
+)
+from property_rental.ledger_posting_api import NEEDS_CHECK as NEEDS_CHECK_LIST
 from test_gl_auto_posting_migration import SET_ACCOUNT, invoice_paid, method_of, problem
 from test_gl_close_migration import capital, worked_out_net
 from test_gl_money_records_migration import Books, Borrowed
@@ -146,3 +152,31 @@ def test_the_runtime_login_can_run_the_opening_read(migrated_database_url: str) 
         key = {"prop": uuid4(), "opening": uuid4(), "entry": uuid4()}
         for query in (FIRST_YEAR, OPENING, ACCOUNTS, TYPED, WORKED_OUT, POSTED, NEEDS_CHECK):
             connection.execute(query, key)
+
+
+def test_the_runtime_login_can_run_the_needs_check_reads(migrated_database_url: str) -> None:
+    """Owner test 04/11/2026: Needs check failed for every Property, because the runtime login
+    may not read app.refund_methods; both of its reads now go through functions."""
+    assert migrated_database_url
+    with psycopg.connect(runtime_database_url()) as connection:
+        connection.execute(NEEDS_CHECK_LIST, (uuid4(),)).fetchall()
+        methods = connection.execute(
+            METHOD_ACCOUNTS, {"prop": uuid4(), "day": date(2026, 11, 4)}
+        ).fetchall()
+    kinds = {str(row[0]) for row in methods}
+    assert "REFUND" in kinds
+    assert all(row[4] is None and row[6] is None for row in methods)
+
+
+def test_the_runtime_login_can_run_every_close_list(migrated_database_url: str) -> None:
+    """The same check for the close lists: the write-off list read app.settlement_corrections,
+    which the runtime login may not read; it now reads the Final Settlement through a function."""
+    assert migrated_database_url
+    with psycopg.connect(runtime_database_url()) as connection:
+        for view, query in CLOSE_VIEWS.items():
+            try:
+                connection.execute(
+                    query, {"prop": uuid4(), "target": uuid4(), "account": "1010"}
+                ).fetchall()
+            except psycopg.errors.InsufficientPrivilege as exc:  # pragma: no cover - failure path
+                pytest.fail(f"{view}: {exc}")
