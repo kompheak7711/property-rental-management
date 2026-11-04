@@ -65,7 +65,6 @@ def test_migration_290_follows_the_ledger_and_is_forward_only() -> None:
     migration = scripts.get_revision(REVISION)
     assert migration is not None
     assert migration.down_revision == "20270429_279"
-    assert scripts.get_heads() == [REVISION]
     with pytest.raises(RuntimeError, match="forward-only"):
         migration.module.downgrade()
 

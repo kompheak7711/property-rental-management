@@ -2241,3 +2241,7 @@ Added by DL-124 (V1.1 part 7; migration `20270426_276`, DB-PR-001). Reads are `p
 ### API-PR-002 Problem report repair cost — 2026-11-04
 
 Added by DL-125 (migration `20270510_290`, DB-PR-002). `GET /problem-reports/{report_id}` answers `cost`: the latest entry (`set_no`, `no_cost`, `note`, who typed it and when, `lines`, `totals` by currency), its `check` and its `expense_requests` (number, status, currency, cents, riel), and `can_enter`. `POST /problem-reports/{report_id}/cost` (`problem_reports.add`, `If-Match`; strict body `no_cost`, `note`, `lines` of at most 20 `kind` PARTS or OUTSIDE_WORKER, `description`, `currency` USD or KHR, `amount_minor`) and `POST /problem-reports/{report_id}/cost-check` (`problem_reports.costs`, `If-Match`; body `receipt_seen` true, `spent_on`, `paid_how` OWN_MONEY or CASH, `paid_from_code` for CASH) answer the report. Refusals: 403, 404, 409 (not yet Repair planned, already checked, no cost to check, no riel rate), 412, 422, 428.
+
+### API-PR-003 Problem report Home card and Monthly report — 2026-11-04
+
+Added by DL-126 (migration `20270511_291`, DB-PR-003). `GET /problem-report-summary` (`problem_reports.read`) answers `open`, `urgent`, `late` and `costs_to_check`. `GET /problem-report-month?month=yyyy-mm` (`problem_reports.plan`) answers the Monthly report of DL-126. Refusals: 403, 422 (a month before 2026, after this month, or not yyyy-mm).

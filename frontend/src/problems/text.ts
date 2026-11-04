@@ -641,6 +641,50 @@ const TEXT = {
     "Repair cost checked; Expense report {0}",
     "បានពិនិត្យថ្លៃជួសជុល៖ របាយការណ៍ចំណាយ {0}",
   ],
+  m_title: ["Monthly report", "របាយការណ៍ប្រចាំខែ"],
+  m_sub: [
+    "One month of problem reports and what the repairs cost. Dollars and riel are shown apart.",
+    "របាយការណ៍បញ្ហាមួយខែ និងថ្លៃជួសជុល។ ដុល្លារ និងរៀល បង្ហាញដាច់ពីគ្នា។",
+  ],
+  m_month: ["Month", "ខែ"],
+  m_right: [
+    "You need the right Plan repairs to see the Monthly report.",
+    "អ្នកត្រូវមានសិទ្ធិ រៀបចំការជួសជុល ដើម្បីមើលរបាយការណ៍ប្រចាំខែ។",
+  ],
+  m_received: ["Reports received", "របាយការណ៍ដែលបានទទួល"],
+  m_received_s: ["{0} Unit · {1} Building", "{0} បន្ទប់ · {1} អគារ"],
+  m_joined: ["{0} joined, not counted again", "{0} បានភ្ជាប់ មិនរាប់ម្ដងទៀត"],
+  m_done: ["Done", "រួចរាល់"],
+  m_days: ["{0} days to fix on average", "ជាមធ្យម {0} ថ្ងៃដើម្បីជួសជុល"],
+  m_open: ["Still open", "នៅបើក"],
+  m_open_s: [
+    "{0} opened again · {1} not accepted",
+    "{0} បានបើកម្ដងទៀត · {1} មិនទទួលយក",
+  ],
+  m_on_time: ["Urgent fixed on time", "បន្ទាន់ ជួសជុលទាន់ពេល"],
+  m_on_time_s: [
+    "Normal planned on time: {0} / {1}",
+    "ធម្មតា រៀបចំទាន់ពេល៖ {0} / {1}",
+  ],
+  m_pays: [
+    "Owner pays {0} · Tenant pays {1} · Damage charges {2}",
+    "ម្ចាស់បង់ {0} · អ្នកជួលបង់ {1} · ថ្លៃខូចខាត {2}",
+  ],
+  m_cost_unit: ["Repair cost by Unit", "ថ្លៃជួសជុលតាមបន្ទប់"],
+  m_cost_type: ["Repair cost by type", "ថ្លៃជួសជុលតាមប្រភេទ"],
+  m_no_cost: ["No repair done this month.", "ខែនេះគ្មានការជួសជុលរួចរាល់ទេ។"],
+  m_where: ["Where", "ទីកន្លែង"],
+  m_reports: ["Reports", "របាយការណ៍"],
+  m_building: ["Building (shared places)", "អគារ (កន្លែងរួម)"],
+  m_repeats: [
+    "Same problem again in one Unit",
+    "បញ្ហាដដែលម្ដងទៀតក្នុងបន្ទប់តែមួយ",
+  ],
+  m_none: ["None this month.", "ខែនេះគ្មានទេ។"],
+  m_times: ["{0} times:", "{0} ដង៖"],
+  m_by_type: ["Reports by type", "របាយការណ៍តាមប្រភេទ"],
+  m_by_place: ["Reports by place", "របាយការណ៍តាមទីកន្លែង"],
+  m_late: ["Late now", "យឺតឥឡូវនេះ"],
 } as const satisfies Record<string, readonly [string, string]>;
 
 export type ProblemsTextKey = keyof typeof TEXT;

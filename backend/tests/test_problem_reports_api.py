@@ -10,6 +10,7 @@ the cost and the check need If-Match. The database refusals map to 403, 404, 409
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import date
 from uuid import UUID, uuid4
 
 from fastapi.testclient import TestClient
@@ -102,6 +103,15 @@ class InMemoryProblems:
             raise ProductStale
         self.version += 1
         self.calls.append(("check_cost", check))
+
+    def summary(self, property_id: UUID, *, actor_id: str) -> Json:
+        self._check(property_id)
+        return {"open": 2, "urgent": 1, "late": 0, "costs_to_check": []}
+
+    def month(self, property_id: UUID, first_day: date, *, actor_id: str) -> Json:
+        self._check(property_id)
+        self.calls.append(("month", first_day))
+        return {"month": first_day.isoformat(), "received": 3}
 
 
 def client(flow: InMemoryProblems, *capabilities: str) -> TestClient:
@@ -273,3 +283,21 @@ def test_the_repair_cost_needs_the_add_right_and_its_check_the_costs_right() -> 
         f"{report}/cost", json={"no_cost": True}, headers=HEADERS | {"If-Match": '"3"'}
     )
     assert late.status_code == 409
+
+
+def test_the_home_card_needs_read_and_the_monthly_report_the_plan_right() -> None:
+    flow = InMemoryProblems()
+    staff = client(flow, "problem_reports.read", "problem_reports.add")
+    card = staff.get(f"{base(flow)}/problem-report-summary")
+    assert card.status_code == 200 and card.json()["data"]["open"] == 2
+    assert card.headers["Cache-Control"] == "private, no-store"
+    assert client(flow).get(f"{base(flow)}/problem-report-summary").status_code == 403
+    url = f"{base(flow)}/problem-report-month"
+    assert staff.get(url, params={"month": "2026-11"}).status_code == 403
+    manager = client(flow, "problem_reports.read", "problem_reports.plan")
+    for wrong in ("2026-13", "2026-1", "november", ""):
+        assert manager.get(url, params={"month": wrong}).status_code == 422
+    assert manager.get(url).status_code == 422
+    found = manager.get(url, params={"month": "2026-11"})
+    assert found.status_code == 200 and found.json()["data"]["received"] == 3
+    assert flow.calls[-1] == ("month", date(2026, 11, 1))

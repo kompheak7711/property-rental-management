@@ -1651,6 +1651,7 @@ export function App({
           capabilities={capabilities}
           homeApi={homeApi}
           language={language}
+          problemsApi={problemsApi}
           propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
         />
       </div>

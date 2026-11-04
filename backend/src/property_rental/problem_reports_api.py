@@ -12,6 +12,8 @@ Invoice draft at once for the amount the Manager set, so it runs on the financia
 (`problem_reports.add`, DL-125). `POST .../problem-reports/{id}/cost-check` is a Manager's check
 with the receipt (`problem_reports.costs`); it makes the Expense reports (already spent) that then
 follow the normal Expense approval.
+`GET .../problem-report-summary` answers the Home card (`problem_reports.read`) and
+`GET .../problem-report-month?month=yyyy-mm` the Monthly report (`problem_reports.plan`, DL-126).
 
 The database functions check the rights again and keep what was reported unchanged.
 """
@@ -23,7 +25,7 @@ from typing import Annotated, Literal, Protocol
 from uuid import UUID, uuid4
 
 import psycopg
-from fastapi import APIRouter, Request, Response, status
+from fastapi import APIRouter, Query, Request, Response, status
 from psycopg.types.json import Jsonb
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
@@ -97,6 +99,10 @@ class ProblemReportFlow(Protocol):
         self, property_id: UUID, report_id: UUID, version: int, check: Json, *, actor_id: str
     ) -> None: ...
 
+    def summary(self, property_id: UUID, *, actor_id: str) -> Json: ...
+
+    def month(self, property_id: UUID, first_day: date, *, actor_id: str) -> Json: ...
+
 
 class UnavailableProblemReportFlow:
     def reports(self, property_id: UUID, **_: object) -> list[Json]:
@@ -129,6 +135,12 @@ class UnavailableProblemReportFlow:
     def check_cost(
         self, property_id: UUID, report_id: UUID, version: int, check: Json, **_: object
     ) -> None:
+        raise ProductUnavailable
+
+    def summary(self, property_id: UUID, **_: object) -> Json:
+        raise ProductUnavailable
+
+    def month(self, property_id: UUID, first_day: date, **_: object) -> Json:
         raise ProductUnavailable
 
 
@@ -238,6 +250,24 @@ class PostgresProblemReportFlow:
             (property_id, report_id, version, Jsonb(check), UUID(actor_id), uuid4()),
         )
 
+    def summary(self, property_id: UUID, *, actor_id: str) -> Json:
+        return _json(
+            self._one(
+                self._database_url,
+                "SELECT app.problem_report_summary(%s, %s)",
+                (property_id, UUID(actor_id)),
+            )
+        )
+
+    def month(self, property_id: UUID, first_day: date, *, actor_id: str) -> Json:
+        return _json(
+            self._one(
+                self._database_url,
+                "SELECT app.problem_report_month(%s, %s, %s)",
+                (property_id, UUID(actor_id), first_day),
+            )
+        )
+
 
 class _Body(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
@@ -336,6 +366,30 @@ def create_problem_reports_router(
         response.headers["Cache-Control"] = "private, no-store"
         try:
             return envelope(request, flow.choices(property_id, actor_id=actor.actor_id))
+        except REFUSED as exc:
+            raise _http(exc) from exc
+
+    @router.get("/problem-report-summary")
+    def problem_report_summary(property_id: UUID, request: Request, response: Response) -> Json:
+        actor = _require(request, resolver, PROBLEM_REPORTS_READ, property_id)
+        response.headers["Cache-Control"] = "private, no-store"
+        try:
+            return envelope(request, flow.summary(property_id, actor_id=actor.actor_id))
+        except REFUSED as exc:
+            raise _http(exc) from exc
+
+    @router.get("/problem-report-month")
+    def problem_report_month(
+        property_id: UUID,
+        request: Request,
+        response: Response,
+        month: Annotated[str, Query(pattern=r"^20[0-9]{2}-(0[1-9]|1[0-2])$")],
+    ) -> Json:
+        actor = _require(request, resolver, PROBLEM_REPORTS_PLAN, property_id)
+        response.headers["Cache-Control"] = "private, no-store"
+        first_day = date(int(month[:4]), int(month[5:]), 1)
+        try:
+            return envelope(request, flow.month(property_id, first_day, actor_id=actor.actor_id))
         except REFUSED as exc:
             raise _http(exc) from exc
 

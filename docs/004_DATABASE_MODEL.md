@@ -5725,3 +5725,10 @@ Added by DL-125 (migration `20270510_290`, forward-only).
 - `app.problem_report_cost_sets` (`report_id`, `set_no`, `no_cost`, `note`, entered at and by) and `app.problem_report_cost_lines` (`line_no` 1 to 20, `kind` PARTS or OUTSIDE_WORKER, `description` at most 200, `currency` USD or KHR, `amount_minor`: cents or whole riel). The latest set is the cost shown.
 - `app.problem_report_cost_checks` (one per set: `receipt_seen` always true, `spent_on`, `paid_how` OWN_MONEY or CASH, checked at and by) and `app.problem_report_cost_expense_requests` (the check, the currency and the Expense request it made, unique). All four are append-only, no truncate.
 - Functions: `app.record_problem_report_cost` (`problem_reports.add`; expected version; from Repair planned on) and `app.check_problem_report_cost` (`problem_reports.costs`; expected version; calls `app.gl_submit_expense_request` as an URGENT_REPORT on 6050 for the Unit, one per currency, riel at the latest rate), both runtime. `app.problem_report_json` gains `cost` on the full read. New right `problem_reports.costs` (permission PROBLEM_REPORTS_COSTS, group Operations); the default Owner and Manager roles get a new version with it.
+
+## DB-PR-003 — Problem report Home card and Monthly report
+
+Added by DL-126 (migration `20270511_291`, forward-only, read only).
+
+- `app.problem_report_summary(property, actor)` (`problem_reports.read`): `open`, `urgent`, `late`, and `costs_to_check` (each latest cost entry, not No cost, with no check yet: report, kind, Unit or shared place, when typed, totals by currency).
+- `app.problem_report_month(property, actor, month)` (`problem_reports.plan`; `month` is a first day, from 2026-01-01 to this month, else 22023): the counts, `by_type`, `by_place`, `repeats`, `late_now`, `cost_by_unit` and `cost_by_type` of DL-126. Helpers `app.problem_report_late` and `app.problem_report_cost_parts` (not granted).

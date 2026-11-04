@@ -11,6 +11,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ProblemReportsPage } from "./ProblemReportsPage";
 import {
   type ProblemChoices,
+  type ProblemMonth,
   type ProblemReport,
   ProblemsError,
   type ProblemsApi,
@@ -245,6 +246,10 @@ function apiOf(overrides: Partial<ProblemsApi> = {}): ProblemsApi {
     answer: vi.fn((_: string, one: ProblemReport) => Promise.resolve(one)),
     cost: vi.fn((_: string, one: ProblemReport) => Promise.resolve(one)),
     checkCost: vi.fn((_: string, one: ProblemReport) => Promise.resolve(one)),
+    summary: vi.fn(() =>
+      Promise.resolve({ open: 0, urgent: 0, late: 0, costs_to_check: [] }),
+    ),
+    month: vi.fn(() => Promise.reject(new ProblemsError(403))),
     ...overrides,
   };
 }
@@ -897,5 +902,155 @@ describe("Building › Problem reports (V1.1 part 7, DL-124)", () => {
     expect(
       screen.queryByRole("button", { name: "Type the cost again" }),
     ).toBeNull();
+  });
+
+  it("TEST-FE-1293 Monthly report: a person who may plan repairs opens it from the list; it shows one month's counts, who pays, repeats, late reports and the repair cost by Unit and by type with dollars and riel apart; another month is read again; Staff get no button", async () => {
+    const DAY: ProblemMonth = {
+      month: "2026-11-01",
+      received: 5,
+      joined: 1,
+      unit_problems: 3,
+      building_problems: 2,
+      urgent: 2,
+      urgent_on_time: 1,
+      normal: 3,
+      normal_on_time: 3,
+      done: 2,
+      average_days_to_fix: 1.5,
+      still_open: 3,
+      not_accepted: 0,
+      opened_again: 1,
+      owner_pays: 2,
+      tenant_pays: 1,
+      damage_usd_cents: 2500,
+      by_type: [
+        {
+          code: "WATER",
+          name_en: "Water",
+          name_kh: null,
+          icon: "drop",
+          reports: 3,
+        },
+      ],
+      by_place: [
+        {
+          kind: "UNIT",
+          unit_number: "U101",
+          place_code: null,
+          place_en: null,
+          place_kh: null,
+          reports: 3,
+        },
+        {
+          kind: "BUILDING",
+          unit_number: null,
+          place_code: "LOBBY",
+          place_en: "Lobby",
+          place_kh: null,
+          reports: 2,
+        },
+      ],
+      repeats: [
+        {
+          code: "WATER",
+          name_en: "Water",
+          name_kh: null,
+          icon: "drop",
+          unit_number: "U101",
+          reports: 2,
+          found: [
+            { report_id: "r-1", report_number: "UP260001" },
+            { report_id: "r-2", report_number: "UP260002" },
+          ],
+        },
+      ],
+      late_now: [
+        { report_id: "r-3", report_number: "BP260003", late: "URGENT" },
+      ],
+      cost_by_unit: [
+        {
+          unit_number: "U101",
+          reports: 1,
+          parts_usd_cents: 1400,
+          outside_usd_cents: 0,
+          parts_khr: 0,
+          outside_khr: 40000,
+        },
+        {
+          unit_number: null,
+          reports: 1,
+          parts_usd_cents: 0,
+          outside_usd_cents: 0,
+          parts_khr: 0,
+          outside_khr: 0,
+        },
+      ],
+      cost_by_type: [],
+    };
+    const month = vi.fn(() => Promise.resolve(DAY));
+    window.location.hash = "#/problems";
+    show(apiOf(), STAFF);
+    await screen.findByText("UP260001");
+    expect(screen.queryByRole("link", { name: "Monthly report" })).toBeNull();
+    cleanup();
+
+    show(apiOf({ month }), MANAGER);
+    await screen.findByText("UP260001");
+    expect(
+      screen.getByRole("link", { name: "Monthly report" }).getAttribute("href"),
+    ).toBe("#/problems/month");
+    cleanup();
+
+    window.location.hash = "#/problems/month";
+    show(apiOf({ month }), MANAGER);
+    expect(await screen.findByText("Reports received")).toBeTruthy();
+    expect(month).toHaveBeenCalledWith("property-1", "2026-11");
+    expect(
+      screen.getByText("3 Unit · 2 Building · 1 joined, not counted again"),
+    ).toBeTruthy();
+    expect(screen.getByText("1.5 days to fix on average")).toBeTruthy();
+    expect(screen.getByText("1 opened again · 0 not accepted")).toBeTruthy();
+    expect(screen.getByText("1 / 2")).toBeTruthy();
+    expect(screen.getByText("Normal planned on time: 3 / 3")).toBeTruthy();
+    expect(
+      screen.getByText("Owner pays 2 · Tenant pays 1 · Damage charges $25.00"),
+    ).toBeTruthy();
+    const byUnit = screen.getByRole("region", { name: "Repair cost by Unit" });
+    const u101 = within(byUnit).getByRole("row", { name: /U101/ });
+    expect(within(u101).getByText("$14.00 + 40,000 ៛")).toBeTruthy();
+    expect(within(u101).getByText("40,000 ៛")).toBeTruthy();
+    expect(
+      within(byUnit).getByRole("row", { name: /Building \(shared places\)/ }),
+    ).toBeTruthy();
+    expect(
+      within(
+        screen.getByRole("region", { name: "Repair cost by type" }),
+      ).getByText("No repair done this month."),
+    ).toBeTruthy();
+    const repeats = screen.getByRole("region", {
+      name: "Same problem again in one Unit",
+    });
+    expect(
+      within(repeats)
+        .getByRole("link", { name: "UP260002" })
+        .getAttribute("href"),
+    ).toBe("#/problems/pr%3Ar-2");
+    expect(
+      within(
+        screen.getByRole("region", { name: "Reports by place" }),
+      ).getByText(/Lobby/),
+    ).toBeTruthy();
+    expect(
+      within(screen.getByRole("region", { name: "Late now" })).getByText(
+        /Late: the tenant is not contacted yet/,
+      ),
+    ).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("Month"), {
+      target: { value: "2026-10" },
+    });
+    await waitFor(() => {
+      expect(month).toHaveBeenLastCalledWith("property-1", "2026-10");
+    });
+    expect(screen.getAllByRole("option")).toHaveLength(12);
   });
 });

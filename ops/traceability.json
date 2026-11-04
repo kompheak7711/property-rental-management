@@ -61279,6 +61279,61 @@
       "notes": "Problem report repair cost: a Manager with Check repair costs confirms the receipt, how it was paid and the day; the box then links the Expense report with its status; the tenant-pays note says the cost is for comparison only."
     },
     {
+      "test_id": "test_migration_291_follows_the_repair_cost_and_is_forward_only",
+      "upstream_ids": [
+        "DL-126",
+        "DB-PR-003"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_problem_report_month_migration.py",
+      "status": "implemented",
+      "notes": "Problem report Home card and Monthly report: migration 20270511_291 follows 290, is the one head and is forward-only."
+    },
+    {
+      "test_id": "test_the_home_card_and_the_monthly_report",
+      "upstream_ids": [
+        "DL-126",
+        "DB-PR-003"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_problem_report_month_migration.py",
+      "status": "implemented",
+      "notes": "Problem report Home card counts open and urgent reports and lists a cost until it is checked; the Monthly report counts received, joined, urgent, done and who pays, by type, and the repair cost by Unit and type; Staff are refused and a month must be its first day."
+    },
+    {
+      "test_id": "test_the_home_card_needs_read_and_the_monthly_report_the_plan_right",
+      "upstream_ids": [
+        "DL-126",
+        "API-PR-003"
+      ],
+      "test_level": "API",
+      "test_path": "backend/tests/test_problem_reports_api.py",
+      "status": "implemented",
+      "notes": "Problem report summary needs problem_reports.read; the Monthly report needs problem_reports.plan and a yyyy-mm month."
+    },
+    {
+      "test_id": "TEST-FE-1293",
+      "upstream_ids": [
+        "DL-126",
+        "API-PR-003"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/problems/ProblemReportsPage.test.tsx",
+      "status": "implemented",
+      "notes": "Problem report Monthly report: the button shows only with Plan repairs; the page shows the counts, who pays, repeats, late reports and the repair cost by Unit and by type with dollars and riel apart; another month is read again."
+    },
+    {
+      "test_id": "TEST-FE-1294",
+      "upstream_ids": [
+        "DL-126",
+        "API-PR-003"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/home/HomeScreen.test.tsx",
+      "status": "implemented",
+      "notes": "Home Problem reports card: open, urgent and late for a person who may read reports; repair costs to check with links for a person with Check repair costs; nothing read without the right."
+    },
+    {
       "test_id": "TEST-FE-1225",
       "upstream_ids": [
         "DL-124"

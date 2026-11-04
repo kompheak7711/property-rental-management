@@ -271,6 +271,75 @@ export interface TenantAnswer {
   after_refusal: "OWNER_PAYS" | "MOVE_OUT" | null;
 }
 
+/** DL-126: the Home card. */
+export interface ProblemSummary {
+  open: number;
+  urgent: number;
+  late: number;
+  costs_to_check: {
+    report_id: string;
+    report_number: string;
+    unit_number: string | null;
+    place_en: string | null;
+    place_kh: string | null;
+    entered_at: string;
+    totals: { currency: CostCurrency; amount_minor: number }[];
+  }[];
+}
+
+export interface CostRow {
+  reports: number;
+  parts_usd_cents: number;
+  outside_usd_cents: number;
+  parts_khr: number;
+  outside_khr: number;
+}
+
+export interface TypeRef {
+  code: string;
+  name_en: string;
+  name_kh: string | null;
+  icon: string;
+}
+
+/** DL-126: the Monthly report of one month. */
+export interface ProblemMonth {
+  month: string;
+  received: number;
+  joined: number;
+  unit_problems: number;
+  building_problems: number;
+  urgent: number;
+  urgent_on_time: number;
+  normal: number;
+  normal_on_time: number;
+  done: number;
+  average_days_to_fix: number | null;
+  still_open: number;
+  not_accepted: number;
+  opened_again: number;
+  owner_pays: number;
+  tenant_pays: number;
+  damage_usd_cents: number;
+  by_type: (TypeRef & { reports: number })[];
+  by_place: {
+    kind: ProblemKind;
+    unit_number: string | null;
+    place_code: string | null;
+    place_en: string | null;
+    place_kh: string | null;
+    reports: number;
+  }[];
+  repeats: (TypeRef & {
+    unit_number: string;
+    reports: number;
+    found: ReportLink[];
+  })[];
+  late_now: (ReportLink & { late: "URGENT" | "NORMAL" })[];
+  cost_by_unit: (CostRow & { unit_number: string | null })[];
+  cost_by_type: (CostRow & TypeRef)[];
+}
+
 export interface ProblemsApi {
   list: (propertyId: string) => Promise<ProblemReport[]>;
   get: (propertyId: string, reportId: string) => Promise<ProblemReport>;
@@ -296,6 +365,9 @@ export interface ProblemsApi {
     report: ProblemReport,
     check: CostCheck,
   ) => Promise<ProblemReport>;
+  summary: (propertyId: string) => Promise<ProblemSummary>;
+  /** `month` is "yyyy-mm". */
+  month: (propertyId: string, month: string) => Promise<ProblemMonth>;
 }
 
 export class ProblemsError extends Error {
@@ -634,6 +706,124 @@ export function reportOf(value: unknown): ProblemReport {
   };
 }
 
+function totalsOf(
+  value: unknown,
+): { currency: CostCurrency; amount_minor: number }[] {
+  return list(value ?? []).map((entry) => {
+    const total = record(entry);
+    return {
+      currency: oneOf(CURRENCIES, total.currency),
+      amount_minor: whole(total.amount_minor),
+    };
+  });
+}
+
+export function summaryOf(value: unknown): ProblemSummary {
+  const row = record(value);
+  return {
+    open: whole(row.open),
+    urgent: whole(row.urgent),
+    late: whole(row.late),
+    costs_to_check: list(row.costs_to_check ?? []).map((entry) => {
+      const item = record(entry);
+      return {
+        report_id: text(item.report_id),
+        report_number: text(item.report_number),
+        unit_number: maybeText(item.unit_number),
+        place_en: maybeText(item.place_en),
+        place_kh: maybeText(item.place_kh),
+        entered_at: text(item.entered_at),
+        totals: totalsOf(item.totals),
+      };
+    }),
+  };
+}
+
+function typeRefOf(row: Record<string, unknown>): TypeRef {
+  return {
+    code: text(row.code),
+    name_en: text(row.name_en),
+    name_kh: maybeText(row.name_kh),
+    icon: text(row.icon),
+  };
+}
+
+function costRowOf(row: Record<string, unknown>): CostRow {
+  return {
+    reports: whole(row.reports),
+    parts_usd_cents: whole(row.parts_usd_cents),
+    outside_usd_cents: whole(row.outside_usd_cents),
+    parts_khr: whole(row.parts_khr),
+    outside_khr: whole(row.outside_khr),
+  };
+}
+
+export function monthOf(value: unknown): ProblemMonth {
+  const row = record(value);
+  const count = (key: string) => whole(row[key]);
+  return {
+    month: text(row.month),
+    received: count("received"),
+    joined: count("joined"),
+    unit_problems: count("unit_problems"),
+    building_problems: count("building_problems"),
+    urgent: count("urgent"),
+    urgent_on_time: count("urgent_on_time"),
+    normal: count("normal"),
+    normal_on_time: count("normal_on_time"),
+    done: count("done"),
+    average_days_to_fix:
+      row.average_days_to_fix === null || row.average_days_to_fix === undefined
+        ? null
+        : Number(row.average_days_to_fix),
+    still_open: count("still_open"),
+    not_accepted: count("not_accepted"),
+    opened_again: count("opened_again"),
+    owner_pays: count("owner_pays"),
+    tenant_pays: count("tenant_pays"),
+    damage_usd_cents: count("damage_usd_cents"),
+    by_type: list(row.by_type ?? []).map((entry) => {
+      const item = record(entry);
+      return { ...typeRefOf(item), reports: whole(item.reports) };
+    }),
+    by_place: list(row.by_place ?? []).map((entry) => {
+      const item = record(entry);
+      return {
+        kind: oneOf(["UNIT", "BUILDING"] as const, item.kind),
+        unit_number: maybeText(item.unit_number),
+        place_code: maybeText(item.place_code),
+        place_en: maybeText(item.place_en),
+        place_kh: maybeText(item.place_kh),
+        reports: whole(item.reports),
+      };
+    }),
+    repeats: list(row.repeats ?? []).map((entry) => {
+      const item = record(entry);
+      return {
+        ...typeRefOf(item),
+        unit_number: text(item.unit_number),
+        reports: whole(item.reports),
+        found: list(item.found ?? []).map(linkOf),
+      };
+    }),
+    late_now: list(row.late_now ?? []).map((entry) => {
+      const item = record(entry);
+      return {
+        ...linkOf(item),
+        late: oneOf(["URGENT", "NORMAL"] as const, item.late),
+      };
+    }),
+    cost_by_unit: list(row.cost_by_unit ?? []).map((entry) => {
+      const item = record(entry);
+      return { ...costRowOf(item), unit_number: maybeText(item.unit_number) };
+    }),
+    cost_by_type: list(row.cost_by_type ?? []).map((entry) => {
+      const item = record(entry);
+      return { ...costRowOf(item), ...typeRefOf(item) };
+    }),
+  };
+}
+
 export function choicesOf(value: unknown): ProblemChoices {
   const row = record(value);
   const rules = record(row.rules);
@@ -711,6 +901,14 @@ export const problemsApi: ProblemsApi = {
       await request(
         `${one(propertyId, report.report_id)}/cost`,
         send(cost, report.version),
+      ),
+    ),
+  summary: async (propertyId) =>
+    summaryOf(await request(`${base(propertyId)}/problem-report-summary`)),
+  month: async (propertyId, month) =>
+    monthOf(
+      await request(
+        `${base(propertyId)}/problem-report-month?month=${encodeURIComponent(month)}`,
       ),
     ),
   checkCost: async (propertyId, report, check) =>
