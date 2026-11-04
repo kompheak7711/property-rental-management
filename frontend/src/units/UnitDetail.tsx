@@ -7,8 +7,9 @@
 
 import { ReactNode, useCallback, useEffect, useRef, useState } from "react";
 
-import { UnitInventoryPanel } from "../UnitInventoryPanel";
 import type { LeaseApi, LeaseResource } from "../leaseClient";
+import type { ProductsApi } from "../products/productsClient";
+import { UnitInventoryCard } from "../products/UnitInventory";
 import type { ReservationResource } from "../reservationClient";
 import {
   dayText,
@@ -213,6 +214,8 @@ export interface UnitDetailProps {
   utilityApi: UtilityPricesApi;
   /** V1-061 (DL-110): the Property's Services, for the required Services. */
   servicesApi: RentTermsServicesApi;
+  /** V1.1 part 5 (DL-122): the Unit inventory form moves items through stock. */
+  productsApi: ProductsApi;
 }
 
 export function UnitDetail({
@@ -229,6 +232,7 @@ export function UnitDetail({
   onChanged,
   utilityApi,
   servicesApi,
+  productsApi,
 }: UnitDetailProps) {
   const khmer = language === "km";
   const [unit, setUnit] = useState<UnitResource | null>(null);
@@ -652,14 +656,14 @@ export function UnitDetail({
               }}
               unit={unit}
             />
-            <UnitInventoryPanel
-              api={unitApi}
-              features={unit.features ?? []}
+            <UnitInventoryCard
+              api={productsApi}
+              capabilities={capabilities}
               key={unit.unit_id}
-              lists={lists}
-              onSaved={load}
+              language={language}
               propertyId={propertyId}
               unitId={unit.unit_id}
+              unitNumber={unit.unit_number}
             />
           </section>
           <RentTermsCard

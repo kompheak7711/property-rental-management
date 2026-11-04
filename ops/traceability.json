@@ -60808,48 +60808,70 @@
       "notes": "V1.1 part 4: the price helper rounds up to the step and quantities follow the unit."
     },
     {
+      "test_id": "test_the_unit_inventory_rows_are_saved_together_with_each_kind_s_right",
+      "upstream_ids": [
+        "DL-122",
+        "API-PS-001"
+      ],
+      "test_level": "API",
+      "test_path": "backend/tests/test_products_api.py",
+      "status": "implemented",
+      "notes": "V1.1 part 5: the batch needs 1 to 20 rows, the browser checks and the right of every kind in it, and saves all rows or none."
+    },
+    {
+      "test_id": "test_the_unit_inventory_rows_are_saved_all_or_none",
+      "upstream_ids": [
+        "DL-122",
+        "API-PS-001",
+        "DB-PS-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_products_stock_migration.py",
+      "status": "implemented",
+      "notes": "V1.1 part 5: the Unit inventory rows are written in one transaction; when one row is refused no row is kept."
+    },
+    {
       "test_id": "TEST-FE-1148",
       "upstream_ids": [
-        "DL-117",
-        "API-GL-007"
+        "DL-122"
       ],
-      "test_level": "unit",
-      "test_path": "frontend/src/ledger/LedgerPage.test.tsx",
+      "test_level": "UI component",
+      "test_path": "frontend/src/products/UnitInventory.test.tsx",
       "status": "implemented",
-      "notes": "General Ledger phase 6 step 6 part 1 (Ledger screens, mock-up v76): Lists entries newest first with the record they came from."
+      "notes": "V1.1 part 5: the Unit page counts what is in the Unit from the stock, starts empty, and is hidden without products.read."
     },
     {
       "test_id": "TEST-FE-1149",
       "upstream_ids": [
-        "DL-117",
-        "API-GL-007"
+        "DL-122",
+        "API-PS-001"
       ],
-      "test_level": "unit",
-      "test_path": "frontend/src/ledger/LedgerPage.test.tsx",
+      "test_level": "UI component",
+      "test_path": "frontend/src/products/UnitInventory.test.tsx",
       "status": "implemented",
-      "notes": "General Ledger phase 6 step 6 part 1 (Ledger screens, mock-up v76): Reads one month when a month is picked."
+      "notes": "V1.1 part 5: the form puts items in from storage row by row, lists only stored Furniture and Appliances, refuses more than a storage place holds, and saves the rows together as Transfers."
     },
     {
       "test_id": "TEST-FE-1150",
       "upstream_ids": [
-        "DL-117",
-        "API-GL-007"
+        "DL-122",
+        "API-PS-001"
       ],
-      "test_level": "unit",
-      "test_path": "frontend/src/ledger/LedgerPage.test.tsx",
+      "test_level": "UI component",
+      "test_path": "frontend/src/products/UnitInventory.test.tsx",
       "status": "implemented",
-      "notes": "General Ledger phase 6 step 6 part 1 (Ledger screens, mock-up v76): Opens one entry from the address with its lines and totals."
+      "notes": "V1.1 part 5: New purchase buys into storage (Reorder fills the last cost, New product for a Manager) and goes back to the form with the item in a row."
     },
     {
       "test_id": "TEST-FE-1151",
       "upstream_ids": [
-        "DL-117",
-        "API-GL-007"
+        "DL-122",
+        "API-PS-001"
       ],
-      "test_level": "unit",
-      "test_path": "frontend/src/ledger/LedgerPage.test.tsx",
+      "test_level": "UI component",
+      "test_path": "frontend/src/products/UnitInventory.test.tsx",
       "status": "implemented",
-      "notes": "General Ledger phase 6 step 6 part 1 (Ledger screens, mock-up v76): Says when the entry is not in the ledger."
+      "notes": "V1.1 part 5: Take out sends an item back to storage or records it as Broken or lost (Manager or Owner), always with a reason; a refusal stays in the form."
     },
     {
       "test_id": "TEST-FE-1152",
@@ -60860,7 +60882,7 @@
       "test_level": "unit",
       "test_path": "frontend/src/ledger/LedgerPage.test.tsx",
       "status": "implemented",
-      "notes": "General Ledger phase 6 step 6 part 1 (Ledger screens, mock-up v76): Groups accounts by type with their balance and marks."
+      "notes": "General Ledger phase 6 step 6 part 1 (Ledger screens, mock-up v76): Lists entries newest first with the record they came from."
     },
     {
       "test_id": "TEST-FE-1153",
@@ -60871,7 +60893,7 @@
       "test_level": "unit",
       "test_path": "frontend/src/ledger/LedgerPage.test.tsx",
       "status": "implemented",
-      "notes": "General Ledger phase 6 step 6 part 1 (Ledger screens, mock-up v76): Shows Khmer account names when the screen is in Khmer."
+      "notes": "General Ledger phase 6 step 6 part 1 (Ledger screens, mock-up v76): Reads one month when a month is picked."
     },
     {
       "test_id": "TEST-FE-1154",
@@ -60882,7 +60904,7 @@
       "test_level": "unit",
       "test_path": "frontend/src/ledger/LedgerPage.test.tsx",
       "status": "implemented",
-      "notes": "General Ledger phase 6 step 6 part 1 (Ledger screens, mock-up v76): Opens an account with every line and the running balance."
+      "notes": "General Ledger phase 6 step 6 part 1 (Ledger screens, mock-up v76): Opens one entry from the address with its lines and totals."
     },
     {
       "test_id": "TEST-FE-1155",
@@ -60893,7 +60915,7 @@
       "test_level": "unit",
       "test_path": "frontend/src/ledger/LedgerPage.test.tsx",
       "status": "implemented",
-      "notes": "General Ledger phase 6 step 6 part 1 (Ledger screens, mock-up v76): Lists records waiting with a reason in the screen's words only."
+      "notes": "General Ledger phase 6 step 6 part 1 (Ledger screens, mock-up v76): Says when the entry is not in the ledger."
     },
     {
       "test_id": "TEST-FE-1156",
@@ -60904,7 +60926,7 @@
       "test_level": "unit",
       "test_path": "frontend/src/ledger/LedgerPage.test.tsx",
       "status": "implemented",
-      "notes": "General Ledger phase 6 step 6 part 1 (Ledger screens, mock-up v76): Lets the Owner set a method's account from a date."
+      "notes": "General Ledger phase 6 step 6 part 1 (Ledger screens, mock-up v76): Groups accounts by type with their balance and marks."
     },
     {
       "test_id": "TEST-FE-1157",
@@ -60915,7 +60937,7 @@
       "test_level": "unit",
       "test_path": "frontend/src/ledger/LedgerPage.test.tsx",
       "status": "implemented",
-      "notes": "General Ledger phase 6 step 6 part 1 (Ledger screens, mock-up v76): Says when nothing waits."
+      "notes": "General Ledger phase 6 step 6 part 1 (Ledger screens, mock-up v76): Shows Khmer account names when the screen is in Khmer."
     },
     {
       "test_id": "TEST-FE-1158",
@@ -60926,7 +60948,7 @@
       "test_level": "unit",
       "test_path": "frontend/src/ledger/LedgerPage.test.tsx",
       "status": "implemented",
-      "notes": "General Ledger phase 6 step 6 part 1 (Ledger screens, mock-up v76): Shows a statement with its state and check line."
+      "notes": "General Ledger phase 6 step 6 part 1 (Ledger screens, mock-up v76): Opens an account with every line and the running balance."
     },
     {
       "test_id": "TEST-FE-1159",
@@ -60937,7 +60959,7 @@
       "test_level": "unit",
       "test_path": "frontend/src/ledger/LedgerPage.test.tsx",
       "status": "implemented",
-      "notes": "General Ledger phase 6 step 6 part 1 (Ledger screens, mock-up v76): Asks each statement for its own values."
+      "notes": "General Ledger phase 6 step 6 part 1 (Ledger screens, mock-up v76): Lists records waiting with a reason in the screen's words only."
     },
     {
       "test_id": "TEST-FE-1160",
@@ -60948,10 +60970,54 @@
       "test_level": "unit",
       "test_path": "frontend/src/ledger/LedgerPage.test.tsx",
       "status": "implemented",
-      "notes": "General Ledger phase 6 step 6 part 1 (Ledger screens, mock-up v76): Downloads Excel and PDF files."
+      "notes": "General Ledger phase 6 step 6 part 1 (Ledger screens, mock-up v76): Lets the Owner set a method's account from a date."
     },
     {
       "test_id": "TEST-FE-1161",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-007"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/LedgerPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 1 (Ledger screens, mock-up v76): Says when nothing waits."
+    },
+    {
+      "test_id": "TEST-FE-1162",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-007"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/LedgerPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 1 (Ledger screens, mock-up v76): Shows a statement with its state and check line."
+    },
+    {
+      "test_id": "TEST-FE-1163",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-007"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/LedgerPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 1 (Ledger screens, mock-up v76): Asks each statement for its own values."
+    },
+    {
+      "test_id": "TEST-FE-1164",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-007"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/LedgerPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 1 (Ledger screens, mock-up v76): Downloads Excel and PDF files."
+    },
+    {
+      "test_id": "TEST-FE-1165",
       "upstream_ids": [
         "DL-117",
         "API-GL-007"

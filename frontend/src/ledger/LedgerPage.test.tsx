@@ -269,7 +269,7 @@ function show(
 }
 
 describe("Journal entries", () => {
-  it("TEST-FE-1148 lists entries newest first with the record they came from", async () => {
+  it("TEST-FE-1152 lists entries newest first with the record they came from", async () => {
     const api = fakeApi();
     show("journal", api);
     const table = await screen.findByRole("table");
@@ -284,7 +284,7 @@ describe("Journal entries", () => {
     expect(screen.getByText(/Newest 2 entries/)).toBeInTheDocument();
   });
 
-  it("TEST-FE-1149 reads one month when a month is picked", async () => {
+  it("TEST-FE-1153 reads one month when a month is picked", async () => {
     const api = fakeApi();
     show("journal", api);
     const month = await screen.findByLabelText("Month");
@@ -294,7 +294,7 @@ describe("Journal entries", () => {
     });
   });
 
-  it("TEST-FE-1150 opens one entry from the address with its lines and totals", async () => {
+  it("TEST-FE-1154 opens one entry from the address with its lines and totals", async () => {
     window.location.hash = "#/journal/JE270002";
     const api = fakeApi();
     show("journal", api);
@@ -311,7 +311,7 @@ describe("Journal entries", () => {
     expect(screen.getByText(/Recorded by: The app/)).toBeInTheDocument();
   });
 
-  it("TEST-FE-1151 says when the entry is not in the ledger", async () => {
+  it("TEST-FE-1155 says when the entry is not in the ledger", async () => {
     window.location.hash = "#/journal/JE279999";
     show(
       "journal",
@@ -326,7 +326,7 @@ describe("Journal entries", () => {
 });
 
 describe("Chart of accounts", () => {
-  it("TEST-FE-1152 groups accounts by type with their balance and marks", async () => {
+  it("TEST-FE-1156 groups accounts by type with their balance and marks", async () => {
     show("chart", fakeApi());
     const assets = await screen.findByRole("heading", { name: "Assets" });
     expect(assets).toBeInTheDocument();
@@ -342,14 +342,14 @@ describe("Chart of accounts", () => {
     );
   });
 
-  it("TEST-FE-1153 shows Khmer account names when the screen is in Khmer", async () => {
+  it("TEST-FE-1157 shows Khmer account names when the screen is in Khmer", async () => {
     show("chart", fakeApi(), new Set(["ledger.read"]), "km");
     expect(await screen.findByText("ឈ្នួល")).toBeInTheDocument();
     // An account with no Khmer name keeps its English name.
     expect(screen.getByText("ABA Bank · USD account")).toBeInTheDocument();
   });
 
-  it("TEST-FE-1154 opens an account with every line and the running balance", async () => {
+  it("TEST-FE-1158 opens an account with every line and the running balance", async () => {
     window.location.hash = "#/chart/1010";
     const api = fakeApi({
       report: vi.fn(() =>
@@ -396,7 +396,7 @@ describe("Chart of accounts", () => {
 });
 
 describe("Needs check", () => {
-  it("TEST-FE-1155 lists records waiting with a reason in the screen's words only", async () => {
+  it("TEST-FE-1159 lists records waiting with a reason in the screen's words only", async () => {
     show("needscheck", fakeApi());
     expect(
       await screen.findByText(
@@ -420,7 +420,7 @@ describe("Needs check", () => {
     ).toBe(2);
   });
 
-  it("TEST-FE-1156 lets the Owner set a method's account from a date", async () => {
+  it("TEST-FE-1160 lets the Owner set a method's account from a date", async () => {
     const api = fakeApi();
     show("needscheck", api, new Set(["ledger.read", "ledger.accounts.manage"]));
     const buttons = await screen.findAllByRole("button", {
@@ -448,7 +448,7 @@ describe("Needs check", () => {
     ).toBeInTheDocument();
   });
 
-  it("TEST-FE-1157 says when nothing waits", async () => {
+  it("TEST-FE-1161 says when nothing waits", async () => {
     show(
       "needscheck",
       fakeApi({ needsCheck: vi.fn(() => Promise.resolve([])) }),
@@ -462,7 +462,7 @@ describe("Needs check", () => {
 });
 
 describe("Financial statements", () => {
-  it("TEST-FE-1158 shows a statement with its state and check line", async () => {
+  it("TEST-FE-1162 shows a statement with its state and check line", async () => {
     const api = fakeApi();
     show("statements", api);
     expect(
@@ -481,7 +481,7 @@ describe("Financial statements", () => {
     );
   });
 
-  it("TEST-FE-1159 asks each statement for its own values", async () => {
+  it("TEST-FE-1163 asks each statement for its own values", async () => {
     const api = fakeApi();
     show("statements", api);
     await screen.findByRole("heading", { name: "Profit and loss" });
@@ -505,7 +505,7 @@ describe("Financial statements", () => {
     });
   });
 
-  it("TEST-FE-1160 downloads Excel and PDF files", async () => {
+  it("TEST-FE-1164 downloads Excel and PDF files", async () => {
     const api = fakeApi();
     const created = vi.fn(() => "blob:x");
     const revoked = vi.fn();
@@ -533,7 +533,7 @@ describe("Financial statements", () => {
     });
   });
 
-  it("TEST-FE-1161 shows the Books check lines", async () => {
+  it("TEST-FE-1165 shows the Books check lines", async () => {
     const api = fakeApi();
     show("statements", api);
     await screen.findByRole("heading", { name: "Profit and loss" });
