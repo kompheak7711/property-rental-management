@@ -502,6 +502,33 @@ const TEXT = {
   ev_CANCELLED: ["Cancelled", "បានលុបចោល"],
   ev_NO_SHOW: ["Did not come", "មិនបានមក"],
   ev_CREDIT_GIVEN: ["Credit given", "បានផ្ដល់ឥណទាន"],
+  ls_t: ["Change to a Lease", "ប្ដូរទៅកិច្ចសន្យាជួល"],
+  ls_s: [
+    "{0} off the first month when the guest signs a Lease. Make the guest's Lease draft, then link it here.",
+    "បញ្ចុះ {0} លើខែដំបូង ពេលភ្ញៀវចុះហត្ថលេខាកិច្ចសន្យាជួល។ បង្កើតសេចក្ដីព្រាងកិច្ចសន្យារបស់ភ្ញៀវ រួចភ្ជាប់វានៅទីនេះ។",
+  ],
+  ls_none: [
+    "The guest has no Lease draft yet.",
+    "ភ្ញៀវមិនទាន់មានសេចក្ដីព្រាងកិច្ចសន្យាជួលទេ។",
+  ],
+  ls_pick: ["Lease draft", "សេចក្ដីព្រាងកិច្ចសន្យា"],
+  ls_draft: ["{0}, from {1}, {2} a month", "{0} ចាប់ពី {1} {2} ក្នុងមួយខែ"],
+  ls_new: ["New Lease", "កិច្ចសន្យាថ្មី"],
+  ls_b: ["Link the Lease", "ភ្ជាប់កិច្ចសន្យា"],
+  ls_linked: [
+    "Linked to the Lease for {0}: {1} off the first month.",
+    "បានភ្ជាប់ទៅកិច្ចសន្យាសម្រាប់ {0}៖ បញ្ចុះ {1} លើខែដំបូង។",
+  ],
+  ls_at_sign: [
+    "Sign Lease asks for that much less.",
+    "ការចុះហត្ថលេខាកិច្ចសន្យានឹងស្នើប្រាក់តិចជាងនោះ។",
+  ],
+  ls_signed: [
+    "The Lease is signed with the money off.",
+    "កិច្ចសន្យាបានចុះហត្ថលេខាជាមួយការបញ្ចុះតម្លៃ។",
+  ],
+  ls_open: ["Open the Lease", "បើកកិច្ចសន្យា"],
+  ev_LEASE_LINKED: ["Lease linked", "បានភ្ជាប់កិច្ចសន្យា"],
 } as const satisfies Record<string, readonly [string, string]>;
 
 export type StaysTextKey = keyof typeof TEXT;

@@ -162,6 +162,9 @@ const BOOKING: Booking = {
   paid_usd_cents: 0,
   cancellation: null,
   credit: null,
+  lease_off_usd_cents: 5000,
+  lease_offer: null,
+  lease_drafts: [],
 };
 
 /** Booking b-1 checks in today (04/11) for 3 nights. */
@@ -1127,6 +1130,60 @@ describe("Daily and weekly rent: Short stays", () => {
       await screen.findByText("$20.00 credit, to use by 04/05/2027."),
     ).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Give credit" })).toBeNull();
+  });
+
+  it("TEST-FE-1616 links the guest's Lease draft for $50 off the first month", async () => {
+    const inside: Booking = {
+      ...BOOKING,
+      status: "CHECKED_IN",
+      payment: "PAID",
+      invoice: INVOICE,
+      lease_drafts: [
+        {
+          lease_id: "l-9",
+          unit_number: "U503",
+          start_date: "2026-12-01",
+          monthly_rent_usd_cents: 40500,
+        },
+      ],
+    };
+    const step = vi.fn(() =>
+      Promise.resolve({
+        ...inside,
+        lease_drafts: [],
+        lease_offer: {
+          lease_id: "l-9",
+          off_usd_cents: 5000,
+          lease_status: "DRAFTED",
+          start_date: "2026-12-01",
+          unit_number: "U503",
+        },
+      }),
+    );
+    show({
+      api: fakeApi({ get: vi.fn(() => Promise.resolve(inside)), step }),
+    });
+    go("#/shortstays/st:b-1");
+    expect(
+      await screen.findByRole("heading", { name: "Change to a Lease" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "New Lease" })).toHaveAttribute(
+      "href",
+      "#/leases/new",
+    );
+    expect(screen.getByLabelText("Lease draft")).toHaveValue("l-9");
+    fireEvent.click(screen.getByRole("button", { name: "Link the Lease" }));
+    expect(step).toHaveBeenCalledWith("p-1", "b-1", "lease", {
+      lease_id: "l-9",
+    });
+    expect(
+      await screen.findByText(
+        "Linked to the Lease for U503: $50.00 off the first month.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Open the Lease" }),
+    ).toHaveAttribute("href", "#/leases/l-9");
   });
 
   it("TEST-FE-1605 speaks Khmer and hides New booking without the front-desk right", async () => {

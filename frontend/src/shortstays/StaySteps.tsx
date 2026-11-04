@@ -1065,3 +1065,101 @@ export function CancelledCard({
     </section>
   );
 }
+
+/** Step 4c: a guest who changes to a Lease gets money off the first month. */
+export function LeaseCard({
+  language,
+  booking,
+  may,
+  busy,
+  onStep,
+}: StepsProps) {
+  const [chosen, setChosen] = useState("");
+  const offer = booking.lease_offer;
+  const stayed =
+    booking.status === "CHECKED_IN" || booking.status === "CHECKED_OUT";
+  if (offer !== null) {
+    return (
+      <section aria-labelledby="ss-lease" className="ui-card">
+        <h2 id="ss-lease">{st(language, "ls_t")}</h2>
+        <p>
+          {st(
+            language,
+            "ls_linked",
+            offer.unit_number,
+            usdFromCents(offer.off_usd_cents),
+          )}
+        </p>
+        <p className="ui-small ui-muted">
+          {st(
+            language,
+            offer.lease_status === "DRAFTED" ? "ls_at_sign" : "ls_signed",
+          )}
+        </p>
+        <div className="ui-actions">
+          <a className="ui-btn" href={hashForPage("leases", offer.lease_id)}>
+            {st(language, "ls_open")}
+          </a>
+        </div>
+      </section>
+    );
+  }
+  if (!stayed || !may("short_stays.desk") || booking.lease_off_usd_cents < 1)
+    return null;
+  const drafts = booking.lease_drafts;
+  const pick =
+    drafts.find((draft) => draft.lease_id === chosen)?.lease_id ??
+    drafts[0]?.lease_id;
+  return (
+    <section aria-labelledby="ss-lease" className="ui-card">
+      <h2 id="ss-lease">{st(language, "ls_t")}</h2>
+      <p className="ui-small ui-muted">
+        {st(language, "ls_s", usdFromCents(booking.lease_off_usd_cents))}
+      </p>
+      {pick === undefined ? (
+        <p className="ui-small">{st(language, "ls_none")}</p>
+      ) : (
+        <div className="ui-field">
+          <label htmlFor="ss-lease-pick">{st(language, "ls_pick")}</label>
+          <select
+            disabled={busy}
+            id="ss-lease-pick"
+            onChange={(event) => {
+              setChosen(event.currentTarget.value);
+            }}
+            value={pick}
+          >
+            {drafts.map((draft) => (
+              <option key={draft.lease_id} value={draft.lease_id}>
+                {st(
+                  language,
+                  "ls_draft",
+                  draft.unit_number,
+                  draft.start_date === null ? "" : dayText(draft.start_date),
+                  usdFromCents(draft.monthly_rent_usd_cents),
+                )}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+      <div className="ui-actions">
+        <a className="ui-btn" href={hashForPage("leases", "new")}>
+          {st(language, "ls_new")}
+        </a>
+        {pick !== undefined && (
+          <button
+            className="ui-btn primary"
+            disabled={busy}
+            onClick={() => {
+              onStep("lease", { lease_id: pick });
+            }}
+            type="button"
+          >
+            {st(language, "ls_b")}
+          </button>
+        )}
+      </div>
+    </section>
+  );
+}

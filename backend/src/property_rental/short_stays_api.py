@@ -10,7 +10,8 @@ deposit, check-in, check-out and ending the deposit (`short_stays.desk`), the ro
 early check-in and late check-out fee and extending a stay (`short_stays.desk`), and the cleaning
 list of a day (`GET .../housekeeping`, `short_stays.read`) with its done or skipped cleans
 (`short_stays.housekeeping`). Step 4b adds cancel and no-show (`short_stays.desk`) and the
-late-cancel credit (`short_stays.credit`). The database
+late-cancel credit (`short_stays.credit`). Step 4c links the guest's Lease draft for $50 off its
+first month (`short_stays.desk`). The database
 functions check the rights again, price the stay from the owner's rules and keep one booking per
 Unit and night.
 """
@@ -62,6 +63,7 @@ Action = Literal[
     "finish_task",
     "cancel",
     "credit",
+    "link_lease",
 ]
 # Step 3 (migration 20270602_312): each action is one database function that checks the right
 # again. "version" is the booking version the screen read (refused with 412 when it changed).
@@ -81,6 +83,8 @@ ACTION_SQL: dict[str, str] = {
     # Step 4b (migration 20270604_314).
     "cancel": "SELECT app.cancel_short_stay(%(p)s, %(t)s, %(b)s, %(v)s, %(a)s, %(c)s)",
     "credit": "SELECT app.give_short_stay_credit(%(p)s, %(t)s, %(b)s, %(a)s, %(c)s)",
+    # Step 4c (migration 20270605_315).
+    "link_lease": "SELECT app.link_short_stay_lease(%(p)s, %(t)s, %(b)s, %(a)s, %(c)s)",
 }
 
 
@@ -297,6 +301,12 @@ class Credit(BaseModel):
     note: Note
 
 
+class LinkLease(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    lease_id: Id
+
+
 def create_short_stays_router(
     resolver: ActorResolver, flow: ShortStayFlow, settings: Settings
 ) -> APIRouter:
@@ -464,6 +474,12 @@ def create_short_stays_router(
         property_id: UUID, booking_id: UUID, body: Credit, request: Request
     ) -> Json:
         return act(request, property_id, SHORT_STAYS_CREDIT, "credit", booking_id, body)
+
+    @router.post("/bookings/{booking_id}/lease")
+    def link_short_stay_lease(
+        property_id: UUID, booking_id: UUID, body: LinkLease, request: Request
+    ) -> Json:
+        return act(request, property_id, SHORT_STAYS_DESK, "link_lease", booking_id, body)
 
     @router.get("/housekeeping")
     def short_stay_housekeeping(

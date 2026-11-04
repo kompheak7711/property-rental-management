@@ -207,6 +207,11 @@ export interface Booking {
   paid_usd_cents: number;
   cancellation: StayCancellation | null;
   credit: StayCredit | null;
+  /** Step 4c: what comes off the first month when the guest changes to a Lease (today's rule). */
+  lease_off_usd_cents: number;
+  lease_offer: StayLeaseOffer | null;
+  /** The guest's Lease drafts in this building, not linked yet. */
+  lease_drafts: StayLeaseDraft[];
 }
 
 /** Step 3: the actions on one booking; each answers with the booking as it is now. */
@@ -221,7 +226,24 @@ export type StayStep =
   | "fee"
   | "extend"
   | "cancel"
-  | "credit";
+  | "credit"
+  | "lease";
+
+/** Step 4c: the guest's Lease, with the money off its first month kept from the link. */
+export interface StayLeaseOffer {
+  lease_id: string;
+  off_usd_cents: number;
+  lease_status: string;
+  start_date: string | null;
+  unit_number: string;
+}
+
+export interface StayLeaseDraft {
+  lease_id: string;
+  unit_number: string;
+  start_date: string | null;
+  monthly_rent_usd_cents: number;
+}
 
 /** Step 4b: how a cancelled booking ended. */
 export interface StayCancellation {
@@ -619,6 +641,30 @@ export function bookingOf(value: unknown): Booking {
       row.credit === null || row.credit === undefined
         ? null
         : creditOf(record(row.credit)),
+    lease_off_usd_cents: whole(row.lease_off_usd_cents ?? 0),
+    lease_offer:
+      row.lease_offer === null || row.lease_offer === undefined
+        ? null
+        : leaseOfferOf(record(row.lease_offer)),
+    lease_drafts: list(row.lease_drafts ?? []).map((entry) => {
+      const draft = record(entry);
+      return {
+        lease_id: text(draft.lease_id),
+        unit_number: text(draft.unit_number),
+        start_date: maybeText(draft.start_date),
+        monthly_rent_usd_cents: whole(draft.monthly_rent_usd_cents),
+      };
+    }),
+  };
+}
+
+function leaseOfferOf(row: Record<string, unknown>): StayLeaseOffer {
+  return {
+    lease_id: text(row.lease_id),
+    off_usd_cents: whole(row.off_usd_cents),
+    lease_status: text(row.lease_status),
+    start_date: maybeText(row.start_date),
+    unit_number: text(row.unit_number),
   };
 }
 

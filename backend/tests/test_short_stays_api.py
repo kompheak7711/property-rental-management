@@ -171,6 +171,7 @@ def test_each_step_of_a_stay_needs_its_own_right() -> None:
         ),
         (f"{booking}/cancel", {"version": 7, "reason": "Flight changed"}, "short_stays.desk"),
         (f"{booking}/credit", {"amount_usd_cents": 2000, "note": "Sick"}, "short_stays.credit"),
+        (f"{booking}/lease", {"lease_id": str(uuid4())}, "short_stays.desk"),
     )
     for url, body, right in steps:
         others = {
@@ -199,6 +200,7 @@ def test_each_step_of_a_stay_needs_its_own_right() -> None:
         "finish_task",
         "cancel",
         "credit",
+        "link_lease",
     ]
     desk = client(flow, "short_stays.desk")
     # A card number never reaches the database as last 4 digits; unknown fields are refused.
