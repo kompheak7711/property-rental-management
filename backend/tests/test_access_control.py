@@ -156,7 +156,8 @@ def test_the_capability_catalog_names_every_capability_the_code_checks() -> None
 
 
 def test_the_catalog_holds_the_approved_new_names() -> None:
-    assert len(CAPABILITY_CATALOG) == 113
+    # HRIS phase 1 (migration 20270430_300): 12 HR rights.
+    assert len(CAPABILITY_CATALOG) == 125
     assert list(CAPABILITY_CATALOG) == sorted(CAPABILITY_CATALOG)
     assert all(DOTTED.fullmatch(name) and len(name) <= 128 for name in CAPABILITY_CATALOG)
     assert all(description.strip() for description in CAPABILITY_CATALOG.values())
@@ -192,7 +193,7 @@ def test_each_capability_has_one_grant_path() -> None:
     assert paths["rent_nonpayment.evaluate"] == "service_principal"
     assert paths["billing.generate"] == "bundle"
     assert BUNDLE_CAPABILITIES == {c for c, path in paths.items() if path == "bundle"}
-    assert len(BUNDLE_CAPABILITIES) == 110
+    assert len(BUNDLE_CAPABILITIES) == 122
     with pytest.raises(KeyError):
         capability_grant_path("reports.export")
 
@@ -351,6 +352,19 @@ STAFF_NEVER = frozenset(
         # reports and records the tenant's answer.
         "problem_reports.plan",
         "problem_reports.join",
+        # HRIS phase 1 (migration 20270430_300): Staff hold no HR right.
+        "hr.employees.read",
+        "hr.employees.manage",
+        "hr.salaries.read",
+        "hr.salaries.manage",
+        "hr.loans.prepare",
+        "hr.loans.approve",
+        "hr.payroll.prepare",
+        "hr.payroll.approve",
+        "hr.payroll.pay",
+        "hr.attendance.read",
+        "hr.attendance.manage",
+        "hr.overtime.approve",
     }
 )
 # Owner answer (a) to Q-2026-10-21-164: none of these nine is in the Staff bundle.
