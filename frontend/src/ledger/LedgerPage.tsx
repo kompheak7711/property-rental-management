@@ -46,6 +46,9 @@ import {
 
 export type LedgerTab = "journal" | "needscheck" | "chart" | "statements";
 
+/** The Chart of accounts address that opens Opening balances (#/chart/opening). */
+export const OPENING = "opening";
+
 export interface LedgerPageProps {
   language: Language;
   propertyId: string;
@@ -953,8 +956,18 @@ function ChartTab({
   return (
     <>
       <section aria-labelledby="chart-title" className="ui-card">
-        <h2 id="chart-title">{lt(language, "a_title")}</h2>
-        <p className="ui-muted">{lt(language, "a_sub")}</p>
+        <div className="ui-head">
+          <div>
+            <h2 id="chart-title">{lt(language, "a_title")}</h2>
+            <p className="ui-muted">{lt(language, "a_sub")}</p>
+          </div>
+          <span className="ui-actions">
+            <a className="ui-btn" href={hashForPage("chart", OPENING)}>
+              <Icon name="list" small />
+              {lt(language, "ob_t")}
+            </a>
+          </span>
+        </div>
       </section>
       {ACCOUNT_TYPES.map((type) => {
         const accounts = data.accounts.filter(

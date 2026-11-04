@@ -62130,6 +62130,116 @@
       "test_path": "frontend/src/ledger/SpendingPage.test.tsx",
       "status": "implemented",
       "notes": "General Ledger owner test fix (04/11/2026): when the bills cannot be read again after a save, the screen says so instead of showing the old list."
+    },
+    {
+      "test_id": "TEST-FE-1213",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-014"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/OpeningPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 (Opening balances, mock-up lopen): Lets the Owner start the books on 1 January of the first year."
+    },
+    {
+      "test_id": "TEST-FE-1214",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-014"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/OpeningPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 (Opening balances, mock-up lopen): Shows typed and worked-out lines, says how far off they are and keeps Post closed."
+    },
+    {
+      "test_id": "TEST-FE-1215",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-014"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/OpeningPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 (Opening balances, mock-up lopen): Types the lines once each, one side each, and saves them whole."
+    },
+    {
+      "test_id": "TEST-FE-1216",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-014"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/OpeningPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 (Opening balances, mock-up lopen): Posts balanced opening balances after the Owner confirms."
+    },
+    {
+      "test_id": "TEST-FE-1217",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-014"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/OpeningPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 (Opening balances, mock-up lopen): Shows posted opening balances locked with their entry and who posted them."
+    },
+    {
+      "test_id": "TEST-FE-1218",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-014"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/OpeningPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 (Opening balances, mock-up lopen): Holds posting while records wait in Needs check and shows the Owner-only note to others."
+    },
+    {
+      "test_id": "TEST-FE-1219",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-014"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/OpeningPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 (Opening balances, mock-up lopen): Opens from the Chart of accounts button and its address."
+    },
+    {
+      "test_id": "test_the_opening_sheet_follows_the_books_from_start_to_posted",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-014"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_gl_opening_sheet_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 (Opening balances): the opening sheet follows the books from start to posted, and the runtime login can run every query."
+    },
+    {
+      "test_id": "test_the_runtime_login_can_run_the_opening_read",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-014"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_gl_opening_sheet_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 (Opening balances): the opening sheet follows the books from start to posted, and the runtime login can run every query."
+    },
+    {
+      "test_id": "test_the_ledger_readers_see_the_opening_sheet",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-014"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_ledger_opening.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 (Opening balances): only ledger readers see the opening sheet; no query values are taken."
     }
   ]
 }
