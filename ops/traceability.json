@@ -61188,6 +61188,97 @@
       "notes": "V1.1 part 7: Join to a report offers only open reports of the same kind and place and needs a reason; Undo join needs a reason; a report changed meanwhile is read again; Staff see a lock line."
     },
     {
+      "test_id": "test_only_the_owner_and_manager_check_repair_costs",
+      "upstream_ids": [
+        "DL-125",
+        "DB-PR-002",
+        "DL-120"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_problem_report_costs_migration.py",
+      "status": "implemented",
+      "notes": "Problem report repair cost: the new right problem_reports.costs (permission Check repair costs, group Operations) is held by the Owner and Manager roles, not Staff."
+    },
+    {
+      "test_id": "test_migration_290_follows_the_ledger_and_is_forward_only",
+      "upstream_ids": [
+        "DL-125",
+        "DB-PR-002"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_problem_report_costs_migration.py",
+      "status": "implemented",
+      "notes": "Problem report repair cost: migration 20270510_290 follows 20270429_279, is the one head and is forward-only."
+    },
+    {
+      "test_id": "test_staff_type_the_cost_and_a_manager_check_makes_the_expense_reports",
+      "upstream_ids": [
+        "DL-125",
+        "DB-PR-002",
+        "DL-117"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_problem_report_costs_migration.py",
+      "status": "implemented",
+      "notes": "Problem report repair cost: staff type dollar and riel lines once the repair is planned (bad lines refused, a stale version 40001); a newer entry replaces the last; a Manager's check needs the receipt and makes one Expense report (already spent) per currency on 6050 for the Unit, riel at today's rate; a checked cost is locked until every Expense report is refused; No cost has nothing to check."
+    },
+    {
+      "test_id": "test_an_approved_repair_cost_is_posted_to_repairs_for_the_unit",
+      "upstream_ids": [
+        "DL-125",
+        "DB-PR-002",
+        "DL-117"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_problem_report_costs_migration.py",
+      "status": "implemented",
+      "notes": "Problem report repair cost: an approved Expense report posts the expense to 6050 with the Unit and the box shows it Done."
+    },
+    {
+      "test_id": "test_cost_history_is_never_changed",
+      "upstream_ids": [
+        "DL-125",
+        "DB-PR-002"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_problem_report_costs_migration.py",
+      "status": "implemented",
+      "notes": "Problem report repair cost: the cost tables refuse update, delete and truncate; the runtime login cannot write them directly; the list read leaves the cost out."
+    },
+    {
+      "test_id": "test_the_repair_cost_needs_the_add_right_and_its_check_the_costs_right",
+      "upstream_ids": [
+        "DL-125",
+        "API-PR-002"
+      ],
+      "test_level": "API",
+      "test_path": "backend/tests/test_problem_reports_api.py",
+      "status": "implemented",
+      "notes": "Problem report repair cost: the cost needs problem_reports.add and If-Match with a strict body (422 for a bad line); the check needs problem_reports.costs (Plan repairs alone is 403), the receipt (422) and the read version (412); a report not yet planned is 409."
+    },
+    {
+      "test_id": "TEST-FE-1291",
+      "upstream_ids": [
+        "DL-125",
+        "API-PR-002"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/problems/ProblemReportsPage.test.tsx",
+      "status": "implemented",
+      "notes": "Problem report repair cost: staff type parts and outside workers in dollars or riel with checks on each line; the box shows the lines, totals and Waiting for a Manager; no check button without Check repair costs."
+    },
+    {
+      "test_id": "TEST-FE-1292",
+      "upstream_ids": [
+        "DL-125",
+        "API-PR-002"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/problems/ProblemReportsPage.test.tsx",
+      "status": "implemented",
+      "notes": "Problem report repair cost: a Manager with Check repair costs confirms the receipt, how it was paid and the day; the box then links the Expense report with its status; the tenant-pays note says the cost is for comparison only."
+    },
+    {
       "test_id": "TEST-FE-1225",
       "upstream_ids": [
         "DL-124"

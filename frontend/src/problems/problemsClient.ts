@@ -82,6 +82,55 @@ export interface HistoryEntry {
   by_name: string | null;
 }
 
+export type CostCurrency = "USD" | "KHR";
+
+export interface CostLine {
+  kind: "PARTS" | "OUTSIDE_WORKER";
+  description: string;
+  currency: CostCurrency;
+  /** Cents for dollars, whole riel for riel. */
+  amount_minor: number;
+}
+
+/** DL-125: the latest repair cost typed for a report, its check and its Expense reports. */
+export interface RepairCost {
+  set_no: number;
+  no_cost: boolean;
+  note: string | null;
+  entered_at: string;
+  entered_by_name: string | null;
+  lines: CostLine[];
+  totals: { currency: CostCurrency; amount_minor: number }[];
+  check: {
+    checked_at: string;
+    checked_by_name: string | null;
+    spent_on: string;
+    paid_how: "OWN_MONEY" | "CASH";
+  } | null;
+  expense_requests: {
+    request_number: string;
+    status: string;
+    currency: CostCurrency;
+    amount_cents: number;
+    original_amount_minor: number | null;
+  }[];
+  /** Staff may type the cost (again): not checked yet, or every Expense report was refused. */
+  can_enter: boolean;
+}
+
+export interface RepairCostEntry {
+  no_cost: boolean;
+  note?: string;
+  lines: CostLine[];
+}
+
+export interface CostCheck {
+  receipt_seen: true;
+  spent_on: string;
+  paid_how: "OWN_MONEY" | "CASH";
+  paid_from_code?: string;
+}
+
 export interface ProblemReport {
   report_id: string;
   report_number: string;
@@ -139,6 +188,8 @@ export interface ProblemReport {
     amount_usd_cents: number;
   } | null;
   done_at: string | null;
+  /** Only on one report read with its history; null on the list. */
+  cost: RepairCost | null;
   closes_on: string | null;
   closed_at: string | null;
   close_note: string | null;
@@ -234,6 +285,16 @@ export interface ProblemsApi {
     propertyId: string,
     report: ProblemReport,
     answer: TenantAnswer,
+  ) => Promise<ProblemReport>;
+  cost: (
+    propertyId: string,
+    report: ProblemReport,
+    cost: RepairCostEntry,
+  ) => Promise<ProblemReport>;
+  checkCost: (
+    propertyId: string,
+    report: ProblemReport,
+    check: CostCheck,
   ) => Promise<ProblemReport>;
 }
 
@@ -359,6 +420,58 @@ const SOURCES: readonly ProblemSource[] = [
   "STAFF_BOT",
 ];
 
+const CURRENCIES = ["USD", "KHR"] as const;
+
+function costOf(value: unknown): RepairCost | null {
+  if (value === null || value === undefined) return null;
+  const row = record(value);
+  const check =
+    row.check === null || row.check === undefined ? null : record(row.check);
+  return {
+    set_no: whole(row.set_no),
+    no_cost: flag(row.no_cost),
+    note: maybeText(row.note),
+    entered_at: text(row.entered_at),
+    entered_by_name: maybeText(row.entered_by_name),
+    lines: list(row.lines ?? []).map((entry) => {
+      const line = record(entry);
+      return {
+        kind: oneOf(["PARTS", "OUTSIDE_WORKER"] as const, line.kind),
+        description: text(line.description),
+        currency: oneOf(CURRENCIES, line.currency),
+        amount_minor: whole(line.amount_minor),
+      };
+    }),
+    totals: list(row.totals ?? []).map((entry) => {
+      const total = record(entry);
+      return {
+        currency: oneOf(CURRENCIES, total.currency),
+        amount_minor: whole(total.amount_minor),
+      };
+    }),
+    check:
+      check === null
+        ? null
+        : {
+            checked_at: text(check.checked_at),
+            checked_by_name: maybeText(check.checked_by_name),
+            spent_on: text(check.spent_on),
+            paid_how: oneOf(["OWN_MONEY", "CASH"] as const, check.paid_how),
+          },
+    expense_requests: list(row.expense_requests ?? []).map((entry) => {
+      const made = record(entry);
+      return {
+        request_number: text(made.request_number),
+        status: text(made.status),
+        currency: oneOf(CURRENCIES, made.currency),
+        amount_cents: whole(made.amount_cents),
+        original_amount_minor: maybeWhole(made.original_amount_minor),
+      };
+    }),
+    can_enter: flag(row.can_enter),
+  };
+}
+
 function typeOf(value: unknown): ProblemType {
   const row = record(value);
   return {
@@ -475,6 +588,7 @@ export function reportOf(value: unknown): ProblemReport {
             amount_usd_cents: whole(damage.amount_usd_cents),
           },
     done_at: maybeText(row.done_at),
+    cost: costOf(row.cost),
     closes_on: maybeText(row.closes_on),
     closed_at: maybeText(row.closed_at),
     close_note: maybeText(row.close_note),
@@ -590,6 +704,20 @@ export const problemsApi: ProblemsApi = {
       await request(
         `${one(propertyId, report.report_id)}/tenant-answer`,
         send(answer, report.version),
+      ),
+    ),
+  cost: async (propertyId, report, cost) =>
+    reportOf(
+      await request(
+        `${one(propertyId, report.report_id)}/cost`,
+        send(cost, report.version),
+      ),
+    ),
+  checkCost: async (propertyId, report, check) =>
+    reportOf(
+      await request(
+        `${one(propertyId, report.report_id)}/cost-check`,
+        send(check, report.version),
       ),
     ),
 };

@@ -8,6 +8,10 @@ latest reports, `GET .../problem-reports/{id}` reads one with its history and
 (`problem_reports.plan`; Join and Undo join need `problem_reports.join`).
 `POST .../problem-reports/{id}/tenant-answer` records the tenant's answer: Agree makes the Damage
 Invoice draft at once for the amount the Manager set, so it runs on the financial connection.
+`POST .../problem-reports/{id}/cost` records what a done repair cost, in dollars or riel
+(`problem_reports.add`, DL-125). `POST .../problem-reports/{id}/cost-check` is a Manager's check
+with the receipt (`problem_reports.costs`); it makes the Expense reports (already spent) that then
+follow the normal Expense approval.
 
 The database functions check the rights again and keep what was reported unchanged.
 """
@@ -41,6 +45,7 @@ PROBLEM_REPORTS_READ = "problem_reports.read"
 PROBLEM_REPORTS_ADD = "problem_reports.add"
 PROBLEM_REPORTS_PLAN = "problem_reports.plan"
 PROBLEM_REPORTS_JOIN = "problem_reports.join"
+PROBLEM_REPORTS_COSTS = "problem_reports.costs"
 Text = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=500)]
 Name = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=120)]
 Floor = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=20)]
@@ -84,6 +89,14 @@ class ProblemReportFlow(Protocol):
         self, property_id: UUID, report_id: UUID, version: int, answer: Json, *, actor_id: str
     ) -> None: ...
 
+    def cost(
+        self, property_id: UUID, report_id: UUID, version: int, cost: Json, *, actor_id: str
+    ) -> None: ...
+
+    def check_cost(
+        self, property_id: UUID, report_id: UUID, version: int, check: Json, *, actor_id: str
+    ) -> None: ...
+
 
 class UnavailableProblemReportFlow:
     def reports(self, property_id: UUID, **_: object) -> list[Json]:
@@ -105,6 +118,16 @@ class UnavailableProblemReportFlow:
 
     def answer(
         self, property_id: UUID, report_id: UUID, version: int, answer: Json, **_: object
+    ) -> None:
+        raise ProductUnavailable
+
+    def cost(
+        self, property_id: UUID, report_id: UUID, version: int, cost: Json, **_: object
+    ) -> None:
+        raise ProductUnavailable
+
+    def check_cost(
+        self, property_id: UUID, report_id: UUID, version: int, check: Json, **_: object
     ) -> None:
         raise ProductUnavailable
 
@@ -197,6 +220,24 @@ class PostgresProblemReportFlow:
             ),
         )
 
+    def cost(
+        self, property_id: UUID, report_id: UUID, version: int, cost: Json, *, actor_id: str
+    ) -> None:
+        self._one(
+            self._database_url,
+            "SELECT app.record_problem_report_cost(%s, %s, %s, %s, %s, %s)",
+            (property_id, report_id, version, Jsonb(cost), UUID(actor_id), uuid4()),
+        )
+
+    def check_cost(
+        self, property_id: UUID, report_id: UUID, version: int, check: Json, *, actor_id: str
+    ) -> None:
+        self._one(
+            self._database_url,
+            "SELECT app.check_problem_report_cost(%s, %s, %s, %s, %s, %s)",
+            (property_id, report_id, version, Jsonb(check), UUID(actor_id), uuid4()),
+        )
+
 
 class _Body(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
@@ -241,6 +282,29 @@ class TenantAnswer(_Body):
     answered_on: Annotated[date, Field(strict=False)]
     said: Text | None = None
     after_refusal: Literal["OWNER_PAYS", "MOVE_OUT"] | None = None
+
+
+class CostLine(_Body):
+    kind: Literal["PARTS", "OUTSIDE_WORKER"]
+    description: Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)
+    ]
+    currency: Literal["USD", "KHR"]
+    # Cents for dollars, whole riel for riel.
+    amount_minor: Annotated[int, Field(ge=1, le=9_000_000_000_000)]
+
+
+class RepairCost(_Body):
+    no_cost: bool = False
+    note: Text | None = None
+    lines: Annotated[list[CostLine], Field(max_length=20, default_factory=list)]
+
+
+class CostCheck(_Body):
+    receipt_seen: Literal[True]
+    spent_on: Annotated[date, Field(strict=False)]
+    paid_how: Literal["OWN_MONEY", "CASH"]
+    paid_from_code: Annotated[str, StringConstraints(pattern=r"^[0-9]{4}$")] | None = None
 
 
 def create_problem_reports_router(
@@ -326,13 +390,43 @@ def create_problem_reports_router(
             raise _http(exc) from exc
         return one(property_id, report_id, actor.actor_id, request)
 
+    @router.post("/problem-reports/{report_id}/cost")
+    def problem_report_cost(
+        property_id: UUID, report_id: UUID, cost: RepairCost, request: Request
+    ) -> Json:
+        actor = _require(request, resolver, PROBLEM_REPORTS_ADD, property_id)
+        require_browser_mutation(request, settings)
+        version = _expected_version(request)
+        body: Json = cost.model_dump(mode="json", exclude_none=True)
+        try:
+            flow.cost(property_id, report_id, version, body, actor_id=actor.actor_id)
+        except REFUSED as exc:
+            raise _http(exc) from exc
+        return one(property_id, report_id, actor.actor_id, request)
+
+    @router.post("/problem-reports/{report_id}/cost-check")
+    def problem_report_cost_check(
+        property_id: UUID, report_id: UUID, check: CostCheck, request: Request
+    ) -> Json:
+        actor = _require(request, resolver, PROBLEM_REPORTS_COSTS, property_id)
+        require_browser_mutation(request, settings)
+        version = _expected_version(request)
+        body: Json = check.model_dump(mode="json", exclude_none=True)
+        try:
+            flow.check_cost(property_id, report_id, version, body, actor_id=actor.actor_id)
+        except REFUSED as exc:
+            raise _http(exc) from exc
+        return one(property_id, report_id, actor.actor_id, request)
+
     return router
 
 
 __all__ = [
+    "CostCheck",
     "NewProblemReport",
     "PostgresProblemReportFlow",
     "ProblemReportFlow",
+    "RepairCost",
     "UnavailableProblemReportFlow",
     "create_problem_reports_router",
 ]

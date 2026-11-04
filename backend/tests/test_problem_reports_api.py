@@ -2,8 +2,9 @@
 
 Reading needs `problem_reports.read`, adding `problem_reports.add`, a step
 `problem_reports.plan` (Join and Undo join `problem_reports.join`) and the tenant's answer
-`problem_reports.plan`. Each change needs the browser mutation checks; steps and answers need
-If-Match. The database refusals map to 403, 404, 409, 412 and 422.
+`problem_reports.plan`. The repair cost needs `problem_reports.add` and its check
+`problem_reports.costs` (DL-125). Each change needs the browser mutation checks; steps, answers,
+the cost and the check need If-Match. The database refusals map to 403, 404, 409, 412 and 422.
 """
 
 from __future__ import annotations
@@ -81,6 +82,26 @@ class InMemoryProblems:
         self.version += 1
         self.status = "REPAIR_PLANNED"
         self.calls.append(("answer", answer))
+
+    def cost(
+        self, property_id: UUID, report_id: UUID, version: int, cost: Json, *, actor_id: str
+    ) -> None:
+        self._check(property_id, report_id)
+        if version != self.version:
+            raise ProductStale
+        if self.status != "DONE":
+            raise ProductConflict("The cost is typed after the repair is done")
+        self.version += 1
+        self.calls.append(("cost", cost))
+
+    def check_cost(
+        self, property_id: UUID, report_id: UUID, version: int, check: Json, *, actor_id: str
+    ) -> None:
+        self._check(property_id, report_id)
+        if version != self.version:
+            raise ProductStale
+        self.version += 1
+        self.calls.append(("check_cost", check))
 
 
 def client(flow: InMemoryProblems, *capabilities: str) -> TestClient:
@@ -193,3 +214,62 @@ def test_the_tenant_answer_needs_the_plan_right_and_if_match() -> None:
     sent = flow.calls[-1][1]
     assert isinstance(sent, dict)
     assert sent["answer"] == "AGREED" and sent["said"] is None and sent["after_refusal"] is None
+
+
+def test_the_repair_cost_needs_the_add_right_and_its_check_the_costs_right() -> None:
+    flow = InMemoryProblems(status="DONE")
+    report = f"{base(flow)}/problem-reports/{flow.report_id}"
+    lines = [
+        {"kind": "PARTS", "description": " New tap ", "currency": "USD", "amount_minor": 1250},
+        {
+            "kind": "OUTSIDE_WORKER",
+            "description": "Plumber",
+            "currency": "KHR",
+            "amount_minor": 40000,
+        },
+    ]
+    reader = client(flow, "problem_reports.read")
+    first = HEADERS | {"If-Match": '"1"'}
+    assert reader.post(f"{report}/cost", json={"lines": lines}, headers=first).status_code == 403
+    staff = client(flow, "problem_reports.read", "problem_reports.add")
+    assert staff.post(f"{report}/cost", json={"lines": lines}, headers=HEADERS).status_code == 428
+    for wrong in (
+        {"lines": [lines[0] | {"amount_minor": 0}]},
+        {"lines": [lines[0] | {"amount_minor": 12.5}]},
+        {"lines": [lines[0] | {"currency": "EUR"}]},
+        {"lines": [lines[0] | {"kind": "STAFF"}]},
+        {"lines": [lines[0]] * 21},
+        {"lines": lines, "total": 1},
+    ):
+        assert staff.post(f"{report}/cost", json=wrong, headers=first).status_code == 422
+    typed = staff.post(f"{report}/cost", json={"lines": lines, "note": "Riel"}, headers=first)
+    assert typed.status_code == 200 and typed.json()["data"]["version"] == 2
+    assert flow.calls[-1] == (
+        "cost",
+        {
+            "no_cost": False,
+            "note": "Riel",
+            "lines": [lines[0] | {"description": "New tap"}, lines[1]],
+        },
+    )
+    check = {"receipt_seen": True, "spent_on": "2026-11-04", "paid_how": "CASH",
+             "paid_from_code": "1030"}  # fmt: skip
+    second = HEADERS | {"If-Match": '"2"'}
+    assert staff.post(f"{report}/cost-check", json=check, headers=second).status_code == 403
+    planner = client(flow, "problem_reports.read", "problem_reports.plan")
+    assert planner.post(f"{report}/cost-check", json=check, headers=second).status_code == 403
+    manager = client(flow, "problem_reports.read", "problem_reports.costs")
+    assert (
+        manager.post(
+            f"{report}/cost-check", json=check | {"receipt_seen": False}, headers=second
+        ).status_code
+        == 422
+    )
+    assert manager.post(f"{report}/cost-check", json=check, headers=first).status_code == 412
+    checked = manager.post(f"{report}/cost-check", json=check, headers=second)
+    assert checked.status_code == 200 and flow.calls[-1] == ("check_cost", check)
+    flow.status = "PLANNED"
+    late = staff.post(
+        f"{report}/cost", json={"no_cost": True}, headers=HEADERS | {"If-Match": '"3"'}
+    )
+    assert late.status_code == 409

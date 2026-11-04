@@ -544,6 +544,103 @@ const TEXT = {
     "This was not saved. Check the connection and try again.",
     "មិនបានរក្សាទុកទេ។ ពិនិត្យការតភ្ជាប់ ហើយសាកម្តងទៀត។",
   ],
+  // Repair cost (DL-125, mock-up round 32 A5). Khmer here is new and needs the native check.
+  cost_h: ["Repair cost", "ថ្លៃជួសជុល"],
+  cost_none: [
+    "No cost typed yet. Type parts and outside workers only; our own staff are paid by payroll.",
+    "មិនទាន់វាយថ្លៃនៅឡើយ។ វាយតែគ្រឿងបន្លាស់ និងជាងខាងក្រៅ។ បុគ្គលិកយើងទទួលប្រាក់ខែ។",
+  ],
+  cost_enter: ["Type the cost", "វាយថ្លៃ"],
+  cost_again: ["Type the cost again", "វាយថ្លៃម្តងទៀត"],
+  cost_by: ["Typed by {0}, {1}", "វាយដោយ {0}, {1}"],
+  cost_no_cost: [
+    "No cost: the repair cost nothing to pay.",
+    "គ្មានថ្លៃ៖ ការជួសជុលមិនចំណាយអ្វីទេ។",
+  ],
+  cost_total: ["Total", "សរុប"],
+  cost_wait: [
+    "Waiting for a Manager to check the cost.",
+    "កំពុងរង់ចាំអ្នកគ្រប់គ្រងពិនិត្យថ្លៃ។",
+  ],
+  cost_check: [
+    "Checked, make Expense report",
+    "បានពិនិត្យ បង្កើតរបាយការណ៍ចំណាយ",
+  ],
+  cost_checked: [
+    "Checked by {0}, {1}. Receipt seen.",
+    "បានពិនិត្យដោយ {0}, {1}។ បានឃើញបង្កាន់ដៃ។",
+  ],
+  cost_er: ["Expense report {0}: {1}", "របាយការណ៍ចំណាយ {0}៖ {1}"],
+  cost_refused: [
+    "The Expense report was not approved. Staff may type the cost again.",
+    "របាយការណ៍ចំណាយមិនត្រូវបានអនុម័ត។ បុគ្គលិកអាចវាយថ្លៃម្តងទៀត។",
+  ],
+  cost_compare: [
+    "For comparison only; it does not change the Damage Invoice draft.",
+    "សម្រាប់ប្រៀបធៀបតែប៉ុណ្ណោះ មិនប្តូរសេចក្តីព្រាងវិក្កយបត្រខូចខាតទេ។",
+  ],
+  kind_PARTS: ["Parts", "គ្រឿងបន្លាស់"],
+  kind_OUTSIDE_WORKER: ["Outside worker", "ជាងខាងក្រៅ"],
+  cur_USD: ["Dollars", "ដុល្លារ"],
+  cur_KHR: ["Riel", "រៀល"],
+  cd_t: ["Repair cost of {0}", "ថ្លៃជួសជុល {0}"],
+  cd_no_cost: [
+    "No cost (fixed by our own staff, nothing bought)",
+    "គ្មានថ្លៃ (បុគ្គលិកយើងជួសជុល មិនបានទិញអ្វី)",
+  ],
+  cd_kind: ["Kind", "ប្រភេទ"],
+  cd_what: ["What", "អ្វី"],
+  cd_cur: ["Currency", "រូបិយប័ណ្ណ"],
+  cd_amount: ["Amount", "ចំនួន"],
+  cd_add: ["Add a line", "បន្ថែមជួរ"],
+  cd_remove: ["Remove line {0}", "លុបជួរ {0}"],
+  cd_line: ["Line {0}", "ជួរ {0}"],
+  cd_receipt: [
+    "Keep the receipt. A Manager checks it before the Expense report is made.",
+    "រក្សាបង្កាន់ដៃ។ អ្នកគ្រប់គ្រងពិនិត្យវា មុនបង្កើតរបាយការណ៍ចំណាយ។",
+  ],
+  e_amount_usd: ["Type dollars, like 12.50.", "វាយជាដុល្លារ ដូចជា 12.50។"],
+  e_amount_khr: ["Type whole riel, like 40000.", "វាយជារៀលគត់ ដូចជា 40000។"],
+  e_lines: [
+    "Add at least one line, or tick No cost.",
+    "បន្ថែមយ៉ាងហោចណាស់មួយជួរ ឬធីក គ្មានថ្លៃ។",
+  ],
+  ck_t: ["Check the repair cost of {0}", "ពិនិត្យថ្លៃជួសជុល {0}"],
+  ck_makes: [
+    "This makes an Expense report (money already spent) on 6050 Repairs and maintenance for {0}, one for each currency. It then waits for the normal Expense approval.",
+    "នេះបង្កើតរបាយការណ៍ចំណាយ (ប្រាក់បានចំណាយរួច) លើ 6050 ការជួសជុល និងថែទាំ សម្រាប់ {0} មួយសម្រាប់រូបិយប័ណ្ណនីមួយៗ។ បន្ទាប់មកវារង់ចាំការអនុម័តចំណាយធម្មតា។",
+  ],
+  ck_rate: [
+    "Riel turns into dollars at today's riel rate.",
+    "រៀលប្តូរជាដុល្លារតាមអត្រាប្តូរប្រាក់ថ្ងៃនេះ។",
+  ],
+  ck_paid: ["Paid with", "បង់ដោយ"],
+  ck_OWN_MONEY: [
+    "Staff's own money (paid back later)",
+    "ប្រាក់ផ្ទាល់ខ្លួនបុគ្គលិក (សងវិញពេលក្រោយ)",
+  ],
+  ck_CASH: ["Petty cash (1030)", "សាច់ប្រាក់រាយ (1030)"],
+  ck_day: ["Day the money was spent", "ថ្ងៃចំណាយប្រាក់"],
+  ck_receipt: [
+    "I have seen the receipt and it matches these lines.",
+    "ខ្ញុំបានឃើញបង្កាន់ដៃ ហើយវាត្រូវនឹងជួរទាំងនេះ។",
+  ],
+  e_receipt: ["Check the receipt first.", "សូមពិនិត្យបង្កាន់ដៃជាមុនសិន។"],
+  ck_done: [
+    "{0}: cost checked. Expense report {1} made.",
+    "{0}៖ បានពិនិត្យថ្លៃ។ បានបង្កើតរបាយការណ៍ចំណាយ {1}។",
+  ],
+  est_WAITING: ["Waiting for approval", "រង់ចាំការអនុម័ត"],
+  est_APPROVED: ["Approved", "បានអនុម័ត"],
+  est_REFUSED: ["Not approved", "មិនបានអនុម័ត"],
+  est_PAID_OUT: ["Advance given", "បានផ្ដល់ប្រាក់បុរេប្រទាន"],
+  est_DONE: ["Posted", "បានកត់ត្រា"],
+  est_VOID: ["Void", "ទុកជាមោឃៈ"],
+  h_COST_ENTERED: ["Repair cost typed", "បានវាយថ្លៃជួសជុល"],
+  h_COST_CHECKED: [
+    "Repair cost checked; Expense report {0}",
+    "បានពិនិត្យថ្លៃជួសជុល៖ របាយការណ៍ចំណាយ {0}",
+  ],
 } as const satisfies Record<string, readonly [string, string]>;
 
 export type ProblemsTextKey = keyof typeof TEXT;

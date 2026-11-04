@@ -92,6 +92,7 @@ function report(extra: Partial<ProblemReport>): ProblemReport {
     tenant_can_answer: true,
     damage: null,
     done_at: null,
+    cost: null,
     closes_on: null,
     closed_at: null,
     close_note: null,
@@ -242,6 +243,8 @@ function apiOf(overrides: Partial<ProblemsApi> = {}): ProblemsApi {
     ),
     step: vi.fn((_: string, one: ProblemReport) => Promise.resolve(one)),
     answer: vi.fn((_: string, one: ProblemReport) => Promise.resolve(one)),
+    cost: vi.fn((_: string, one: ProblemReport) => Promise.resolve(one)),
+    checkCost: vi.fn((_: string, one: ProblemReport) => Promise.resolve(one)),
     ...overrides,
   };
 }
@@ -667,5 +670,232 @@ describe("Building › Problem reports (V1.1 part 7, DL-124)", () => {
       await screen.findByText(/Only a Manager or the Owner can join reports/),
     ).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Undo join" })).toBeNull();
+  });
+
+  it("TEST-FE-1291 Repair cost: from Repair planned on, staff type parts and outside workers in dollars or riel (or No cost); the box waits for a Manager; a person without Check repair costs gets no check button", async () => {
+    window.location.hash = "#/problems/pr:r-1";
+    const done = report({
+      status: "DONE",
+      state: "DONE",
+      pays: "OWNER",
+      done_at: "2026-11-04T02:30:00Z",
+      version: 7,
+    });
+    const typed = report({
+      ...done,
+      version: 8,
+      cost: {
+        set_no: 1,
+        no_cost: false,
+        note: null,
+        entered_at: "2026-11-04T02:40:00Z",
+        entered_by_name: "Staff One",
+        lines: [
+          {
+            kind: "PARTS",
+            description: "New tap",
+            currency: "USD",
+            amount_minor: 1250,
+          },
+          {
+            kind: "OUTSIDE_WORKER",
+            description: "Plumber",
+            currency: "KHR",
+            amount_minor: 40000,
+          },
+        ],
+        totals: [
+          { currency: "USD", amount_minor: 1250 },
+          { currency: "KHR", amount_minor: 40000 },
+        ],
+        check: null,
+        expense_requests: [],
+        can_enter: true,
+      },
+    });
+    const cost = vi.fn(() => Promise.resolve(typed));
+    show(apiOf({ get: vi.fn(() => Promise.resolve(done)), cost }), STAFF);
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Type the cost" }),
+    );
+    const dialog = screen.getByRole("dialog");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    expect(within(dialog).getByText("Choose one.")).toBeTruthy();
+    expect(within(dialog).getByText("Type dollars, like 12.50.")).toBeTruthy();
+    expect(cost).not.toHaveBeenCalled();
+    fireEvent.change(within(dialog).getByLabelText("Kind"), {
+      target: { value: "PARTS" },
+    });
+    fireEvent.change(within(dialog).getByLabelText("What"), {
+      target: { value: " New tap " },
+    });
+    fireEvent.change(within(dialog).getByLabelText("Amount"), {
+      target: { value: "12.50" },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Add a line" }));
+    const second = within(dialog).getByRole("group", { name: "Line 2" });
+    fireEvent.change(within(second).getByLabelText("Kind"), {
+      target: { value: "OUTSIDE_WORKER" },
+    });
+    fireEvent.change(within(second).getByLabelText("What"), {
+      target: { value: "Plumber" },
+    });
+    fireEvent.change(within(second).getByLabelText("Currency"), {
+      target: { value: "KHR" },
+    });
+    fireEvent.change(within(second).getByLabelText("Amount"), {
+      target: { value: "40.5" },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    expect(
+      within(dialog).getByText("Type whole riel, like 40000."),
+    ).toBeTruthy();
+    fireEvent.change(within(second).getByLabelText("Amount"), {
+      target: { value: "40,000" },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    await waitFor(() => {
+      expect(cost).toHaveBeenCalledWith("property-1", done, {
+        no_cost: false,
+        lines: [
+          {
+            kind: "PARTS",
+            description: "New tap",
+            currency: "USD",
+            amount_minor: 1250,
+          },
+          {
+            kind: "OUTSIDE_WORKER",
+            description: "Plumber",
+            currency: "KHR",
+            amount_minor: 40000,
+          },
+        ],
+      });
+    });
+    const box = element(
+      (await screen.findByRole("heading", { name: "Repair cost" })).closest(
+        "section",
+      ),
+    );
+    // Each line, then the total of each currency.
+    expect(within(box).getAllByText("$12.50")).toHaveLength(2);
+    expect(within(box).getAllByText("40,000 ៛")).toHaveLength(2);
+    expect(
+      within(box).getByText("Waiting for a Manager to check the cost."),
+    ).toBeTruthy();
+    expect(
+      within(box).queryByRole("button", {
+        name: "Checked, make Expense report",
+      }),
+    ).toBeNull();
+  });
+
+  it("TEST-FE-1292 Repair cost check: a Manager with Check repair costs confirms the receipt, how it was paid and the day; the box then shows the Expense reports with links and their status", async () => {
+    window.location.hash = "#/problems/pr:r-1";
+    const waiting = report({
+      status: "DONE",
+      state: "DONE",
+      pays: "TENANT",
+      done_at: "2026-11-04T02:30:00Z",
+      version: 8,
+      cost: {
+        set_no: 1,
+        no_cost: false,
+        note: null,
+        entered_at: "2026-11-04T02:40:00Z",
+        entered_by_name: "Staff One",
+        lines: [
+          {
+            kind: "OUTSIDE_WORKER",
+            description: "Plumber",
+            currency: "KHR",
+            amount_minor: 40000,
+          },
+        ],
+        totals: [{ currency: "KHR", amount_minor: 40000 }],
+        check: null,
+        expense_requests: [],
+        can_enter: true,
+      },
+    });
+    const checked = report({
+      ...waiting,
+      version: 9,
+      cost: {
+        ...(waiting.cost ?? ({} as never)),
+        check: {
+          checked_at: "2026-11-04T03:00:00Z",
+          checked_by_name: "Manager One",
+          spent_on: "2026-11-04",
+          paid_how: "OWN_MONEY",
+        },
+        expense_requests: [
+          {
+            request_number: "ER26000003",
+            status: "WAITING",
+            currency: "KHR",
+            amount_cents: 980,
+            original_amount_minor: 40000,
+          },
+        ],
+        can_enter: false,
+      },
+    });
+    const checkCost = vi.fn(() => Promise.resolve(checked));
+    show(
+      apiOf({ get: vi.fn(() => Promise.resolve(waiting)), checkCost }),
+      new Set([...MANAGER, "problem_reports.costs"]),
+    );
+    expect(
+      await screen.findByText(
+        "For comparison only; it does not change the Damage Invoice draft.",
+      ),
+    ).toBeTruthy();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Checked, make Expense report" }),
+    );
+    const dialog = screen.getByRole("dialog");
+    expect(
+      within(dialog).getByText(/Riel turns into dollars at today's riel rate/),
+    ).toBeTruthy();
+    fireEvent.click(
+      within(dialog).getByRole("button", {
+        name: "Checked, make Expense report",
+      }),
+    );
+    expect(within(dialog).getByText("Check the receipt first.")).toBeTruthy();
+    expect(checkCost).not.toHaveBeenCalled();
+    fireEvent.click(
+      within(dialog).getByLabelText("Staff's own money (paid back later)"),
+    );
+    fireEvent.click(
+      within(dialog).getByLabelText(
+        "I have seen the receipt and it matches these lines.",
+      ),
+    );
+    fireEvent.click(
+      within(dialog).getByRole("button", {
+        name: "Checked, make Expense report",
+      }),
+    );
+    await waitFor(() => {
+      expect(checkCost).toHaveBeenCalledWith("property-1", waiting, {
+        receipt_seen: true,
+        spent_on: "2026-11-04",
+        paid_how: "OWN_MONEY",
+      });
+    });
+    expect(
+      await screen.findByText(
+        "UP260001: cost checked. Expense report ER26000003 made.",
+      ),
+    ).toBeTruthy();
+    const link = screen.getByRole("link", { name: "ER26000003" });
+    expect(link.getAttribute("href")).toContain("ER26000003");
+    expect(screen.getByText(/Waiting for approval/)).toBeTruthy();
+    expect(
+      screen.queryByRole("button", { name: "Type the cost again" }),
+    ).toBeNull();
   });
 });
