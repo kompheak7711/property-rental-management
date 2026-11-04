@@ -5763,3 +5763,12 @@ Added by DL-126 (migration `20270520_282`, forward-only).
 - `app.tenant_telegram_links` (Telegram account, Customer, Lease, Unit) and `app.tenant_telegram_link_endings` (one ending per link: LEASE_ENDED, REMOVED with a note, or NEW_LINK).
 - `app.telegram_outbox` gains `keyboard` (a fixed keyboard code or `remove`).
 - All are append-only (updates refused, truncate refused). The runtime login cannot read these tables; only the functions can. Functions: `app.telegram_bot_state`, `app.telegram_bot_reply` (saves the next step and queues up to 5 messages in one call), `app.telegram_choose_language`, `app.telegram_tenant_link`, `app.telegram_tenant_end_finished_links`, `app.telegram_tenant_link_remove` (Owner and Manager), `app.telegram_tenant_links_read` (`telegram.read`), `app.telegram_tenant_access_list`, `app.telegram_remove_old_link_attempts`; `app.telegram_outbox_due` now returns the keyboard. Helpers `app.phone_e164`, `app.tenant_names_match`, `app.tenant_unit_key`.
+
+## DB-TG-003 — Tenant bot Problem reports (bots step 2b)
+
+Added by DL-127 (migration `20270521_283`, forward-only).
+
+- `app.problem_report_media` (report, file in `media_files`, kind PHOTO, VIDEO or VOICE, stage REPORTED, position). Append-only.
+- `app.tenant_problem_report_sources` (report, the pulled form in `telegram_inbound_events` (once), Telegram account, tenant link). Append-only. Each form makes one report.
+- `app.media_files` also takes `audio/webm` (voice notes recorded on Android).
+- The runtime login cannot read these tables. Functions (`telegram.operate`): `app.telegram_tenant_form_data` (choices and access list for the relay), `app.telegram_tenant_problem_report` (checks the link and the form, saves the report with source TENANT_BOT, its files and "Same problem" join; a wrong form gives a fixed reason and saves nothing).

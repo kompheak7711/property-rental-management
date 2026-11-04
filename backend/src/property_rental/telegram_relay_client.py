@@ -197,3 +197,6 @@ class RelayClient:
 
     def set_access(self, bot: str, users: list[dict[str, object]]) -> None:
         self._json("PUT", f"/office/access/{bot.lower()}", {"users": users})
+
+    def set_choices(self, bot: str, choices: dict[str, object]) -> None:
+        self._json("PUT", f"/office/choices/{bot.lower()}", {"choices": choices})

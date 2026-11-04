@@ -8,14 +8,17 @@ What it does:
 
 1. Takes Telegram webhooks at `POST /telegram/{customer|tenant|staff}`. The
    bot's secret word must be in the `X-Telegram-Bot-Api-Secret-Token` header.
-2. Takes Mini App forms at `POST /form/{bot}`. The Telegram sign-in must be
-   right and less than 24 hours old. Tenant and Staff forms need the person on
-   the access list the office sends.
+2. Serves the Mini App form pages (`GET /app/tenant?form=unit|building`, the
+   Tenant bot's Problem report). The page asks `POST /form/{bot}/start` for what
+   to show and sends the form to `POST /form/{bot}`. The Telegram sign-in must
+   be right and less than 24 hours old. Tenant and Staff forms need the person
+   on the access list the office sends.
 3. Seals every item and photo with the office public key before it is stored.
    Only the office private key opens it (`backend/src/property_rental/telegram_seal.py`).
 4. Gives the office its items (`GET /office/items`, `GET /office/media/{id}`),
    deletes them when the office confirms (`POST /office/confirm`), and takes
-   the access lists (`PUT /office/access/{bot}`). Every office call is signed
+   the access lists (`PUT /office/access/{bot}`) and the form choices
+   (`PUT /office/choices/{bot}`). Every office call is signed
    with the pull key and must be within 5 minutes of the relay's clock.
 5. Every hour removes items not pulled in 7 days and counts them.
 

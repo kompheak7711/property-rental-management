@@ -2587,6 +2587,22 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **Links:** DL-125, DL-124.
 - **Decision date:** 2026-11-04.
 
+## DL-127 — Telegram bots: a tenant sends a Problem report from the Tenant bot (bots step 2b)
+
+- **Type:** `OWNER BUSINESS DECISION`
+- **Status:** `STEP 2B BUILT ON BRANCH claude/telegram-bots; WAITS FOR THE OWNER'S TEST`
+- **Source:** the owner's Problem report Part B (3 Nov 2026 11:22, tenant mock-up v15), the voice note rule (3 Nov 2026 07:34) and the owner's OK of the Telegram bots tech and database plan (3 Nov 2026 08:36, Mini App forms). Technical choices by Claude under the owner's 2026-10-23 22:30 rule.
+- **(A) The form.** A linked tenant taps Problem report, then Unit Problem or Building problem. Each opens one short form (a Telegram Mini App page served by the relay). The tenant taps the problem type first (pictures). The form needs what is wrong as text, a voice note (up to 1 minute), or both, and takes up to 5 photos (sent at most 1600 px). A Unit Problem also asks the place in the Unit (optional), if it is urgent, if staff may enter when the tenant is out, and the best time (morning, afternoon or any time). A Building problem asks where and the floor (optional).
+- **(B) Safety first.** Safety (fire, gas, smoke) is always urgent. For Water the form asks "Is water flooding the floor?" and for Electricity "Is there a risk of electric shock?"; Yes makes the report urgent. These show the safety steps and 118 (fire) and 117 (police) before the rest of the form.
+- **(C) Same problem.** A Building problem shows the open Building problems at that place (number, type and floor only). "Same problem" saves the report with its own number and joins it to that report at once (DL-124); it needs no text.
+- **(D) The report.** The report goes into the one Problem reports list with source TENANT_BOT, the tenant's Unit and current Lease, and "Name, Unit" as who reported it. A voice note without text is saved with the words "Voice note only". The photos and the voice note stay with the report. Each form makes one report only.
+- **(E) The answer.** The bot answers in the chat with the report number: for an urgent report "our team will contact you within 1 hour", otherwise "we will plan a visit within 1 working day" (both from the business rules TR_URGENT_HOURS and TR_PLAN_WORKDAYS). A tenant whose link has ended is asked to link again.
+- **(F) The relay.** The office sends the relay, only when they change, the access list with each linked person's Unit places (no name, phone or Unit number) and the form choices (problem types, shared places, open Building problems).
+- **Open:** short videos in the form, the urgent alert to the caretaker on shift, and messages on the report's later steps come in step 2d. The Khmer texts need a native-speaker check.
+- **Built:** migration `20270521_283` (DB-TG-003); `relay/src/tenant_app.ts`; `handle_tenant_form` in `telegram_tenant_bot.py`; `push_form_data` in `telegram_pull_job.py`.
+- **Links:** DL-124, DL-125, DL-126.
+- **Decision date:** 2026-11-04.
+
 ## DL-130 — Problem reports: repair cost and its Expense report
 
 - **Type:** `OWNER BUSINESS DECISION`

@@ -7,9 +7,10 @@ fingerprint (inside the encrypted backups). An item that cannot be opened or sav
 confirmed: it stays in the relay, the run counts it as refused, and after 7 days the relay
 removes it and the health page shows a warning.
 
-After an item is saved, the handler for its bot and kind runs (the later steps add the Tenant,
-Customer and Staff handlers). Step 1 has one: "ping" to any bot answers that the connection
-works, the owner's setup test.
+After an item is saved, the handler for its bot and kind runs: "ping" to any bot answers that the
+connection works (the owner's setup test); the Tenant bot answers chat messages and saves Problem
+report forms (steps 2a and 2b). After each pull the job sends the relay the Tenant bot access list
+and form choices when they changed.
 """
 
 from __future__ import annotations
@@ -36,11 +37,21 @@ from property_rental.telegram_phone import normalize_phone
 from property_rental.telegram_relay_client import RelayClient, RelayError, RelayItem, read_pull_key
 from property_rental.telegram_seal import SealError, load_office_private_key, open_sealed
 from property_rental.telegram_store import PostgresTelegramStore, TelegramStore
-from property_rental.telegram_tenant_bot import handle_tenant_update
+from property_rental.telegram_tenant_bot import handle_tenant_form, handle_tenant_update
 
 MEDIA_TYPES: Final = frozenset(
-    {"image/jpeg", "image/png", "image/webp", "video/mp4", "audio/ogg", "audio/mpeg", "audio/mp4"}
+    {
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+        "video/mp4",
+        "audio/ogg",
+        "audio/mpeg",
+        "audio/mp4",
+        "audio/webm",
+    }
 )
+FORM_DATA_FILE: Final = "telegram-form-data.sha256"
 MAX_MEDIA_BYTES: Final = 20 * 1024 * 1024
 BOT_NAMES: Final = {
     "CUSTOMER": "CHETANA Residence",
@@ -82,7 +93,45 @@ def _ping(bot: str, plain: dict[str, Any], saved: dict[str, Any], store: Telegra
         )
 
 
-HANDLERS: Final[dict[str, list[Handler]]] = {"update": [_ping, handle_tenant_update]}
+HANDLERS: Final[dict[str, list[Handler]]] = {
+    "update": [_ping, handle_tenant_update],
+    "form": [handle_tenant_form],
+}
+
+
+def push_form_data(
+    *,
+    client: RelayClient,
+    store: TelegramStore,
+    status_directory: Path,
+    log: Callable[[str], None] = lambda line: print(line, flush=True),
+) -> bool:
+    """Send the relay who may open the Tenant bot forms and what the forms show. Only a change
+    is sent (the relay's free plan counts writes); a failed send is tried again next minute."""
+    data = store.tenant_form_data()
+    fingerprint = hashlib.sha256(
+        json.dumps(data, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    marker = status_directory / FORM_DATA_FILE
+    try:
+        if marker.read_text(encoding="utf-8").strip() == fingerprint:
+            return False
+    except OSError:
+        pass
+    users = data.get("users")
+    choices = data.get("choices")
+    if not isinstance(users, list) or not isinstance(choices, dict):
+        log("telegram_pull:form_data_invalid")
+        return False
+    try:
+        client.set_access("TENANT", users)
+        client.set_choices("TENANT", choices)
+    except RelayError as error:
+        log(f"telegram_pull:form_data_not_sent:{error.code}")
+        return False
+    status_directory.mkdir(parents=True, exist_ok=True)
+    marker.write_text(fingerprint + "\n", encoding="utf-8")
+    return True
 
 
 def store_media(directory: Path, sha256: str, data: bytes) -> str:
@@ -314,6 +363,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         store.remove_old_payloads()
         store.tenant_end_finished_links()
         store.remove_old_link_attempts()
+        push_form_data(client=client, store=store, status_directory=config.status_directory)
     except (RelayError, SealError) as error:
         code = error.code if isinstance(error, RelayError) else "office_key_unreadable"
         print(f"telegram_pull:failed:{code}", file=sys.stderr, flush=True)

@@ -1,10 +1,13 @@
-"""The Tenant bot conversation, step 2a: Start, language and linking (DL-126).
+"""The Tenant bot conversation: Start, language and linking (step 2a, DL-126), and the Problem
+report form (step 2b, DL-127).
 
 Owner rules (2 and 3 Nov 2026, tenant mock-up v15): Start greets the person and asks for Khmer or
 English. A person who is not linked sees only "Link my Lease". Linking asks for the person's own
 Telegram phone number (Telegram's share button), then the full name, then the Unit; the database
 decides the match (migration 20270520_282). A linked tenant sees the menu: Problem report, My
-requests, FAQ and Contact office. The parts behind the menu come in the next steps.
+requests, FAQ and Contact office. Problem report opens the Unit Problem or Building problem
+form (a Mini App on the relay); the database saves the report (migration 20270521_283) and the
+bot answers with its number. My requests, FAQ and Contact office come in step 2d.
 
 Each answer is one database call that saves the person's next step and queues the messages
 together, so a reply is never sent for a step that was not saved.
@@ -23,9 +26,7 @@ MAX_UNIT: Final = 20
 LANGUAGE_BUTTONS: Final = {"button.khmer": "km", "button.english": "en"}
 # The chat steps this bot saves (telegram_chat_steps.step).
 TENANT_STEPS: Final = frozenset({"language", "menu", "link.phone", "link.name", "link.unit"})
-LATER_PARTS: Final = frozenset(
-    {"button.problem", "button.my_requests", "button.faq", "button.contact"}
-)
+LATER_PARTS: Final = frozenset({"button.my_requests", "button.faq", "button.contact"})
 
 
 def _message(plain: dict[str, Any]) -> dict[str, Any] | None:
@@ -118,6 +119,9 @@ def handle_tenant_update(
     if link is None:
         reply("menu", _say("tenant.link_first", "tenant.start"))
         return
+    if tapped == "button.problem":
+        reply("menu", _say("tenant.report_kind", "tenant.report_kind"))
+        return
     if tapped in LATER_PARTS:
         reply("menu", _say("tenant.soon", "tenant.menu"))
         return
@@ -145,3 +149,52 @@ def _link_answer(result: dict[str, Any]) -> list[dict[str, Any]]:
     if outcome == "BLOCKED" or tries_left == 0:
         return [_say("tenant.blocked", "tenant.reject")]
     return [_say("tenant.no_match", "tenant.reject", tries_left=tries_left)]
+
+
+def handle_tenant_form(
+    bot: str, plain: dict[str, Any], saved: dict[str, Any], store: TelegramStore
+) -> None:
+    """A Problem report form sent from the Mini App: save it, then answer with its number."""
+    if bot != BOT:
+        return
+    user = plain.get("telegram_user_id")
+    chat = plain.get("chat_id")
+    inbound = saved.get("inbound_id")
+    payload = plain.get("payload")
+    if not isinstance(user, int) or not isinstance(chat, int) or user <= 0:
+        return
+    if not isinstance(inbound, str) or not isinstance(payload, dict):
+        return
+    form = payload.get("form")
+    media = saved.get("media_ids")
+    result = store.tenant_problem_report(
+        inbound,
+        form if isinstance(form, dict) else {},
+        [str(media_id) for media_id in media] if isinstance(media, list) else [],
+    )
+    if result.get("repeated") is True:
+        return
+    language = store.bot_state(BOT, user).get("language") or "km"
+    store.bot_reply(BOT, user, chat, "menu", None, language, [_report_answer(result)])
+
+
+def _report_answer(result: dict[str, Any]) -> dict[str, Any]:
+    outcome = result.get("result")
+    if outcome == "NOT_LINKED":
+        return _say("tenant.report_not_linked", "tenant.start")
+    if outcome != "ADDED":
+        return _say("tenant.report_invalid", "tenant.menu")
+    number = str(result.get("report_number") or "")
+    if result.get("joined_to"):
+        return _say("tenant.report_joined", "tenant.menu", number=number, main=result["joined_to"])
+    urgent = result.get("urgent") is True
+    if result.get("kind") == "BUILDING":
+        code = "tenant.report_building_urgent" if urgent else "tenant.report_building"
+        return _say(code, "tenant.menu", number=number)
+    if urgent:
+        hours = int(result.get("urgent_hours") or 1)
+        code = "tenant.report_urgent" if hours == 1 else "tenant.report_urgent_hours"
+        return _say(code, "tenant.menu", number=number, hours=hours)
+    days = int(result.get("plan_workdays") or 1)
+    code = "tenant.report_received" if days == 1 else "tenant.report_received_days"
+    return _say(code, "tenant.menu", number=number, days=days)

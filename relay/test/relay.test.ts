@@ -418,3 +418,130 @@ test("sign-in check and update reading", async () => {
   assert.equal(facts.chatId, -100);
   assert.deepEqual(facts.media, []);
 });
+
+test("the Tenant bot form: the page, its choices and the person's places, then the form with a voice note", async () => {
+  const env = testEnv(keys.publicPem);
+  const token = env.TENANT_BOT_TOKEN as string;
+  const user = JSON.stringify({ id: 5151, language_code: "en" });
+  const signIn = await signInForTests(token, {
+    auth_date: String(NOW - 30),
+    user,
+  });
+  const page = await handle(
+    new Request("https://relay.test/app/tenant?form=unit&lang=en"),
+    env,
+    clock,
+  );
+  assert.equal(page.status, 200);
+  assert.match(page.headers.get("content-type") ?? "", /^text\/html/);
+  assert.match(
+    page.headers.get("content-security-policy") ?? "",
+    /connect-src 'self'/,
+  );
+  assert.match(await page.text(), /\/form\/tenant\/start/);
+  assert.equal(
+    (await handle(new Request("https://relay.test/app/staff"), env, clock))
+      .status,
+    404,
+  );
+
+  const start = () =>
+    handle(
+      new Request("https://relay.test/form/tenant/start", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ init_data: signIn }),
+      }),
+      env,
+      clock,
+    );
+  assert.equal((await start()).status, 403);
+
+  const places = {
+    places: [{ item_id: "i-1", number: 2, name_en: "Bedroom" }],
+  };
+  const list = { users: [{ id: 5151, role: "TENANT", data: places }] };
+  assert.equal(
+    (
+      await handle(
+        await officeRequest("PUT", "/office/access/tenant", NOW, list),
+        env,
+        clock,
+      )
+    ).status,
+    200,
+  );
+  const choices = { types: [{ id: "t-1", code: "WATER" }], open_building: [] };
+  assert.equal(
+    (
+      await handle(
+        await officeRequest("PUT", "/office/choices/tenant", NOW, { choices }),
+        env,
+        clock,
+      )
+    ).status,
+    200,
+  );
+  const started = await start();
+  assert.equal(started.status, 200);
+  assert.deepEqual(await started.json(), { ok: true, choices, mine: places });
+
+  // Wrong lists are refused: an unsigned call, a list that is not a list, too much data.
+  const unsigned = new Request("https://relay.test/office/choices/tenant", {
+    method: "PUT",
+    body: JSON.stringify({ choices }),
+  });
+  assert.equal((await handle(unsigned, env, clock)).status, 401);
+  for (const [path, body] of [
+    ["/office/choices/tenant", { choices: [1, 2] }],
+    ["/office/choices/nobody", { choices }],
+    [
+      "/office/access/tenant",
+      { users: [{ id: 1, role: "TENANT", data: { text: "x".repeat(9000) } }] },
+    ],
+    [
+      "/office/access/tenant",
+      { users: [{ id: 1, role: "TENANT", data: "x" }] },
+    ],
+  ] as const) {
+    const answer = await handle(
+      await officeRequest("PUT", path, NOW, body),
+      env,
+      clock,
+    );
+    assert.equal(answer.status, 400, path);
+  }
+
+  const voice = new Uint8Array([0x1a, 0x45, 0xdf, 0xa3, 9, 9, 9]);
+  const sent = await handle(
+    new Request("https://relay.test/form/tenant", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        init_data: signIn,
+        form: { kind: "UNIT", problem_type_id: "t-1", description: null },
+        photos: [
+          {
+            content_type: "audio/webm",
+            data: Buffer.from(voice).toString("base64"),
+            duration: 21,
+          },
+        ],
+      }),
+    }),
+    env,
+    clock,
+  );
+  assert.equal(sent.status, 200);
+  const pulled = (await (
+    await handle(await officeRequest("GET", "/office/items", NOW), env, clock)
+  ).json()) as { items: { id: string; kind: string; sealed: string }[] };
+  const item = pulled.items[0];
+  assert.ok(item);
+  const plain = await openItem(item);
+  assert.equal(plain.payload.role, "TENANT");
+  assert.equal(plain.media.length, 1);
+  assert.equal(plain.media[0].content_type, "audio/webm");
+  assert.equal(plain.media[0].duration, 21);
+  assert.equal(plain.media[0].size, voice.length);
+});

@@ -104,6 +104,72 @@ TEXTS: Final[dict[str, dict[str, str]]] = {
         "km": "ផ្នែកនេះនឹងបើកឆាប់ៗនេះ។ បើមានរឿងបន្ទាន់ សូមទូរស័ព្ទមកការិយាល័យ។",
         "en": "This part opens soon. For anything urgent, please call the office.",
     },
+    # Step 2b: Problem report (owner rules of 3 Nov 2026, Problem report Part B; tenant
+    # mock-up v15). The form itself is the Mini App page in relay/src/tenant_app.ts.
+    "tenant.report_kind": {
+        "km": (
+            "តើជាបញ្ហាប្រភេទណា?\n"
+            "• បញ្ហាក្នុងបន្ទប់៖ អ្វីមួយនៅក្នុងបន្ទប់របស់លោកអ្នក។ លោកអ្នកអាចសម្គាល់ថាបន្ទាន់។\n"
+            "• បញ្ហាអគារ៖ កន្លែងរួម ឧទាហរណ៍ ជណ្ដើរ ចំណតយានយន្ត ជណ្ដើរយន្ត ឬទ្វារធំ។\n"
+            "ភ្លើងឆេះ ឬគ្រោះថ្នាក់ឥឡូវនេះ៖ សូមទូរស័ព្ទ 118 (ពន្លត់អគ្គិភ័យ) ឬ 117 (ប៉ូលិស) ជាមុនសិន។"
+        ),
+        "en": (
+            "What kind of problem?\n"
+            "• Unit Problem: something inside your Unit. You can mark it urgent.\n"
+            "• Building problem: a shared place, for example stairs, parking, lift or gate.\n"
+            "Fire or danger now: call 118 (fire) or 117 (police) first."
+        ),
+    },
+    "tenant.report_received": {
+        "km": "យើងបានទទួលរបាយការណ៍ {number} របស់លោកអ្នក។ ស្ថានភាព៖ បានទទួល។\n"
+        "យើងនឹងរៀបចំការមកពិនិត្យក្នុងរយៈពេល 1 ថ្ងៃធ្វើការ។",
+        "en": "We got your report {number}. Status: Received.\n"
+        "We will plan a visit within 1 working day.",
+    },
+    "tenant.report_received_days": {
+        "km": "យើងបានទទួលរបាយការណ៍ {number} របស់លោកអ្នក។ ស្ថានភាព៖ បានទទួល។\n"
+        "យើងនឹងរៀបចំការមកពិនិត្យក្នុងរយៈពេល {days} ថ្ងៃធ្វើការ។",
+        "en": "We got your report {number}. Status: Received.\n"
+        "We will plan a visit within {days} working days.",
+    },
+    "tenant.report_urgent": {
+        "km": "យើងបានទទួលរបាយការណ៍ {number} របស់លោកអ្នក។ ស្ថានភាព៖ បានទទួល។\n"
+        "នេះជារឿងបន្ទាន់៖ ក្រុមការងាររបស់យើងនឹងទាក់ទងលោកអ្នកក្នុងរយៈពេល 1 ម៉ោង។",
+        "en": "We got your report {number}. Status: Received.\n"
+        "This is urgent: our team will contact you within 1 hour.",
+    },
+    "tenant.report_urgent_hours": {
+        "km": "យើងបានទទួលរបាយការណ៍ {number} របស់លោកអ្នក។ ស្ថានភាព៖ បានទទួល។\n"
+        "នេះជារឿងបន្ទាន់៖ ក្រុមការងាររបស់យើងនឹងទាក់ទងលោកអ្នកក្នុងរយៈពេល {hours} ម៉ោង។",
+        "en": "We got your report {number}. Status: Received.\n"
+        "This is urgent: our team will contact you within {hours} hours.",
+    },
+    "tenant.report_building": {
+        "km": "សូមអរគុណ។ យើងបានទទួលរបាយការណ៍ {number} របស់លោកអ្នក។ អ្នកគ្រប់គ្រងនឹងពិនិត្យវា។",
+        "en": "Thank you. We got your report {number}. The Manager will check it.",
+    },
+    "tenant.report_building_urgent": {
+        "km": "សូមអរគុណ។ យើងបានទទួលរបាយការណ៍ {number} របស់លោកអ្នក។ "
+        "នេះជារឿងបន្ទាន់៖ អ្នកថែទាំដែលកំពុងប្រចាំការនឹងមក។",
+        "en": "Thank you. We got your report {number}. "
+        "This is urgent: the caretaker on shift is coming.",
+    },
+    "tenant.report_joined": {
+        "km": "សូមអរគុណ។ យើងបានទទួលរបាយការណ៍ {number} របស់លោកអ្នក។ "
+        "វាជាបញ្ហាដូចគ្នានឹង {main} ដែលយើងកំពុងដោះស្រាយរួចហើយ។",
+        "en": "Thank you. We got your report {number}. "
+        "It is the same problem as {main}, which we are already working on.",
+    },
+    "tenant.report_not_linked": {
+        "km": "កិច្ចសន្យាជួលរបស់លោកអ្នកមិនបានភ្ជាប់ទៀតទេ ដូច្នេះយើងមិនអាចរក្សាទុករបាយការណ៍នេះបានទេ។ "
+        "សូមភ្ជាប់ម្ដងទៀត ឬទូរស័ព្ទមកការិយាល័យ។",
+        "en": "Your Lease is not linked any more, so we could not save this report. "
+        "Please link again, or call the office.",
+    },
+    "tenant.report_invalid": {
+        "km": "យើងមិនអាចរក្សាទុករបាយការណ៍នេះបានទេ។ សូមបើកទម្រង់ម្ដងទៀត ហើយព្យាយាមម្ដងទៀត។",
+        "en": "We could not save this report. Please open the form and try again.",
+    },
     # Button labels (no fields). The bot reads a tap as the label's text in either language.
     "button.link": {"km": "ភ្ជាប់កិច្ចសន្យាជួល", "en": "Link my Lease"},
     "button.share_phone": {"km": "ចែករំលែកលេខទូរស័ព្ទ", "en": "Share my phone number"},
@@ -111,6 +177,8 @@ TEXTS: Final[dict[str, dict[str, str]]] = {
     "button.my_requests": {"km": "សំណើរបស់ខ្ញុំ", "en": "My requests"},
     "button.faq": {"km": "សំណួរញឹកញាប់", "en": "FAQ"},
     "button.contact": {"km": "ទាក់ទងការិយាល័យ", "en": "Contact office"},
+    "button.unit_problem": {"km": "បញ្ហាក្នុងបន្ទប់", "en": "Unit Problem"},
+    "button.building_problem": {"km": "បញ្ហាអគារ", "en": "Building problem"},
     "button.khmer": {"km": "ភាសាខ្មែរ", "en": "ភាសាខ្មែរ"},
     "button.english": {"km": "English", "en": "English"},
 }
@@ -125,6 +193,14 @@ KEYBOARDS: Final[dict[str, list[list[str]]]] = {
     "tenant.reject": [["button.link", "button.contact"]],
 }
 CONTACT_BUTTONS: Final = frozenset({"button.share_phone"})
+# Buttons on the message itself that open a Mini App form on the relay
+# (https://<relay>/app/<bot>?form=<form>&lang=<language>). Telegram signs who opens it.
+APP_KEYBOARDS: Final[dict[str, tuple[str, list[list[tuple[str, str]]]]]] = {
+    "tenant.report_kind": (
+        "tenant",
+        [[("button.unit_problem", "unit")], [("button.building_problem", "building")]],
+    ),
+}
 REMOVE_KEYBOARD: Final = "remove"
 
 
@@ -152,12 +228,32 @@ def render(code: str, language: str, details: Mapping[str, object]) -> str:
     return template.format_map(values)[:MAX_MESSAGE_CHARACTERS]
 
 
-def keyboard_markup(code: str | None, language: str) -> dict[str, object] | None:
+def keyboard_markup(
+    code: str | None, language: str, app_host: str | None = None
+) -> dict[str, object] | None:
     """Telegram's reply_markup for a keyboard code, or None when the message has none."""
     if code is None:
         return None
     if code == REMOVE_KEYBOARD:
         return {"remove_keyboard": True}
+    if code in APP_KEYBOARDS:
+        if not app_host:
+            raise TextError(f"keyboard.{code}.no_app_host")
+        page, app_rows = APP_KEYBOARDS[code]
+        return {
+            "inline_keyboard": [
+                [
+                    {
+                        "text": render(label, language, {}),
+                        "web_app": {
+                            "url": f"https://{app_host}/app/{page}?form={form}&lang={language}"
+                        },
+                    }
+                    for label, form in row
+                ]
+                for row in app_rows
+            ]
+        }
     rows = KEYBOARDS.get(code)
     if rows is None:
         raise TextError(f"keyboard.{code}")

@@ -41,6 +41,7 @@ class FakeRelay:
         self.media: dict[str, bytes] = {}
         self.calls: list[str] = []
         self.fail_confirm = False
+        self.pushed: list[tuple[str, Any]] = []
 
     def add(
         self, item_id: str, plain: dict[str, Any], media: dict[str, bytes] | None = None
@@ -78,6 +79,9 @@ class FakeRelay:
             return 200, json.dumps(answer).encode()
         if path.startswith("/office/media/"):
             return 200, self.media[path.rsplit("/", 1)[1]]
+        if path.startswith(("/office/access/", "/office/choices/")) and method == "PUT":
+            self.pushed.append((path, json.loads(body)))
+            return 200, b'{"count": 1}'
         if path == "/office/confirm":
             if self.fail_confirm:
                 return 503, b""
@@ -103,6 +107,10 @@ class FakeStore:
         self.links: dict[int, dict[str, Any]] = {}
         self.link_answers: list[dict[str, Any]] = []
         self.link_tries: list[tuple[int, str, str]] = []
+        # The Problem report forms (migration 20270521_283).
+        self.form_data: dict[str, Any] = {"choices": {"types": []}, "users": []}
+        self.report_answers: list[dict[str, Any]] = []
+        self.reports: list[tuple[str, dict[str, Any], list[str]]] = []
 
     def record_item(self, item: dict[str, Any]) -> dict[str, Any]:
         if item["relay_item_id"] in self.items:
@@ -172,6 +180,15 @@ class FakeStore:
 
     def remove_old_link_attempts(self) -> int:
         return 0
+
+    def tenant_form_data(self) -> dict[str, Any]:
+        return self.form_data
+
+    def tenant_problem_report(
+        self, inbound_id: str, form: dict[str, Any], media_ids: list[str]
+    ) -> dict[str, Any]:
+        self.reports.append((inbound_id, form, media_ids))
+        return self.report_answers.pop(0)
 
 
 def _client(relay: FakeRelay) -> RelayClient:

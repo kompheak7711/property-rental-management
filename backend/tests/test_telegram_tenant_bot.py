@@ -1,12 +1,21 @@
-"""The Tenant bot conversation (DL-126, bots plan step 2a): Start, language and linking."""
+"""The Tenant bot conversation: Start, language and linking (DL-126, step 2a) and the Problem
+report form (DL-127, step 2b)."""
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
+import pytest
+from cryptography.hazmat.primitives.asymmetric import rsa
+
+from property_rental.telegram_pull_job import push_form_data
+from property_rental.telegram_relay_client import RelayClient
 from property_rental.telegram_send_job import run_send
-from property_rental.telegram_tenant_bot import handle_tenant_update
-from test_telegram_jobs import FakeStore
+from property_rental.telegram_tenant_bot import handle_tenant_form, handle_tenant_update
+from property_rental.telegram_texts import TextError, keyboard_markup
+from test_telegram_jobs import NOW, PULL_KEY, FakeRelay, FakeStore, _client
+from test_telegram_jobs import office_key as office_key
 
 USER = 777
 
@@ -67,7 +76,8 @@ def test_linking_asks_for_the_own_phone_then_name_then_unit() -> None:
     linked = say(store, "305")
     assert codes(linked) == [("tenant.linked", "tenant.menu")]
     assert linked[0]["details"] == {"name": "Dara Kim", "unit": "305"}
-    assert codes(say(store, "Problem report")) == [("tenant.soon", "tenant.menu")]
+    assert codes(say(store, "Problem report")) == [("tenant.report_kind", "tenant.report_kind")]
+    assert codes(say(store, "My requests")) == [("tenant.soon", "tenant.menu")]
     assert codes(say(store, "anything")) == [("tenant.menu", "tenant.menu")]
 
 
@@ -140,3 +150,105 @@ def test_the_send_job_shows_the_keyboard_in_the_persons_language() -> None:
     }
     assert sent[1]["reply_markup"] == {"remove_keyboard": True}
     assert store.attempts[-1] == ("m3", "FAILED", "text_unknown", None)
+
+
+def send_form(store: FakeStore, answer: dict[str, Any], bot: str = "TENANT") -> list[Any]:
+    before = len(store.replies)
+    store.report_answers.append(answer)
+    plain = {
+        "telegram_user_id": USER,
+        "chat_id": USER,
+        "payload": {"form": {"kind": "UNIT"}, "role": "TENANT"},
+    }
+    handle_tenant_form(
+        bot, plain, {"saved": True, "inbound_id": "in-1", "media_ids": ["m-1"]}, store
+    )
+    return [(reply["text_code"], reply.get("details")) for reply in store.replies[before:]]
+
+
+def test_a_saved_form_is_answered_with_its_number_in_the_persons_language() -> None:
+    store = FakeStore()
+    store.languages[USER] = "en"
+    added = {"result": "ADDED", "report_number": "UP260231", "kind": "UNIT", "urgent": False}
+    assert send_form(store, added | {"plan_workdays": 1}) == [
+        ("tenant.report_received", {"number": "UP260231", "days": 1})
+    ]
+    assert store.reports == [("in-1", {"kind": "UNIT"}, ["m-1"])]
+    assert store.replies[-1]["language"] == "en" and store.replies[-1]["keyboard"] == "tenant.menu"
+    assert send_form(store, added | {"plan_workdays": 2})[0][0] == "tenant.report_received_days"
+    urgent = added | {"urgent": True, "urgent_hours": 1}
+    assert send_form(store, urgent)[0] == (
+        "tenant.report_urgent",
+        {"number": "UP260231", "hours": 1},
+    )
+    assert send_form(store, urgent | {"urgent_hours": 3})[0][0] == "tenant.report_urgent_hours"
+    building = added | {"kind": "BUILDING", "report_number": "BP260045"}
+    assert send_form(store, building)[0][0] == "tenant.report_building"
+    assert send_form(store, building | {"urgent": True})[0][0] == "tenant.report_building_urgent"
+    assert send_form(store, building | {"joined_to": "BP260044"}) == [
+        ("tenant.report_joined", {"number": "BP260045", "main": "BP260044"})
+    ]
+    assert send_form(store, {"result": "NOT_LINKED"})[0][0] == "tenant.report_not_linked"
+    assert send_form(store, {"result": "INVALID", "reason": "say_what"})[0][0] == (
+        "tenant.report_invalid"
+    )
+    # The same form again, or a form to another bot, gets no second answer.
+    assert send_form(store, added | {"repeated": True}) == []
+    assert send_form(store, added, bot="STAFF") == []
+
+
+def test_the_report_buttons_open_the_form_on_the_relay() -> None:
+    markup = keyboard_markup("tenant.report_kind", "km", "relay.example.workers.dev")
+    assert markup == {
+        "inline_keyboard": [
+            [
+                {
+                    "text": "បញ្ហាក្នុងបន្ទប់",
+                    "web_app": {
+                        "url": "https://relay.example.workers.dev/app/tenant?form=unit&lang=km"
+                    },
+                }
+            ],
+            [
+                {
+                    "text": "បញ្ហាអគារ",
+                    "web_app": {
+                        "url": "https://relay.example.workers.dev/app/tenant?form=building&lang=km"
+                    },
+                }
+            ],
+        ]
+    }
+    with pytest.raises(TextError):
+        keyboard_markup("tenant.report_kind", "en", None)
+
+
+def test_the_access_list_and_choices_go_to_the_relay_only_when_they_change(
+    office_key: rsa.RSAPrivateKey, tmp_path: Path
+) -> None:
+    relay = FakeRelay(office_key)
+    store = FakeStore()
+    store.form_data = {
+        "choices": {"types": [{"code": "WATER"}]},
+        "users": [{"id": USER, "role": "TENANT", "data": {"places": []}}],
+    }
+    client = _client(relay)
+    assert push_form_data(client=client, store=store, status_directory=tmp_path) is True
+    assert [path for path, _ in relay.pushed] == ["/office/access/tenant", "/office/choices/tenant"]
+    assert relay.pushed[0][1] == {"users": store.form_data["users"]}
+    assert push_form_data(client=client, store=store, status_directory=tmp_path) is False
+    store.form_data = store.form_data | {"users": []}
+    assert push_form_data(client=client, store=store, status_directory=tmp_path) is True
+    assert len(relay.pushed) == 4
+    # A relay that cannot be reached is tried again next time.
+    store.form_data = store.form_data | {"choices": {"types": []}}
+    lines: list[str] = []
+    broken = RelayClient(
+        "relay.example.workers.dev", PULL_KEY, transport=lambda *_: (503, b""), clock=lambda: NOW
+    )
+    assert (
+        push_form_data(client=broken, store=store, status_directory=tmp_path, log=lines.append)
+        is False
+    )
+    assert lines == ["telegram_pull:form_data_not_sent:relay_http_503"]
+    assert push_form_data(client=client, store=store, status_directory=tmp_path) is True

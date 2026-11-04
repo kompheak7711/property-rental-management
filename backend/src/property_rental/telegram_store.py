@@ -1,4 +1,4 @@
-"""The database calls of the Telegram jobs (migrations 20270430_281 and 20270520_282). Each call
+"""The database calls of the Telegram jobs (migrations 20270430_281 to 20270521_283). Each call
 is one SQL function that checks the job's account holds the right on the Property."""
 
 from __future__ import annotations
@@ -47,6 +47,12 @@ class TelegramStore(Protocol):
     def tenant_end_finished_links(self) -> int: ...
 
     def remove_old_link_attempts(self) -> int: ...
+
+    def tenant_form_data(self) -> dict[str, Any]: ...
+
+    def tenant_problem_report(
+        self, inbound_id: str, form: dict[str, Any], media_ids: list[str]
+    ) -> dict[str, Any]: ...
 
 
 class PostgresTelegramStore:
@@ -193,3 +199,24 @@ class PostgresTelegramStore:
                 self._actor,
             )
         )
+
+    def tenant_form_data(self) -> dict[str, Any]:
+        result = self._one(
+            "SELECT app.telegram_tenant_form_data(%s, %s)", self._property, self._actor
+        )
+        assert isinstance(result, dict)
+        return result
+
+    def tenant_problem_report(
+        self, inbound_id: str, form: dict[str, Any], media_ids: list[str]
+    ) -> dict[str, Any]:
+        result = self._one(
+            "SELECT app.telegram_tenant_problem_report(%s, %s, %s::jsonb, %s::jsonb, %s)",
+            self._property,
+            inbound_id,
+            json.dumps(form),
+            json.dumps(media_ids),
+            self._actor,
+        )
+        assert isinstance(result, dict)
+        return result

@@ -19,11 +19,22 @@ CREATE TABLE IF NOT EXISTS media (
 CREATE INDEX IF NOT EXISTS media_item ON media (item_id);
 
 -- Who may send forms, sent by the office app (linked tenants, approved staff and their roles).
+-- "data" is what that person's form shows (for a tenant, the places in their Unit, such as
+-- "Bedroom 2"; never a name, a phone number or a Unit number).
 CREATE TABLE IF NOT EXISTS access (
   bot TEXT NOT NULL,
   user_id INTEGER NOT NULL,
   role TEXT NOT NULL,
+  data TEXT,
   PRIMARY KEY (bot, user_id)
+);
+
+-- What a bot's forms show to everyone on its access list, sent by the office app (problem
+-- types, shared places, the open Building problems by number and place).
+CREATE TABLE IF NOT EXISTS choices (
+  bot TEXT PRIMARY KEY,
+  body TEXT NOT NULL,
+  updated_at TEXT NOT NULL
 );
 
 -- Items removed after 7 days without a pull, per day, for the health page.

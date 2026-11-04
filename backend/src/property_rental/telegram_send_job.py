@@ -86,6 +86,7 @@ def run_send(
     api_host: str,
     tokens: dict[str, str],
     post_json: PostJson = _post_json,
+    app_host: str | None = None,
     limit: int = 50,
     log: Callable[[str], None] = lambda line: print(line, flush=True),
 ) -> SendResult:
@@ -98,7 +99,7 @@ def run_send(
             continue
         try:
             text = render(message["text_code"], message["language"], message.get("details") or {})
-            markup = keyboard_markup(message.get("keyboard"), message["language"])
+            markup = keyboard_markup(message.get("keyboard"), message["language"], app_host)
         except TextError:
             outcome = store.record_attempt(message["id"], "FAILED", "text_unknown", None)
             result.gave_up += outcome == "GAVE_UP"
@@ -162,7 +163,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         database_url, property_id=args.property_id, actor_id=args.actor_id
     )
     result = run_send(
-        store=store, api_host=bots.api_host, tokens=load_bot_tokens(bots.bot_token_files)
+        store=store,
+        api_host=bots.api_host,
+        tokens=load_bot_tokens(bots.bot_token_files),
+        app_host=bots.relay_host,
     )
     print(
         f"telegram_send:sent={result.sent},failed={result.failed},gave_up={result.gave_up},"

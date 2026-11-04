@@ -1,7 +1,8 @@
 // The CHETANA Telegram relay (bots plan 03/11/2026, "The relay"). A small Cloudflare Worker
 // that is always on, even when the office power or internet is off. Its five jobs:
 //   1. receive from Telegram (webhooks, checked with each bot's secret word);
-//   2. check who it is (Mini App sign-ins, checked with the bot key and the access list);
+//   2. check who it is (Mini App sign-ins, checked with the bot key and the access list), and
+//      serve the Mini App form pages (the Tenant bot's Problem report);
 //   3. seal every message and photo with the office's public key;
 //   4. hand over to the office (signed pull, then delete after the office confirms);
 //   5. (step 2) the urgent ping to the caretaker group.
@@ -16,11 +17,20 @@ import {
   MAX_MEDIA_PER_ITEM,
   readUpdate,
 } from "./telegram.ts";
+import { tenantAppPage } from "./tenant_app.ts";
 import { BOTS, type BotCode, type Bytes, type Env } from "./types.ts";
 
 export const KEEP_DAYS = 7;
 export const RATE_PER_MINUTE = 30;
 export const OFFICE_CLOCK_SKEW_SECONDS = 300;
+export const MAX_PERSON_DATA_CHARS = 8192;
+export const MAX_CHOICES_CHARS = 65536;
+const FORM_FILE_TYPES = [
+  "image/jpeg",
+  "audio/ogg",
+  "audio/mp4",
+  "audio/webm",
+] as const;
 const DEFAULT_API = "https://api.telegram.org";
 
 type Clock = () => number;
@@ -257,8 +267,23 @@ function corsHeaders(request: Request): Record<string, string> {
     : {};
 }
 
-async function form(request: Request, env: Env, bot: BotCode, now: number) {
-  const cors = corsHeaders(request);
+interface FormCaller {
+  body: Record<string, unknown>;
+  userId: number;
+  languageCode?: string;
+  role: string | null;
+  data: string | null;
+}
+
+// Who sends a form: a Telegram sign-in under 24 hours old, signed with this bot's key, and for
+// the Tenant and Staff bots a person on the access list the office sent.
+async function formCaller(
+  request: Request,
+  env: Env,
+  bot: BotCode,
+  now: number,
+  cors: Record<string, string>,
+): Promise<FormCaller | Response> {
   const token = env[`${bot}_BOT_TOKEN`];
   if (!token) {
     return json({ ok: false, error: "not_set_up" }, 404, cors);
@@ -269,6 +294,9 @@ async function form(request: Request, env: Env, bot: BotCode, now: number) {
   } catch {
     return json({ ok: false, error: "not_json" }, 400, cors);
   }
+  if (typeof body !== "object" || body === null) {
+    return json({ ok: false, error: "not_json" }, 400, cors);
+  }
   const signIn =
     typeof body.init_data === "string"
       ? await checkSignIn(body.init_data, token, now)
@@ -277,10 +305,10 @@ async function form(request: Request, env: Env, bot: BotCode, now: number) {
     return json({ ok: false, error: "sign_in_refused" }, 401, cors);
   }
   const access = await env.DB.prepare(
-    "SELECT role FROM access WHERE bot = ? AND user_id = ?",
+    "SELECT role, data FROM access WHERE bot = ? AND user_id = ?",
   )
     .bind(bot, signIn.userId)
-    .first<{ role: string }>();
+    .first<{ role: string; data: string | null }>();
   // Customer bot forms (an inquiry) are open to anyone; Tenant and Staff forms need a link.
   if (bot !== "CUSTOMER" && !access) {
     return json({ ok: false, error: "not_allowed" }, 403, cors);
@@ -288,6 +316,49 @@ async function form(request: Request, env: Env, bot: BotCode, now: number) {
   if (await overLimit(env, signIn.userId, now)) {
     return json({ ok: false, error: "too_many" }, 429, cors);
   }
+  return {
+    body,
+    userId: signIn.userId,
+    languageCode: signIn.languageCode,
+    role: access?.role ?? null,
+    data: access?.data ?? null,
+  };
+}
+
+// What the form shows: the bot's choices and this person's own data (for a tenant, the places
+// in their Unit).
+async function formStart(
+  request: Request,
+  env: Env,
+  bot: BotCode,
+  now: number,
+) {
+  const cors = corsHeaders(request);
+  const caller = await formCaller(request, env, bot, now, cors);
+  if (caller instanceof Response) {
+    return caller;
+  }
+  const choices = await env.DB.prepare("SELECT body FROM choices WHERE bot = ?")
+    .bind(bot)
+    .first<{ body: string }>();
+  return json(
+    {
+      ok: true,
+      choices: choices ? JSON.parse(choices.body) : null,
+      mine: caller.data ? JSON.parse(caller.data) : null,
+    },
+    200,
+    cors,
+  );
+}
+
+async function form(request: Request, env: Env, bot: BotCode, now: number) {
+  const cors = corsHeaders(request);
+  const caller = await formCaller(request, env, bot, now, cors);
+  if (caller instanceof Response) {
+    return caller;
+  }
+  const { body } = caller;
   const fields = body.form;
   const photos = Array.isArray(body.photos) ? body.photos : [];
   if (
@@ -305,7 +376,7 @@ async function form(request: Request, env: Env, bot: BotCode, now: number) {
     const type = entry?.content_type;
     if (
       typeof entry?.data !== "string" ||
-      !["image/jpeg", "audio/ogg", "audio/mp4"].includes(String(type))
+      !(FORM_FILE_TYPES as readonly string[]).includes(String(type))
     ) {
       return json({ ok: false, error: "file_not_allowed" }, 400, cors);
     }
@@ -318,9 +389,17 @@ async function form(request: Request, env: Env, bot: BotCode, now: number) {
     if (bytes.length === 0 || bytes.length > MAX_FILE_BYTES) {
       return json({ ok: false, error: "file_too_big" }, 413, cors);
     }
+    // A voice note says how long it is (the form stops recording at 1 minute).
+    const duration = entry.duration;
     media.push(
       await keepMedia(env, officeKey, itemId, position, bytes, {
         content_type: String(type),
+        duration:
+          Number.isSafeInteger(duration) &&
+          (duration as number) >= 0 &&
+          (duration as number) <= 600
+            ? (duration as number)
+            : undefined,
       }),
     );
   }
@@ -332,10 +411,10 @@ async function form(request: Request, env: Env, bot: BotCode, now: number) {
     "form",
     {
       v: 1,
-      telegram_user_id: signIn.userId,
-      chat_id: signIn.userId,
-      language_code: signIn.languageCode,
-      payload: { form: fields, role: access?.role ?? null },
+      telegram_user_id: caller.userId,
+      chat_id: caller.userId,
+      language_code: caller.languageCode,
+      payload: { form: fields, role: caller.role },
       media,
     },
     now,
@@ -440,6 +519,10 @@ async function office(request: Request, env: Env, now: number, path: string[]) {
     } catch {
       return json({ error: "not_json" }, 400);
     }
+    const personData = (user: { data?: unknown }) =>
+      user.data === undefined || user.data === null
+        ? null
+        : JSON.stringify(user.data);
     const valid =
       bot !== undefined &&
       Array.isArray(users) &&
@@ -449,7 +532,12 @@ async function office(request: Request, env: Env, now: number, path: string[]) {
           user !== null &&
           Number.isSafeInteger((user as { id?: unknown }).id) &&
           typeof (user as { role?: unknown }).role === "string" &&
-          /^[A-Z_]{2,20}$/.test((user as { role: string }).role),
+          /^[A-Z_]{2,20}$/.test((user as { role: string }).role) &&
+          ((user as { data?: unknown }).data === undefined ||
+            (user as { data?: unknown }).data === null ||
+            (typeof (user as { data?: unknown }).data === "object" &&
+              (personData(user as { data?: unknown }) ?? "").length <=
+                MAX_PERSON_DATA_CHARS)),
       );
     if (!valid) {
       return json({ error: "access_list" }, 400);
@@ -458,15 +546,47 @@ async function office(request: Request, env: Env, now: number, path: string[]) {
     const statements = [
       env.DB.prepare("DELETE FROM access WHERE bot = ?").bind(bot),
     ];
-    for (const user of users as { id: number; role: string }[]) {
+    for (const user of users as {
+      id: number;
+      role: string;
+      data?: unknown;
+    }[]) {
       statements.push(
         env.DB.prepare(
-          "INSERT INTO access (bot, user_id, role) VALUES (?, ?, ?)",
-        ).bind(bot, user.id, user.role),
+          "INSERT INTO access (bot, user_id, role, data) VALUES (?, ?, ?, ?)",
+        ).bind(bot, user.id, user.role, personData(user)),
       );
     }
     await env.DB.batch(statements);
     return json({ count: (users as unknown[]).length });
+  }
+  if (what === "choices" && request.method === "PUT") {
+    const bot = botFromPath(which);
+    let choices: unknown;
+    try {
+      choices = (
+        JSON.parse(new TextDecoder().decode(body)) as { choices?: unknown }
+      ).choices;
+    } catch {
+      return json({ error: "not_json" }, 400);
+    }
+    const text = JSON.stringify(choices ?? null);
+    if (
+      bot === undefined ||
+      typeof choices !== "object" ||
+      choices === null ||
+      Array.isArray(choices) ||
+      text.length > MAX_CHOICES_CHARS
+    ) {
+      return json({ error: "choices" }, 400);
+    }
+    await env.DB.prepare(
+      "INSERT INTO choices (bot, body, updated_at) VALUES (?, ?, ?) " +
+        "ON CONFLICT (bot) DO UPDATE SET body = excluded.body, updated_at = excluded.updated_at",
+    )
+      .bind(bot, text, new Date(now * 1000).toISOString())
+      .run();
+    return json({ saved: true });
   }
   return json({ error: "not_found" }, 404);
 }
@@ -531,9 +651,36 @@ export async function handle(
     if (request.method === "OPTIONS") {
       return new Response(null, { status: 204, headers: corsHeaders(request) });
     }
-    return bot && request.method === "POST"
+    if (!bot || request.method !== "POST" || path.length > 3) {
+      return new Response("not found", { status: 404 });
+    }
+    if (path[2] === "start") {
+      return formStart(request, env, bot, now);
+    }
+    return path.length === 2
       ? form(request, env, bot, now)
       : new Response("not found", { status: 404 });
+  }
+  // The Mini App pages (the Tenant bot's Problem report form). They hold no data: the page asks
+  // /form/<bot>/start with the person's Telegram sign-in for what to show.
+  if (
+    path[0] === "app" &&
+    path[1] === "tenant" &&
+    path.length === 2 &&
+    request.method === "GET"
+  ) {
+    return new Response(tenantAppPage(), {
+      headers: {
+        "content-type": "text/html; charset=utf-8",
+        "cache-control": "no-store",
+        "content-security-policy":
+          "default-src 'none'; script-src 'self' 'unsafe-inline' https://telegram.org; " +
+          "style-src 'unsafe-inline'; img-src blob: data:; media-src blob:; " +
+          "connect-src 'self'; base-uri 'none'; form-action 'none'",
+        "x-content-type-options": "nosniff",
+        "referrer-policy": "no-referrer",
+      },
+    });
   }
   if (path[0] === "office") {
     return office(request, env, now, path.slice(1));
