@@ -372,8 +372,17 @@ VIEWS = {
             request.request_number, expense.void_reason, expense.created_at,
             account.name_km AS account_name_km, paid_from.name_en AS paid_from_name,
             paid_from.name_km AS paid_from_name_km, unit.unit_number,
-            entry.entry_number, bill.bill_number AS supplier_bill_number
+            entry.entry_number, bill.bill_number AS supplier_bill_number,
+            voider.display_name AS voided_by_name, expense.voided_at,
+            void_entry.entry_number AS void_entry_number,
+            EXISTS (SELECT 1 FROM app.gl_bill_payments AS payment
+                    WHERE payment.supplier_bill_id = bill.id
+                      AND NOT EXISTS (SELECT 1 FROM app.gl_bill_payment_reversals AS reversal
+                                      WHERE reversal.bill_payment_id = payment.id))
+                AS bill_has_payments
         FROM app.gl_expenses AS expense
+        LEFT JOIN app.user_accounts AS voider ON voider.actor_id = expense.voided_by
+        LEFT JOIN app.gl_journal_entries AS void_entry ON void_entry.id = expense.void_entry_id
         LEFT JOIN app.units AS unit ON unit.id = expense.unit_id
         LEFT JOIN app.gl_journal_entries AS entry ON entry.id = expense.entry_id
         LEFT JOIN app.gl_supplier_bills AS bill ON bill.expense_id = expense.id
@@ -401,14 +410,23 @@ VIEWS = {
                 SELECT jsonb_agg(jsonb_build_object(
                     'id', payment.id, 'paid_on', payment.paid_on,
                     'amount_cents', payment.amount_cents, 'paid_from_code', paid_from.code,
+                    'paid_from_name', paid_from.name_en, 'paid_from_name_km', paid_from.name_km,
                     'entry_number', paid_entry.entry_number,
-                    'reversed', EXISTS (SELECT 1 FROM app.gl_bill_payment_reversals AS reversal
-                                        WHERE reversal.bill_payment_id = payment.id))
+                    'reversed', reversal.id IS NOT NULL,
+                    'reversal_reason', reversal.reason,
+                    'reversed_at', reversal.created_at,
+                    'reversed_by_name', reverser.display_name,
+                    'reversal_entry_number', reversal_entry.entry_number)
                     ORDER BY payment.paid_on, payment.created_at)
                 FROM app.gl_bill_payments AS payment
                 JOIN app.gl_accounts AS paid_from ON paid_from.id = payment.paid_from_account_id
                 LEFT JOIN app.gl_journal_entries AS paid_entry
                     ON paid_entry.id = payment.entry_id
+                LEFT JOIN app.gl_bill_payment_reversals AS reversal
+                    ON reversal.bill_payment_id = payment.id
+                LEFT JOIN app.user_accounts AS reverser ON reverser.actor_id = reversal.created_by
+                LEFT JOIN app.gl_journal_entries AS reversal_entry
+                    ON reversal_entry.id = reversal.entry_id
                 WHERE payment.supplier_bill_id = bill.id), '[]'::jsonb) AS payments
         FROM app.gl_supplier_bills AS bill
         JOIN app.gl_suppliers AS supplier ON supplier.id = bill.supplier_id

@@ -128,6 +128,11 @@ export interface ExpenseRow {
   void_reason: string | null;
   entry_number: string | null;
   supplier_bill_number: string | null;
+  voided_by_name: string | null;
+  voided_at: string | null;
+  void_entry_number: string | null;
+  /** A "pay later" expense whose supplier bill has a payment not reversed. */
+  bill_has_payments: boolean;
 }
 
 export interface BillPayment {
@@ -135,8 +140,14 @@ export interface BillPayment {
   paid_on: string;
   amount_cents: number;
   paid_from_code: string;
+  paid_from_name: string | null;
+  paid_from_name_km: string | null;
   entry_number: string | null;
   reversed: boolean;
+  reversal_reason: string | null;
+  reversed_at: string | null;
+  reversed_by_name: string | null;
+  reversal_entry_number: string | null;
 }
 
 export interface SupplierBill {
@@ -399,6 +410,10 @@ function expenseOf(value: unknown): ExpenseRow {
     void_reason: maybeText(row.void_reason),
     entry_number: maybeText(row.entry_number),
     supplier_bill_number: maybeText(row.supplier_bill_number),
+    voided_by_name: maybeText(row.voided_by_name),
+    voided_at: maybeText(row.voided_at),
+    void_entry_number: maybeText(row.void_entry_number),
+    bill_has_payments: flag(row.bill_has_payments),
   };
 }
 
@@ -425,8 +440,14 @@ function billOf(value: unknown): SupplierBill {
         paid_on: text(payment.paid_on),
         amount_cents: whole(payment.amount_cents),
         paid_from_code: text(payment.paid_from_code),
+        paid_from_name: maybeText(payment.paid_from_name),
+        paid_from_name_km: maybeText(payment.paid_from_name_km),
         entry_number: maybeText(payment.entry_number),
         reversed: flag(payment.reversed),
+        reversal_reason: maybeText(payment.reversal_reason),
+        reversed_at: maybeText(payment.reversed_at),
+        reversed_by_name: maybeText(payment.reversed_by_name),
+        reversal_entry_number: maybeText(payment.reversal_entry_number),
       };
     }),
   };

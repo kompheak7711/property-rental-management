@@ -25,6 +25,7 @@ import type { Language } from "../signInText";
 import { LedgerError } from "./ledgerClient";
 import { accountName, money, useRead, Waiting } from "./LedgerPage";
 import {
+  type BillPayment,
   type ExpenseRequest,
   type ExpenseRow,
   type PaidHow,
@@ -1822,6 +1823,7 @@ function ExpensesTab({
   const list = useRead<ExpenseRow[]>(active, readList);
   const form = useRead<SpendingForm>(active, readForm);
   const [open, setOpen] = useState(false);
+  const [voiding, setVoiding] = useState<ExpenseRow | null>(null);
   const [done, setDone] = useState<string | null>(null);
   const formData = form.data;
   const rows = list.data;
@@ -1875,6 +1877,7 @@ function ExpensesTab({
                   </th>
                   <th scope="col">{lt(language, "x_from")}</th>
                   <th scope="col">{lt(language, "col_status")}</th>
+                  {rights.pay && <th scope="col">{lt(language, "x39_act")}</th>}
                 </tr>
               </thead>
               <tbody>
@@ -1934,13 +1937,55 @@ function ExpensesTab({
                     </td>
                     <td>
                       {row.status === "VOID" ? (
-                        <Chip tone="neutral">{lt(language, "x_st_VOID")}</Chip>
+                        <>
+                          <Chip tone="neutral">
+                            {lt(language, "x_st_VOID")}
+                          </Chip>
+                          {row.void_reason !== null && (
+                            <span className="ui-sub2">
+                              {lt(
+                                language,
+                                "x39_void_s",
+                                row.voided_by_name ?? "",
+                                momentText(row.voided_at),
+                                row.void_reason,
+                              )}
+                            </span>
+                          )}
+                        </>
                       ) : (
                         <Chip icon="check" tone="ok">
                           {lt(language, "x_st_POSTED")}
                         </Chip>
                       )}
                     </td>
+                    {rights.pay && (
+                      <td>
+                        {row.status === "POSTED" &&
+                          row.entry_number !== null &&
+                          (row.bill_has_payments ? (
+                            <span className="ui-muted">
+                              {lt(
+                                language,
+                                "x39_paid_first",
+                                row.supplier_bill_number ?? "",
+                              )}
+                            </span>
+                          ) : (
+                            <button
+                              className="ui-btn"
+                              onClick={() => {
+                                setDone(null);
+                                setVoiding(row);
+                              }}
+                              type="button"
+                            >
+                              <Icon name="x" small />
+                              {lt(language, "x39_void")}
+                            </button>
+                          ))}
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -1952,6 +1997,22 @@ function ExpensesTab({
           {lt(language, "gl_x_limit", money(formData?.expense_limit_cents))}
         </p>
       </section>
+      {voiding !== null && (
+        <VoidExpenseDialog
+          api={api}
+          expense={voiding}
+          language={language}
+          onClose={() => {
+            setVoiding(null);
+          }}
+          onDone={(text) => {
+            setVoiding(null);
+            setDone(text);
+            list.reload();
+          }}
+          propertyId={propertyId}
+        />
+      )}
       {open && formData !== null && (
         <ExpenseDialog
           api={api}
@@ -1971,6 +2032,258 @@ function ExpensesTab({
         />
       )}
     </>
+  );
+}
+
+/** The lines of an entry, as "1020 · debit $10.00". */
+function EntryLines({
+  language,
+  lines,
+}: {
+  language: Language;
+  lines: readonly { code: string; debit: number; credit: number }[];
+}) {
+  return (
+    <>
+      <p>{lt(language, "ent39")}</p>
+      <ul>
+        {lines.map((line) => (
+          <li key={`${line.code}-${String(line.debit)}`}>
+            <span className="ui-num">{line.code}</span> ·{" "}
+            {line.debit > 0
+              ? lt(language, "wo_dr", money(line.debit))
+              : lt(language, "wo_cr", money(line.credit))}
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+}
+
+/** Asks for a reason, then calls `send` with it (Void expense, Reverse payment). */
+function ReasonField({
+  language,
+  value,
+  error,
+  onChange,
+}: {
+  language: Language;
+  value: string;
+  error: string | null;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="ui-field">
+      <label htmlFor="rv-reason">
+        {lt(language, "reason")}
+        <span className="req">{lt(language, "required")}</span>
+      </label>
+      <input
+        aria-describedby={error === null ? undefined : "rv-reason-e"}
+        autoComplete="off"
+        id="rv-reason"
+        maxLength={160}
+        onChange={(event) => {
+          onChange(event.target.value);
+        }}
+        value={value}
+      />
+      <FieldError id="rv-reason-e" text={error} />
+    </div>
+  );
+}
+
+/** Void an Expense (mock-up v77): a reversing entry today; the row stays as Void. */
+function VoidExpenseDialog({
+  language,
+  propertyId,
+  expense,
+  api,
+  onClose,
+  onDone,
+}: {
+  language: Language;
+  propertyId: string;
+  expense: ExpenseRow;
+  api: SpendingApi;
+  onClose: () => void;
+  onDone: (text: string) => void;
+}) {
+  const work = useBusy(language);
+  const [reason, setReason] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const from = expense.paid_from_code ?? "2010";
+  const fromText =
+    expense.paid_from_code === null
+      ? lt(language, "x_later")
+      : named(
+          language,
+          expense.paid_from_code,
+          expense.paid_from_name,
+          expense.paid_from_name_km,
+        );
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const why = reason.trim();
+    if (why === "") {
+      setError(lt(language, "br_e_reason"));
+      return;
+    }
+    setError(null);
+    work.run(async () => {
+      await api.voidExpense(propertyId, expense.id, why);
+      const row = (await api.expenses(propertyId)).find(
+        (item) => item.id === expense.id,
+      );
+      return lt(
+        language,
+        "x39_void_done",
+        expense.expense_number,
+        row?.void_entry_number ?? "",
+      );
+    }, onDone);
+  }
+
+  return (
+    <Dialog
+      busy={work.busy}
+      closeLabel={lt(language, "cancel")}
+      onClose={onClose}
+      onSubmit={submit}
+      submitLabel={lt(language, "x39_void")}
+      title={lt(language, "x39_void_t", expense.expense_number)}
+    >
+      <p>
+        {lt(
+          language,
+          "x39_void_b",
+          expense.supplier_name ?? "—",
+          money(expense.amount_cents),
+          fromText,
+        )}
+      </p>
+      <ReasonField
+        error={error}
+        language={language}
+        onChange={setReason}
+        value={reason}
+      />
+      <EntryLines
+        language={language}
+        lines={[
+          { code: from, debit: expense.amount_cents, credit: 0 },
+          {
+            code: expense.account_code,
+            debit: 0,
+            credit: expense.amount_cents,
+          },
+        ]}
+      />
+      {expense.supplier_bill_number !== null && (
+        <p>
+          <Icon name="info" small />{" "}
+          {lt(language, "x39_void_bill", expense.supplier_bill_number)}
+        </p>
+      )}
+      <p className="ui-muted">
+        <Icon name="info" small /> {lt(language, "x39_void_n")}
+      </p>
+      <Failure text={work.failure} />
+    </Dialog>
+  );
+}
+
+/** Reverse a bill payment (mock-up v77): DR the paid-from account, CR 2010. */
+function ReversePaymentDialog({
+  language,
+  propertyId,
+  bill,
+  payment,
+  api,
+  onClose,
+  onDone,
+}: {
+  language: Language;
+  propertyId: string;
+  bill: SupplierBill;
+  payment: BillPayment;
+  api: SpendingApi;
+  onClose: () => void;
+  onDone: (text: string) => void;
+}) {
+  const work = useBusy(language);
+  const [reason, setReason] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const why = reason.trim();
+    if (why === "") {
+      setError(lt(language, "br_e_reason"));
+      return;
+    }
+    setError(null);
+    work.run(async () => {
+      await api.reverseBillPayment(propertyId, payment.id, why);
+      const again = (await api.bills(propertyId))
+        .find((item) => item.id === bill.id)
+        ?.payments.find((item) => item.id === payment.id);
+      return lt(
+        language,
+        "sb39_rev_done",
+        bill.bill_number,
+        again?.reversal_entry_number ?? "",
+      );
+    }, onDone);
+  }
+
+  return (
+    <Dialog
+      busy={work.busy}
+      closeLabel={lt(language, "cancel")}
+      onClose={onClose}
+      onSubmit={submit}
+      submitLabel={lt(language, "sb39_rev")}
+      title={lt(language, "sb39_rev_t", bill.bill_number)}
+    >
+      <p>
+        {lt(
+          language,
+          "sb39_rev_b",
+          money(payment.amount_cents),
+          dayText(payment.paid_on),
+          named(
+            language,
+            payment.paid_from_code,
+            payment.paid_from_name,
+            payment.paid_from_name_km,
+          ),
+          bill.supplier_name,
+        )}
+      </p>
+      <ReasonField
+        error={error}
+        language={language}
+        onChange={setReason}
+        value={reason}
+      />
+      <EntryLines
+        language={language}
+        lines={[
+          {
+            code: payment.paid_from_code,
+            debit: payment.amount_cents,
+            credit: 0,
+          },
+          { code: "2010", debit: 0, credit: payment.amount_cents },
+        ]}
+      />
+      <p className="ui-muted">
+        <Icon name="info" small /> {lt(language, "sb39_rev_n")}
+      </p>
+      <Failure text={work.failure} />
+    </Dialog>
   );
 }
 
@@ -2257,6 +2570,10 @@ function BillsTab({
   const [filter, setFilter] = useState<BillFilter>("open");
   const [adding, setAdding] = useState(false);
   const [paying, setPaying] = useState<SupplierBill | null>(null);
+  const [reversing, setReversing] = useState<{
+    bill: SupplierBill;
+    payment: BillPayment;
+  } | null>(null);
   const [done, setDone] = useState<string | null>(null);
   const formData = form.data;
   const today = formData?.today ?? "";
@@ -2290,6 +2607,7 @@ function BillsTab({
   const reloadAll = (text: string) => {
     setAdding(false);
     setPaying(null);
+    setReversing(null);
     setDone(text);
     list.reload();
     form.reload();
@@ -2306,6 +2624,19 @@ function BillsTab({
           }}
           onSaved={reloadAll}
           pay="later"
+          propertyId={propertyId}
+        />
+      )}
+      {reversing !== null && (
+        <ReversePaymentDialog
+          api={api}
+          bill={reversing.bill}
+          language={language}
+          onClose={() => {
+            setReversing(null);
+          }}
+          onDone={reloadAll}
+          payment={reversing.payment}
           propertyId={propertyId}
         />
       )}
@@ -2465,6 +2796,68 @@ function BillsTab({
                             </a>
                           </span>
                         )}
+                        {bill.payments.map((payment) => {
+                          const paidText = lt(
+                            language,
+                            "sb39_paid",
+                            money(payment.amount_cents),
+                            dayText(payment.paid_on),
+                            named(
+                              language,
+                              payment.paid_from_code,
+                              payment.paid_from_name,
+                              payment.paid_from_name_km,
+                            ),
+                          );
+                          const entry = payment.reversed
+                            ? payment.reversal_entry_number
+                            : payment.entry_number;
+                          return (
+                            <span className="ui-sub2" key={payment.id}>
+                              {payment.reversed ? (
+                                <>
+                                  <s>{paidText}</s> ·{" "}
+                                  {lt(
+                                    language,
+                                    "sb39_reved",
+                                    payment.reversed_by_name ?? "",
+                                    momentText(payment.reversed_at),
+                                    payment.reversal_reason ?? "",
+                                  )}
+                                </>
+                              ) : (
+                                paidText
+                              )}
+                              {entry !== null && (
+                                <>
+                                  {" · "}
+                                  <a
+                                    className="ui-num"
+                                    href={hashForPage("journal", entry)}
+                                  >
+                                    {entry}
+                                  </a>
+                                </>
+                              )}
+                              {!payment.reversed && rights.pay && (
+                                <>
+                                  {" "}
+                                  <button
+                                    className="ui-btn"
+                                    onClick={() => {
+                                      setDone(null);
+                                      setReversing({ bill, payment });
+                                    }}
+                                    type="button"
+                                  >
+                                    <Icon name="swap" small />
+                                    {lt(language, "sb39_rev")}
+                                  </button>
+                                </>
+                              )}
+                            </span>
+                          );
+                        })}
                       </td>
                       <td className="ui-num">{dayText(bill.due_date)}</td>
                       <td className="r ui-num">{money(bill.amount_cents)}</td>

@@ -61899,6 +61899,28 @@
       "test_path": "frontend/src/ledger/BudgetPage.test.tsx",
       "status": "implemented",
       "notes": "General Ledger phase 6 step 6 part 4 (Budget; mock-up v76): Switches the year."
+    },
+    {
+      "test_id": "TEST-FE-1209",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-013"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/SpendingPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 (Void Expense and Reverse bill payment; mock-up v77): Voids an expense with a reason and shows the reversing entry."
+    },
+    {
+      "test_id": "TEST-FE-1210",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-013"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/SpendingPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 (Void Expense and Reverse bill payment; mock-up v77): Shows each payment under its bill and reverses one with a reason."
     }
   ]
 }

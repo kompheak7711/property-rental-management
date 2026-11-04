@@ -1026,6 +1026,47 @@ const TEXT = {
   ],
   // new
   bu_closed: ["The year {0} is closed.", "ឆ្នាំ {0} ត្រូវបានបិទ។"],
+  // Void an Expense, Reverse a bill payment (mock-up v77, round 34).
+  x39_act: ["Action", "សកម្មភាព"],
+  x39_void: ["Void", "ទុកជាមោឃៈ"],
+  x39_void_t: ["Void expense {0}", "ទុកចំណាយ {0} ជាមោឃៈ"],
+  x39_void_b: ["{0} · {1} · paid from {2}", "{0} · {1} · បង់ពី {2}"],
+  x39_void_n: [
+    "An expense is never edited. Void makes a reversing entry today and keeps the expense in the list as Void. If it was wrong, record it again.",
+    "ចំណាយមិនដែលកែទេ។ ការទុកជាមោឃៈធ្វើធាតុបញ្ច្រាសនៅថ្ងៃនេះ ហើយរក្សាចំណាយក្នុងបញ្ជីជាមោឃៈ។ បើវាខុស កត់ត្រាម្ដងទៀត។",
+  ],
+  x39_void_bill: [
+    "It was to pay later, so its supplier bill {0} is voided with it.",
+    "វាត្រូវបង់ពេលក្រោយ ដូច្នេះវិក្កយបត្រអ្នកផ្គត់ផ្គង់ {0} ក៏ត្រូវទុកជាមោឃៈជាមួយ។",
+  ],
+  x39_void_done: [
+    "{0} voided. Reversing entry {1}.",
+    "{0} បានទុកជាមោឃៈ។ ធាតុបញ្ច្រាស {1}។",
+  ],
+  x39_void_s: ["Voided by {0} · {1} · {2}", "ទុកជាមោឃៈដោយ {0} · {1} · {2}"],
+  x39_paid_first: [
+    "Reverse the payments of bill {0} first",
+    "បញ្ច្រាសការបង់របស់វិក្កយបត្រ {0} ជាមុនសិន",
+  ],
+  sb39_paid: ["Paid {0} on {1} from {2}", "បានបង់ {0} នៅ {1} ពី {2}"],
+  sb39_rev: ["Reverse payment", "បញ្ច្រាសការបង់"],
+  sb39_rev_t: ["Reverse a payment on {0}", "បញ្ច្រាសការបង់លើ {0}"],
+  sb39_rev_b: [
+    "{0} paid on {1} from {2} to {3}.",
+    "{0} បានបង់នៅ {1} ពី {2} ទៅ {3}។",
+  ],
+  sb39_rev_n: [
+    "Use this when the payment was made by mistake or was wrong. The bill owes this money again; pay it again if needed.",
+    "ប្រើពេលការបង់ធ្វើដោយច្រឡំ ឬខុស។ វិក្កយបត្រជំពាក់ប្រាក់នេះម្ដងទៀត; បង់ម្ដងទៀតបើត្រូវការ។",
+  ],
+  sb39_rev_done: [
+    "Payment on {0} reversed. Entry {1}.",
+    "ការបង់លើ {0} បានបញ្ច្រាស។ ធាតុ {1}។",
+  ],
+  sb39_reved: ["Reversed by {0} · {1} · {2}", "បញ្ច្រាសដោយ {0} · {1} · {2}"],
+  ent39: ["The entry:", "ធាតុ៖"],
+  wo_dr: ["debit {0}", "ឥណពន្ធ {0}"],
+  wo_cr: ["credit {0}", "ឥណទាន {0}"],
 } as const satisfies Record<string, readonly [string, string]>;
 
 export type LedgerTextKey = keyof typeof TEXT;

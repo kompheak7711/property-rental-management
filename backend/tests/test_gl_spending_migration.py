@@ -106,6 +106,28 @@ def test_the_lists_name_people_units_entries_and_bill_payments(borrowed: Books) 
     assert bill["payments"][0]["amount_cents"] == 1_000
     assert bill["payments"][0]["paid_from_code"] == "1020"
     assert bill["payments"][0]["reversed"] is False
+    assert bill["payments"][0]["paid_from_name"]
+    paid = next(row for row in expenses if row["supplier_bill_number"] == bill["bill_number"])
+    assert paid["bill_has_payments"] is True and paid["voided_by_name"] is None
+
+    # A reversed payment says who, when, why and its entry; the bill's expense can then be voided.
+    payment = UUID(bill["payments"][0]["id"])
+    books.call("gl_reverse_bill_payment", payment, books.owner, "Paid twice")
+    again = next(
+        row for row in money.rows("supplier-bills", books.property_id) if row["id"] == bill["id"]
+    )
+    reversed_payment = again["payments"][0]
+    assert reversed_payment["reversed"] is True
+    assert reversed_payment["reversal_reason"] == "Paid twice"
+    assert reversed_payment["reversed_at"] and reversed_payment["reversal_entry_number"]
+    assert "reversed_by_name" in reversed_payment
+    books.call("gl_void_expense", UUID(paid["id"]), books.owner, "Wrong supplier")
+    voided = next(
+        row for row in money.rows("expenses", books.property_id) if row["id"] == paid["id"]
+    )
+    assert voided["status"] == "VOID" and voided["void_reason"] == "Wrong supplier"
+    assert voided["voided_at"] and voided["void_entry_number"]
+    assert voided["bill_has_payments"] is False
 
 
 def test_the_runtime_login_can_run_the_spending_reads(migrated_database_url: str) -> None:

@@ -231,6 +231,10 @@ const EXPENSES: ExpenseRow[] = [
     void_reason: null,
     entry_number: "JE270011",
     supplier_bill_number: null,
+    voided_by_name: null,
+    voided_at: null,
+    void_entry_number: null,
+    bill_has_payments: false,
   },
   {
     id: "x-2",
@@ -252,6 +256,10 @@ const EXPENSES: ExpenseRow[] = [
     void_reason: null,
     entry_number: "JE270009",
     supplier_bill_number: "SB270001",
+    voided_by_name: null,
+    voided_at: null,
+    void_entry_number: null,
+    bill_has_payments: true,
   },
 ];
 
@@ -292,8 +300,14 @@ const BILLS: SupplierBill[] = [
         paid_on: "2027-02-05",
         amount_cents: 10_000,
         paid_from_code: "1020",
+        paid_from_name: "ABA Bank · USD account",
+        paid_from_name_km: null,
         entry_number: "JE270006",
         reversed: false,
+        reversal_reason: null,
+        reversed_at: null,
+        reversed_by_name: null,
+        reversal_entry_number: null,
       },
     ],
   },
@@ -761,6 +775,52 @@ describe("Expenses", () => {
     show("expenses", fakeApi(), new Set(["ledger.read"]));
     await screen.findByRole("link", { name: "EX270004" });
     expect(screen.queryByRole("button", { name: "Record a bill" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Void" })).toBeNull();
+  });
+
+  it("TEST-FE-1209 voids an expense with a reason and shows the reversing entry", async () => {
+    const voided: ExpenseRow = {
+      ...at(EXPENSES, 0),
+      status: "VOID",
+      void_reason: "Recorded twice",
+      voided_by_name: "Sok Chenda",
+      voided_at: "2027-02-10T03:00:00+00:00",
+      void_entry_number: "JE270020",
+    };
+    const expenses = vi
+      .fn<SpendingApi["expenses"]>()
+      .mockResolvedValueOnce(EXPENSES)
+      .mockResolvedValue([voided, at(EXPENSES, 1)]);
+    const api = fakeApi({ expenses });
+    show("expenses", api);
+    await screen.findByRole("link", { name: "EX270004" });
+    expect(
+      screen.getByText("Reverse the payments of bill SB270001 first"),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Void" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(dialog).toHaveTextContent(
+      "Sok Hardware · $50.00 · paid from 1400 · Staff advances",
+    );
+    expect(dialog).toHaveTextContent("1400 · debit $50.00");
+    expect(dialog).toHaveTextContent("6050 · credit $50.00");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Void" }));
+    expect(await within(dialog).findByText("Say why.")).toBeInTheDocument();
+    fireEvent.change(within(dialog).getByLabelText(/^Reason/), {
+      target: { value: "Recorded twice" },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Void" }));
+    expect(
+      await screen.findByText("EX270004 voided. Reversing entry JE270020."),
+    ).toBeInTheDocument();
+    expect(api.voidExpense).toHaveBeenCalledWith(
+      "prop-1",
+      "x-1",
+      "Recorded twice",
+    );
+    expect(
+      await screen.findByText(/^Voided by Sok Chenda · .* · Recorded twice$/),
+    ).toBeInTheDocument();
   });
 });
 
@@ -849,5 +909,62 @@ describe("Supplier bills", () => {
     expect(
       at(screen.getAllByRole("button", { name: "Pay" }), 0),
     ).toBeInTheDocument();
+  });
+
+  it("TEST-FE-1210 shows each payment under its bill and reverses one with a reason", async () => {
+    const reversedBills: SupplierBill[] = BILLS.map((bill) =>
+      bill.id === "b-2"
+        ? {
+            ...bill,
+            still_to_pay_cents: bill.amount_cents,
+            payments: bill.payments.map((payment) => ({
+              ...payment,
+              reversed: true,
+              reversal_reason: "Paid twice",
+              reversed_at: "2027-02-10T03:00:00+00:00",
+              reversed_by_name: "Kompheak",
+              reversal_entry_number: "JE270021",
+            })),
+          }
+        : bill,
+    );
+    const bills = vi
+      .fn<SpendingApi["bills"]>()
+      .mockResolvedValueOnce(BILLS)
+      .mockResolvedValue(reversedBills);
+    const api = fakeApi({ bills });
+    show("bills", api);
+    await screen.findByText("SB270002");
+    const row = screen.getByText("SB270002").closest("tr");
+    if (row === null) throw new Error("no row");
+    expect(row).toHaveTextContent(
+      "Paid $100.00 on 05/02/2027 from 1020 · ABA Bank · USD account",
+    );
+    fireEvent.click(
+      within(row).getByRole("button", { name: "Reverse payment" }),
+    );
+    const dialog = await screen.findByRole("dialog");
+    expect(dialog).toHaveTextContent("1020 · debit $100.00");
+    expect(dialog).toHaveTextContent("2010 · credit $100.00");
+    fireEvent.change(within(dialog).getByLabelText(/^Reason/), {
+      target: { value: "Paid twice" },
+    });
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Reverse payment" }),
+    );
+    expect(
+      await screen.findByText("Payment on SB270002 reversed. Entry JE270021."),
+    ).toBeInTheDocument();
+    expect(api.reverseBillPayment).toHaveBeenCalledWith(
+      "prop-1",
+      "p-1",
+      "Paid twice",
+    );
+    expect(
+      await screen.findByText(/Reversed by Kompheak · .* · Paid twice/),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Reverse payment" }),
+    ).toBeNull();
   });
 });
