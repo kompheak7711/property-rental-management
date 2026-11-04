@@ -584,6 +584,214 @@ const TEXT = {
   paid_on: ["Paid on", "បង់នៅថ្ងៃ"],
   // new
   by_unknown: ["Someone", "នរណាម្នាក់"],
+  // Bank and cash (step 6 part 3; mock-up app26 and app29)
+  bc_t: ["Bank and cash", "ធនាគារ និងសាច់ប្រាក់"],
+  bc_sub: [
+    "At each month end: match the bank book to the ABA statement, and count the cash. Month-end close checks both.",
+    "នៅចុងខែនីមួយៗ៖ ផ្ទៀងសៀវភៅធនាគារជាមួយរបាយការណ៍ ABA ហើយរាប់សាច់ប្រាក់។ ការបិទចុងខែពិនិត្យទាំងពីរ។",
+  ],
+  bc_bank: ["Bank reconciliation", "ការផ្ទៀងផ្ទាត់ធនាគារ"],
+  bc_cash: ["Cash count", "ការរាប់សាច់ប្រាក់"],
+  bk_done: ["Matched", "ត្រូវគ្នា"],
+  bk_done_by: ["Done by {0}, {1}", "ធ្វើដោយ {0}, {1}"],
+  bk_stmt: ["ABA statement balance on {0}", "សមតុល្យរបាយការណ៍ ABA នៅ {0}"],
+  bk_stmt_h: [
+    "Type the closing balance printed on the ABA statement.",
+    "វាយសមតុល្យចុងគ្រាដែលបោះពុម្ពលើរបាយការណ៍ ABA។",
+  ],
+  bk_in_book: [
+    "In the book, not on the statement yet",
+    "មាននៅសៀវភៅ មិនទាន់មានលើរបាយការណ៍",
+  ],
+  bk_in_stmt: [
+    "On the statement, not in the book yet",
+    "មានលើរបាយការណ៍ មិនទាន់មាននៅសៀវភៅ",
+  ],
+  bk_none: ["Nothing.", "គ្មាន។"],
+  bk_sum: ["Do they match?", "តើត្រូវគ្នាទេ?"],
+  bk_less_tr: [
+    "Less money in the book, not on the statement yet",
+    "ដកប្រាក់នៅសៀវភៅ មិនទាន់លើរបាយការណ៍",
+  ],
+  bk_adj: ["Book after these", "សៀវភៅក្រោយទាំងនេះ"],
+  bk_diff: ["Difference", "ភាពខុសគ្នា"],
+  bk_ok: ["Matches", "ត្រូវគ្នា"],
+  bk_bad: ["Does not match", "មិនត្រូវគ្នា"],
+  bk_ok_n: ["The book equals the statement.", "សៀវភៅស្មើរបាយការណ៍។"],
+  bk_bad_n: [
+    "Find the difference before you mark the month as matched.",
+    "រកភាពខុសគ្នាមុនពេលសម្គាល់ខែថាត្រូវគ្នា។",
+  ],
+  bk_mark: ["Mark as matched", "សម្គាល់ថាត្រូវគ្នា"],
+  bk_saved: ["Bank matched for {0}.", "ធនាគារត្រូវគ្នាសម្រាប់ {0}។"],
+  cc_done: ["Counted", "បានរាប់"],
+  cc_box: ["Cash", "សាច់ប្រាក់"],
+  cc_book: ["Book on {0}", "សៀវភៅនៅ {0}"],
+  cc_counted: ["Counted", "បានរាប់"],
+  cc_khr_n: [
+    "Count in riel. The app turns it into dollars at today's rate.",
+    "រាប់ជារៀល។ កម្មវិធីប្ដូរជាដុល្លារតាមអត្រាថ្ងៃនេះ។",
+  ],
+  cc_usd_n: ["Count in dollars", "រាប់ជាដុល្លារ"],
+  cc_about: ["About {0}", "ប្រហែល {0}"],
+  cc_sub: [
+    "Count the office cash and the petty cash at the end of {0}, then type what you counted.",
+    "រាប់សាច់ប្រាក់ការិយាល័យ និងសាច់ប្រាក់រាយនៅចុង {0} រួចវាយចំនួនដែលបានរាប់។",
+  ],
+  cc_e_all: [
+    "Type what you counted in every box.",
+    "សូមវាយចំនួនដែលបានរាប់គ្រប់ប្រអប់។",
+  ],
+  cc_why: ["Reason for any difference", "មូលហេតុនៃភាពខុសគ្នា"],
+  cc_why_h: [
+    "Needed only when a count is different. The difference goes to 6180 Cash short or over.",
+    "ត្រូវការតែពេលការរាប់ខុសគ្នា។ ភាពខុសគ្នាចូល 6180 សាច់ប្រាក់ខ្វះ ឬលើស។",
+  ],
+  cc_save: ["Save count", "រក្សាទុកការរាប់"],
+  cc_saved: [
+    "Cash count saved for {0}.",
+    "បានរក្សាទុកការរាប់សាច់ប្រាក់សម្រាប់ {0}។",
+  ],
+  mm_t: ["Move money", "ផ្ទេរប្រាក់"],
+  mm_from: ["From", "ពី"],
+  mm_to: ["To", "ទៅ"],
+  mm_riel: ["Riel amount", "ចំនួនរៀល"],
+  mm_rate: ["Rate (riel for 1 dollar)", "អត្រា (រៀលក្នុង ១ ដុល្លារ)"],
+  mm_rate_h: [
+    "The rate you really got. Today's ABA rate is filled in.",
+    "អត្រាដែលអ្នកទទួលបានពិត។ អត្រា ABA ថ្ងៃនេះបានបំពេញរួច។",
+  ],
+  mm_prev: [
+    "You get {0}. The books hold this riel at {1}. {2}",
+    "អ្នកទទួលបាន {0}។ សៀវភៅកាន់រៀលនេះនៅ {1}។ {2}",
+  ],
+  mm_gain: [
+    "Exchange gain {0} goes to 4100.",
+    "ចំណេញពីការប្ដូរប្រាក់ {0} ចូល ៤១០០។",
+  ],
+  mm_loss: [
+    "Exchange loss {0} goes to 4100.",
+    "ខាតពីការប្ដូរប្រាក់ {0} ចូល ៤១០០។",
+  ],
+  mm_n: [
+    "For riel, type the riel amount and the rate. The app works out the gain or loss.",
+    "សម្រាប់រៀល វាយចំនួនរៀល និងអត្រា។ កម្មវិធីគណនាចំណេញ ឬខាត។",
+  ],
+  mm_ok: ["Move money", "ផ្ទេរប្រាក់"],
+  mm_done: ["Money moved. Entry {0}.", "បានផ្ទេរប្រាក់។ ធាតុ {0}។"],
+  mm_e_same: ["Pick two different places.", "ជ្រើសកន្លែងពីរផ្សេងគ្នា។"],
+  mm_e_riel: ["Type the riel amount and the rate.", "វាយចំនួនរៀល និងអត្រា។"],
+  mm_e_bal: [
+    "There is not that much money there.",
+    "មិនមានប្រាក់ច្រើនដល់ម្ល៉េះទេ។",
+  ],
+  ow_t: ["Owner money", "ប្រាក់ម្ចាស់"],
+  ow_dir: ["Which way", "ទិសដៅ"],
+  ow_in: ["Money in", "ដាក់ប្រាក់ចូល"],
+  ow_in_s: [
+    "The Owner puts money into the business. 3000 Owner's capital.",
+    "ម្ចាស់ដាក់ប្រាក់ចូលអាជីវកម្ម។ ៣០០០ ដើមទុនម្ចាស់។",
+  ],
+  ow_out: ["Money out", "ដកប្រាក់ចេញ"],
+  ow_out_s: [
+    "The Owner takes money for themselves. 3100 Owner's drawings.",
+    "ម្ចាស់ដកប្រាក់សម្រាប់ខ្លួន។ ៣១០០ ការដកប្រាក់របស់ម្ចាស់។",
+  ],
+  ow_acc: ["Cash or bank", "សាច់ប្រាក់ ឬធនាគារ"],
+  ow_note: ["Note", "កំណត់ចំណាំ"],
+  ow_n: [
+    "Only the Owner can do this. It is not income and not an expense.",
+    "មានតែម្ចាស់ទេដែលធ្វើបាន។ វាមិនមែនជាចំណូល ឬចំណាយទេ។",
+  ],
+  ow_ok: ["Save", "រក្សាទុក"],
+  ow_done_in: [
+    "Owner money in {0}. Entry {1}.",
+    "ម្ចាស់ដាក់ប្រាក់ចូល {0}។ ធាតុ {1}។",
+  ],
+  ow_done_out: [
+    "Owner money out {0}. Entry {1}.",
+    "ម្ចាស់ដកប្រាក់ចេញ {0}។ ធាតុ {1}។",
+  ],
+  pt_t: ["Top up petty cash", "បំពេញសាច់ប្រាក់រាយ"],
+  pt_now: [
+    "Petty cash float {0}. In petty cash now {1}. You can add up to {2}.",
+    "ប្រាក់រាយកំណត់ {0}។ មានក្នុងប្រាក់រាយឥឡូវ {1}។ អាចបន្ថែមរហូតដល់ {2}។",
+  ],
+  pt_ok: ["Top up", "បំពេញ"],
+  pt_done: [
+    "Petty cash topped up {0}. Entry {1}.",
+    "បានបំពេញសាច់ប្រាក់រាយ {0}។ ធាតុ {1}។",
+  ],
+  pt_e_max: [
+    "That is more than the float allows, or more than there is to take.",
+    "ច្រើនជាងប្រាក់រាយកំណត់ ឬច្រើនជាងប្រាក់ដែលមាន។",
+  ],
+  pt_card: ["Petty cash", "សាច់ប្រាក់រាយ"],
+  pt_float: ["Float (Petty cash rule)", "ប្រាក់រាយកំណត់ (ច្បាប់សាច់ប្រាក់រាយ)"],
+  pt_bal: ["In petty cash now", "មានក្នុងប្រាក់រាយឥឡូវ"],
+  pt_gap: ["Can top up", "អាចបំពេញ"],
+  pt_open: [
+    "Bills not recorded yet: {0}, {1}",
+    "វិក្កយបត្រមិនទាន់កត់ត្រា៖ {0} សរុប {1}",
+  ],
+  pt_open0: [
+    "Every petty cash bill is recorded.",
+    "វិក្កយបត្រប្រាក់រាយទាំងអស់បានកត់ត្រា។",
+  ],
+  pt_n: [
+    "Top up only up to the float in the Petty cash business rule.",
+    "បំពេញត្រឹមប្រាក់រាយកំណត់ក្នុងច្បាប់អាជីវកម្មសាច់ប្រាក់រាយ។",
+  ],
+  kh_t: ["Riel cash", "សាច់ប្រាក់រៀល"],
+  kh_q: ["Riel held", "រៀលដែលកាន់"],
+  kh_b: ["Value in the books (1011)", "តម្លៃក្នុងសៀវភៅ (១០១១)"],
+  kh_last: ["Last month-end value", "តម្លៃចុងខែចុងក្រោយ"],
+  kh_n: [
+    "On the last day of each month the app values riel cash at the month-end rate. The difference goes to 4100.",
+    "នៅថ្ងៃចុងខែ កម្មវិធីវាយតម្លៃសាច់ប្រាក់រៀលតាមអត្រាចុងខែ។ ភាពខុសគ្នាចូល ៤១០០។",
+  ],
+  br_e_reason: ["Say why.", "សូមប្រាប់មូលហេតុ។"],
+  bk_book: ["Bank book ({1}) on {0}", "សៀវភៅធនាគារ ({1}) នៅ {0}"],
+  // new
+  bk_tick: [
+    "Tick each line that is not on the ABA statement yet.",
+    "គូសបន្ទាត់នីមួយៗដែលមិនទាន់មានលើរបាយការណ៍ ABA។",
+  ],
+  // new
+  bk_not_yet: ["Not on the statement yet", "មិនទាន់មានលើរបាយការណ៍"],
+  // new
+  bk_fee_how: [
+    "A bank fee or interest on the statement: record it in Expenses, paid from {0}. Then come back here.",
+    "ថ្លៃធនាគារ ឬការប្រាក់លើរបាយការណ៍៖ កត់ត្រាវានៅក្នុងចំណាយ បង់ពី {0}។ បន្ទាប់មកត្រឡប់មកទីនេះវិញ។",
+  ],
+  // new
+  bk_go_x: ["Open Expenses", "បើកចំណាយ"],
+  // new
+  bk_e_stmt: ["Type the statement balance.", "សូមវាយសមតុល្យរបាយការណ៍។"],
+  // new
+  mm_riel_in: ["Riel received", "រៀលដែលទទួលបាន"],
+  // new
+  mm_riel_in_h: [
+    "The riel counted into riel cash. The books hold it at the dollar amount until the month end.",
+    "រៀលដែលរាប់ចូលសាច់ប្រាក់រៀល។ សៀវភៅកាន់វាតាមចំនួនដុល្លាររហូតដល់ចុងខែ។",
+  ],
+  // new
+  cc_e_rate: [
+    "There is no riel rate for today, so riel cannot be counted. Ask the Owner to set it in Settings.",
+    "មិនមានអត្រារៀលសម្រាប់ថ្ងៃនេះ ដូច្នេះមិនអាចរាប់រៀលបានទេ។ សូមស្នើម្ចាស់ឱ្យកំណត់វានៅក្នុងការកំណត់។",
+  ],
+  // new
+  bc_no_month: [
+    "No month has ended since the ledger started.",
+    "មិនទាន់មានខែណាបញ្ចប់ចាប់តាំងពីសៀវភៅបញ្ជីចាប់ផ្ដើម។",
+  ],
+  // new
+  bc_no_bank: [
+    "There is no bank account in the chart of accounts.",
+    "មិនមានគណនីធនាគារក្នុងតារាងគណនីទេ។",
+  ],
+  // new
+  bc_closed: ["This month is closed.", "ខែនេះបានបិទ។"],
 } as const satisfies Record<string, readonly [string, string]>;
 
 export type LedgerTextKey = keyof typeof TEXT;

@@ -145,6 +145,8 @@ import { ReservationsPage } from "./reservations/ReservationsPage";
 import { ct } from "./customers/text";
 import { UnitsPage } from "./units/UnitsPage";
 import { LedgerPage } from "./ledger/LedgerPage";
+import { BankCashPage } from "./ledger/BankCashPage";
+import type { CashApi } from "./ledger/cashClient";
 import { SpendingPage } from "./ledger/SpendingPage";
 import type { SpendingApi } from "./ledger/spendingClient";
 import type { LedgerApi } from "./ledger/ledgerClient";
@@ -167,6 +169,7 @@ export interface AppProps {
   generalLedgerApi?: LedgerApi;
   /** General Ledger step 6 part 2: Expense requests, Expenses, Supplier bills. */
   spendingApi?: SpendingApi;
+  cashApi?: CashApi;
   propertyApi?: PropertyConfigurationApi;
   unitApi?: UnitApi;
   businessSettingsApi?: BusinessSettingsApi;
@@ -645,6 +648,7 @@ export function App({
   productsApi,
   generalLedgerApi,
   spendingApi,
+  cashApi,
   propertyApi = propertyConfigurationApi,
   unitApi,
   customerApi,
@@ -1891,6 +1895,19 @@ export function App({
           language={language}
           propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
           tab="statements"
+        />
+      </div>
+      <div
+        className="shell-page"
+        data-page="bankcash"
+        hidden={!shown("bankcash")}
+      >
+        <BankCashPage
+          active={shown("bankcash")}
+          api={cashApi}
+          capabilities={capabilities}
+          language={language}
+          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
         />
       </div>
       <div

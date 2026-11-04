@@ -61446,6 +61446,160 @@
       "test_path": "backend/tests/test_gl_spending_migration.py",
       "status": "implemented",
       "notes": "General Ledger phase 6 step 6 part 2 (spending reads for the ledger screens): The runtime login can run the spending reads."
+    },
+    {
+      "test_id": "test_the_ledger_readers_see_bank_and_cash_for_a_month",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-009"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_ledger_cash.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 3 (Bank and cash read for the ledger screen): The ledger readers see bank and cash for a month."
+    },
+    {
+      "test_id": "test_the_bank_and_cash_read_refuses_unknown_values",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-009"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_ledger_cash.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 3 (Bank and cash read for the ledger screen): The bank and cash read refuses unknown values."
+    },
+    {
+      "test_id": "test_the_entry_of_a_money_record_is_read_by_its_kind",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-009"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_ledger_cash.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 3 (Bank and cash read for the ledger screen): The entry of a money record is read by its kind."
+    },
+    {
+      "test_id": "test_a_month_shows_the_bank_lines_to_match_and_the_cash_to_count",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-009"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_cash_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 3 (Bank and cash read for the ledger screen): A month shows the bank lines to match and the cash to count."
+    },
+    {
+      "test_id": "test_petty_cash_and_riel_cash_show_what_they_hold",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-009"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_cash_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 3 (Bank and cash read for the ledger screen): Petty cash and riel cash show what they hold."
+    },
+    {
+      "test_id": "test_the_runtime_login_can_run_the_bank_and_cash_read",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-009"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_cash_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 3 (Bank and cash read for the ledger screen): The runtime login can run the bank and cash read."
+    },
+    {
+      "test_id": "TEST-FE-1182",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-009"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/BankCashPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 3 (Bank and cash; mock-up v76): Shows the petty cash float, the riel held and the month to match."
+    },
+    {
+      "test_id": "TEST-FE-1183",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-009"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/BankCashPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 3 (Bank and cash; mock-up v76): Matches the bank once the lines not on the statement are ticked."
+    },
+    {
+      "test_id": "TEST-FE-1184",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-009"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/BankCashPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 3 (Bank and cash; mock-up v76): Shows a matched month and a counted month as done."
+    },
+    {
+      "test_id": "TEST-FE-1185",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-009"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/BankCashPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 3 (Bank and cash; mock-up v76): Counts dollars and riel, and a difference needs a reason."
+    },
+    {
+      "test_id": "TEST-FE-1186",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-009"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/BankCashPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 3 (Bank and cash; mock-up v76): Moves money between places and says which entry it made."
+    },
+    {
+      "test_id": "TEST-FE-1187",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-009"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/BankCashPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 3 (Bank and cash; mock-up v76): Changes riel at the rate typed and shows the gain."
+    },
+    {
+      "test_id": "TEST-FE-1188",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-009"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/BankCashPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 3 (Bank and cash; mock-up v76): Tops up petty cash only up to the float."
+    },
+    {
+      "test_id": "TEST-FE-1189",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-009"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/BankCashPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 3 (Bank and cash; mock-up v76): Lets only the Owner record Owner money, with a note."
     }
   ]
 }

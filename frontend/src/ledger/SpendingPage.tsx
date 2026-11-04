@@ -88,7 +88,7 @@ function daysBetween(from: string, to: string): number {
   return Math.round((Date.parse(to) - Date.parse(from)) / 86_400_000);
 }
 
-function useBusy(language: Language): {
+export function useBusy(language: Language): {
   busy: boolean;
   failure: string | null;
   run: <T>(work: () => Promise<T>, done: (value: T) => void) => void;
@@ -171,7 +171,7 @@ export function SpendingPage({
 
 /* ---------- shared pieces ---------- */
 
-function Done({ text }: { text: string | null }) {
+export function Done({ text }: { text: string | null }) {
   if (text === null) return null;
   return (
     <div className="ui-notice ok" role="status">
@@ -181,7 +181,7 @@ function Done({ text }: { text: string | null }) {
   );
 }
 
-function Failure({ text }: { text: string | null }) {
+export function Failure({ text }: { text: string | null }) {
   if (text === null) return null;
   return (
     <p className="ui-error" role="alert">
@@ -190,7 +190,7 @@ function Failure({ text }: { text: string | null }) {
   );
 }
 
-function FieldError({ id, text }: { id: string; text: string | null }) {
+export function FieldError({ id, text }: { id: string; text: string | null }) {
   if (text === null) return null;
   return (
     <p className="ui-error" id={id}>
@@ -300,7 +300,7 @@ function SupplierField({
   );
 }
 
-function AmountField({
+export function AmountField({
   id,
   label,
   value,
