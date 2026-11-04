@@ -106,6 +106,7 @@ describe("Totals by Unit and month", () => {
       "Monthly Rent and Services",
       "Utilities",
       "Move-out and damage",
+      "Products and services",
       "Late charges and kept Deposits",
     ]);
     // A part the screen does not know is added to the last part.
@@ -113,6 +114,7 @@ describe("Totals by Unit and month", () => {
       "October 2026",
       "$800.00",
       "$120.00",
+      "$0.00",
       "$0.00",
       "$60.00",
     ]);
