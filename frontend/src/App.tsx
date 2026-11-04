@@ -162,6 +162,11 @@ import { ProductsPage } from "./products/ProductsPage";
 import { QuotationsPage } from "./quotations/QuotationsPage";
 import { ProblemReportsPage } from "./problems/ProblemReportsPage";
 import type { ProblemsApi } from "./problems/problemsClient";
+import {
+  LinkedTenantsPage,
+  TelegramHealthPage,
+} from "./telegram/TelegramPages";
+import type { TelegramApi } from "./telegram/telegramClient";
 import type { QuotationsApi } from "./quotations/quotationsClient";
 import type { ProductsApi } from "./products/productsClient";
 import { type ActorAccessApi, actorAccessApi } from "./shell/accessClient";
@@ -190,6 +195,8 @@ export interface AppProps {
   quotationsApi?: QuotationsApi;
   /** V1.1 part 7: Building › Problem reports; the real server when not given. */
   problemsApi?: ProblemsApi;
+  /** Telegram bots step 2c: Office › Telegram; the real server when not given. */
+  telegramApi?: TelegramApi;
   propertyApi?: PropertyConfigurationApi;
   unitApi?: UnitApi;
   businessSettingsApi?: BusinessSettingsApi;
@@ -675,6 +682,7 @@ export function App({
   openingApi,
   quotationsApi,
   problemsApi,
+  telegramApi,
   propertyApi = propertyConfigurationApi,
   unitApi,
   customerApi,
@@ -1994,6 +2002,32 @@ export function App({
         <ProblemReportsPage
           active={shown("problems")}
           api={problemsApi}
+          capabilities={capabilities}
+          language={language}
+          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
+        />
+      </div>
+      <div
+        className="shell-page"
+        data-page="tglinks"
+        hidden={!shown("tglinks")}
+      >
+        <LinkedTenantsPage
+          active={shown("tglinks")}
+          api={telegramApi}
+          capabilities={capabilities}
+          language={language}
+          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
+        />
+      </div>
+      <div
+        className="shell-page"
+        data-page="tghealth"
+        hidden={!shown("tghealth")}
+      >
+        <TelegramHealthPage
+          active={shown("tghealth")}
+          api={telegramApi}
           capabilities={capabilities}
           language={language}
           propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}

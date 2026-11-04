@@ -353,6 +353,12 @@ from property_rental.settlement_correction_api import (
     PostgresCorrectionFlow,
     create_settlement_correction_router,
 )
+from property_rental.telegram_api import (
+    PostgresTelegramPageFlow,
+    TelegramPageFlow,
+    UnavailableTelegramPageFlow,
+    create_telegram_router,
+)
 from property_rental.unit_api import (
     PostgresUnitResourceFlow,
     UnavailableUnitResourceFlow,
@@ -621,6 +627,7 @@ def create_app(
     product_flow: ProductFlow | None = None,
     quotation_flow: QuotationFlow | None = None,
     problem_report_flow: ProblemReportFlow | None = None,
+    telegram_page_flow: TelegramPageFlow | None = None,
     ledger_posting_flow: LedgerPostingFlow | None = None,
     ledger_money_flow: LedgerMoneyFlow | None = None,
     ledger_close_flow: LedgerCloseFlow | None = None,
@@ -1311,6 +1318,18 @@ def create_app(
                 )
                 if resolved_settings.database_url is not None
                 else UnavailableProblemReportFlow()
+            ),
+            resolved_settings,
+        )
+    )
+    include_signed_in(
+        create_telegram_router(
+            actor_resolver,
+            telegram_page_flow
+            or (
+                PostgresTelegramPageFlow(resolved_settings.database_url.get_secret_value())
+                if resolved_settings.database_url is not None
+                else UnavailableTelegramPageFlow()
             ),
             resolved_settings,
         )

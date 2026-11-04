@@ -62900,6 +62900,122 @@
       "test_path": "backend/tests/test_telegram_tenant_bot.py",
       "status": "implemented",
       "notes": "Telegram bots step 2b: The access list and form choices are sent to the relay only when they change, and again after a failed send."
+    },
+    {
+      "test_id": "test_linked_tenants_shows_links_wrong_tries_and_ended_links",
+      "upstream_ids": [
+        "DL-128",
+        "DB-TG-004"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_app_pages_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 2c: Linked tenants shows the links in force, the wrong link tries with tries left, the ended links, and Remove link with a reason; Staff are refused."
+    },
+    {
+      "test_id": "test_telegram_health_lists_messages_not_sent_and_retries_a_given_up_one_once",
+      "upstream_ids": [
+        "DL-128",
+        "DB-TG-004"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_app_pages_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 2c: Telegram health lists the bots and the messages not sent with their last error; Retry works only on a given-up message and only once."
+    },
+    {
+      "test_id": "test_the_telegram_pages_need_telegram_read",
+      "upstream_ids": [
+        "DL-128",
+        "API-TG-001"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_api.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 2c: Both pages need telegram.read for the Property and are never cached."
+    },
+    {
+      "test_id": "test_remove_link_needs_operate_a_reason_and_the_browser_checks",
+      "upstream_ids": [
+        "DL-128",
+        "API-TG-001"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_api.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 2c: Remove link needs telegram.operate, a reason and the browser mutation checks; an ended link is 409 and a missing one 404."
+    },
+    {
+      "test_id": "test_retry_sends_a_given_up_message_once",
+      "upstream_ids": [
+        "DL-128",
+        "API-TG-001"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_api.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 2c: Retry needs telegram.operate, answers 201 with the health page, and a second Retry is 409."
+    },
+    {
+      "test_id": "TEST-FE-1299",
+      "upstream_ids": [
+        "DL-128"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/telegram/TelegramPages.test.tsx",
+      "status": "implemented",
+      "notes": "Telegram bots step 2c: Linked tenants lists the links in force, the link tries that did not match with tries left or blocked until, and the ended links with why."
+    },
+    {
+      "test_id": "TEST-FE-1300",
+      "upstream_ids": [
+        "DL-128"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/telegram/TelegramPages.test.tsx",
+      "status": "implemented",
+      "notes": "Telegram bots step 2c: Remove link needs a reason and shows the list the server answers; an ended link reads the list again; no button without telegram.operate."
+    },
+    {
+      "test_id": "TEST-FE-1301",
+      "upstream_ids": [
+        "DL-128"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/telegram/TelegramPages.test.tsx",
+      "status": "implemented",
+      "notes": "Telegram bots step 2c: Telegram health shows the last pull, the counts, each bot's state, the messages not sent with their last error and the last pulls; no bot key is shown."
+    },
+    {
+      "test_id": "TEST-FE-1302",
+      "upstream_ids": [
+        "DL-128"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/telegram/TelegramPages.test.tsx",
+      "status": "implemented",
+      "notes": "Telegram bots step 2c: Retry shows only on a given-up message to a person with telegram.operate, sends once and shows Sent again; a refused Retry reads the page again."
+    },
+    {
+      "test_id": "TEST-FE-1303",
+      "upstream_ids": [
+        "DL-128",
+        "API-TG-001"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/telegram/TelegramPages.test.tsx",
+      "status": "implemented",
+      "notes": "Telegram bots step 2c: The client reads the pages, sends Remove link and Retry with the browser token, and refuses an answer of the wrong shape."
+    },
+    {
+      "test_id": "TEST-FE-1304",
+      "upstream_ids": [
+        "DL-128"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/telegram/TelegramPages.test.tsx",
+      "status": "implemented",
+      "notes": "Telegram bots step 2c: The pages show in Khmer and ask for a Property first when none is chosen."
     }
   ]
 }

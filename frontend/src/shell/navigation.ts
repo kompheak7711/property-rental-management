@@ -34,6 +34,8 @@ export type PageId =
   | "fassets"
   | "bankcash"
   | "lclose"
+  | "tglinks"
+  | "tghealth"
   | "account";
 
 export type IconName =
@@ -52,7 +54,8 @@ export type IconName =
   | "moveout"
   | "reports"
   | "history"
-  | "settings";
+  | "settings"
+  | "send";
 
 export interface MenuItem {
   /** The page the menu link opens; with tabs, the first tab. */
@@ -142,6 +145,14 @@ export const MENU: readonly MenuGroup[] = [
           "lclose",
         ],
       },
+      // Telegram bots step 2c (DL-128, mock-up round 29): Office › Telegram. Contact office and
+      // FAQ come in a later step.
+      {
+        page: "tglinks",
+        icon: "send",
+        label: ["Telegram", "តេឡេក្រាម"],
+        tabs: ["tglinks", "tghealth"],
+      },
       { page: "reports", icon: "reports" },
       { page: "history", icon: "history" },
       { page: "settings", icon: "settings" },
@@ -185,6 +196,8 @@ const PAGE_NAMES: Record<PageId, readonly [string, string]> = {
   fassets: ["Fixed assets", "ទ្រព្យសកម្មរយៈពេលវែង"],
   bankcash: ["Bank and cash", "ធនាគារ និងសាច់ប្រាក់"],
   lclose: ["Month-end close", "ការបិទចុងខែ"],
+  tglinks: ["Linked tenants", "អ្នកជួលដែលបានភ្ជាប់"],
+  tghealth: ["Telegram health", "ស្ថានភាពតេឡេក្រាម"],
   // new
   account: ["My account", "គណនីរបស់ខ្ញុំ"],
 };
@@ -241,6 +254,9 @@ const PAGE_NEEDS: Record<PageId, readonly string[] | null> = {
   fassets: ["ledger.read"],
   bankcash: ["ledger.read"],
   lclose: ["ledger.read"],
+  // Telegram bots step 2c (DL-128): Owner and Manager for now.
+  tglinks: ["telegram.read"],
+  tghealth: ["telegram.read"],
   account: null,
 };
 

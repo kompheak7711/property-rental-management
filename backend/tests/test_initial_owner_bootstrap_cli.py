@@ -1042,6 +1042,11 @@ def test_fastapi_openapi_inventory_has_no_bootstrap_or_unauthenticated_owner_res
         "/api/v1/properties/{property_id}/problem-reports/{report_id}/cost": {"post"},
         "/api/v1/properties/{property_id}/problem-reports/{report_id}/cost-check": {"post"},
         "/api/v1/properties/{property_id}/problem-reports/{report_id}/tenant-answer": {"post"},
+        # Telegram bots step 2c (DL-128).
+        "/api/v1/properties/{property_id}/telegram/links": {"get"},
+        "/api/v1/properties/{property_id}/telegram/links/{link_id}/remove": {"post"},
+        "/api/v1/properties/{property_id}/telegram/health": {"get"},
+        "/api/v1/properties/{property_id}/telegram/outbox/{message_id}/retry": {"post"},
         "/api/v1/properties/{property_id}/ledger/bank-cash": {"get"},
         "/api/v1/properties/{property_id}/ledger/month-end": {"get"},
         "/api/v1/properties/{property_id}/ledger/asset-register": {"get"},

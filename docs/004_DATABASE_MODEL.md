@@ -5772,3 +5772,11 @@ Added by DL-127 (migration `20270521_283`, forward-only).
 - `app.tenant_problem_report_sources` (report, the pulled form in `telegram_inbound_events` (once), Telegram account, tenant link). Append-only. Each form makes one report.
 - `app.media_files` also takes `audio/webm` (voice notes recorded on Android).
 - The runtime login cannot read these tables. Functions (`telegram.operate`): `app.telegram_tenant_form_data` (choices and access list for the relay), `app.telegram_tenant_problem_report` (checks the link and the form, saves the report with source TENANT_BOT, its files and "Same problem" join; a wrong form gives a fixed reason and saves nothing).
+
+## DB-TG-004 — Telegram app pages (bots step 2c)
+
+Added by DL-128 (migration `20270522_284`, forward-only).
+
+- `app.telegram_outbox_retries` (the given-up message, its one copy in the outbox, when, by whom). Append-only; one Retry per message.
+- `app.telegram_tenant_link_remove` now says "the link does not exist" (22023) and "The link has already ended" (55000).
+- The runtime login cannot read the table. Functions: `app.telegram_links_page` and `app.telegram_health_page` (`telegram.read`), `app.telegram_outbox_retry` (`telegram.operate`; only a GAVE_UP message, only once). No bot key is stored or answered.

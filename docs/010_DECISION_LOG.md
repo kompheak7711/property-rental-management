@@ -2603,6 +2603,21 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **Links:** DL-124, DL-125, DL-126.
 - **Decision date:** 2026-11-04.
 
+## DL-128 — Telegram bots: the app pages Linked tenants and Telegram health (bots step 2c)
+
+- **Type:** `TECHNICAL DECISION`
+- **Status:** `STEP 2C BUILT ON BRANCH claude/telegram-bots; WAITS FOR THE OWNER'S TEST`
+- **Source:** mock-up round 29 (Office > Telegram: 5 Linked tenants, 8 Telegram health), approved with the Telegram bots app screens (3 Nov 2026 10:45), and the owner's "T1 - T5: all recommended" (3 Nov 2026 08:36). Technical choices by Claude under the owner's 2026-10-23 22:30 rule; no new business rule.
+- **(A) The menu.** Office > Telegram with the tabs Linked tenants and Telegram health. For now only a person with "See Telegram health" (`telegram.read`, Owner and Manager) sees them. Contact office and FAQ come in a later step.
+- **(B) Linked tenants.** Linked now: the shared phone and Telegram account, Customer, Unit, Lease end and linked on. Link tries that did not match: each Telegram account with wrong tries in the last 24 hours, its last typed name and Unit, tries left or blocked until. Ended links: the last 90 days with why (the Lease ended, removed by the office, or a new link took its place) and the note.
+- **(C) Remove link.** Needs "Run Telegram jobs" (`telegram.operate`) and a reason (1 to 300 letters). The link ends at once and moves to Ended links; the bot shows only Link my Lease again. A link that has already ended is refused (409) and the list is read again.
+- **(D) Telegram health.** The last relay pull and its items, messages waiting to send, messages failing for 12 hours or more, items the relay deleted after 7 days, each bot's state and last message in and out, the messages not sent yet with their tries and last error, and the last 10 relay pulls. No bot key is ever read or shown.
+- **(E) Retry.** Only on a message the app gave up on (failing for 7 days) and only once (`telegram.operate`). It puts a copy of the message in the outbox; the send job sends it within a minute. A message still being tried, or one already sent again, is refused (409).
+- **Open:** Looks right and Add a new phone on Linked tenants; Staff access to Linked tenants (the design lets Staff link tenants). The Khmer texts marked new need a native-speaker check.
+- **Built:** migration `20270522_284` (DB-TG-004), API-TG-001, `frontend/src/telegram/`.
+- **Links:** DL-125, DL-126.
+- **Decision date:** 2026-11-04.
+
 ## DL-130 — Problem reports: repair cost and its Expense report
 
 - **Type:** `OWNER BUSINESS DECISION`
