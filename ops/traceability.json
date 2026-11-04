@@ -62294,6 +62294,218 @@
       "test_path": "backend/tests/test_gl_opening_sheet_migration.py",
       "status": "implemented",
       "notes": "Owner test 04/11/2026 follow-up: every close list (adjusting entries, periods, bank lines and matches, write-offs, budgets and the rest) runs with the runtime login; the write-off list reads the Final Settlement through app.gl_write_off_settlement (migration 20270428_278)."
+    },
+    {
+      "test_id": "test_the_relay_is_allowed_out_when_the_bots_are_on",
+      "upstream_ids": [
+        "DEPLOY-016",
+        "DL-125"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_operations_deployment_config.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 1: The relay address joins the outbound list only while the Telegram bots are on; each bot token is its own secret file."
+    },
+    {
+      "test_id": "test_rights_owner_and_manager_run_the_jobs_staff_cannot",
+      "upstream_ids": [
+        "DL-125",
+        "DB-TG-001",
+        "SEC-059"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_telegram_base_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 1: Only an account with the Owner or Manager Telegram rights may run the bot job functions; Staff and no actor are refused."
+    },
+    {
+      "test_id": "test_an_item_is_saved_once_with_its_account_and_photos",
+      "upstream_ids": [
+        "DL-125",
+        "DB-TG-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_telegram_base_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 1: Each relay item and each Telegram update is saved once; a photo is saved once by its fingerprint; a later message keeps the shared phone."
+    },
+    {
+      "test_id": "test_history_is_never_changed_and_the_runtime_login_cannot_write",
+      "upstream_ids": [
+        "DL-125",
+        "DB-TG-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_telegram_base_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 1: Telegram history rows refuse update and delete, and the runtime login cannot write the tables directly."
+    },
+    {
+      "test_id": "test_outbox_tries_waits_and_finishes_once",
+      "upstream_ids": [
+        "DL-125",
+        "DB-TG-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_telegram_base_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 1: A failed send waits before the next try, a sent message is final once, and a message failing for 7 days is given up."
+    },
+    {
+      "test_id": "test_pull_runs_and_health",
+      "upstream_ids": [
+        "DL-125",
+        "DB-TG-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_telegram_base_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 1: Each pull run is recorded and the Telegram health read shows the last outcome and the relay drop count."
+    },
+    {
+      "test_id": "test_raw_messages_are_removed_after_90_days_and_the_summary_stays",
+      "upstream_ids": [
+        "DL-125",
+        "DB-TG-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_telegram_base_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 1: The raw Telegram message is removed after 90 days and the summary stays."
+    },
+    {
+      "test_id": "test_pull_saves_each_item_once_keeps_photos_and_confirms",
+      "upstream_ids": [
+        "DL-125"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_jobs.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 1: The pull job opens each sealed item, saves it once, stores its photos by fingerprint and confirms to the relay."
+    },
+    {
+      "test_id": "test_an_item_that_cannot_be_opened_or_whose_photo_changed_stays_in_the_relay",
+      "upstream_ids": [
+        "DL-125"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_jobs.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 1: An item that cannot be opened, or whose photo does not match, is not confirmed and stays in the relay."
+    },
+    {
+      "test_id": "test_a_shared_phone_counts_only_when_it_is_the_persons_own",
+      "upstream_ids": [
+        "DL-125"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_jobs.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 1: A shared phone is kept only when it is the sender's own contact."
+    },
+    {
+      "test_id": "test_a_failed_pull_or_confirm_is_recorded_with_a_fixed_code",
+      "upstream_ids": [
+        "DL-125",
+        "SEC-059"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_jobs.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 1: A failed pull or confirm is recorded with a fixed code and no secret or message text."
+    },
+    {
+      "test_id": "test_send_job_sends_records_and_reports_fixed_codes",
+      "upstream_ids": [
+        "DL-125"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_jobs.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 1: The send job sends each due outbox message, records each try and reports only fixed error codes."
+    },
+    {
+      "test_id": "test_bot_keys_are_read_only_when_they_look_like_keys",
+      "upstream_ids": [
+        "DL-125",
+        "DEPLOY-016"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_jobs.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 1: Bot token and pull key files are read only when they have the expected shape."
+    },
+    {
+      "test_id": "test_phone_numbers_in_one_format",
+      "upstream_ids": [
+        "DL-125"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_jobs.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 1: Phone numbers written in different ways match in one +855 format."
+    },
+    {
+      "test_id": "test_texts_fill_only_their_own_fields",
+      "upstream_ids": [
+        "DL-125"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_jobs.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 1: Bot texts are fixed Khmer and English texts that fill only their own fields."
+    },
+    {
+      "test_id": "test_signed_calls_match_the_relay_format",
+      "upstream_ids": [
+        "DL-125"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_jobs.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 1: Office calls to the relay are signed in the format the relay checks."
+    },
+    {
+      "test_id": "test_bot_warnings_show_only_when_the_bots_are_on",
+      "upstream_ids": [
+        "DL-125",
+        "DEPLOY-016"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_jobs.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 1: The Telegram bot health warnings show only after the bot jobs have run."
+    },
+    {
+      "test_id": "test_a_sealed_item_opens_with_the_office_key_under_its_own_id",
+      "upstream_ids": [
+        "DL-125",
+        "SEC-059"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_seal.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 1: A sealed item opens only with the office key and only under its own item id; a changed or broken item is refused."
+    },
+    {
+      "test_id": "test_the_office_key_file_must_be_a_strong_rsa_key",
+      "upstream_ids": [
+        "DL-125"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_seal.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 1: The office private key must be an RSA key of 3072 bits or more."
+    },
+    {
+      "test_id": "test_what_the_relay_code_seals_opens_here",
+      "upstream_ids": [
+        "DL-125"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_seal.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 1: What the relay's TypeScript code seals opens with the Python office code (skipped without Node.js 22.6)."
     }
   ]
 }
