@@ -56,11 +56,11 @@ export interface LedgerPageProps {
   api?: LedgerApi;
 }
 
-function money(cents: number | null | undefined): string {
+export function money(cents: number | null | undefined): string {
   return cents === null || cents === undefined ? "" : usdFromCents(cents);
 }
 
-function accountName(
+export function accountName(
   language: Language,
   account: { name_en: string; name_km: string | null },
 ): string {
@@ -79,7 +79,7 @@ function refusal(language: Language, error: unknown): string {
   return lt(language, "f_failed");
 }
 
-function Waiting({
+export function Waiting({
   language,
   failed,
   onRetry,
@@ -107,7 +107,7 @@ function Waiting({
 }
 
 /** Reads one thing each time the tab is opened, so it shows what others changed meanwhile. */
-function useRead<T>(
+export function useRead<T>(
   active: boolean,
   read: (() => Promise<T>) | null,
 ): { data: T | null; failed: boolean; reload: () => void } {

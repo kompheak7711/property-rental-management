@@ -192,11 +192,11 @@ export class LedgerError extends Error {
   }
 }
 
-function isObject(value: unknown): value is Record<string, unknown> {
+export function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
-function csrfToken(): string {
+export function csrfToken(): string {
   const prefix = "__Host-prm_csrf=";
   const entry = document.cookie
     .split(";")
@@ -234,7 +234,7 @@ async function refused(response: Response): Promise<LedgerError> {
   return new LedgerError(response.status, detail);
 }
 
-async function request(
+export async function request(
   path: string,
   init: RequestInit = { method: "GET" },
 ): Promise<unknown> {
@@ -263,26 +263,26 @@ function query(values: Record<string, string | undefined>): string {
   return text === "" ? "" : `?${text}`;
 }
 
-function list(value: unknown): unknown[] {
+export function list(value: unknown): unknown[] {
   if (!Array.isArray(value)) throw new LedgerError();
   return value;
 }
 
-function record(value: unknown): Record<string, unknown> {
+export function record(value: unknown): Record<string, unknown> {
   if (!isObject(value)) throw new LedgerError();
   return value;
 }
 
-function text(value: unknown): string {
+export function text(value: unknown): string {
   if (typeof value !== "string") throw new LedgerError();
   return value;
 }
 
-function maybeText(value: unknown): string | null {
+export function maybeText(value: unknown): string | null {
   return value === null || value === undefined ? null : text(value);
 }
 
-function whole(value: unknown): number {
+export function whole(value: unknown): number {
   if (typeof value !== "number" || !Number.isInteger(value)) {
     throw new LedgerError();
   }

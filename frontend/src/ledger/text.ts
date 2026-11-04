@@ -291,6 +291,299 @@ const TEXT = {
   bc_in_app: ["In the app", "ក្នុងកម្មវិធី"],
   // new
   bc_waiting: ["{0} waiting", "{0} កំពុងរង់ចាំ"],
+  // Part 2: Expense requests, Expenses, Supplier bills (i18n24.js, i18n26.js)
+  er_t: ["Expense requests", "សំណើចំណាយ"],
+  er_sub: [
+    "Staff ask before they spend. For urgent spending, staff pay first and send an Expense report with the bill.",
+    "បុគ្គលិកស្នើមុនពេលចំណាយ។ ចំណាយបន្ទាន់ បុគ្គលិកបង់មុន ហើយផ្ញើរបាយការណ៍ចំណាយជាមួយវិក្កយបត្រ។",
+  ],
+  er_new: ["New Expense request", "សំណើចំណាយថ្មី"],
+  er_new_rep: ["New Expense report", "របាយការណ៍ចំណាយថ្មី"],
+  er_req: ["Expense request", "សំណើចំណាយ"],
+  er_rep: ["Expense report", "របាយការណ៍ចំណាយ"],
+  er_open_t: ["Open requests and advances", "សំណើ និងប្រាក់បុរេប្រទានដែលនៅបើក"],
+  er_c_wait: ["Waiting for approval", "រង់ចាំការអនុម័ត"],
+  er_c_adv: ["Advances not cleared", "ប្រាក់បុរេប្រទានមិនទាន់ជម្រះ"],
+  er_c_late: ["Late reports", "របាយការណ៍យឺត"],
+  er_c_owed: ["Money owed to staff", "ប្រាក់ជំពាក់បុគ្គលិក"],
+  er_c_all: ["All requests", "សំណើទាំងអស់"],
+  er_c_n: ["{0} open", "{0} នៅបើក"],
+  er_list_open: ["Open requests", "សំណើដែលនៅបើក"],
+  er_c_late_s: [
+    "Bill not back after {0} days",
+    "វិក្កយបត្រមិនទាន់មកវិញក្រោយ {0} ថ្ងៃ",
+  ],
+  er_c_owed_s: ["To pay back", "ត្រូវសងវិញ"],
+  er_no: ["Number", "លេខ"],
+  er_date: ["Date", "កាលបរិច្ឆេទ"],
+  er_date_spent: ["Date spent", "ថ្ងៃចំណាយ"],
+  er_urgent: ["Urgent", "បន្ទាន់"],
+  er_u_no: ["No: ask before spending", "ទេ៖ ស្នើមុនពេលចំណាយ"],
+  er_u_yes: [
+    "Yes: already spent, this is an Expense report",
+    "បាទ/ចាស៖ បានចំណាយរួច នេះជារបាយការណ៍ចំណាយ",
+  ],
+  er_for: ["What for", "សម្រាប់អ្វី"],
+  er_why: ["Reason", "មូលហេតុ"],
+  er_amt: ["Amount", "ចំនួនទឹកប្រាក់"],
+  er_sup: ["Supplier (if known)", "អ្នកផ្គត់ផ្គង់ (បើដឹង)"],
+  er_sup_s: ["Supplier", "អ្នកផ្គត់ផ្គង់"],
+  er_unit: ["Unit", "បន្ទប់"],
+  er_unit_h: [
+    "For repairs only, so you can see what each Unit costs in repairs.",
+    "សម្រាប់ការជួសជុលប៉ុណ្ណោះ ដើម្បីមើលថ្លៃជួសជុលរបស់បន្ទប់នីមួយៗ។",
+  ],
+  er_unit_none: ["Whole building (no Unit)", "អគារទាំងមូល (គ្មានបន្ទប់)"],
+  er_c_open: ["Show all open", "បង្ហាញទាំងអស់ដែលបើក"],
+  er_from: ["Paid from", "បង់ពី"],
+  er_f_ADV: ["Advance to staff", "ប្រាក់បុរេប្រទានឱ្យបុគ្គលិក"],
+  er_f_OWN: ["Staff's own money", "ប្រាក់ផ្ទាល់ខ្លួនបុគ្គលិក"],
+  er_f_LATER: [
+    "Pay later (supplier bill)",
+    "បង់ពេលក្រោយ (វិក្កយបត្រអ្នកផ្គត់ផ្គង់)",
+  ],
+  er_cur: ["Currency", "រូបិយប័ណ្ណ"],
+  er_rate: ["= {0} at {1} ៛ per $1", "= {0} តាមអត្រា {1} ៛ ក្នុង $1"],
+  er_asset_h: [
+    "From {0}, choose an asset account (business rule).",
+    "ចាប់ពី {0} សូមជ្រើសគណនីទ្រព្យសកម្ម (ច្បាប់អាជីវកម្ម)។",
+  ],
+  er_who_acct: [
+    "Approved by: the Accountant (up to {0}) or the Owner.",
+    "អនុម័តដោយ៖ គណនេយ្យករ (រហូតដល់ {0}) ឬម្ចាស់។",
+  ],
+  er_who_own: [
+    "Approved by: the Owner (above {0}).",
+    "អនុម័តដោយ៖ ម្ចាស់ (លើស {0})។",
+  ],
+  er_late_n: [
+    "This report is late. It was due on {0} ({1} days after spending, business rule).",
+    "របាយការណ៍នេះយឺត។ ត្រូវផុតកំណត់នៅ {0} ({1} ថ្ងៃក្រោយចំណាយ ច្បាប់អាជីវកម្ម)។",
+  ],
+  er_due_n: [
+    "Send the Expense report with the bill within {0} days of spending (business rule).",
+    "ផ្ញើរបាយការណ៍ចំណាយជាមួយវិក្កយបត្រក្នុងរយៈពេល {0} ថ្ងៃក្រោយចំណាយ (ច្បាប់អាជីវកម្ម)។",
+  ],
+  er_e_why: ["Write why this is needed.", "សូមសរសេរហេតុផល។"],
+  er_e_amt: ["Type the amount.", "សូមវាយចំនួនទឹកប្រាក់។"],
+  er_e_date: [
+    "Type a date as dd/mm/yyyy, not after today.",
+    "វាយកាលបរិច្ឆេទជា dd/mm/yyyy មិនក្រោយថ្ងៃនេះ។",
+  ],
+  er_send: ["Send", "ផ្ញើ"],
+  er_sent: [
+    "{0} sent. It waits for approval.",
+    "បានផ្ញើ {0}។ រង់ចាំការអនុម័ត។",
+  ],
+  er_st_WAITING: ["Waiting for approval", "រង់ចាំការអនុម័ត"],
+  er_st_APPROVED: ["Approved", "បានអនុម័ត"],
+  er_st_PAID_OUT: ["Advance given", "បានផ្ដល់ប្រាក់បុរេប្រទាន"],
+  er_st_DONE: ["Done", "រួចរាល់"],
+  er_st_VOID: ["Void", "ទុកជាមោឃៈ"],
+  er_late: ["Late", "យឺត"],
+  er_owed: ["Owed to staff", "ជំពាក់បុគ្គលិក"],
+  er_details: ["Details", "ព័ត៌មានលម្អិត"],
+  er_steps: ["Steps", "ជំហាន"],
+  er_need: ["Who approves", "អ្នកអនុម័ត"],
+  er_s_sent: ["Sent by {0}", "ផ្ញើដោយ {0}"],
+  er_s_ok: ["Approved by {0}", "អនុម័តដោយ {0}"],
+  er_s_adv: [
+    "Advance of {0} given by {1} from {2}",
+    "ប្រាក់បុរេប្រទាន {0} ផ្ដល់ដោយ {1} ពី {2}",
+  ],
+  er_s_bill: ["Bill of {0} recorded by {1}", "វិក្កយបត្រ {0} កត់ត្រាដោយ {1}"],
+  er_s_change: ["Change returned: {0}", "ប្រាក់អាប់ប្រគល់វិញ៖ {0}"],
+  er_s_extra: [
+    "Staff paid {0} more; it is owed to them.",
+    "បុគ្គលិកបង់លើស {0} ដែលត្រូវសងពួកគេ។",
+  ],
+  er_s_back: ["{0} paid back to {1} by {2}", "សង {0} ទៅ {1} ដោយ {2}"],
+  er_s_void: ["Void by {0}: {1}", "ទុកជាមោឃៈដោយ {0}៖ {1}"],
+  er_s_entry: ["Entry {0}", "ធាតុ {0}"],
+  er_approve: ["Approve", "អនុម័ត"],
+  er_void: ["Void", "ទុកជាមោឃៈ"],
+  er_give: ["Give advance", "ផ្ដល់ប្រាក់បុរេប្រទាន"],
+  er_bill: ["Record bill", "កត់ត្រាវិក្កយបត្រ"],
+  er_payback: ["Pay back staff", "សងប្រាក់បុគ្គលិក"],
+  er_wait_own: [
+    "Waits for the Owner: the amount is above the Expense limit of {0}.",
+    "រង់ចាំម្ចាស់៖ ចំនួនលើសកម្រិតចំណាយ {0}។",
+  ],
+  er_wait_any: [
+    "Waits for the Accountant or the Owner.",
+    "រង់ចាំគណនេយ្យករ ឬម្ចាស់។",
+  ],
+  er_ok_t: ["Approve {0}?", "អនុម័ត {0}?"],
+  er_ok_n: ["{0} for {1}. Requested by {2}.", "{0} សម្រាប់ {1}។ ស្នើដោយ {2}។"],
+  er_ok_post: [
+    "Approving this report records the expense in the books now.",
+    "ការអនុម័តរបាយការណ៍នេះ កត់ត្រាចំណាយក្នុងសៀវភៅបញ្ជីឥឡូវនេះ។",
+  ],
+  er_ok_done: ["{0} approved.", "បានអនុម័ត {0}។"],
+  er_void_t: ["Void {0}?", "ទុក {0} ជាមោឃៈ?"],
+  er_void_n: [
+    "A request is never edited. Void it with a reason, then send a new one.",
+    "សំណើមិនត្រូវកែទេ។ ទុកជាមោឃៈដោយមានមូលហេតុ រួចផ្ញើសំណើថ្មី។",
+  ],
+  er_void_done: ["{0} is void.", "{0} ជាមោឃៈ។"],
+  er_give_t: ["Give an advance for {0}", "ផ្ដល់ប្រាក់បុរេប្រទានសម្រាប់ {0}"],
+  er_give_from: ["Pay the advance from", "បង់ប្រាក់បុរេប្រទានពី"],
+  er_give_n: [
+    "The staff member brings the bill and any change within {0} days (business rule).",
+    "បុគ្គលិកនាំវិក្កយបត្រ និងប្រាក់អាប់មកវិញក្នុងរយៈពេល {0} ថ្ងៃ (ច្បាប់អាជីវកម្ម)។",
+  ],
+  er_give_done: [
+    "Advance given. Entry {0}.",
+    "បានផ្ដល់ប្រាក់បុរេប្រទាន។ ធាតុ {0}។",
+  ],
+  er_bill_t: ["Record the bill for {0}", "កត់ត្រាវិក្កយបត្រសម្រាប់ {0}"],
+  er_bill_amt: ["Bill amount", "ចំនួនក្នុងវិក្កយបត្រ"],
+  er_bill_ref: ["Reference", "លេខយោង"],
+  er_bill_adv: ["Advance given: {0}.", "ប្រាក់បុរេប្រទានបានផ្ដល់៖ {0}។"],
+  er_bill_done: [
+    "Bill recorded as expense {0}. Entry {1}.",
+    "បានកត់ត្រាវិក្កយបត្រជាចំណាយ {0}។ ធាតុ {1}។",
+  ],
+  er_back_t: ["Pay back {0}", "សងប្រាក់ {0}"],
+  er_back_from: ["Pay from", "បង់ពី"],
+  er_back_done: ["Paid back. Entry {0}.", "បានសងវិញ។ ធាតុ {0}។"],
+  er_you: ["You are signed in as {0}, {1}.", "អ្នកបានចូលជា {0}, {1}។"],
+  er_can_all: ["You approve every request.", "អ្នកអនុម័តសំណើទាំងអស់។"],
+  er_can_lim: [
+    "You approve requests up to {0}. Above that, the Owner approves.",
+    "អ្នកអនុម័តសំណើរហូតដល់ {0}។ លើសនេះ ម្ចាស់អនុម័ត។",
+  ],
+  er_can_pay: [
+    "You give advances, record bills and pay staff back.",
+    "អ្នកផ្ដល់ប្រាក់បុរេប្រទាន កត់ត្រាវិក្កយបត្រ និងសងប្រាក់បុគ្គលិក។",
+  ],
+  er_can_send: [
+    "You send Expense requests and reports. You cannot approve or pay money.",
+    "អ្នកផ្ញើសំណើ និងរបាយការណ៍ចំណាយ។ អ្នកមិនអាចអនុម័ត ឬបង់ប្រាក់បានទេ។",
+  ],
+  er_next: ["Your next step", "ជំហានបន្ទាប់របស់អ្នក"],
+  er_n_owner: ["Waits for the Owner", "រង់ចាំម្ចាស់"],
+  er_n_wait: ["Waits for approval", "រង់ចាំការអនុម័ត"],
+  er_n_acct: ["Accountant's step", "ជំហានរបស់គណនេយ្យករ"],
+  er_for_you: ["{0} for you", "{0} សម្រាប់អ្នក"],
+  er_none: ["No requests here.", "គ្មានសំណើនៅទីនេះទេ។"],
+  er_from_req: ["From request", "ពីសំណើ"],
+  er_cant: [
+    "You can see this request. Approving and paying are done by the Accountant or the Owner.",
+    "អ្នកអាចមើលសំណើនេះ។ ការអនុម័ត និងការបង់ប្រាក់ធ្វើដោយគណនេយ្យករ ឬម្ចាស់។",
+  ],
+  er_owed_line: ["Pay back {0}: {1}", "សងប្រាក់ {0}៖ {1}"],
+  er_n_self: ["Someone else must approve", "អ្នកផ្សេងត្រូវអនុម័ត"],
+  er_wait_self: [
+    "You sent this request. Someone else must approve it.",
+    "អ្នកបានផ្ញើសំណើនេះ។ អ្នកផ្សេងត្រូវអនុម័តវា។",
+  ],
+  er_own: ["Owner's own spending", "ការចំណាយផ្ទាល់របស់ម្ចាស់"],
+  er_own_n: [
+    "Approved at once: the Owner's own spending, kept with this note.",
+    "បានអនុម័តភ្លាម៖ ការចំណាយផ្ទាល់របស់ម្ចាស់ រក្សាទុកជាមួយកំណត់សម្គាល់នេះ។",
+  ],
+  er_own_only: [
+    "You see only your own requests.",
+    "អ្នកឃើញតែសំណើរបស់អ្នកប៉ុណ្ណោះ។",
+  ],
+  gl_x_limit: [
+    "An Expense request above {0} is approved by the Owner; up to {0}, by the Accountant (business rule).",
+    "សំណើចំណាយលើស {0} អនុម័តដោយម្ចាស់ រហូតដល់ {0} ដោយគណនេយ្យករ (ច្បាប់អាជីវកម្ម)។",
+  ],
+  col_status: ["Status", "ស្ថានភាព"],
+  x_title: ["Expenses", "ចំណាយ"],
+  x_sub: [
+    "Bills and costs of the business. Monthly bills such as EDC, water and internet are recorded here straight. Other spending starts with an Expense request. Never edited: void with a reason, then record again.",
+    "វិក្កយបត្រ និងថ្លៃចំណាយរបស់អាជីវកម្ម។ វិក្កយបត្រប្រចាំខែ ដូចជា EDC ទឹក និងអ៊ីនធឺណិត កត់ត្រានៅទីនេះផ្ទាល់។ ចំណាយផ្សេងទៀតចាប់ផ្ដើមដោយសំណើចំណាយ។ មិនត្រូវកែទេ៖ ទុកជាមោឃៈដោយមានមូលហេតុ រួចកត់ត្រាម្ដងទៀត។",
+  ],
+  x_new: ["Record a bill", "កត់ត្រាវិក្កយបត្រ"],
+  x_sup: ["Supplier", "អ្នកផ្គត់ផ្គង់"],
+  x_for: ["Expense account", "គណនីចំណាយ"],
+  x_from: ["Paid from", "បង់ពី"],
+  x_ref: ["Reference", "លេខយោង"],
+  x_later: [
+    "Pay later (supplier bill)",
+    "បង់ពេលក្រោយ (វិក្កយបត្រអ្នកផ្គត់ផ្គង់)",
+  ],
+  x_e_sup: ["Type the supplier.", "សូមវាយអ្នកផ្គត់ផ្គង់។"],
+  x_e_amt: ["Type the amount.", "សូមវាយចំនួន។"],
+  x_saved: [
+    "Expense {0} recorded. Entry {1}.",
+    "បានកត់ត្រាចំណាយ {0}។ ធាតុ {1}។",
+  ],
+  x_st_POSTED: ["Posted", "បានកត់"],
+  sb_t: ["Supplier bills to pay", "វិក្កយបត្រអ្នកផ្គត់ផ្គង់ត្រូវបង់"],
+  sb_sub: [
+    "Bills from suppliers that we pay later. Each bill and each payment makes its own entry.",
+    "វិក្កយបត្រពីអ្នកផ្គត់ផ្គង់ដែលយើងបង់ពេលក្រោយ។ វិក្កយបត្រ និងការបង់នីមួយៗបង្កើតធាតុរបស់ខ្លួន។",
+  ],
+  sb_new: ["Add supplier bill", "បន្ថែមវិក្កយបត្រអ្នកផ្គត់ផ្គង់"],
+  sb_c_open: ["Still to pay", "នៅត្រូវបង់"],
+  sb_c_n: ["{0} bills", "វិក្កយបត្រ {0}"],
+  sb_c_late: ["Late", "យឺត"],
+  sb_c_paid: ["Paid", "បានបង់"],
+  sb_c_paid_s: ["Fully paid bills", "វិក្កយបត្របង់គ្រប់"],
+  sb_l_open: ["Bills still to pay", "វិក្កយបត្រនៅត្រូវបង់"],
+  sb_l_late: ["Late bills", "វិក្កយបត្រយឺត"],
+  sb_l_paid: ["Paid bills", "វិក្កយបត្របានបង់"],
+  sb_date: ["Bill date", "កាលបរិច្ឆេទវិក្កយបត្រ"],
+  sb_due: ["Due date", "ថ្ងៃផុតកំណត់"],
+  sb_left: ["Left to pay", "នៅសល់ត្រូវបង់"],
+  sb_pay: ["Pay", "បង់"],
+  sb_ref: ["Supplier's bill number", "លេខវិក្កយបត្រអ្នកផ្គត់ផ្គង់"],
+  sb_st_paid: ["Paid", "បានបង់"],
+  sb_st_late: ["{0} days late", "យឺត {0} ថ្ងៃ"],
+  sb_st_open: ["Not yet due", "មិនទាន់ដល់ថ្ងៃ"],
+  sb_note: [
+    'Paid at once? Record it on Expenses. An expense marked "Pay later" comes here by itself, due 30 days after the bill date unless the bill shows its own due date (owner rule, 02/11/2026).',
+    'បង់ភ្លាម? កត់ត្រានៅចំណាយ។ ចំណាយដែលសម្គាល់ "បង់ពេលក្រោយ" មកទីនេះដោយខ្លួនឯង ផុតកំណត់ ៣០ ថ្ងៃក្រោយកាលបរិច្ឆេទវិក្កយបត្រ លើកលែងតែវិក្កយបត្របង្ហាញថ្ងៃផុតកំណត់ផ្ទាល់ (ច្បាប់ម្ចាស់ ០២/១១/២០២៦)។',
+  ],
+  sb_e_due: [
+    "The due date must be on or after the bill date.",
+    "ថ្ងៃផុតកំណត់ត្រូវនៅថ្ងៃ ឬក្រោយកាលបរិច្ឆេទវិក្កយបត្រ។",
+  ],
+  sb_e_more: ["You can pay {0} or less.", "អ្នកអាចបង់ {0} ឬតិចជាងនេះ។"],
+  sb_new_n: [
+    "An item of {0} or more goes on Fixed assets, not here.",
+    "របស់ដែលមានតម្លៃ {0} ឬច្រើនជាងនេះ ដាក់នៅទ្រព្យសកម្មរយៈពេលវែង មិនមែនទីនេះទេ។",
+  ],
+  sb_saved: [
+    "Supplier bill {0} added. Entry {1}.",
+    "បានបន្ថែមវិក្កយបត្រអ្នកផ្គត់ផ្គង់ {0}។ ធាតុ {1}។",
+  ],
+  sb_pay_t: ["Pay supplier bill {0}", "បង់វិក្កយបត្រអ្នកផ្គត់ផ្គង់ {0}"],
+  sb_paid: ["Bill {0} paid. Entry {1}.", "បានបង់វិក្កយបត្រ {0}។ ធាតុ {1}។"],
+  t_expenses: ["Expenses", "ចំណាយ"],
+  t_assets: ["Assets", "ទ្រព្យសកម្ម"],
+  // Part 2 words not in the mock-up
+  // new
+  er_st_REFUSED: ["Refused", "បានបដិសេធ"],
+  // new
+  er_not_found: [
+    "This request is not there, or you cannot see it.",
+    "សំណើនេះមិនមាន ឬអ្នកមិនអាចមើលវាបានទេ។",
+  ],
+  // new
+  er_no_rate: [
+    "There is no riel rate for today. Ask the Owner to set it in Settings.",
+    "មិនមានអត្រារៀលសម្រាប់ថ្ងៃនេះទេ។ សូមស្នើម្ចាស់ឱ្យកំណត់វានៅក្នុងការកំណត់។",
+  ],
+  // new
+  x_st_VOID: ["Void", "ទុកជាមោឃៈ"],
+  // new
+  x_no_unit: ["No Unit", "គ្មានបន្ទប់"],
+  // new
+  x_none: ["No expenses yet.", "មិនទាន់មានចំណាយទេ។"],
+  // new
+  sb_none: [
+    "No supplier bills here.",
+    "គ្មានវិក្កយបត្រអ្នកផ្គត់ផ្គង់នៅទីនេះទេ។",
+  ],
+  // new
+  paid_on: ["Paid on", "បង់នៅថ្ងៃ"],
+  // new
+  by_unknown: ["Someone", "នរណាម្នាក់"],
 } as const satisfies Record<string, readonly [string, string]>;
 
 export type LedgerTextKey = keyof typeof TEXT;
@@ -302,7 +595,7 @@ export function lt(
 ): string {
   const text = TEXT[key][language === "en" ? 0 : 1];
   return values.reduce(
-    (out, value, index) => out.replace(`{${String(index)}}`, value),
+    (out, value, index) => out.split(`{${String(index)}}`).join(value),
     text,
   );
 }

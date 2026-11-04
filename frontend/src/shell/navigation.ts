@@ -21,6 +21,9 @@ export type PageId =
   | "reports"
   | "history"
   | "settings"
+  | "exreqs"
+  | "expenses"
+  | "bills"
   | "journal"
   | "needscheck"
   | "chart"
@@ -109,14 +112,22 @@ export const MENU: readonly MenuGroup[] = [
   {
     label: ["Office", "ការិយាល័យ"],
     items: [
-      // General Ledger phase 6 step 6 (mock-up v76, Administration › Ledger): its tabs. The
-      // other ledger tabs (Expense requests, Expenses, Supplier bills, Budget, Fixed assets,
-      // Bank and cash, Month-end close) come with the next parts.
+      // General Ledger phase 6 step 6 (mock-up v76, Administration › Ledger): its tabs in the
+      // mock-up's order. Every role sees Expense requests; the other tabs need ledger.read.
+      // Budget, Fixed assets, Bank and cash and Month-end close come with the next parts.
       {
-        page: "journal",
+        page: "exreqs",
         icon: "list",
         label: ["Ledger", "សៀវភៅបញ្ជី"],
-        tabs: ["journal", "needscheck", "chart", "statements"],
+        tabs: [
+          "exreqs",
+          "expenses",
+          "bills",
+          "journal",
+          "needscheck",
+          "chart",
+          "statements",
+        ],
       },
       { page: "reports", icon: "reports" },
       { page: "history", icon: "history" },
@@ -148,6 +159,9 @@ const PAGE_NAMES: Record<PageId, readonly [string, string]> = {
   reports: ["Reports", "របាយការណ៍"],
   history: ["History", "ប្រវត្តិ"],
   settings: ["Settings", "ការកំណត់"],
+  exreqs: ["Expense requests", "សំណើចំណាយ"],
+  expenses: ["Expenses", "ចំណាយ"],
+  bills: ["Supplier bills", "វិក្កយបត្រអ្នកផ្គត់ផ្គង់"],
   journal: ["Journal entries", "ធាតុទិនានុប្បវត្តិ"],
   needscheck: ["Needs check", "ត្រូវពិនិត្យ"],
   chart: ["Chart of accounts", "តារាងគណនី"],
@@ -193,6 +207,9 @@ const PAGE_NEEDS: Record<PageId, readonly string[] | null> = {
     "operations.status.read",
   ],
   // General Ledger (owner plan 03/11/2026, rights table L1): Owner and Manager read the ledger.
+  exreqs: ["expenses.request"],
+  expenses: ["ledger.read"],
+  bills: ["ledger.read"],
   journal: ["ledger.read"],
   needscheck: ["ledger.read"],
   chart: ["ledger.read"],

@@ -145,6 +145,8 @@ import { ReservationsPage } from "./reservations/ReservationsPage";
 import { ct } from "./customers/text";
 import { UnitsPage } from "./units/UnitsPage";
 import { LedgerPage } from "./ledger/LedgerPage";
+import { SpendingPage } from "./ledger/SpendingPage";
+import type { SpendingApi } from "./ledger/spendingClient";
 import type { LedgerApi } from "./ledger/ledgerClient";
 import { ProductsPage } from "./products/ProductsPage";
 import type { ProductsApi } from "./products/productsClient";
@@ -163,6 +165,8 @@ export interface AppProps {
   productsApi?: ProductsApi;
   /** General Ledger step 6: Office › Ledger; the real server when not given. */
   generalLedgerApi?: LedgerApi;
+  /** General Ledger step 6 part 2: Expense requests, Expenses, Supplier bills. */
+  spendingApi?: SpendingApi;
   propertyApi?: PropertyConfigurationApi;
   unitApi?: UnitApi;
   businessSettingsApi?: BusinessSettingsApi;
@@ -640,6 +644,7 @@ export function App({
   rolesApi = accessRolesApi,
   productsApi,
   generalLedgerApi,
+  spendingApi,
   propertyApi = propertyConfigurationApi,
   unitApi,
   customerApi,
@@ -1797,6 +1802,43 @@ export function App({
           language={language}
           propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
           tab="locations"
+        />
+      </div>
+      <div className="shell-page" data-page="exreqs" hidden={!shown("exreqs")}>
+        <SpendingPage
+          active={shown("exreqs")}
+          actorId={sessionActorId}
+          api={spendingApi}
+          capabilities={capabilities}
+          language={language}
+          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
+          tab="exreqs"
+        />
+      </div>
+      <div
+        className="shell-page"
+        data-page="expenses"
+        hidden={!shown("expenses")}
+      >
+        <SpendingPage
+          active={shown("expenses")}
+          actorId={sessionActorId}
+          api={spendingApi}
+          capabilities={capabilities}
+          language={language}
+          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
+          tab="expenses"
+        />
+      </div>
+      <div className="shell-page" data-page="bills" hidden={!shown("bills")}>
+        <SpendingPage
+          active={shown("bills")}
+          actorId={sessionActorId}
+          api={spendingApi}
+          capabilities={capabilities}
+          language={language}
+          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
+          tab="bills"
         />
       </div>
       <div

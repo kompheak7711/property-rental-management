@@ -61103,6 +61103,248 @@
       "test_path": "backend/tests/test_gl_books_migration.py",
       "status": "implemented",
       "notes": "General Ledger phase 6 step 6 part 1 (books reads for the Ledger screens): The runtime login can read what the books read."
+    },
+    {
+      "test_id": "TEST-FE-1166",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-008"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/SpendingPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 2 (Expense requests, Expenses, Supplier bills; mock-up v76): Shows the open requests with their next step for the Accountant."
+    },
+    {
+      "test_id": "TEST-FE-1167",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-008"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/SpendingPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 2 (Expense requests, Expenses, Supplier bills; mock-up v76): Lets the Owner approve above the limit and shows Staff only their own."
+    },
+    {
+      "test_id": "TEST-FE-1168",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-008"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/SpendingPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 2 (Expense requests, Expenses, Supplier bills; mock-up v76): Sends a request with its Unit, a new supplier and the advance."
+    },
+    {
+      "test_id": "TEST-FE-1169",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-008"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/SpendingPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 2 (Expense requests, Expenses, Supplier bills; mock-up v76): Sends an Expense report in riel with today's rate and refuses an asset on an expense account."
+    },
+    {
+      "test_id": "TEST-FE-1170",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-008"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/SpendingPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 2 (Expense requests, Expenses, Supplier bills; mock-up v76): Approves, gives an advance and records the bill with the entry numbers."
+    },
+    {
+      "test_id": "TEST-FE-1171",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-008"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/SpendingPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 2 (Expense requests, Expenses, Supplier bills; mock-up v76): Pays staff back from the chosen money account with the entry number."
+    },
+    {
+      "test_id": "TEST-FE-1172",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-008"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/SpendingPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 2 (Expense requests, Expenses, Supplier bills; mock-up v76): Opens one request from the address with its steps and entries."
+    },
+    {
+      "test_id": "TEST-FE-1173",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-008"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/SpendingPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 2 (Expense requests, Expenses, Supplier bills; mock-up v76): Says when a request is not there."
+    },
+    {
+      "test_id": "TEST-FE-1174",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-008"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/SpendingPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 2 (Expense requests, Expenses, Supplier bills; mock-up v76): Void shows a server refusal and keeps the dialog open."
+    },
+    {
+      "test_id": "TEST-FE-1175",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-008"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/SpendingPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 2 (Expense requests, Expenses, Supplier bills; mock-up v76): Shows Khmer words when the screen is in Khmer."
+    },
+    {
+      "test_id": "TEST-FE-1176",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-008"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/SpendingPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 2 (Expense requests, Expenses, Supplier bills; mock-up v76): Lists expenses with their entry, request and pay-later marks."
+    },
+    {
+      "test_id": "TEST-FE-1177",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-008"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/SpendingPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 2 (Expense requests, Expenses, Supplier bills; mock-up v76): Records a bill paid at once and needs a supplier and amount."
+    },
+    {
+      "test_id": "TEST-FE-1178",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-008"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/SpendingPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 2 (Expense requests, Expenses, Supplier bills; mock-up v76): Hides Record a bill without the right."
+    },
+    {
+      "test_id": "TEST-FE-1179",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-008"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/SpendingPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 2 (Expense requests, Expenses, Supplier bills; mock-up v76): Shows bills to pay with late days and paid bills."
+    },
+    {
+      "test_id": "TEST-FE-1180",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-008"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/SpendingPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 2 (Expense requests, Expenses, Supplier bills; mock-up v76): Pays a bill in part and not more than is left."
+    },
+    {
+      "test_id": "TEST-FE-1181",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-008"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/ledger/SpendingPage.test.tsx",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 2 (Expense requests, Expenses, Supplier bills; mock-up v76): Adds a supplier bill to pay later with its due date."
+    },
+    {
+      "test_id": "test_every_role_that_sends_requests_reads_the_form_and_staff_read_only_their_own",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-008"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_ledger_spending.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 2 (spending reads for the ledger screens): Every role that sends requests reads the form and staff read only their own."
+    },
+    {
+      "test_id": "test_the_spending_reads_refuse_unknown_values_and_say_when_a_request_is_not_there",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-008"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_ledger_spending.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 2 (spending reads for the ledger screens): The spending reads refuse unknown values and say when a request is not there."
+    },
+    {
+      "test_id": "test_the_form_answers_the_rules_accounts_suppliers_and_units",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-008"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_spending_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 2 (spending reads for the ledger screens): The form answers the rules accounts suppliers and units."
+    },
+    {
+      "test_id": "test_one_request_shows_its_steps_advance_bill_and_entries",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-008"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_spending_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 2 (spending reads for the ledger screens): One request shows its steps advance bill and entries."
+    },
+    {
+      "test_id": "test_the_lists_name_people_units_entries_and_bill_payments",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-008"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_spending_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 2 (spending reads for the ledger screens): The lists name people units entries and bill payments."
+    },
+    {
+      "test_id": "test_the_runtime_login_can_run_the_spending_reads",
+      "upstream_ids": [
+        "DL-117",
+        "API-GL-008"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_spending_migration.py",
+      "status": "implemented",
+      "notes": "General Ledger phase 6 step 6 part 2 (spending reads for the ledger screens): The runtime login can run the spending reads."
     }
   ]
 }
