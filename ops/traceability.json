@@ -62957,7 +62957,7 @@
       "notes": "Telegram bots step 2c: Retry needs telegram.operate, answers 201 with the health page, and a second Retry is 409."
     },
     {
-      "test_id": "TEST-FE-1299",
+      "test_id": "TEST-FE-1500",
       "upstream_ids": [
         "DL-128"
       ],
@@ -62967,7 +62967,7 @@
       "notes": "Telegram bots step 2c: Linked tenants lists the links in force, the link tries that did not match with tries left or blocked until, and the ended links with why."
     },
     {
-      "test_id": "TEST-FE-1300",
+      "test_id": "TEST-FE-1501",
       "upstream_ids": [
         "DL-128"
       ],
@@ -62977,7 +62977,7 @@
       "notes": "Telegram bots step 2c: Remove link needs a reason and shows the list the server answers; an ended link reads the list again; no button without telegram.operate."
     },
     {
-      "test_id": "TEST-FE-1301",
+      "test_id": "TEST-FE-1502",
       "upstream_ids": [
         "DL-128"
       ],
@@ -62987,7 +62987,7 @@
       "notes": "Telegram bots step 2c: Telegram health shows the last pull, the counts, each bot's state, the messages not sent with their last error and the last pulls; no bot key is shown."
     },
     {
-      "test_id": "TEST-FE-1302",
+      "test_id": "TEST-FE-1503",
       "upstream_ids": [
         "DL-128"
       ],
@@ -62997,7 +62997,7 @@
       "notes": "Telegram bots step 2c: Retry shows only on a given-up message to a person with telegram.operate, sends once and shows Sent again; a refused Retry reads the page again."
     },
     {
-      "test_id": "TEST-FE-1303",
+      "test_id": "TEST-FE-1504",
       "upstream_ids": [
         "DL-128",
         "API-TG-001"
@@ -63008,7 +63008,7 @@
       "notes": "Telegram bots step 2c: The client reads the pages, sends Remove link and Retry with the browser token, and refuses an answer of the wrong shape."
     },
     {
-      "test_id": "TEST-FE-1304",
+      "test_id": "TEST-FE-1505",
       "upstream_ids": [
         "DL-128"
       ],
@@ -63134,7 +63134,7 @@
       "notes": "Telegram bots step 2d part 2: The FAQ is read with telegram.contact, changed with telegram.faq, approved by the Owner only."
     },
     {
-      "test_id": "TEST-FE-1305",
+      "test_id": "TEST-FE-1506",
       "upstream_ids": [
         "DL-170"
       ],
@@ -63144,7 +63144,7 @@
       "notes": "Telegram bots step 2d part 2: Contact office lists Waiting and Answered; Reply needs words and sends them; an answered message reads the list again."
     },
     {
-      "test_id": "TEST-FE-1306",
+      "test_id": "TEST-FE-1507",
       "upstream_ids": [
         "DL-170"
       ],
@@ -63154,7 +63154,7 @@
       "notes": "Telegram bots step 2d part 2: The FAQ shows both languages, who sees it, the approved and the waiting version; a Manager's save goes to the Owner."
     },
     {
-      "test_id": "TEST-FE-1307",
+      "test_id": "TEST-FE-1508",
       "upstream_ids": [
         "DL-170"
       ],
@@ -63164,7 +63164,7 @@
       "notes": "Telegram bots step 2d part 2: The Owner approves and saves at once; Staff read the FAQ only."
     },
     {
-      "test_id": "TEST-FE-1308",
+      "test_id": "TEST-FE-1509",
       "upstream_ids": [
         "DL-170",
         "API-TG-002"
@@ -63270,7 +63270,7 @@
       "notes": "Telegram bots step 3a: The Visit requests list needs visit_requests.read for that Property and is not cached."
     },
     {
-      "test_id": "TEST-FE-1309",
+      "test_id": "TEST-FE-1510",
       "upstream_ids": [
         "DL-171"
       ],
@@ -63280,7 +63280,7 @@
       "notes": "Telegram bots step 3a: Visit requests lists the requests oldest first with customer, contact, wants, preferred day and note, and the joined asks under each."
     },
     {
-      "test_id": "TEST-FE-1310",
+      "test_id": "TEST-FE-1511",
       "upstream_ids": [
         "DL-171",
         "API-TG-003"
@@ -63345,7 +63345,7 @@
       "notes": "Telegram bots step 3b: The visit booked, moved and reminder messages show the day, time, address and staff."
     },
     {
-      "test_id": "TEST-FE-1311",
+      "test_id": "TEST-FE-1512",
       "upstream_ids": [
         "DL-172"
       ],
@@ -63355,7 +63355,7 @@
       "notes": "Telegram bots step 3b: Visit requests shows the Waiting, Late, Visits booked and Mine cards, and Send by hand today gives the words in the customer's language with Mark sent."
     },
     {
-      "test_id": "TEST-FE-1312",
+      "test_id": "TEST-FE-1513",
       "upstream_ids": [
         "DL-172"
       ],
@@ -63365,7 +63365,7 @@
       "notes": "Telegram bots step 3b: A request opens with Take; the holder records calls, books a visit Monday to Saturday and closes it; a Manager gives it and marks Spam; others only read it."
     },
     {
-      "test_id": "TEST-FE-1313",
+      "test_id": "TEST-FE-1514",
       "upstream_ids": [
         "DL-172",
         "API-TG-004"
@@ -63408,7 +63408,7 @@
       "notes": "Telegram bots step 3c: A blocked account is told to visit or call the office for Send an inquiry and Contact office."
     },
     {
-      "test_id": "TEST-FE-1314",
+      "test_id": "TEST-FE-1515",
       "upstream_ids": [
         "DL-173"
       ],
@@ -63418,7 +63418,7 @@
       "notes": "Telegram bots step 3c: Make Reservation from a Visit request names it, chooses the Customer with the same phone, or starts New Customer with the name, phone and email."
     },
     {
-      "test_id": "TEST-FE-1315",
+      "test_id": "TEST-FE-1516",
       "upstream_ids": [
         "DL-173",
         "API-TG-005"
