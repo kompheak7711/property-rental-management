@@ -1821,4 +1821,26 @@ describe("Daily and weekly rent: Short stays", () => {
       "This booking was not made: The nights are booked on Agoda",
     );
   });
+
+  it("TEST-FE-1630 keeps a Unit without a monthly Rent out of a new booking", async () => {
+    go("#/shortstays/new:u-503:2026-11-06");
+    const api = fakeApi({
+      calendar: vi.fn((_: string, from: string, days: number) => {
+        const found = calendar(from, days);
+        return Promise.resolve({
+          ...found,
+          units: found.units.map((unit) =>
+            unit.unit_id === "u-501"
+              ? { ...unit, monthly_rent_usd_cents: null }
+              : unit,
+          ),
+        });
+      }),
+    });
+    show({ api });
+    const option = await screen.findByRole("option", {
+      name: "U501 · Studio · no monthly Rent yet",
+    });
+    expect(option).toBeDisabled();
+  });
 });

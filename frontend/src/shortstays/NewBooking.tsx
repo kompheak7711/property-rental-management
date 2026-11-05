@@ -646,15 +646,21 @@ export function NewBookingForm({
                     checkOut,
                     source === "BOOKING_SITE" ? siteName : null,
                   );
+                // A short stay is priced from the monthly Rent, so a Unit without one waits.
+                const priced = unit.monthly_rent_usd_cents !== null;
                 return (
                   <option
-                    disabled={!free && unit.unit_id !== unitId}
+                    disabled={(!free || !priced) && unit.unit_id !== unitId}
                     key={unit.unit_id}
                     value={unit.unit_id}
                   >
                     {unit.unit_number} ·{" "}
                     {unitTypeText(language, unit.unit_type)}
-                    {free ? "" : ` · ${st(language, "u_busy")}`}
+                    {!priced
+                      ? ` · ${st(language, "u_no_rent")}`
+                      : free
+                        ? ""
+                        : ` · ${st(language, "u_busy")}`}
                   </option>
                 );
               })}

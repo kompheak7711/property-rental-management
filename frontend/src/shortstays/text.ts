@@ -342,6 +342,11 @@ const TEXT = {
   ],
   // new
   u_busy: ["not free", "មិនទំនេរ"],
+  u_no_rent: [
+    "no monthly Rent yet",
+    // new
+    "មិនទាន់មានថ្លៃជួលប្រចាំខែ",
+  ],
   // new
   f_find_b: ["Find", "ស្វែងរក"],
   // new
