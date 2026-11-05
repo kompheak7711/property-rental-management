@@ -405,6 +405,7 @@ export type StayStep =
   | "extend"
   | "cancel"
   | "credit"
+  | "credit/end"
   | "lease"
   | "discount"
   | "review";
@@ -440,6 +441,24 @@ export interface StayCredit {
   amount_usd_cents: number;
   use_by: string;
   note: string;
+  /** Step 5d: what the guest can still use (0 once the credit ended). */
+  left_usd_cents: number;
+  /** Step 5d: the credit ended after its use-by day; what was left paid this Invoice. */
+  ended: {
+    left_usd_cents: number;
+    invoice_id: string | null;
+    invoice_number: string | null;
+    at: string;
+  } | null;
+}
+
+/** Step 5d: a late-cancel credit past its use-by day, with money left. */
+export interface CreditDue {
+  booking_id: string;
+  booking_number: string;
+  guest_name: string;
+  use_by: string;
+  left_usd_cents: number;
 }
 
 /** Step 4a: an Invoice for a fee or an extension, made after the stay was billed. */
@@ -540,6 +559,7 @@ export interface ShortStaysApi {
   quote: (propertyId: string, quote: NewQuote) => Promise<StayQuote>;
   weekReport: (propertyId: string, from: string) => Promise<WeekReport>;
   complaint: (propertyId: string, complaint: NewComplaint) => Promise<void>;
+  creditsDue: (propertyId: string) => Promise<CreditDue[]>;
 }
 
 export class ShortStaysError extends Error {
@@ -1056,10 +1076,35 @@ function cancellationOf(row: Record<string, unknown>): StayCancellation {
 }
 
 function creditOf(row: Record<string, unknown>): StayCredit {
+  const ended =
+    row.ended === null || row.ended === undefined ? null : record(row.ended);
   return {
     amount_usd_cents: whole(row.amount_usd_cents),
     use_by: text(row.use_by),
     note: text(row.note),
+    left_usd_cents:
+      row.left_usd_cents === undefined
+        ? whole(row.amount_usd_cents)
+        : whole(row.left_usd_cents),
+    ended:
+      ended === null
+        ? null
+        : {
+            left_usd_cents: whole(ended.left_usd_cents),
+            invoice_id: maybeText(ended.invoice_id),
+            invoice_number: maybeText(ended.invoice_number),
+            at: text(ended.at),
+          },
+  };
+}
+
+function creditDueOf(row: Record<string, unknown>): CreditDue {
+  return {
+    booking_id: text(row.booking_id),
+    booking_number: text(row.booking_number),
+    guest_name: text(row.guest_name),
+    use_by: text(row.use_by),
+    left_usd_cents: whole(row.left_usd_cents),
   };
 }
 
@@ -1193,6 +1238,10 @@ export const shortStaysApi: ShortStaysApi = {
   complaint: async (propertyId, complaint) => {
     await request(`${base(propertyId)}/complaints`, post(complaint));
   },
+  creditsDue: async (propertyId) =>
+    list(await request(`${base(propertyId)}/credits-due`)).map((row) =>
+      creditDueOf(record(row)),
+    ),
 };
 
 /** Adds days to an ISO day ("2026-11-04" + 3 → "2026-11-07"), in UTC so no clock shifts it. */

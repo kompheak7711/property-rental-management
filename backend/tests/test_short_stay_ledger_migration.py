@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import uuid
 from collections.abc import Iterator
+from datetime import timedelta
 from pathlib import Path
 from typing import Any
 
@@ -23,9 +24,11 @@ from test_short_stay_booking_migration import (
     BOOK,
     BookingDatabase,
     booking,
+    refused,
     run,
     short_stay_database,
 )
+from test_short_stay_cancel_migration import CANCEL, CREDIT, WHY, paid_stay
 from test_short_stay_check_in_migration import (
     BILL,
     CHECK_IN,
@@ -41,6 +44,8 @@ from test_short_stay_check_in_migration import (
 )
 
 REVISION = "20270609_319"
+DUE = "SELECT app.short_stay_credits_due(%s, %s)"
+END_CREDIT = "SELECT app.end_short_stay_credit(%s, %s, %s, NULL)"
 APPROVE = json.dumps({"approve": True, "note": "Photo on file"})
 
 
@@ -209,4 +214,96 @@ def test_short_stay_money_posts_to_rent_damage_cash_and_bank(
             (db.property_id,),
         ).fetchone()
         assert check == (5000, 5000, True)
+        connection.rollback()
+
+
+def credit_left(db: BookingDatabase, customer: uuid.UUID) -> int:
+    return int(
+        run(
+            db.owner_url,
+            "SELECT COALESCE(sum(app.credit_available_value(id)), 0) FROM app.customer_credits "
+            "WHERE customer_id = %s",
+            customer,
+        )
+    )
+
+
+def test_unused_credit_ends_after_its_use_by_day_and_becomes_rent(
+    stay_database: BookingDatabase,
+) -> None:
+    db = stay_database
+    # A late cancel: the paid money is kept; the Manager gives $20 of it back as credit.
+    guest, made = paid_stay(db, db.two_bedroom, 0)
+    late = run(
+        db.runtime_url, CANCEL, db.property_id, made, WHY, read(db, made)["version"], db.staff
+    )
+    assert late["cancellation"]["free"] is False
+    give = json.dumps({"amount_usd_cents": 2000, "note": "Sick child"})
+    given = run(db.runtime_url, CREDIT, db.property_id, made, give, db.manager)
+    assert given["credit"]["left_usd_cents"] == 2000 and given["credit"]["ended"] is None
+    assert credit_left(db, guest) == 2000
+    # Not before the use-by day, and only the credit right.
+    assert "until" in refused(db.runtime_url, "55000", END_CREDIT, db.property_id, made, db.manager)
+    assert run(db.runtime_url, DUE, db.property_id, db.manager) == []
+    refused(db.runtime_url, "42501", DUE, db.property_id, db.staff)
+    refused(db.runtime_url, "42501", END_CREDIT, db.property_id, made, db.staff)
+
+    # The use-by day passes (a credit row never changes in the app, so the test moves it).
+    with psycopg.connect(db.owner_url) as connection:
+        connection.execute(
+            "ALTER TABLE app.short_stay_credits DISABLE TRIGGER short_stay_credits_protect"
+        )
+        connection.execute(
+            "UPDATE app.short_stay_credits SET use_by = %s WHERE booking_id = %s",
+            (db.today - timedelta(days=1), made),
+        )
+        connection.execute(
+            "ALTER TABLE app.short_stay_credits ENABLE TRIGGER short_stay_credits_protect"
+        )
+    due = run(db.runtime_url, DUE, db.property_id, db.manager)
+    assert [(entry["booking_id"], entry["left_usd_cents"]) for entry in due] == [(str(made), 2000)]
+
+    ended = run(db.runtime_url, END_CREDIT, db.property_id, made, db.manager)
+    credit = ended["credit"]
+    assert credit["left_usd_cents"] == 0
+    assert credit["ended"]["left_usd_cents"] == 2000 and credit["ended"]["invoice_number"]
+    assert ended["history"][-1]["kind"] == "CREDIT_ENDED"
+    assert credit_left(db, guest) == 0
+    assert run(db.runtime_url, DUE, db.property_id, db.manager) == []
+    refused(db.runtime_url, "55000", END_CREDIT, db.property_id, made, db.manager)
+    invoice = run(
+        db.owner_url,
+        "SELECT status FROM app.invoices WHERE id = %s",
+        credit["ended"]["invoice_id"],
+    )
+    assert invoice == "PAID"
+
+    # The ledger: the Credit ended Invoice is rent on the booking's Unit, paid by the credit.
+    with psycopg.connect(db.owner_url) as connection:
+        connection.execute(
+            "SELECT app.gl_start_ledger(%s, %s::smallint, %s)",
+            (db.property_id, db.today.year, db.manager),
+        )
+        connection.execute(
+            "SELECT app.gl_post_app_records(%s, %s, %s, 5000)",
+            (db.property_id, db.manager, db.today),
+        )
+        connection.execute("SET CONSTRAINTS app.gl_journal_entries_balanced IMMEDIATE")
+        rent = connection.execute(
+            "SELECT account.code, line.debit_cents, line.credit_cents, line.unit_id "
+            "FROM app.gl_journal_entries AS entry "
+            "JOIN app.gl_journal_lines AS line ON line.entry_id = entry.id "
+            "JOIN app.gl_accounts AS account ON account.id = line.account_id "
+            "WHERE entry.posting_key = %s ORDER BY account.code",
+            (f"invoice:{credit['ended']['invoice_id']}:issue",),
+        ).fetchall()
+        assert [tuple(row) for row in rent] == [
+            ("1100", 2000, 0, db.two_bedroom),
+            ("4010", 0, 2000, db.two_bedroom),
+        ]
+        problems = connection.execute(
+            "SELECT posting_key, problem FROM app.gl_posting_problems "
+            "WHERE source_type IN ('INVOICE', 'CREDIT_APPLICATION', 'SHORT_STAY_DEPOSIT')"
+        ).fetchall()
+        assert problems == []
         connection.rollback()

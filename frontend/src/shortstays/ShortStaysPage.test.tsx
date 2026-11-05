@@ -303,6 +303,7 @@ function fakeApi(overrides: Partial<ShortStaysApi> = {}): ShortStaysApi {
       Promise.resolve(weekReport({ from })),
     ),
     complaint: vi.fn(() => Promise.resolve()),
+    creditsDue: vi.fn(() => Promise.resolve([])),
     ...overrides,
   };
 }
@@ -1190,7 +1191,13 @@ describe("Daily and weekly rent: Short stays", () => {
     const step = vi.fn(() =>
       Promise.resolve({
         ...late,
-        credit: { amount_usd_cents: 2000, use_by: "2027-05-04", note: "Sick" },
+        credit: {
+          amount_usd_cents: 2000,
+          use_by: "2027-05-04",
+          note: "Sick",
+          left_usd_cents: 2000,
+          ended: null,
+        },
       }),
     );
     show({
@@ -1222,6 +1229,93 @@ describe("Daily and weekly rent: Short stays", () => {
       await screen.findByText("$20.00 credit, to use by 04/05/2027."),
     ).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Give credit" })).toBeNull();
+  });
+
+  it("TEST-FE-1628 ends a late-cancel credit after its use-by day", async () => {
+    const late: Booking = {
+      ...BOOKING,
+      status: "NO_SHOW",
+      cancel_reason: "Did not come",
+      payment: "PAID",
+      invoice: INVOICE,
+      cancellation: {
+        kind: "NO_SHOW",
+        free: false,
+        paid_usd_cents: 6090,
+        back_usd_cents: 0,
+        kept_usd_cents: 6090,
+      },
+      credit: {
+        amount_usd_cents: 2000,
+        use_by: "2026-10-31",
+        note: "Sick",
+        left_usd_cents: 1500,
+        ended: null,
+      },
+    };
+    const step = vi.fn(() =>
+      Promise.resolve({
+        ...late,
+        credit: {
+          ...late.credit,
+          left_usd_cents: 0,
+          ended: {
+            left_usd_cents: 1500,
+            invoice_id: "i-9",
+            invoice_number: "INV-260009",
+            at: "2026-11-04T03:00:00Z",
+          },
+        },
+      } as Booking),
+    );
+    const creditsDue = vi.fn(() =>
+      Promise.resolve([
+        {
+          booking_id: "b-1",
+          booking_number: "ST260001",
+          guest_name: "Meas Rina",
+          use_by: "2026-10-31",
+          left_usd_cents: 1500,
+        },
+      ]),
+    );
+    // Without the credit right: no list of credits and no End credit.
+    show({ api: fakeApi({ creditsDue }) });
+    fireEvent.click(await screen.findByRole("button", { name: "Bookings" }));
+    await screen.findByRole("table");
+    expect(creditsDue).not.toHaveBeenCalled();
+    cleanup();
+    show({
+      api: fakeApi({
+        creditsDue,
+        get: vi.fn(() => Promise.resolve(late)),
+        step,
+      }),
+      capabilities: new Set([...DESK, "short_stays.credit"]),
+    });
+    fireEvent.click(await screen.findByRole("button", { name: "Bookings" }));
+    expect(
+      await screen.findByText(
+        "1 guest credit(s) passed the use-by day. Open each booking and end the credit.",
+      ),
+    ).toBeInTheDocument();
+    const due = screen.getByRole("region", {
+      name: "1 guest credit(s) passed the use-by day. Open each booking and end the credit.",
+    });
+    expect(within(due).getByRole("link", { name: "ST260001" })).toHaveAttribute(
+      "href",
+      "#/shortstays/st%3Ab-1",
+    );
+    go("#/shortstays/st:b-1");
+    expect(await screen.findByText("$15.00 left to use.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "End credit" }));
+    expect(step).toHaveBeenCalledWith("p-1", "b-1", "credit/end", null);
+    expect(
+      await screen.findByText(
+        "Credit ended: $15.00 became income (Invoice INV-260009).",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "End credit" })).toBeNull();
   });
 
   it("TEST-FE-1616 links the guest's Lease draft for $50 off the first month", async () => {

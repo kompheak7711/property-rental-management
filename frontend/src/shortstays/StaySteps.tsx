@@ -942,6 +942,7 @@ export function CancelCard({
 export function CancelledCard({
   language,
   booking,
+  today,
   may,
   busy,
   onStep,
@@ -998,8 +999,53 @@ export function CancelledCard({
             )}
           </span>
           <span className="ui-sub2">{booking.credit.note}</span>
+          {booking.credit.ended !== null ? (
+            <span className="ui-sub2">
+              {booking.credit.ended.left_usd_cents === 0
+                ? st(
+                    language,
+                    "cr_ended_none",
+                    dayText(booking.credit.ended.at.slice(0, 10)),
+                  )
+                : st(
+                    language,
+                    "cr_ended",
+                    usdFromCents(booking.credit.ended.left_usd_cents),
+                    booking.credit.ended.invoice_number ?? "",
+                  )}
+            </span>
+          ) : (
+            booking.credit.left_usd_cents !==
+              booking.credit.amount_usd_cents && (
+              <span className="ui-sub2 ui-num">
+                {st(
+                  language,
+                  "cr_left",
+                  usdFromCents(booking.credit.left_usd_cents),
+                )}
+              </span>
+            )
+          )}
         </p>
       )}
+      {booking.credit !== null &&
+        booking.credit.ended === null &&
+        booking.credit.use_by < today &&
+        may("short_stays.credit") && (
+          <div className="ui-actions">
+            <p className="ui-small">{st(language, "cr_end_s")}</p>
+            <button
+              className="ui-btn"
+              disabled={busy}
+              onClick={() => {
+                onStep("credit/end", null);
+              }}
+              type="button"
+            >
+              {st(language, "cr_end_b")}
+            </button>
+          </div>
+        )}
       {mayCredit && (
         <form className="ui-form" noValidate onSubmit={give}>
           <h3>{st(language, "cr_t")}</h3>

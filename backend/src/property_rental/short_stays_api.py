@@ -18,7 +18,9 @@ sign-in (`GET /api/v1/short-stays/ical/{token}.ics`: busy dates only). Step 5b a
 `POST .../guests/{id}/notes`), the review request after check-out (`short_stays.desk`) and the
 Manager's extra discount before the Invoice (`short_stays.approve`). Step 5c adds the weekly
 report (`GET .../report?from=`, `short_stays.approve`) and a monthly tenant's complaint about
-short-stay guests (`POST .../complaints`, `short_stays.desk`). The database
+short-stay guests (`POST .../complaints`, `short_stays.desk`). Step 5d ends a late-cancel credit
+after its use-by day (`POST .../bookings/{id}/credit/end`, `GET .../credits-due`,
+`short_stays.credit`). The database
 functions check the rights again, price the stay from the owner's rules and keep one booking per
 Unit and night.
 """
@@ -80,6 +82,7 @@ Action = Literal[
     "review",
     "quote",
     "complaint",
+    "end_credit",
 ]
 # Step 3 (migration 20270602_312): each action is one database function that checks the right
 # again. "version" is the booking version the screen read (refused with 412 when it changed).
@@ -113,6 +116,8 @@ ACTION_SQL: dict[str, str] = {
     "quote": "SELECT app.make_short_stay_quote(%(p)s, %(b)s, %(a)s, %(c)s)",
     # Step 5c (migration 20270608_318): the target is the Property.
     "complaint": "SELECT app.record_short_stay_complaint(%(p)s, %(b)s, %(a)s, %(c)s)",
+    # Step 5d (migration 20270609_319): a late-cancel credit ends after its use-by day.
+    "end_credit": "SELECT app.end_short_stay_credit(%(p)s, %(t)s, %(a)s, %(c)s)",
 }
 
 
@@ -140,6 +145,8 @@ class ShortStayFlow(Protocol):
     def quotes(self, property_id: UUID, *, actor_id: str) -> list[Json]: ...
 
     def week_report(self, property_id: UUID, start: date, *, actor_id: str) -> Json: ...
+
+    def credits_due(self, property_id: UUID, *, actor_id: str) -> list[Json]: ...
 
     def act(
         self, property_id: UUID, action: Action, target: UUID, body: Json, *, actor_id: str
@@ -180,6 +187,9 @@ class UnavailableShortStayFlow:
         raise ProductUnavailable
 
     def week_report(self, property_id: UUID, start: date, **_: object) -> Json:
+        raise ProductUnavailable
+
+    def credits_due(self, property_id: UUID, **_: object) -> list[Json]:
         raise ProductUnavailable
 
     def act(self, property_id: UUID, action: Action, target: UUID, body: Json, **_: object) -> Json:
@@ -291,6 +301,14 @@ class PostgresShortStayFlow:
                 (property_id, start, UUID(actor_id)),
             )
         )
+
+    def credits_due(self, property_id: UUID, *, actor_id: str) -> list[Json]:
+        found = self._one(
+            "SELECT app.short_stay_credits_due(%s, %s)", (property_id, UUID(actor_id))
+        )
+        if not isinstance(found, list):
+            raise ProductUnavailable("Short-stay persistence is unavailable")
+        return [_json(item) for item in found]
 
     def act(
         self, property_id: UUID, action: Action, target: UUID, body: Json, *, actor_id: str
@@ -621,6 +639,19 @@ def create_short_stays_router(
         property_id: UUID, booking_id: UUID, body: Credit, request: Request
     ) -> Json:
         return act(request, property_id, SHORT_STAYS_CREDIT, "credit", booking_id, body)
+
+    @router.post("/bookings/{booking_id}/credit/end")
+    def end_short_stay_credit(property_id: UUID, booking_id: UUID, request: Request) -> Json:
+        return act(request, property_id, SHORT_STAYS_CREDIT, "end_credit", booking_id, None)
+
+    @router.get("/credits-due")
+    def short_stay_credits_due(property_id: UUID, request: Request, response: Response) -> Json:
+        actor = _require(request, resolver, SHORT_STAYS_CREDIT, property_id)
+        response.headers["Cache-Control"] = "private, no-store"
+        try:
+            return envelope(request, flow.credits_due(property_id, actor_id=actor.actor_id))
+        except REFUSED as exc:
+            raise _http(exc) from exc
 
     @router.post("/bookings/{booking_id}/lease")
     def link_short_stay_lease(

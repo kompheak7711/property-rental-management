@@ -22,6 +22,7 @@ import { Chip, type Tone } from "../shell/ui";
 import type { Language } from "../signInText";
 import { BookingDetail } from "./BookingDetail";
 import { CleaningList } from "./CleaningList";
+import { CreditsDue } from "./CreditsDue";
 import { NewBookingForm } from "./NewBooking";
 import { nightOf } from "./nights";
 import { Quotes } from "./Quotes";
@@ -445,6 +446,9 @@ export function ShortStaysPage({
     ) : (
       <>
         {failure}
+        {may("short_stays.credit") && (
+          <CreditsDue api={api} language={language} propertyId={propertyId} />
+        )}
         <div className="ui-card pad0">
           {bookings.length === 0 ? (
             <p className="ui-empty">{st(language, "none")}</p>

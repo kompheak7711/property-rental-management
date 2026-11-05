@@ -213,3 +213,9 @@ td.ss-clash {
     display: none;
   }
 }
+
+/* Step 5d: late-cancel credits past their use-by day. */
+.ss-due {
+  margin: 4px 0 0;
+  padding-left: 18px;
+}

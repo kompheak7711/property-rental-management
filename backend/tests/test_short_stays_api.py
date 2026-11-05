@@ -95,6 +95,11 @@ class InMemoryStays:
         self.calls.append(("week_report", start))
         return {"from": start.isoformat(), "units": []}
 
+    def credits_due(self, property_id: UUID, *, actor_id: str) -> list[Json]:
+        self._check(property_id)
+        self.calls.append(("credits_due", None))
+        return []
+
     def act(
         self, property_id: UUID, action: Action, target: UUID, body: Json, *, actor_id: str
     ) -> Json:
@@ -360,6 +365,19 @@ def test_quotes_and_a_guests_history() -> None:
     found = client(flow, "short_stays.read").get(guest)
     assert found.status_code == 200 and found.json()["data"]["notes"] == []
     assert client(flow, "short_stays.read").get(f"{base(flow)}/guests/{uuid4()}").status_code == 404
+
+
+def test_an_unused_credit_ends_with_the_credit_right() -> None:
+    flow = InMemoryStays()
+    due = f"{base(flow)}/credits-due"
+    assert client(flow, "short_stays.desk", "short_stays.approve").get(due).status_code == 403
+    answer = client(flow, "short_stays.credit").get(due)
+    assert answer.status_code == 200 and answer.headers["Cache-Control"] == "private, no-store"
+    assert answer.json()["data"] == []
+    end = f"{base(flow)}/bookings/{flow.booking_id}/credit/end"
+    assert client(flow, "short_stays.desk").post(end, headers=HEADERS).status_code == 403
+    assert client(flow, "short_stays.credit").post(end, headers=HEADERS).status_code == 200
+    assert flow.calls[-1][0] == "end_credit"
 
 
 def test_the_weekly_report_needs_the_approve_right_and_a_complaint_the_desk() -> None:

@@ -492,8 +492,8 @@ const TEXT = {
   can_nothing: ["No money was paid.", "មិនមានប្រាក់បានបង់ទេ។"],
   cr_t: ["Credit for a later stay", "ឥណទានសម្រាប់ការស្នាក់នៅពេលក្រោយ"],
   cr_s: [
-    "Turn some or all of the kept money into credit, for a stay or the first month of a Lease.",
-    "ប្ដូរប្រាក់ដែលរក្សាទុកខ្លះ ឬទាំងអស់ទៅជាឥណទាន សម្រាប់ការស្នាក់នៅ ឬខែដំបូងនៃកិច្ចសន្យា។",
+    "Turn some or all of the kept money into credit, for a later stay or the first month of a Lease, when a room is free. Credit not used by its use-by day ends.",
+    "ប្ដូរប្រាក់ដែលរក្សាទុកខ្លះ ឬទាំងអស់ទៅជាឥណទាន សម្រាប់ការស្នាក់នៅពេលក្រោយ ឬខែដំបូងនៃកិច្ចសន្យា នៅពេលមានបន្ទប់ទំនេរ។ ឥណទានដែលមិនបានប្រើត្រឹមថ្ងៃកំណត់ នឹងផុតសុពលភាព។",
   ],
   cr_amount: ["Credit (US$)", "ឥណទាន (US$)"],
   cr_note: ["Why", "មូលហេតុ"],
@@ -503,6 +503,26 @@ const TEXT = {
   ev_CANCELLED: ["Cancelled", "បានលុបចោល"],
   ev_NO_SHOW: ["Did not come", "មិនបានមក"],
   ev_CREDIT_GIVEN: ["Credit given", "បានផ្ដល់ឥណទាន"],
+  ev_CREDIT_ENDED: ["Credit ended", "ឥណទានបានផុតសុពលភាព"],
+  cr_left: ["{0} left to use.", "នៅសល់ {0} ដែលអាចប្រើបាន។"],
+  cr_end_s: [
+    "The use-by day has passed. What is left of the credit becomes income.",
+    "ថ្ងៃកំណត់បានកន្លងផុតហើយ។ ឥណទានដែលនៅសល់ក្លាយជាចំណូល។",
+  ],
+  cr_end_b: ["End credit", "បញ្ចប់ឥណទាន"],
+  cr_ended: [
+    "Credit ended: {0} became income (Invoice {1}).",
+    "ឥណទានបានបញ្ចប់៖ {0} ក្លាយជាចំណូល (វិក្កយបត្រ {1})។",
+  ],
+  cr_ended_none: [
+    "Credit ended on {0}. The guest had used all of it.",
+    "ឥណទានបានបញ្ចប់នៅ {0}។ ភ្ញៀវបានប្រើអស់ហើយ។",
+  ],
+  cd_t: [
+    "{0} guest credit(s) passed the use-by day. Open each booking and end the credit.",
+    "ឥណទានភ្ញៀវ {0} បានហួសថ្ងៃកំណត់។ បើកការកក់នីមួយៗ ហើយបញ្ចប់ឥណទាន។",
+  ],
+  cd_row: ["{0}: {1} left, use by {2}", "{0}៖ នៅសល់ {1} ប្រើបានដល់ {2}"],
   ls_t: ["Change to a Lease", "ប្ដូរទៅកិច្ចសន្យាជួល"],
   ls_s: [
     "{0} off the first month when the guest signs a Lease. Make the guest's Lease draft, then link it here.",
