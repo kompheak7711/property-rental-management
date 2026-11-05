@@ -63374,6 +63374,59 @@
       "test_path": "frontend/src/telegram/TelegramPages.test.tsx",
       "status": "implemented",
       "notes": "Telegram bots step 3b: The client reads one request and sends each step to its address with the browser token, and refuses a wrong shape."
+    },
+    {
+      "test_id": "test_make_reservation_block_and_the_month",
+      "upstream_ids": [
+        "DL-173",
+        "DB-TG-009"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_visit_request_close_out_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 3c: A request becomes a Reservation once and closes, a Manager blocks and unblocks the Telegram account with why, a blocked account sends no inquiry or Contact office message, and this month is for Managers only."
+    },
+    {
+      "test_id": "test_name_phone_and_account_go_after_12_months",
+      "upstream_ids": [
+        "DL-173",
+        "DB-TG-009"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_visit_request_close_out_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 3c: After 12 months with no activity a request and its joined asks lose name, phone, email, note and account, the steps stay, and nothing else can change."
+    },
+    {
+      "test_id": "test_a_blocked_account_is_told_to_visit_or_call_the_office",
+      "upstream_ids": [
+        "DL-173"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_customer_bot.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 3c: A blocked account is told to visit or call the office for Send an inquiry and Contact office."
+    },
+    {
+      "test_id": "TEST-FE-1314",
+      "upstream_ids": [
+        "DL-173"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/reservations/ReservationsPage.test.tsx",
+      "status": "implemented",
+      "notes": "Telegram bots step 3c: Make Reservation from a Visit request names it, chooses the Customer with the same phone, or starts New Customer with the name, phone and email."
+    },
+    {
+      "test_id": "TEST-FE-1315",
+      "upstream_ids": [
+        "DL-173",
+        "API-TG-005"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/telegram/TelegramPages.test.tsx",
+      "status": "implemented",
+      "notes": "Telegram bots step 3c: A request opens Make Reservation, shows the Reservation it became, a Manager blocks with a note, a removed request says so, and Managers see this month."
     }
   ]
 }

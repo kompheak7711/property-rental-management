@@ -281,6 +281,22 @@ def test_a_visit_request_step_needs_work_and_a_manager_gives_or_marks_spam() -> 
     ):
         assert staff.post(f"{url}/close", json=wrong, headers=HEADERS).status_code == 422
     assert staff.post(f"{url}/dance", json={}, headers=HEADERS).status_code == 422
+    reserved = str(uuid4())
+    assert (
+        staff.post(f"{url}/reserve", json={"reservation_id": reserved}, headers=HEADERS).status_code
+        == 200
+    )
+    assert staff.post(f"{url}/block", json={"note": "Adverts"}, headers=HEADERS).status_code == 403
+    assert (
+        manager.post(f"{url}/block", json={"note": "Adverts"}, headers=HEADERS).status_code == 200
+    )
+    assert manager.post(f"{url}/unblock", json={}, headers=HEADERS).status_code == 200
+    assert flow.steps[-3:] == [
+        ("RESERVE", {"reservation_id": reserved}),
+        ("BLOCK", {"note": "Adverts"}),
+        ("UNBLOCK", {}),
+    ]
+    del flow.steps[-3:]
     assert flow.steps == [
         ("TAKE", {}),
         ("GIVE", {"staff_id": worker}),

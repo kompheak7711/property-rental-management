@@ -170,9 +170,12 @@ def handle_customer_update(
         if not typed or not isinstance(inbound, str):
             reply("contact", _say("tenant.contact_text_only", "tenant.back"))
             return
-        store.contact_add(
+        saved_contact = store.contact_add(
             BOT, inbound, user, chat, speak, _sender_name(message), typed[:MAX_CONTACT]
         )
+        if saved_contact.get("result") == "BLOCKED":
+            reply("menu", _say("customer.blocked", "customer.menu"))
+            return
         reply("menu", _say("customer.contact_saved", "customer.menu"))
         return
     if tapped == "button.faq" or (step == "faq" and tapped is None and typed):
@@ -300,6 +303,8 @@ def _send(
     outcome = result.get("result")
     if outcome == "NO_PHONE":
         return "ask.phone", [_say("customer.ask_phone", "customer.share_phone")], request
+    if outcome == "BLOCKED":
+        return "menu", [_say("customer.blocked", "customer.menu")], {}
     number = str(result.get("number") or "")
     if result.get("main_number"):
         joined = _say(

@@ -209,6 +209,12 @@ export interface VisitRequest extends VisitInquiry {
   close_note: string | null;
   /** CONFIRMATION and REMINDER still to send by hand (not a Telegram customer). */
   to_send: string[];
+  /** The Reservation the request became (step 3c, DL-173), or null. */
+  reservation_id: string | null;
+  /** A Manager blocked this Telegram account. */
+  blocked: boolean;
+  /** The name, phone and email were removed after 12 months with no activity. */
+  removed: boolean;
   /** Later inquiries of the same person or phone, which keep this request's place. */
   joined: VisitInquiry[];
 }
@@ -228,6 +234,24 @@ export interface VisitRequestsPage {
   me: string;
   can_work: boolean;
   can_manage: boolean;
+  /** This month, for Managers and the Owner only (null for Staff). */
+  month: VisitMonth | null;
+}
+
+export interface VisitCount {
+  code: string;
+  count: number;
+}
+
+export interface VisitMonth {
+  /** "YYYY-MM". */
+  month: string;
+  new: number;
+  joined: number;
+  /** Requests with each step this month: VISIT_BOOKED, VISITED, NO_SHOW, RESERVED, CLOSED, SPAM. */
+  steps: Record<string, number>;
+  reasons: VisitCount[];
+  sources: VisitCount[];
 }
 
 export interface VisitHistoryStep {
@@ -257,7 +281,10 @@ export type VisitAction =
   | "close"
   | "reopen"
   | "spam"
-  | "sent";
+  | "sent"
+  | "reserve"
+  | "block"
+  | "unblock";
 
 export interface VisitStepBody {
   staff_id?: string;
@@ -267,6 +294,7 @@ export interface VisitStepBody {
   reason?: string;
   what?: "CONFIRMATION" | "REMINDER";
   note?: string;
+  reservation_id?: string;
 }
 
 export interface VisitStepDone {
@@ -630,7 +658,33 @@ function visitRequestOf(value: unknown): VisitRequest {
     reason: maybeText(row.reason),
     close_note: maybeText(row.close_note),
     to_send: list(row.to_send).map(text),
+    reservation_id: maybeText(row.reservation_id),
+    blocked: row.blocked === true,
+    removed: row.removed === true,
     joined: list(row.joined).map(inquiryOf),
+  };
+}
+
+function countsOf(value: unknown, key: string): VisitCount[] {
+  return list(value).map((item) => {
+    const row = record(item);
+    return { code: text(row[key]), count: whole(row.count) };
+  });
+}
+
+function monthOf(value: unknown): VisitMonth | null {
+  if (value === null || value === undefined) return null;
+  const month = record(value);
+  const steps: Record<string, number> = {};
+  for (const [kind, count] of Object.entries(record(month.steps)))
+    steps[kind] = whole(count);
+  return {
+    month: text(month.month),
+    new: whole(month.new),
+    joined: whole(month.joined),
+    steps,
+    reasons: countsOf(month.reasons, "reason"),
+    sources: countsOf(month.sources, "source"),
   };
 }
 
@@ -642,6 +696,7 @@ export function visitRequestsPageOf(value: unknown): VisitRequestsPage {
     me: text(page.me),
     can_work: flag(page.can_work),
     can_manage: flag(page.can_manage),
+    month: monthOf(page.month),
     workers: list(page.workers).map((item) => {
       const worker = record(item);
       return { id: text(worker.id), name: text(worker.name) };

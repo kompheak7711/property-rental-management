@@ -365,6 +365,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         store.tenant_end_finished_links()
         store.remove_old_link_attempts()
         store.visit_reminders()
+        store.visit_requests_remove_old()
         push_form_data(client=client, store=store, status_directory=config.status_directory)
     except (RelayError, SealError) as error:
         code = error.code if isinstance(error, RelayError) else "office_key_unreadable"

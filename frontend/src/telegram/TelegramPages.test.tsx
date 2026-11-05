@@ -254,6 +254,9 @@ const WORK = {
   reason: null,
   close_note: null,
   to_send: [],
+  reservation_id: null,
+  blocked: false,
+  removed: false,
 };
 
 const PAGE_FACTS = {
@@ -266,6 +269,7 @@ const PAGE_FACTS = {
   me: "staff-1",
   can_work: true,
   can_manage: false,
+  month: null,
 };
 
 const FIRST: VisitRequest = {
@@ -1273,5 +1277,138 @@ describe("Office › Telegram", () => {
     expect(() => visitRequestsPageOf({ ...VISITS, can_work: "yes" })).toThrow(
       TelegramError,
     );
+  });
+  it("TEST-FE-1315 a Visit request opens Make Reservation, shows the Reservation it became, a Manager blocks the Telegram account with a note, a removed request says so, and Managers see this month", async () => {
+    const contacted: VisitRequestDetail = {
+      ...FIRST,
+      status: "CONTACTED",
+      staff_id: "staff-1",
+      staff: "Dara",
+      mine: true,
+      history: [],
+    };
+    const managerPage: VisitRequestsPage = {
+      ...VISITS,
+      can_manage: true,
+      month: {
+        month: "2026-11",
+        new: 7,
+        joined: 2,
+        steps: { VISIT_BOOKED: 3, VISITED: 2, RESERVED: 1, CLOSED: 2 },
+        reasons: [
+          { code: "PRICE", count: 2 },
+          { code: "CANCELLED", count: 1 },
+        ],
+        sources: [{ code: "TELEGRAM", count: 7 }],
+      },
+    };
+    const visitStep = vi.fn(() =>
+      Promise.resolve({
+        request: { ...contacted, blocked: true },
+        page: managerPage,
+      }),
+    );
+    const api = fakeApi({
+      visitRequests: vi.fn(() => Promise.resolve(managerPage)),
+      visitRequest: vi.fn(() => Promise.resolve(contacted)),
+      visitStep,
+    });
+    render(
+      <VisitRequestsPageView
+        active
+        api={api}
+        capabilities={null}
+        language="en"
+        propertyId="prop-1"
+      />,
+    );
+    const month = await screen.findByRole("region", { name: /This month/ });
+    expect(within(month).getByText("11/2026")).toBeTruthy();
+    expect(within(month).getByText("Price too high")).toBeTruthy();
+    expect(within(month).getByText("Customer cancelled")).toBeTruthy();
+    expect(within(month).getByText("Telegram bot")).toBeTruthy();
+    expect(within(month).getAllByText("7")).toHaveLength(2);
+
+    fireEvent.click(screen.getByRole("button", { name: "Open VR260001" }));
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.click(
+      await within(dialog).findByRole("button", {
+        name: "Block Telegram account",
+      }),
+    );
+    expect(within(dialog).getByText("Write a note.")).toBeTruthy();
+    fireEvent.change(within(dialog).getByLabelText("Why block"), {
+      target: { value: "Adverts" },
+    });
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Block Telegram account" }),
+    );
+    expect(
+      await within(dialog).findByText(
+        "This Telegram account is blocked. It cannot send requests or messages.",
+      ),
+    ).toBeTruthy();
+    expect(visitStep).toHaveBeenCalledWith("prop-1", "vr-1", "block", {
+      note: "Adverts",
+    });
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Unblock Telegram account" }),
+    );
+    await waitFor(() => {
+      expect(visitStep).toHaveBeenLastCalledWith(
+        "prop-1",
+        "vr-1",
+        "unblock",
+        {},
+      );
+    });
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Make Reservation" }),
+    );
+    expect(decodeURIComponent(window.location.hash)).toBe(
+      "#/reservations/visit:vr-1",
+    );
+    expect(screen.queryByRole("dialog")).toBeNull();
+    cleanup();
+    window.location.hash = "";
+
+    const reserved = fakeApi({
+      visitRequest: vi.fn(() =>
+        Promise.resolve({
+          ...contacted,
+          status: "RESERVED",
+          reservation_id: "res-9",
+          removed: true,
+          name: "",
+          phone: "",
+        }),
+      ),
+    });
+    render(
+      <VisitRequestsPageView
+        active
+        api={reserved}
+        capabilities={new Set(["visit_requests.read"])}
+        language="en"
+        propertyId="prop-1"
+      />,
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Open VR260001" }),
+    );
+    const done = await screen.findByRole("dialog");
+    expect(await within(done).findByText("Became Reservation")).toBeTruthy();
+    expect(
+      within(done).getByRole("link", { name: "Open the Reservation" }),
+    ).toHaveAttribute("href", "#/reservations/res-9");
+    expect(
+      within(done).getByText(
+        "The name, phone and email were removed after 12 months with no activity.",
+      ),
+    ).toBeTruthy();
+    expect(
+      within(done).queryByRole("button", { name: "Make Reservation" }),
+    ).toBeNull();
+    expect(within(done).queryByText("Record a call")).toBeNull();
   });
 });

@@ -123,6 +123,7 @@ class FakeStore:
         self.inquiries: list[tuple[str, int, int, str, dict[str, Any]]] = []
         self.inquiry_answers: list[dict[str, Any]] = []
         self.reminder_runs = 0
+        self.blocked = False
 
     def record_item(self, item: dict[str, Any]) -> dict[str, Any]:
         if item["relay_item_id"] in self.items:
@@ -197,6 +198,9 @@ class FakeStore:
         self.reminder_runs += 1
         return 0
 
+    def visit_requests_remove_old(self) -> int:
+        return 0
+
     def tenant_form_data(self) -> dict[str, Any]:
         return self.form_data
 
@@ -224,7 +228,7 @@ class FakeStore:
         message: str,
     ) -> dict[str, Any]:
         self.contacts.append((bot, inbound_id, user, chat, language, name, message))
-        return {"result": "SAVED", "id": "c1"}
+        return {"result": "BLOCKED"} if self.blocked else {"result": "SAVED", "id": "c1"}
 
     def faq_for_bot(self, bot: str) -> list[dict[str, Any]]:
         return self.faq

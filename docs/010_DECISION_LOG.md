@@ -2717,3 +2717,18 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **Built:** migration `20270526_288` (DB-TG-008), API-TG-004, `telegram_texts.py` (customer.visit_booked, visit_moved, visit_reminder), `frontend/src/telegram/`, TEST-FE-1311 to 1313.
 - **Links:** DL-170, DL-171.
 - **Decision date:** 2026-11-05.
+
+## DL-173 — Telegram bots: Make Reservation, Block, the 12-month removal and this month (bots step 3c)
+
+- **Type:** `TECHNICAL DECISION`
+- **Status:** `STEP 3C BUILT ON BRANCH claude/telegram-bots; WAITS FOR THE OWNER'S TEST`
+- **Source:** the owner's CRM rules of 28 Oct 2026 (Make Reservation from a request; Spam and Block by a Manager; the name, phone and account are removed after 12 months; this month, the reasons and the sources for Managers and the Owner) and the CRM mock-up. Technical choices by Claude under the owner's 2026-10-23 22:30 rule; no new business rule.
+- **(A) Make Reservation.** A request that is Contacted, Visit booked, Visited or No-show has Make Reservation. It opens the usual Make Reservation window (deposit first, DL-112) with the request's number, name and phone; the Customer with the same phone is chosen (phones written another way, such as "012 800 200" and "+85512800200", are the same), or New Customer starts with the name, phone and email. When the Reservation is saved, the request becomes "Became Reservation" with a link to it, and closes; one request per Reservation.
+- **(B) Block.** A Manager blocks the Telegram account of a request, with why, and can unblock it. A blocked account gets "We cannot take requests from this account. Please visit or call the office." for Send an inquiry and Contact office in the Customer bot. Every Block and Unblock is kept.
+- **(C) The 12-month removal.** When a request (with the asks that joined it) has had no step and no new ask for 12 months, the Telegram jobs empty its name, phone, email, note and Telegram account. The request, its number and its steps stay, so the counts stay right. A Customer bot account not seen for 12 months loses its shared phone; an account ever linked to a Lease keeps it. The removal is the only change a request allows.
+- **(D) This month.** Managers and the Owner see, under the list: new requests, asks that joined, visits booked, visited, no-show, became Reservation, closed and Spam this month, why requests closed and where they came from.
+- **Not built:** choosing which Units to show on Book visit (the Units are chosen at the visit); conversation steps the bot keeps for a chat are not part of the removal.
+- **Open:** the Khmer texts marked new need a native-speaker check.
+- **Built:** migration `20270527_289` (DB-TG-009), API-TG-005, `frontend/src/telegram/`, `frontend/src/reservations/`, TEST-FE-1314 and 1315.
+- **Links:** DL-112, DL-171, DL-172.
+- **Decision date:** 2026-11-05.

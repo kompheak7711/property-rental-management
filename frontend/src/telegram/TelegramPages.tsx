@@ -37,11 +37,13 @@ import {
   type VisitAction,
   type VisitHistoryStep,
   type VisitInquiry,
+  type VisitMonth,
   type VisitRequest,
   type VisitRequestDetail,
   type VisitRequestsPage,
   type VisitStepBody,
 } from "./telegramClient";
+import { openPageInAddress } from "../shell/useHashPage";
 import { hasText, type TelegramTextKey, tt } from "./text";
 
 export interface TelegramPageProps {
@@ -1612,7 +1614,7 @@ function shownStatus(request: VisitRequest): string {
 function statusTone(status: string): Tone {
   if (status === "LATE") return "err";
   if (status === "NEW") return "info";
-  if (status === "VISITED") return "ok";
+  if (status === "VISITED" || status === "RESERVED") return "ok";
   if (["CLOSED", "CANCELLED", "SPAM", "NO_SHOW"].includes(status))
     return "neutral";
   return "warn";
@@ -1710,7 +1712,94 @@ const VISIT_CARDS: readonly [
 ];
 
 function isOpen(request: VisitRequest): boolean {
-  return request.status !== "CLOSED" && request.status !== "SPAM";
+  return !["CLOSED", "SPAM", "RESERVED"].includes(request.status);
+}
+
+const MONTH_STEPS = [
+  "VISIT_BOOKED",
+  "VISITED",
+  "NO_SHOW",
+  "RESERVED",
+  "CLOSED",
+  "SPAM",
+] as const;
+
+function CountTable({
+  language,
+  title,
+  rows,
+  prefix,
+}: {
+  language: Language;
+  title: TelegramTextKey;
+  rows: { code: string; count: number }[];
+  prefix: string;
+}) {
+  return (
+    <div>
+      <h3>{tt(language, title)}</h3>
+      {rows.length === 0 ? (
+        <p className="ui-muted">{tt(language, "m_none")}</p>
+      ) : (
+        <table className="ui-table">
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.code}>
+                <td>{textOf(language, prefix, row.code)}</td>
+                <td className="r ui-num">{row.count}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+}
+
+/** This month, for Managers and the Owner (DL-173). */
+function MonthSection({
+  language,
+  month,
+}: {
+  language: Language;
+  month: VisitMonth;
+}) {
+  return (
+    <section aria-labelledby="vr-month" className="ui-card">
+      <h2 id="vr-month">
+        {tt(language, "m_title")}{" "}
+        <span className="ui-muted ui-num">
+          {month.month.split("-").reverse().join("/")}
+        </span>
+      </h2>
+      <dl className="ui-kv">
+        <dt>{tt(language, "m_new")}</dt>
+        <dd className="ui-num">{month.new}</dd>
+        <dt>{tt(language, "m_joined")}</dt>
+        <dd className="ui-num">{month.joined}</dd>
+        {MONTH_STEPS.map((step) => [
+          <dt key={`${step}-t`}>{tt(language, `m_${step}`)}</dt>,
+          <dd className="ui-num" key={`${step}-d`}>
+            {month.steps[step] ?? 0}
+          </dd>,
+        ])}
+      </dl>
+      <div className="ui-split">
+        <CountTable
+          language={language}
+          prefix="reason_"
+          rows={month.reasons}
+          title="m_reasons"
+        />
+        <CountTable
+          language={language}
+          prefix="src_"
+          rows={month.sources}
+          title="m_sources"
+        />
+      </div>
+    </section>
+  );
 }
 
 function inVisitCard(request: VisitRequest, card: VisitCard): boolean {
@@ -1804,6 +1893,7 @@ export function VisitRequestsPageView({
   language,
   propertyId,
   active,
+  capabilities,
   api = defaultTelegramApi,
 }: TelegramPageProps) {
   const page = usePage<VisitRequestsPage>(
@@ -1993,10 +2083,18 @@ export function VisitRequestsPageView({
           </div>
         )}
       </section>
+      {data.month !== null && (
+        <MonthSection language={language} month={data.month} />
+      )}
       <p className="ui-muted">{tt(language, "vr_how")}</p>
       {openId !== null && (
         <VisitRequestDialog
           api={api}
+          mayReserve={
+            capabilities === null ||
+            (capabilities.has("reservations.create") &&
+              capabilities.has("payments.record"))
+          }
           language={language}
           onClose={() => {
             setOpenId(null);
@@ -2068,6 +2166,7 @@ function VisitRequestDialog({
   requestId,
   page,
   api,
+  mayReserve,
   onClose,
   onPage,
 }: {
@@ -2076,6 +2175,8 @@ function VisitRequestDialog({
   requestId: string;
   page: VisitRequestsPage;
   api: TelegramApi;
+  /** Make Reservation needs reservations.create and payments.record (null rights: shown). */
+  mayReserve: boolean;
   onClose: () => void;
   onPage: (next: VisitRequestsPage) => void;
 }) {
@@ -2091,6 +2192,7 @@ function VisitRequestDialog({
   const [closeNote, setCloseNote] = useState("");
   const [reopenNote, setReopenNote] = useState("");
   const [spamNote, setSpamNote] = useState("");
+  const [blockNote, setBlockNote] = useState("");
   const [giveTo, setGiveTo] = useState(page.workers[0]?.id ?? "");
   const [shown, setShown] = useState<string | null>(null);
 
@@ -2167,6 +2269,28 @@ function VisitRequestDialog({
       <p>
         <Chip tone={statusTone(status)}>{statusName(language, status)}</Chip>
       </p>
+      {detail.removed && (
+        <div className="ui-notice info" role="status">
+          <Icon name="info" />
+          <p>{tt(language, "d_removed")}</p>
+        </div>
+      )}
+      {detail.blocked && (
+        <div className="ui-notice warn" role="status">
+          <Icon name="lock" />
+          <p>{tt(language, "d_blocked")}</p>
+        </div>
+      )}
+      {detail.reservation_id !== null && (
+        <div className="ui-actions">
+          <a
+            className="ui-btn"
+            href={`#/reservations/${encodeURIComponent(detail.reservation_id)}`}
+          >
+            {tt(language, "d_res_open")}
+          </a>
+        </div>
+      )}
       <Done text={done} />
       {failure !== null && (
         <p className="ui-error" role="alert">
@@ -2379,6 +2503,28 @@ function VisitRequestDialog({
             </fieldset>
           )}
 
+          {mayReserve &&
+            ["CONTACTED", "VISIT_BOOKED", "VISITED", "NO_SHOW"].includes(
+              detail.status,
+            ) && (
+              <div className="ui-actions">
+                <button
+                  className="ui-btn primary"
+                  disabled={busy}
+                  onClick={() => {
+                    onClose();
+                    openPageInAddress(
+                      "reservations",
+                      false,
+                      `visit:${detail.id}`,
+                    );
+                  }}
+                  type="button"
+                >
+                  {tt(language, "d_make_res")}
+                </button>
+              </div>
+            )}
           {detail.status === "VISIT_BOOKED" && visitDayNow && (
             <div className="ui-actions">
               <button
@@ -2578,6 +2724,57 @@ function VisitRequestDialog({
             )}
           </fieldset>
         )}
+
+      {manager && !detail.removed && (
+        <fieldset className="ui-card">
+          <legend>
+            {tt(language, detail.blocked ? "d_unblock" : "d_block")}
+          </legend>
+          {detail.blocked ? (
+            <button
+              className="ui-btn"
+              disabled={busy}
+              onClick={() => {
+                step("unblock");
+              }}
+              type="button"
+            >
+              {tt(language, "d_unblock")}
+            </button>
+          ) : (
+            <div className="ui-hrow">
+              <div className="ui-field">
+                <label htmlFor="vr-block">{tt(language, "d_block_l")}</label>
+                <input
+                  aria-invalid={shown === "block" && needs(blockNote)}
+                  disabled={busy}
+                  id="vr-block"
+                  maxLength={300}
+                  onChange={(event) => {
+                    setBlockNote(event.currentTarget.value);
+                  }}
+                  value={blockNote}
+                />
+              </div>
+              <button
+                className="ui-btn danger"
+                disabled={busy}
+                onClick={() => {
+                  setShown("block");
+                  if (needs(blockNote)) return;
+                  step("block", { note: blockNote.trim() });
+                }}
+                type="button"
+              >
+                {tt(language, "d_block")}
+              </button>
+            </div>
+          )}
+          {shown === "block" && needs(blockNote) && (
+            <p className="ui-error">{tt(language, "e_note")}</p>
+          )}
+        </fieldset>
+      )}
 
       <h3>{tt(language, "d_hist")}</h3>
       <ul className="ui-timeline">

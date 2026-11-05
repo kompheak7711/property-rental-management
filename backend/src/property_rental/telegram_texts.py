@@ -454,6 +454,10 @@ TEXTS: Final[dict[str, dict[str, str]]] = {
             "Working hours: Monday to Saturday, 07:00 to 17:00."
         ),
     },
+    "customer.blocked": {
+        "km": "យើងមិនអាចទទួលសំណើពីគណនីនេះបានទេ។ សូមមកការិយាល័យ ឬទូរស័ព្ទមកយើង។",
+        "en": "We cannot take requests from this account. Please visit or call the office.",
+    },
     "customer.visit_booked": {
         "km": (
             "ការមកមើលរបស់អ្នកត្រូវបានកក់។\n"

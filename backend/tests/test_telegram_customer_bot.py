@@ -247,3 +247,21 @@ def test_the_visit_messages_from_the_app_have_their_words() -> None:
         "customer.visit_reminder", "km", {"day": "ថ្ងៃសៅរ៍ 07/11/2026", "time": "09:00"}
     )
     assert reminder.startswith("រំលឹក៖") and "09:00" in reminder
+
+
+def test_a_blocked_account_is_told_to_visit_or_call_the_office() -> None:
+    store = english_store()
+    store.phones.add(USER)
+    store.blocked = True
+    say(store, "Contact office")
+    assert codes(say(store, "Hello")) == [("customer.blocked", "customer.menu")]
+    say(store, "Send an inquiry")
+    say(store, "Telegram")
+    say(store, "Sokha")
+    say(store, "Studio")
+    say(store, "Skip")
+    say(store, "Later")
+    say(store, "Skip")
+    store.inquiry_answers.append({"result": "BLOCKED"})
+    assert codes(say(store, "Send an inquiry")) == [("customer.blocked", "customer.menu")]
+    assert store.steps[USER] == ("menu", {})

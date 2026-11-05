@@ -23,6 +23,8 @@ Step 3b (DL-172): `GET .../visit-requests/{request_id}` answers one request with
 (`visit_requests.read`); `POST .../visit-requests/{request_id}/{action}` records one step: take,
 call, book (and move) a visit, visited, no-show, close, reopen and sent by hand
 (`visit_requests.work`), give to another person and spam (`visit_requests.manage`).
+Step 3c (DL-173): reserve (the request became a Reservation; `visit_requests.work`), block and
+unblock the Telegram account (`visit_requests.manage`).
 
 The database functions check the rights again.
 """
@@ -61,7 +63,7 @@ TELEGRAM_FAQ = "telegram.faq"
 VISIT_REQUESTS_READ = "visit_requests.read"
 VISIT_REQUESTS_WORK = "visit_requests.work"
 VISIT_REQUESTS_MANAGE = "visit_requests.manage"
-MANAGER_STEPS = frozenset({"give", "spam"})
+MANAGER_STEPS = frozenset({"give", "spam", "block", "unblock"})
 Reason = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=300)]
 AnswerText = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=600)]
 Question = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=160)]
@@ -70,7 +72,19 @@ VisitAt = Annotated[
     str, StringConstraints(pattern=r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}$")
 ]
 VisitAction = Literal[
-    "take", "give", "call", "book", "visited", "no-show", "close", "reopen", "spam", "sent"
+    "take",
+    "give",
+    "call",
+    "book",
+    "visited",
+    "no-show",
+    "close",
+    "reopen",
+    "spam",
+    "sent",
+    "reserve",
+    "block",
+    "unblock",
 ]
 
 
@@ -297,6 +311,7 @@ class VisitStep(BaseModel):
     ) = None
     what: Literal["CONFIRMATION", "REMINDER"] | None = None
     note: Reason | None = None
+    reservation_id: UUID | None = Field(default=None, strict=False)
 
 
 def _require_any(

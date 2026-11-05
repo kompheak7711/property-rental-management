@@ -561,6 +561,36 @@ const TEXT = {
   ],
   vr_saved: ["Saved.", "បានរក្សាទុក។"],
   close_dlg: ["Close", "បិទ"],
+  // Step 3c (DL-173): Make Reservation, Block, the 12-month removal and this month. New Khmer.
+  vst_RESERVED: ["Became Reservation", "បានក្លាយជាការកក់"],
+  h_RESERVED: ["Became a Reservation", "បានក្លាយជាការកក់"],
+  d_make_res: ["Make Reservation", "បង្កើតការកក់"],
+  d_res_open: ["Open the Reservation", "បើកការកក់"],
+  d_block: ["Block Telegram account", "បិទគណនី Telegram"],
+  d_block_l: ["Why block", "ហេតុអ្វីបិទ"],
+  d_unblock: ["Unblock Telegram account", "បើកគណនី Telegram វិញ"],
+  d_blocked: [
+    "This Telegram account is blocked. It cannot send requests or messages.",
+    "គណនី Telegram នេះត្រូវបានបិទ។ វាមិនអាចផ្ញើសំណើ ឬសារបានទេ។",
+  ],
+  d_removed: [
+    "The name, phone and email were removed after 12 months with no activity.",
+    "ឈ្មោះ ទូរស័ព្ទ និងអ៊ីមែល ត្រូវបានលុប ក្រោយ 12 ខែគ្មានសកម្មភាព។",
+  ],
+  m_title: ["This month", "ខែនេះ"],
+  m_new: ["New requests", "សំណើថ្មី"],
+  m_joined: ["Asked again", "សុំម្ដងទៀត"],
+  m_VISIT_BOOKED: ["Visits booked", "ការមកមើលដែលបានកក់"],
+  m_VISITED: ["Visited", "បានមកមើល"],
+  m_NO_SHOW: ["No-show", "មិនបានមក"],
+  m_RESERVED: ["Became Reservation", "បានក្លាយជាការកក់"],
+  m_CLOSED: ["Closed", "បានបិទ"],
+  m_SPAM: ["Spam", "សារឥតបានការ"],
+  m_reasons: ["Why requests closed", "ហេតុអ្វីសំណើត្រូវបានបិទ"],
+  m_sources: ["Where requests came from", "សំណើមកពីណា"],
+  m_none: ["None yet.", "មិនទាន់មាន។"],
+  m_count: ["Count", "ចំនួន"],
+  src_TELEGRAM: ["Telegram bot", "បូត Telegram"],
 } as const satisfies Record<string, readonly [string, string]>;
 
 export type TelegramTextKey = keyof typeof TEXT;
