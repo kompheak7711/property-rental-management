@@ -161,6 +161,11 @@ import type { LedgerApi } from "./ledger/ledgerClient";
 import { ProductsPage } from "./products/ProductsPage";
 import { QuotationsPage } from "./quotations/QuotationsPage";
 import { ProblemReportsPage } from "./problems/ProblemReportsPage";
+import { AttendancePage } from "./hr/AttendancePage";
+import { EmployeesPage } from "./hr/EmployeesPage";
+import { type HrApi, hrApi as defaultHrApi } from "./hr/hrClient";
+import { LoansPage } from "./hr/LoansPage";
+import { PayrollPage } from "./hr/PayrollPage";
 import type { ProblemsApi } from "./problems/problemsClient";
 import {
   ContactOfficePage,
@@ -200,6 +205,8 @@ export interface AppProps {
   problemsApi?: ProblemsApi;
   /** Telegram bots step 2c: Office › Telegram; the real server when not given. */
   telegramApi?: TelegramApi;
+  /** HRIS phase 6: Office › Employees and payroll; the real server when not given. */
+  hrApi?: HrApi;
   propertyApi?: PropertyConfigurationApi;
   unitApi?: UnitApi;
   businessSettingsApi?: BusinessSettingsApi;
@@ -686,6 +693,7 @@ export function App({
   quotationsApi,
   problemsApi,
   telegramApi,
+  hrApi,
   propertyApi = propertyConfigurationApi,
   unitApi,
   customerApi,
@@ -1999,6 +2007,51 @@ export function App({
       </div>
       <div
         className="shell-page"
+        data-page="employees"
+        hidden={!shown("employees")}
+      >
+        <EmployeesPage
+          active={shown("employees")}
+          api={hrApi}
+          capabilities={capabilities}
+          language={language}
+          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
+        />
+      </div>
+      <div className="shell-page" data-page="loans" hidden={!shown("loans")}>
+        <LoansPage
+          active={shown("loans")}
+          api={hrApi}
+          language={language}
+          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
+        />
+      </div>
+      <div
+        className="shell-page"
+        data-page="payroll"
+        hidden={!shown("payroll")}
+      >
+        <PayrollPage
+          active={shown("payroll")}
+          api={hrApi}
+          language={language}
+          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
+        />
+      </div>
+      <div
+        className="shell-page"
+        data-page="attendance"
+        hidden={!shown("attendance")}
+      >
+        <AttendancePage
+          active={shown("attendance")}
+          api={hrApi}
+          language={language}
+          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
+        />
+      </div>
+      <div
+        className="shell-page"
         data-page="problems"
         hidden={!shown("problems")}
       >
@@ -3114,6 +3167,7 @@ export function App({
           myUserId={session.actor_id}
           reauthenticate={reauthenticateForSettings}
           usersApi={administrationApi}
+          staff={(hrApi ?? defaultHrApi).employees}
           rolesApi={rolesApi}
           businessApi={businessApi}
           ratesApi={effectiveConfigApi}

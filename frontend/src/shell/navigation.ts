@@ -39,6 +39,10 @@ export type PageId =
   | "tgcontact"
   | "tgfaq"
   | "tghealth"
+  | "employees"
+  | "loans"
+  | "payroll"
+  | "attendance"
   | "account";
 
 export type IconName =
@@ -57,6 +61,7 @@ export type IconName =
   | "moveout"
   | "reports"
   | "history"
+  | "staff"
   | "settings"
   | "send";
 
@@ -157,6 +162,14 @@ export const MENU: readonly MenuGroup[] = [
         label: ["Telegram", "តេឡេក្រាម"],
         tabs: ["tglinks", "tgcontact", "tgfaq", "tghealth"],
       },
+      // HRIS phase 6 (mock-up v69, round 23): Employees and payroll with its tabs. Users and
+      // access stays in Settings › Users and sign-in for now.
+      {
+        page: "employees",
+        icon: "staff",
+        label: ["Employees and payroll", "បុគ្គលិក និងប្រាក់ខែ"],
+        tabs: ["employees", "loans", "payroll", "attendance"],
+      },
       { page: "reports", icon: "reports" },
       { page: "history", icon: "history" },
       { page: "settings", icon: "settings" },
@@ -205,6 +218,10 @@ const PAGE_NAMES: Record<PageId, readonly [string, string]> = {
   tgcontact: ["Contact office", "ទាក់ទងការិយាល័យ"],
   tgfaq: ["FAQ", "សំណួរញឹកញាប់"],
   tghealth: ["Telegram health", "ស្ថានភាពតេឡេក្រាម"],
+  employees: ["Employees", "បុគ្គលិក"],
+  loans: ["Salary loans", "ប្រាក់កម្ចីប្រាក់ខែ"],
+  payroll: ["Payroll", "បញ្ជីប្រាក់ខែ"],
+  attendance: ["Attendance", "វត្តមាន"],
   // new
   account: ["My account", "គណនីរបស់ខ្ញុំ"],
 };
@@ -268,6 +285,11 @@ const PAGE_NEEDS: Record<PageId, readonly string[] | null> = {
   tgcontact: ["telegram.contact"],
   tgfaq: ["telegram.faq", "telegram.contact"],
   tghealth: ["telegram.read"],
+  // HRIS phase 6 (rights table, DB plan 03/11/2026): each tab needs its read right.
+  employees: ["hr.employees.read"],
+  loans: ["hr.salaries.read"],
+  payroll: ["hr.salaries.read"],
+  attendance: ["hr.attendance.read"],
   account: null,
 };
 

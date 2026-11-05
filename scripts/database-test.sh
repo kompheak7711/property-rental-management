@@ -372,6 +372,10 @@ database_test_suites='
   tests/test_telegram_customer_bot_migration.py
   tests/test_telegram_visit_request_work_migration.py
   tests/test_telegram_visit_request_close_out_migration.py
+  tests/test_hr_employees_migration.py
+  tests/test_hr_payroll_migration.py
+  tests/test_hr_attendance_migration.py
+  tests/test_hr_leaver_turn_off_migration.py
 '
 # The General Ledger suites run first, in a pytest run of their own on the new database: the other
 # suites leave balances on the one Property (up to the largest bigint) that no books can hold.
@@ -389,6 +393,7 @@ ledger_database_test_suites='
   tests/test_gl_asset_register_migration.py
   tests/test_gl_budget_sheet_migration.py
   tests/test_gl_opening_sheet_migration.py
+  tests/test_gl_riel_bank_migration.py
 '
 
 for database_test_file in $database_test_suites $ledger_database_test_suites; do
