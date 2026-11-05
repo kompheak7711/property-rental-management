@@ -99,6 +99,14 @@ class TelegramStore(Protocol):
 
     def staff_form_data(self) -> dict[str, Any]: ...
 
+    def staff_problem_report(
+        self, inbound_id: str, form: dict[str, Any], media_ids: list[str]
+    ) -> dict[str, Any]: ...
+
+    def staff_close_job(
+        self, inbound_id: str, form: dict[str, Any], media_ids: list[str]
+    ) -> dict[str, Any]: ...
+
 
 class PostgresTelegramStore:
     def __init__(
@@ -435,4 +443,28 @@ class PostgresTelegramStore:
     def staff_form_data(self) -> dict[str, Any]:
         return self._staff_dict(
             "SELECT app.telegram_staff_form_data(%s, %s)", self._property, self._actor
+        )
+
+    def staff_problem_report(
+        self, inbound_id: str, form: dict[str, Any], media_ids: list[str]
+    ) -> dict[str, Any]:
+        return self._staff_dict(
+            "SELECT app.telegram_staff_problem_report(%s, %s, %s::jsonb, %s::jsonb, %s)",
+            self._property,
+            inbound_id,
+            json.dumps(form),
+            json.dumps(media_ids),
+            self._actor,
+        )
+
+    def staff_close_job(
+        self, inbound_id: str, form: dict[str, Any], media_ids: list[str]
+    ) -> dict[str, Any]:
+        return self._staff_dict(
+            "SELECT app.telegram_staff_close_job(%s, %s, %s::jsonb, %s::jsonb, %s)",
+            self._property,
+            inbound_id,
+            json.dumps(form),
+            json.dumps(media_ids),
+            self._actor,
         )

@@ -8,8 +8,14 @@
 // access); when it is off it asks the person to turn it on and opens the settings. Then the
 // camera scans the place QR. Scan employee card (caretakers and Authorizers): check in or out,
 // scan the card, pick the reason (a text for Other) and take a half-body photo; Save stays off
-// until all are given. The person's name comes back in the chat with the answer. The Khmer
-// waits for the native-speaker check.
+// until all are given. The person's name comes back in the chat with the answer.
+//
+// Report a problem (step 4b, DL-175; everyone): Unit Problem or Building problem, the Unit or
+// the place and floor, the problem type picture, at least one photo (up to 4), and a text or a
+// voice note (up to 1 minute). At a place with an open Building problem the person picks Same
+// problem or Something else. Close job (Technicians): pick a planned repair, take the after
+// photo (1 to 3) and choose No cost, or the parts and paid outside workers in dollars with a
+// receipt photo (1 or 2). The Khmer waits for the native-speaker check.
 
 const PAGE = String.raw`<!doctype html>
 <html lang="km">
@@ -51,6 +57,19 @@ const PAGE = String.raw`<!doctype html>
     background: var(--soft); color: inherit; font: inherit; cursor: pointer; }
   .error { color: var(--warn); font-weight: 600; margin-top: 12px; }
   .done { text-align: center; padding: 40px 0; font-size: 18px; }
+  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .tile { border: 1px solid var(--line); border-radius: 12px; background: var(--soft); color: inherit;
+    font: inherit; font-size: 14px; padding: 10px 4px; cursor: pointer; }
+  .tile.on { border-color: var(--accent); outline: 2px solid var(--accent); }
+  .tile.danger { border-color: var(--warn); }
+  .tile .icon { display: block; font-size: 26px; }
+  .urgent { color: var(--warn); font-weight: 600; }
+  .photos { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .photos img { width: 72px; height: 72px; object-fit: cover; border-radius: 8px; }
+  select, input.text { width: 100%; box-sizing: border-box; font: inherit; padding: 10px;
+    border: 1px solid var(--line); border-radius: 10px; background: inherit; color: inherit; }
+  .money { display: flex; gap: 8px; }
+  .money label { flex: 1; font-size: 14px; }
   [hidden] { display: none !important; }
 </style>
 </head>
@@ -78,18 +97,44 @@ const PAGE = String.raw`<!doctype html>
     photo: "រូបថតពាក់កណ្តាលខ្លួន", take_photo: "📷 ថតរូប", retake: "ថតម្តងទៀត",
     save: "រក្សាទុក", sending: "កំពុងផ្ញើ…", back: "ត្រឡប់",
     too_many: "ព្យាយាមច្រើនពេក។ សូមរង់ចាំមួយនាទី។",
+    report: "រាយការណ៍បញ្ហា", report_hint: "ឃើញអ្វីខូចពេលដើរពិនិត្យ",
+    unit_problem: "បញ្ហាក្នុងបន្ទប់", building_problem: "បញ្ហាអគារ",
+    unit: "បន្ទប់", choose: "ជ្រើស", where: "កន្លែង", floor: "ជាន់ (បើដឹង)",
+    what: "បញ្ហាអ្វី? ចុចរូប",
+    always_urgent: "បន្ទាន់ជានិច្ច៖ អ្នកថែរក្សាអគារវេន និងអ្នកគ្រប់គ្រងទទួលដំណឹងភ្លាមៗ។ ភ្លើងឆេះ 118 · ប៉ូលិស 117",
+    open_here: "មានរបាយការណ៍បើកនៅទីនេះ", same: "បញ្ហាដូចគ្នា", something_else: "បញ្ហាផ្សេង",
+    photos: "រូបថត (យ៉ាងហោចណាស់ 1 រហូតដល់ 4)", add_photo: "📷 ថតរូប",
+    what_wrong: "អ្វីខូច", what_wrong_hint: "សរសេរ ឬថតសារជាសំឡេង ឬទាំងពីរ។",
+    record: "🎤 ថតសារជាសំឡេង (រហូតដល់ 1 នាទី)", stop: "■ ឈប់", recording: "កំពុងថត… ",
+    voice: "🎤 សារជាសំឡេង ", remove: "លុប",
+    no_mic: "មិនអាចប្រើមីក្រូហ្វូននៅទីនេះបានទេ។ សូមសរសេរជំនួសវិញ។",
+    tenant_told: "អ្នកជួលបន្ទប់នេះ នឹងទទួលដំណឹង តែពេលអ្នកគ្រប់គ្រងរៀបចំពេលមកពិនិត្យប៉ុណ្ណោះ។",
+    send: "ផ្ញើ", report_ready: "សូមជ្រើសប្រភេទ បន្ទប់ ឬកន្លែង បញ្ហា ថតរូប 1 សន្លឹក ហើយសរសេរ ឬថតសារជាសំឡេង។",
+    close: "បិទការងារ", close_hint: "រូបថតក្រោយជួសជុល និងថ្លៃ", no_jobs: "គ្មានការងាររង់ចាំជួសជុលទេ។",
+    job: "ការងារ", after: "រូបថតក្រោយជួសជុល (ត្រូវតែមាន រហូតដល់ 3)",
+    cost: "ថ្លៃជួសជុល", no_cost: "គ្មានថ្លៃ", paid: "មានថ្លៃ",
+    cost_hint: "តែគ្រឿងបន្លាស់ និងជាងខាងក្រៅដែលបង់លុយប៉ុណ្ណោះ។ ពេលធ្វើការរបស់បុគ្គលិកយើង មិនបញ្ចូលទេ។",
+    parts: "គ្រឿងបន្លាស់ $", outside: "ជាងខាងក្រៅ $",
+    receipt: "រូបថតវិក្កយបត្រ (ត្រូវតែមាន រហូតដល់ 2)",
+    total: "សរុប $", total_hint: "អ្នកគ្រប់គ្រងពិនិត្យ រួចកម្មវិធីធ្វើសំណើចំណាយ។",
+    close_ready: "ថតរូបក្រោយជួសជុល ហើយជ្រើសថ្លៃ (មានថ្លៃ ត្រូវមានចំនួន និងរូបថតវិក្កយបត្រ)។",
     sent: "បានផ្ញើហើយ។ លទ្ធផលនឹងមកក្នុងការជជែក ក្នុងរយៈពេលប្រហែលមួយនាទី។"
   };
   var REASONS = ["NO_PHONE", "PHONE_BROKEN", "PHONE_LOST", "PHONE_STOLEN", "OTHER"];
   var CARD_ROLES = { CARETAKER: true, AUTHORIZER: true };
   var ROLE_NAMES = { CLEANER: "អ្នកសម្អាត", TECHNICIAN: "អ្នកបច្ចេកទេស",
     CARETAKER: "អ្នកថែរក្សាអគារ", METER_READER: "អ្នកអានមីទ័រ", AUTHORIZER: "អ្នកអនុម័ត" };
-  var PHOTO_SIDE = 1600, MAX_REASON = 300;
+  var PHOTO_SIDE = 1600, MAX_REASON = 300, MAX_TEXT = 1000, MAX_VOICE_SECONDS = 60;
+  var LIMITS = { report: 4, after: 3, receipt: 2 };
+  var ICONS = { drop: "💧", zap: "⚡", snow: "❄️", lock: "🚪", window: "🪟", sofa: "🛋️",
+    wifi: "📶", bug: "🐜", broom: "🧹", volume: "🔊", flame: "🔥", dots: "❓" };
 
   var tg = window.Telegram && window.Telegram.WebApp;
   var app = document.getElementById("app");
-  var me = null;
+  var me = null, choices = {};
   var view = "home";
+  var rep = null, job = null;
+  var recorder = null, recordTimer = null, recordStart = 0;
   var card = { mode: "IN", code: "", reason: "", text: "", photo: null };
   var error = "", note = "", busy = false;
 
@@ -105,8 +150,149 @@ const PAGE = String.raw`<!doctype html>
       (card.reason !== "OTHER" || card.text.trim().length > 0);
   }
 
+  function newReport() {
+    return { kind: "", unit: "", place: "", floor: "", type: "", same: null, decided: false,
+      photos: [], text: "", voice: null };
+  }
+  function newJob() {
+    return { id: "", after: [], cost: "", parts: "", outside: "", receipts: [] };
+  }
+  function typeOf(id) {
+    return (choices.types || []).filter(function (row) { return row.id === id; })[0] || null;
+  }
+  function openHere() {
+    if (rep.kind !== "BUILDING" || !rep.place) { return []; }
+    return (choices.open_building || []).filter(function (row) { return row.problem_place_id === rep.place; });
+  }
+  function reportReady() {
+    if (!rep.kind || !rep.type || rep.photos.length < 1) { return false; }
+    if (rep.kind === "UNIT" ? !rep.unit : !rep.place) { return false; }
+    if (openHere().length && !rep.decided) { return false; }
+    return rep.text.trim().length > 0 || !!rep.voice || !!rep.same;
+  }
+  // Dollars as typed ("12" or "12.50") to whole cents, or null.
+  function cents(value) {
+    var match = /^\s*(\d{1,6})(?:\.(\d{1,2}))?\s*$/.exec(value || "");
+    if (!match) { return null; }
+    return Number(match[1]) * 100 + Number(((match[2] || "") + "00").slice(0, 2));
+  }
+  function jobCost() {
+    var parts = job.parts.trim() ? cents(job.parts) : 0, outside = job.outside.trim() ? cents(job.outside) : 0;
+    if (parts === null || outside === null) { return null; }
+    return { parts: parts, outside: outside };
+  }
+  function jobReady() {
+    if (!job.id || job.after.length < 1 || !job.cost) { return false; }
+    if (job.cost === "NONE") { return true; }
+    var money = jobCost();
+    return !!money && money.parts + money.outside > 0 && job.receipts.length > 0;
+  }
+  function photoRow(list, target) {
+    var html = '<div class="photos">' + list.map(function (photo, index) {
+      return '<img alt="" src="' + photo.url + '" data-act="drop-photo" data-value="' + target + ":" + index + '">';
+    }).join("");
+    if (list.length < LIMITS[target]) {
+      html += '<label class="small">' + esc(T.add_photo) +
+        '<input type="file" accept="image/*" capture="environment" data-photo="' + target + '" hidden></label>';
+    }
+    return html + "</div>";
+  }
+  function sendButton(ready, hint) {
+    var html = '<button class="main" data-act="send"' + (ready && !busy ? "" : " disabled") + ">" +
+      esc(busy ? T.sending : T.send) + "</button>";
+    if (!ready) { html += '<p class="hint">' + esc(hint) + "</p>"; }
+    return html + '<button class="small" style="margin-top:12px" data-act="home">' + esc(T.back) + "</button>";
+  }
+
+  function reportView() {
+    var html = "<h1>⚠ " + esc(T.report) + "</h1>";
+    html += '<div class="row">' + [["UNIT", T.unit_problem], ["BUILDING", T.building_problem]].map(function (k) {
+      return '<button class="choice' + (rep.kind === k[0] ? " on" : "") + '" data-act="kind" data-value="' + k[0] + '">' +
+        esc(k[1]) + "</button>";
+    }).join("") + "</div>";
+    if (!rep.kind) { return html + '<button class="small" style="margin-top:12px" data-act="home">' + esc(T.back) + "</button>"; }
+    if (rep.kind === "UNIT") {
+      html += "<h2>" + esc(T.unit) + '</h2><select id="unit"><option value="">' + esc(T.choose) + "</option>" +
+        (choices.units || []).map(function (unit) {
+          return '<option value="' + esc(unit.id) + '"' + (rep.unit === unit.id ? " selected" : "") + ">" + esc(unit.number) + "</option>";
+        }).join("") + "</select>";
+    } else {
+      html += "<h2>" + esc(T.where) + '</h2><div class="row">' + (choices.places || []).map(function (place) {
+        return '<button class="choice' + (rep.place === place.id ? " on" : "") + '" data-act="place" data-value="' +
+          esc(place.id) + '">' + esc(place.name_kh) + "</button>";
+      }).join("") + "</div>";
+      html += '<input class="text" id="floor" maxlength="20" placeholder="' + esc(T.floor) + '" value="' + esc(rep.floor) + '">';
+    }
+    html += "<h2>" + esc(T.what) + '</h2><div class="tiles">' + (choices.types || []).map(function (row) {
+      return '<button class="tile' + (rep.type === row.id ? " on" : "") + (row.always_urgent ? " danger" : "") +
+        '" data-act="type" data-value="' + esc(row.id) + '"><span class="icon">' + (ICONS[row.icon] || "❓") +
+        "</span>" + esc(row.name_kh) + "</button>";
+    }).join("") + "</div>";
+    var type = typeOf(rep.type);
+    if (type && type.always_urgent) { html += '<p class="urgent">' + esc(T.always_urgent) + "</p>"; }
+    var open = openHere();
+    if (open.length) {
+      html += '<div class="card"><b>' + esc(T.open_here) + "</b>" + open.map(function (row) {
+        var kind = typeOf(row.problem_type_id);
+        return '<div class="row"><button class="choice' + (rep.same === row.report_id ? " on" : "") +
+          '" data-act="same" data-value="' + esc(row.report_id) + '">' + (kind ? (ICONS[kind.icon] || "") + " " : "") +
+          esc(row.report_number) + (row.floor ? " · " + esc(row.floor) : "") + " · " + esc(T.same) + "</button></div>";
+      }).join("") + '<div class="row"><button class="choice' + (rep.decided && !rep.same ? " on" : "") +
+        '" data-act="same" data-value="">' + esc(T.something_else) + "</button></div></div>";
+    }
+    html += "<h2>" + esc(T.photos) + "</h2>" + photoRow(rep.photos, "report");
+    html += "<h2>" + esc(T.what_wrong) + '</h2><p class="hint">' + esc(T.what_wrong_hint) + "</p>";
+    html += '<textarea id="text" maxlength="' + MAX_TEXT + '">' + esc(rep.text) + "</textarea>";
+    if (rep.voice) {
+      html += "<p>" + esc(T.voice) + "0:" + String(rep.voice.seconds).padStart(2, "0") +
+        ' <button class="small" data-act="voice-remove">' + esc(T.remove) + "</button></p>";
+    } else if (recorder) {
+      html += '<p><span id="recording">' + esc(T.recording) + '</span> <button class="small" data-act="voice-stop">' +
+        esc(T.stop) + "</button></p>";
+    } else {
+      html += '<p><button class="small" data-act="voice-start">' + esc(T.record) + "</button></p>";
+    }
+    if (rep.kind === "UNIT" && rep.unit) { html += '<p class="hint">' + esc(T.tenant_told) + "</p>"; }
+    return html + sendButton(reportReady(), T.report_ready);
+  }
+
+  function jobView() {
+    var jobs = (me && me.jobs) || [];
+    var html = "<h1>✓ " + esc(T.close) + "</h1>";
+    if (!jobs.length) {
+      return html + '<p class="hint">' + esc(T.no_jobs) + '</p><button class="small" data-act="home">' + esc(T.back) + "</button>";
+    }
+    html += "<h2>" + esc(T.job) + '</h2><div class="list">' + jobs.map(function (row) {
+      var where = row.unit || [row.place_km, row.floor].filter(Boolean).join(" · ");
+      return '<button class="choice' + (job.id === row.report_id ? " on" : "") + '" data-act="job" data-value="' +
+        esc(row.report_id) + '"><b>' + esc(row.report_number) + "</b> · " + esc(where) + " · " +
+        (ICONS[row.icon] || "") + " " + esc(row.type_km) + (row.urgent ? ' <span class="urgent">!</span>' : "") +
+        '<br><span class="hint">' + esc(row.description) + "</span></button>";
+    }).join("") + "</div>";
+    html += "<h2>" + esc(T.after) + "</h2>" + photoRow(job.after, "after");
+    html += "<h2>" + esc(T.cost) + '</h2><div class="row">' + [["NONE", T.no_cost], ["PAID", T.paid]].map(function (c) {
+      return '<button class="choice' + (job.cost === c[0] ? " on" : "") + '" data-act="cost" data-value="' + c[0] + '">' +
+        esc(c[1]) + "</button>";
+    }).join("") + '</div><p class="hint">' + esc(T.cost_hint) + "</p>";
+    if (job.cost === "PAID") {
+      html += '<div class="money"><label>' + esc(T.parts) + '<input class="text" id="parts" inputmode="decimal" value="' +
+        esc(job.parts) + '"></label><label>' + esc(T.outside) + '<input class="text" id="outside" inputmode="decimal" value="' +
+        esc(job.outside) + '"></label></div>';
+      html += "<h2>" + esc(T.receipt) + "</h2>" + photoRow(job.receipts, "receipt");
+      var money = jobCost();
+      if (money) {
+        var sum = money.parts + money.outside;
+        html += '<p class="hint" id="total">' + esc(T.total) + Math.floor(sum / 100) + "." +
+          String(sum % 100).padStart(2, "0") + " · " + esc(T.total_hint) + "</p>";
+      }
+    }
+    return html + sendButton(jobReady(), T.close_ready);
+  }
+
   function render() {
     var html = "";
+    if (view === "report") { app.innerHTML = reportView() + (error ? '<p class="error">' + esc(error) + "</p>" : ""); return; }
+    if (view === "close") { app.innerHTML = jobView() + (error ? '<p class="error">' + esc(error) + "</p>" : ""); return; }
     if (view === "home") {
       html += "<h1>" + esc(me.name_km || me.name_en || "") + "</h1>";
       html += '<p class="hint">' + esc(roles().map(function (role) { return ROLE_NAMES[role] || role; }).join(" · "));
@@ -116,6 +302,12 @@ const PAGE = String.raw`<!doctype html>
       html += '<div class="row"><button class="big" data-act="check" data-value="IN">' + esc(T.check_in) +
         '</button><button class="big out" data-act="check" data-value="OUT">' + esc(T.check_out) + "</button></div>";
       if (note) { html += '<p class="hint">' + esc(note) + "</p>"; }
+      html += '<div class="card"><h2>⚠ ' + esc(T.report) + '</h2><p class="hint">' + esc(T.report_hint) +
+        '</p><button class="small" data-act="report">' + esc(T.report) + "</button></div>";
+      if (roles().indexOf("TECHNICIAN") >= 0) {
+        html += '<div class="card"><h2>✓ ' + esc(T.close) + " (" + ((me.jobs || []).length) + ')</h2><p class="hint">' +
+          esc(T.close_hint) + '</p><button class="small" data-act="close">' + esc(T.close) + "</button></div>";
+      }
       if (mayScanCards()) {
         html += '<div class="card"><h2>▣ ' + esc(T.card) + '</h2><p class="hint">' + esc(T.card_hint) +
           '</p><button class="small" data-act="card">' + esc(T.scan_card) + "</button></div>";
@@ -238,6 +430,82 @@ const PAGE = String.raw`<!doctype html>
     });
   }
 
+  function voiceType() {
+    var kinds = ["audio/ogg;codecs=opus", "audio/webm;codecs=opus", "audio/mp4", "audio/webm"];
+    if (!window.MediaRecorder) { return null; }
+    for (var i = 0; i < kinds.length; i += 1) {
+      if (MediaRecorder.isTypeSupported(kinds[i])) { return kinds[i]; }
+    }
+    return "";
+  }
+  function startVoice() {
+    var type = voiceType();
+    if (type === null || !navigator.mediaDevices) { error = T.no_mic; render(); return; }
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+      var chunks = [];
+      recorder = type ? new MediaRecorder(stream, { mimeType: type }) : new MediaRecorder(stream);
+      recorder.ondataavailable = function (event) { if (event.data.size) { chunks.push(event.data); } };
+      recorder.onstop = function () {
+        stream.getTracks().forEach(function (track) { track.stop(); });
+        clearInterval(recordTimer);
+        var mime = (recorder.mimeType || type || "audio/webm").split(";")[0];
+        var seconds = Math.min(MAX_VOICE_SECONDS, Math.max(1, Math.round((Date.now() - recordStart) / 1000)));
+        rep.voice = { blob: new Blob(chunks, { type: mime }), type: mime, seconds: seconds };
+        recorder = null;
+        render();
+      };
+      recordStart = Date.now();
+      recorder.start();
+      recordTimer = setInterval(function () {
+        var seconds = Math.round((Date.now() - recordStart) / 1000);
+        var label = document.getElementById("recording");
+        if (label) { label.textContent = T.recording + "0:" + String(seconds).padStart(2, "0"); }
+        if (seconds >= MAX_VOICE_SECONDS) { stopVoice(); }
+      }, 250);
+      render();
+    }).catch(function () { error = T.no_mic; render(); });
+  }
+  function stopVoice() { if (recorder && recorder.state !== "inactive") { recorder.stop(); } }
+
+  function files(list) {
+    return Promise.all(list.map(function (entry) {
+      return base64(entry.blob).then(function (encoded) {
+        var file = { content_type: entry.type || "image/jpeg", data: encoded };
+        if (entry.seconds) { file.duration = entry.seconds; }
+        return file;
+      });
+    }));
+  }
+  function sendReport() {
+    if (!reportReady() || busy) { return; }
+    var form = { type: "REPORT", kind: rep.kind, problem_type_id: rep.type,
+      description: rep.text.trim().slice(0, MAX_TEXT) || null };
+    if (rep.kind === "UNIT") { form.unit_id = rep.unit; } else {
+      form.problem_place_id = rep.place;
+      form.floor = rep.floor.trim().slice(0, 20) || null;
+      if (rep.same) { form.same_as = rep.same; }
+    }
+    busy = true; render();
+    files(rep.photos.concat(rep.voice ? [rep.voice] : [])).then(function (sent) {
+      busy = false;
+      return post(form, sent);
+    }).catch(function () { busy = false; error = T.failed; render(); });
+  }
+  function sendJob() {
+    if (!jobReady() || busy) { return; }
+    var form = { type: "CLOSE", report_id: job.id, after_photos: job.after.length, cost: job.cost };
+    if (job.cost === "PAID") {
+      var money = jobCost();
+      form.parts_usd_cents = money.parts;
+      form.outside_usd_cents = money.outside;
+    }
+    busy = true; render();
+    files(job.after.concat(job.cost === "PAID" ? job.receipts : [])).then(function (sent) {
+      busy = false;
+      return post(form, sent);
+    }).catch(function () { busy = false; error = T.failed; render(); });
+  }
+
   function saveCard() {
     if (!cardReady() || busy) { return; }
     base64(card.photo.blob).then(function (encoded) {
@@ -252,6 +520,22 @@ const PAGE = String.raw`<!doctype html>
     if (!target || busy) { return; }
     var act = target.getAttribute("data-act"), value = target.getAttribute("data-value");
     if (act === "check") { check(value); return; }
+    if (act === "report") { view = "report"; rep = newReport(); }
+    if (act === "close") { view = "close"; job = newJob(); }
+    if (act === "kind") { rep.kind = value; rep.unit = ""; rep.place = ""; rep.same = null; rep.decided = false; }
+    if (act === "place") { rep.place = value; rep.same = null; rep.decided = false; }
+    if (act === "type") { rep.type = value; }
+    if (act === "same") { rep.same = value || null; rep.decided = true; }
+    if (act === "voice-start") { startVoice(); return; }
+    if (act === "voice-stop") { stopVoice(); return; }
+    if (act === "voice-remove") { rep.voice = null; }
+    if (act === "job") { job.id = value; }
+    if (act === "cost") { job.cost = value; }
+    if (act === "drop-photo") {
+      var parts = value.split(":"), list = parts[0] === "report" ? rep.photos : parts[0] === "after" ? job.after : job.receipts;
+      list.splice(Number(parts[1]), 1);
+    }
+    if (act === "send") { if (view === "report") { sendReport(); } else { sendJob(); } return; }
     if (act === "card") { view = "card"; card = { mode: "IN", code: "", reason: "", text: "", photo: null }; }
     if (act === "home") { view = "home"; }
     if (act === "mode") { card.mode = value; }
@@ -261,6 +545,16 @@ const PAGE = String.raw`<!doctype html>
     error = ""; render();
   });
   app.addEventListener("input", function (event) {
+    var id = event.target.id, value = event.target.value;
+    if (id === "text" || id === "floor" || id === "parts" || id === "outside") {
+      if (id === "text") { rep.text = value; }
+      if (id === "floor") { rep.floor = value; }
+      if (id === "parts") { job.parts = value; }
+      if (id === "outside") { job.outside = value; }
+      var send = app.querySelector('[data-act="send"]');
+      if (send) { send.disabled = busy || !(view === "report" ? reportReady() : jobReady()); }
+      return;
+    }
     if (event.target.id === "other") {
       card.text = event.target.value;
       var save = app.querySelector('[data-act="save"]');
@@ -268,9 +562,21 @@ const PAGE = String.raw`<!doctype html>
     }
   });
   app.addEventListener("change", function (event) {
+    if (event.target.id === "unit") { rep.unit = event.target.value; render(); return; }
+    if (event.target.id === "parts" || event.target.id === "outside") { render(); return; }
     var file = event.target.files && event.target.files[0];
     if (!file) { return; }
-    shrink(file).then(function (photo) { if (photo) { card.photo = photo; } render(); });
+    var target = event.target.getAttribute("data-photo");
+    shrink(file).then(function (photo) {
+      if (photo) {
+        photo.type = "image/jpeg";
+        if (target === "report") { rep.photos.push(photo); }
+        else if (target === "after") { job.after.push(photo); }
+        else if (target === "receipt") { job.receipts.push(photo); }
+        else { card.photo = photo; }
+      }
+      render();
+    });
   });
 
   if (tg) { tg.ready(); tg.expand(); }
@@ -285,6 +591,7 @@ const PAGE = String.raw`<!doctype html>
   }).then(function (body) {
     if (!body.mine) { throw new Error("not_linked"); }
     me = body.mine;
+    choices = body.choices || {};
     render();
   }).catch(function (problem) {
     app.innerHTML = '<p class="error">' + esc(problem.message === "not_linked" ? T.not_linked : T.failed) + "</p>";

@@ -63618,6 +63618,60 @@
       "test_path": "relay/test/relay.test.ts",
       "status": "implemented",
       "notes": "Telegram bots step 4a: The relay serves /app/staff (Location, QR scan, card scan), gives a linked person their name, roles and shift, and seals a card scan form with its photo."
+    },
+    {
+      "test_id": "test_staff_report_a_problem_with_a_photo",
+      "upstream_ids": [
+        "DL-175",
+        "DB-TG-011"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_staff_reports_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 4b: A linked staff member's Report a problem is saved with source Staff bot, their name and photos; a photo and a text or voice note are needed; unlinked people and wrong Units are refused."
+    },
+    {
+      "test_id": "test_urgent_reports_alert_the_caretaker_on_shift_and_the_authorizers",
+      "upstream_ids": [
+        "DL-175",
+        "DB-TG-011"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_staff_reports_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 4b: An urgent report alerts the caretaker on shift and the Authorizers, not the caretaker off shift or the sender; a report joined at once is not sent again; reports typed in the app alert too."
+    },
+    {
+      "test_id": "test_the_technician_closes_a_job_with_the_after_photo_and_cost",
+      "upstream_ids": [
+        "DL-175",
+        "DB-TG-011"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_staff_reports_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 4b: Technicians see the planned repairs; Close job needs the after photo and the cost (a receipt with a cost); the repair is Done and the cost waits for the Manager's check; a second close is refused."
+    },
+    {
+      "test_id": "test_the_new_functions_are_behind_the_telegram_right",
+      "upstream_ids": [
+        "DL-175",
+        "DB-TG-011"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_staff_reports_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 4b: Staff accounts cannot call the new functions or read the new tables."
+    },
+    {
+      "test_id": "test_report_a_problem_and_close_job_answer_in_the_chat",
+      "upstream_ids": [
+        "DL-175"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_staff_bot.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 4b: The Staff bot answers Report a problem (saved, urgent, joined, refused) and Close job (done with or without cost, not open, cost checked, not a Technician) in Khmer; the same form twice is answered once."
     }
   ]
 }

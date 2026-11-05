@@ -251,3 +251,63 @@ def test_staff_texts_are_khmer_only() -> None:
     for code, texts in TEXTS.items():
         if code.startswith("staff."):
             assert texts["km"] == texts["en"], code
+
+
+def test_report_a_problem_and_close_job_answer_in_the_chat() -> None:
+    store = FakeStore()
+    store.staff_answers += [
+        {"result": "ADDED", "repeated": False, "report_number": "UP260007", "urgent": False},
+        {"result": "ADDED", "repeated": False, "report_number": "BP260003", "urgent": True},
+        {"result": "ADDED", "repeated": False, "report_number": "BP260004",
+         "joined_to": "BP260003"},
+        {"result": "INVALID", "reason": "photo"},
+        {"result": "NOT_LINKED"},
+        {"result": "ADDED", "repeated": True, "report_number": "UP260007"},
+    ]  # fmt: skip
+    report = {"type": "REPORT", "kind": "UNIT", "unit_id": "u-1", "description": "Leak"}
+    saved = {"saved": True, "inbound_id": "in-9", "media_ids": ["m-1", 2]}
+
+    def report_once() -> list[dict[str, Any]]:
+        before = len(store.replies)
+        plain = {"telegram_user_id": USER, "chat_id": USER,
+                 "payload": {"form": report, "role": "STAFF"}, "office": {}}  # fmt: skip
+        handle_staff_form("STAFF", plain, saved, store)
+        return store.replies[before:]
+
+    first = report_once()
+    assert codes(first) == [("staff.report_saved", None)]
+    assert first[0]["details"] == {"number": "UP260007"}
+    assert store.staff_scans[0] == ("REPORT", 0, {"form": report, "media": ["m-1", "2"]}, "in-9")
+    assert codes(report_once()) == [("staff.report_urgent", None)]
+    joined = report_once()
+    assert joined[0]["details"] == {"number": "BP260004", "main": "BP260003"}
+    assert codes(report_once()) == [("staff.report_invalid", None)]
+    assert codes(report_once()) == [("staff.check_refused_not_linked", None)]
+    # The same form again (a second pull) is not answered twice.
+    assert report_once() == []
+
+    store.staff_answers += [
+        {"result": "DONE", "report_number": "UP260007", "cost": "PAID", "total_usd_cents": 1205},
+        {"result": "DONE", "report_number": "UP260008", "cost": "NONE"},
+        {"result": "NOT_OPEN", "report_number": "UP260007"},
+        {"result": "COST_CHECKED", "report_number": "UP260007"},
+        {"result": "NOT_TECHNICIAN"},
+        {"result": "INVALID", "reason": "receipt"},
+    ]
+    close = {"type": "CLOSE", "report_id": "r-1", "after_photos": 1, "cost": "PAID"}
+    answers = []
+    for _ in range(6):
+        answers += send(store, close)
+    assert [code for code, _ in codes(answers)] == [
+        "staff.close_done_cost",
+        "staff.close_done",
+        "staff.close_not_open",
+        "staff.close_cost_checked",
+        "staff.close_not_technician",
+        "staff.close_invalid",
+    ]
+    assert answers[0]["details"] == {"number": "UP260007", "amount": "12.05"}
+    for reply in store.replies:
+        assert render(reply["text_code"], "km", reply["details"])
+    # The urgent alert the database queues renders too.
+    assert render("staff.urgent", "km", {"number": "BP260003", "type": "សុវត្ថិភាព", "where": "B1"})

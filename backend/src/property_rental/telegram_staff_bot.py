@@ -11,6 +11,12 @@ this bot answers with the time. A caretaker scans the card of a person with no p
 reason and a half-body photo; the photo is kept in the HR files folder, not with the Telegram
 photos, so the HR rule "card photos kept 90 days" can remove it.
 
+Report a problem and Close job (step 4b, DL-175; Problem report Part B, 3 Nov 2026): every
+linked person reports what is wrong on the walk-round (a photo and a text or voice note), and the
+Technician closes a planned repair with the after photo and the cost. The database saves them in
+the one Problem reports list; an urgent report reaches the caretaker on shift and the Authorizers
+from the database itself.
+
 The forms reach the office through the relay and the pull job, so the answer comes in the chat
 within about a minute.
 """
@@ -36,6 +42,7 @@ LOCATION_STATES: Final = frozenset({"OK", "NOT_FOUND", "OFF"})
 PHOTO_TYPES: Final = {"image/jpeg": "jpg", "image/png": "png"}
 CARD_PHOTOS: Final = "card-photos"
 REFUSED_PREFIX: Final = "check_refused_"
+FORM_TYPES: Final = frozenset({"CHECK", "CARD", "REPORT", "CLOSE"})
 
 
 def _message(plain: dict[str, Any]) -> dict[str, Any] | None:
@@ -168,7 +175,7 @@ def _answer(result: dict[str, Any], *, card: bool) -> dict[str, Any]:
 def handle_staff_form(
     bot: str, plain: dict[str, Any], saved: dict[str, Any], store: TelegramStore
 ) -> None:
-    """A Check in, Check out or card scan from the Staff forms: record it, then answer."""
+    """A Staff form (check in or out, card scan, Report a problem, Close job): save, answer."""
     if bot != BOT:
         return
     user = plain.get("telegram_user_id")
@@ -180,13 +187,28 @@ def handle_staff_form(
     if not isinstance(payload, dict) or not isinstance(office, dict):
         return
     form = payload.get("form")
-    if not isinstance(form, dict) or form.get("type") not in {"CHECK", "CARD"}:
+    if not isinstance(form, dict) or form.get("type") not in FORM_TYPES:
         return
     at = str(office.get("received_at") or "")
 
     def reply(message: dict[str, Any]) -> None:
         store.bot_reply(BOT, user, chat, None, None, LANGUAGE, [message])
 
+    if form["type"] in {"REPORT", "CLOSE"}:
+        inbound = saved.get("inbound_id")
+        media = saved.get("media_ids")
+        if not isinstance(inbound, str):
+            return
+        files = [str(media_id) for media_id in media] if isinstance(media, list) else []
+        if form["type"] == "REPORT":
+            result = store.staff_problem_report(inbound, form, files)
+            message = _report_answer(result)
+        else:
+            result = store.staff_close_job(inbound, form, files)
+            message = _close_answer(result)
+        if result.get("repeated") is not True:
+            reply(message)
+        return
     try:
         if form["type"] == "CHECK":
             reply(_answer(store.staff_check(user, _scan_from(form), at), card=False))
@@ -194,6 +216,43 @@ def handle_staff_form(
         reply(_card(user, form, at, office, store))
     except StaffBotUnavailable:
         reply(_say("staff.not_ready"))
+
+
+def _report_answer(result: dict[str, Any]) -> dict[str, Any]:
+    """Report a problem: the new number, urgent or joined to the open report."""
+    outcome = result.get("result")
+    if outcome == "NOT_LINKED":
+        return _say("staff.check_refused_not_linked")
+    if outcome != "ADDED":
+        return _say("staff.report_invalid")
+    number = str(result.get("report_number") or "")
+    if result.get("joined_to"):
+        return _say("staff.report_joined", number=number, main=str(result["joined_to"]))
+    if result.get("urgent") is True:
+        return _say("staff.report_urgent", number=number)
+    return _say("staff.report_saved", number=number)
+
+
+def _close_answer(result: dict[str, Any]) -> dict[str, Any]:
+    """Close job: done with or without a cost, or why it was not closed."""
+    outcome = result.get("result")
+    number = str(result.get("report_number") or "")
+    if outcome == "NOT_LINKED":
+        return _say("staff.check_refused_not_linked")
+    if outcome == "NOT_TECHNICIAN":
+        return _say("staff.close_not_technician")
+    if outcome == "NOT_OPEN":
+        return _say("staff.close_not_open", number=number)
+    if outcome == "COST_CHECKED":
+        return _say("staff.close_cost_checked", number=number)
+    if outcome != "DONE":
+        return _say("staff.close_invalid")
+    cents = result.get("total_usd_cents")
+    if result.get("cost") == "PAID" and isinstance(cents, int) and cents > 0:
+        return _say(
+            "staff.close_done_cost", number=number, amount=f"{cents // 100}.{cents % 100:02d}"
+        )
+    return _say("staff.close_done", number=number)
 
 
 def _card(

@@ -5841,3 +5841,14 @@ Added by DL-174 (migrations `20270619_330`, which only joins the Telegram and HR
 - Each call checks the Telegram jobs' account (`telegram.operate`) and then calls the HR function with the service actor the job was given: `app.telegram_staff_who` (`hr_telegram_staff`, plus whether a join request waits), `app.telegram_staff_join` (`hr_record_staff_request`), `app.telegram_staff_check` (`record_staff_check_scan`), `app.telegram_staff_card` (`record_card_check_scan`), `app.telegram_staff_photos_due` and `app.telegram_staff_photo_removed` (`hr_photos_due`, `hr_record_photo_removal`). The scan answers add the time and the shift start in Property time and the shift's Khmer name.
 - `app.telegram_staff_form_data` (`telegram.operate`): the relay's Staff list (staff with a working link today: name, report roles, shift) and the form choices (the Problem report types and places).
 - The trigger `telegram_staff_request_answered` on `telegram_staff_request_decisions` queues `staff.approved` (with the Reports button) or `staff.refused` for the person in the Staff bot.
+
+## DB-TG-011 — Staff Problem reports, Close job and the urgent alert (bots step 4b)
+
+Added by DL-175 (migration `20270621_332`, forward-only).
+
+- `staff_problem_report_sources` (append-only): which Staff bot form made which Problem report (report, inbound form, Telegram user, employee). One form makes one report.
+- `staff_job_closures` (append-only): which Staff bot form closed which repair, with the cost entry it made (`problem_report_cost_sets`). One form closes once.
+- `problem_report_media.stage` also takes `DONE` (after the repair) and `RECEIPT`.
+- `app.telegram_staff_problem_report` and `app.telegram_staff_close_job` (`telegram.operate`): check the linked person (a working link today; Close job needs the Technician role), the form and its files, then save the report (source `STAFF_BOT`), or record the cost (`record_problem_report_cost`) and the Done step (`problem_report_step`). They answer with a fixed result (`ADDED`, `DONE`, `NOT_LINKED`, `NOT_TECHNICIAN`, `NOT_OPEN`, `COST_CHECKED`, `INVALID`).
+- `app.telegram_staff_form_data` now adds the Units (number only) to the choices and, for a Technician, the planned repairs (at most 12).
+- The deferred trigger `telegram_staff_urgent_alert` on `problem_reports` queues `staff.urgent` at the end of the change for the caretakers on shift and the Authorizers, unless the report was joined at once; never to the person who sent it.

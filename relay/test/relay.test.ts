@@ -567,6 +567,10 @@ test("the Staff forms: the page, the person's name, roles and shift, then a card
   assert.match(html, /\/form\/staff\/start/);
   assert.match(html, /showScanQrPopup/);
   assert.match(html, /LocationManager/);
+  // Step 4b: Report a problem (everyone) and Close job (Technicians).
+  assert.match(html, /type: "REPORT"/);
+  assert.match(html, /type: "CLOSE"/);
+  assert.match(html, /MediaRecorder/);
 
   const mine = {
     name_km: "ពេជ ភក្រក្ដី",

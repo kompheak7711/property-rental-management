@@ -2744,10 +2744,24 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **(D) Scan employee card.** Caretakers and Authorizers: check in or out, scan the card, pick the reason (Other needs a text) and take a half-body photo; Save stays off until all are given. The photo is kept in the HR files folder, not with the Telegram photos, so the 90-day rule removes it; a refused scan keeps no photo. The person's name comes back in the chat answer (the mock-up showed it at once; the relay holds no staff data to show it).
 - **(E) Accounts.** The HR functions take only a service actor, so the Telegram jobs get one more setting, the service actor (`--service-actor-id`), and the HR files folder. Without them the Staff bot answers that it is not ready. The scanned QR and card texts are not kept in the saved message.
 - **Branch:** the Staff bot needs the HR tables, so it is built on `claude/telegram-staff-bot` (the Telegram branch plus the HR branch); migration `20270619_330` joins the two migration lines. It merges after PR #7 and the HR PR #10.
-- **Next (step 4b):** Report a problem (walk-round) and Close job, and the urgent alert to the caretaker on shift.
+- **Next (step 4b):** Report a problem (walk-round) and Close job, and the urgent alert to the caretaker on shift: built in DL-175.
 - **Open:** the Khmer texts need a native-speaker check.
 - **Built:** migrations `20270619_330` and `20270620_331` (DB-TG-010), `backend/src/property_rental/telegram_staff_bot.py`, `relay/src/staff_app.ts`.
 - **Links:** DL-125, DL-127, DL-171.
+- **Decision date:** 2026-11-05.
+
+## DL-175 — Telegram bots: staff report a problem, the Technician closes a job, and the urgent alert (bots step 4b)
+
+- **Type:** `TECHNICAL DECISION`
+- **Status:** `STEP 4B BUILT ON BRANCH claude/telegram-staff-bot; WAITS FOR THE OWNER'S TEST`
+- **Source:** the owner's Problem report Part B (OK 3 Nov 2026 11:22: staff "Report a problem" on the walk-round and "Close job" with the after photo and the cost or No cost), the staff forms mock-up v14, the Problem report design (DL-124, DL-130: the cost waits for the Manager's check, which makes the Expense report) and the tenant mock-up's rule that safety is always urgent and alerts the caretaker on shift and the Manager. Technical choices by Claude under the owner's 2026-10-23 22:30 rule; no new business or money rule.
+- **(A) Report a problem.** Every linked staff member: Unit Problem (pick the Unit) or Building problem (the place and the floor), the problem type picture, at least one photo (up to 4), and a text or a voice note (up to 1 minute), as on the mock-up. At a place with an open Building problem they pick Same problem (joined at once, DL-124) or Something else. The report goes into the one Problem reports list with source Staff bot and the person's name. Only the always-urgent types (Safety and the like) are urgent; the mock-up has no Urgent question for staff. The tenant is told nothing until the Manager plans a visit (the tenant hears steps only of reports the tenant made, DL-129).
+- **(B) Close job.** Technicians see the planned repairs (Repair planned; urgent first, at most 12) and pick one. The after photo is needed (1 to 3). Cost: No cost, or parts and paid outside workers in dollars (whole cents) with a receipt photo (1 or 2). The repair becomes Done and the cost is saved for the Manager's check (DL-130), which makes the Expense report; a second close of the same job is refused with its number. Our own staff time is not added (it is in payroll).
+- **(C) The urgent alert.** When an urgent report is saved, from the Tenant bot, the Staff bot or the app, the caretakers on shift now (their planned or usual shift, a Night shift into the next morning) and the Authorizers on the Staff bot get one Khmer message with the number, the type and where. A report joined to an open one at once is not sent again, and the person who sent it is not told. The alert is queued when the change is saved, so it is never lost with a failed save.
+- **(D) Photos.** Report photos keep their stage: reported, after the repair, or receipt (DL-127's report photos table).
+- **Open:** the app's Problem report screen does not show photos yet; the Khmer texts need a native-speaker check.
+- **Built:** migration `20270621_332` (DB-TG-011), `backend/src/property_rental/telegram_staff_bot.py`, `relay/src/staff_app.ts`.
+- **Links:** DL-124, DL-127, DL-129, DL-130, DL-174.
 - **Decision date:** 2026-11-05.
 
 ## DL-160 — Riel bank account

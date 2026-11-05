@@ -288,6 +288,18 @@ class FakeStore:
     def staff_form_data(self) -> dict[str, Any]:
         return self.staff_data
 
+    def staff_problem_report(
+        self, inbound_id: str, form: dict[str, Any], media_ids: list[str]
+    ) -> dict[str, Any]:
+        self.staff_scans.append(("REPORT", 0, {"form": form, "media": media_ids}, inbound_id))
+        return self.staff_answers.pop(0)
+
+    def staff_close_job(
+        self, inbound_id: str, form: dict[str, Any], media_ids: list[str]
+    ) -> dict[str, Any]:
+        self.staff_scans.append(("CLOSE", 0, {"form": form, "media": media_ids}, inbound_id))
+        return self.staff_answers.pop(0)
+
 
 def _client(relay: FakeRelay) -> RelayClient:
     return RelayClient(
