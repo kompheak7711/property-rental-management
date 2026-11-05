@@ -3,7 +3,7 @@
 Free until 23:59 two days before check-in: the money paid becomes Customer Credit, which the desk
 pays back on the usual Refund of Credit. Later, or a no-show: no refund, and what was not paid is
 no longer owed. The Owner, the Manager or the credit right may then turn some or all of the kept
-money into credit for 6 months, once. The deposit always comes back.
+money into credit for 12 months, once. The deposit always comes back.
 """
 
 from __future__ import annotations
@@ -148,7 +148,7 @@ def test_a_late_cancel_keeps_the_money_and_may_give_credit(
     given = run(db.runtime_url, CREDIT, db.property_id, made, give, db.manager)
     assert given["credit"]["amount_usd_cents"] == 2000
     use_by = date.fromisoformat(given["credit"]["use_by"])
-    assert (use_by.year * 12 + use_by.month) - (db.today.year * 12 + db.today.month) == 6
+    assert (use_by.year * 12 + use_by.month) - (db.today.year * 12 + db.today.month) == 12
     assert credit_of(db, guest) == 2000
     refused(db.runtime_url, "55000", CREDIT, db.property_id, made, give, db.manager)
     assert [event["kind"] for event in given["history"]][-2:] == ["CANCELLED", "CREDIT_GIVEN"]

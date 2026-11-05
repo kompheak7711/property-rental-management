@@ -11,8 +11,8 @@ The owner's rules (PRD 03/11/2026, Business rules > Short stays):
    is kept as income; what was not paid yet is no longer owed (an unpaid Invoice is voided, the
    unpaid rest of a partly paid one is credited off).
 3. After a late cancel, the Owner, the Manager or the credit right may turn some or all of the kept
-   money into Customer Credit, once, for SS_CREDIT_MONTHS (6) months: for a stay or the first
-   month of a Lease. The use-by day is kept with the credit.
+   money into Customer Credit, once, for SS_CREDIT_MONTHS (12; owner 05/11/2026) months: for a stay or the first
+   month of a Lease, only when a Unit is free (the credit holds no room). The use-by day is kept.
 4. A booking-site booking paid on the site follows the site's rules: the app moves no money.
 5. The deposit always comes back.
 

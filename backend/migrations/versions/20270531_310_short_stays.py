@@ -209,7 +209,7 @@ RULES = (
     (
         "SS_CREDIT_MONTHS",
         "COUNT",
-        6,
+        12,
         1,
         24,
         "Credit after a late cancel lasts (months)",

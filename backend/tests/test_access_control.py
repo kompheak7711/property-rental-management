@@ -149,8 +149,9 @@ def test_the_capability_catalog_names_every_capability_the_code_checks() -> None
     # part 2 routes (`ledger.fixed_assets`, `.reconcile`, `.budgets.prepare`, `.budgets.approve`),
     # and `ledger.write_off` of part 3, and the 6 product and stock rights (V1.1 part 4, DL-121),
     # and `quotations.read` and `quotations.make` (V1.1 part 6, DL-123; the database alone checks
-    # `quotations.lower_price`), and the 4 Problem report rights (V1.1 part 7, DL-124).
-    assert len(found - NON_CAPABILITY_LABELS) == 102
+    # `quotations.lower_price`), and the 4 Problem report rights (V1.1 part 7, DL-124), and the
+    # 5 short-stay rights (`short_stays.read`, `.desk`, `.housekeeping`, `.approve`, `.credit`).
+    assert len(found - NON_CAPABILITY_LABELS) == 107
     # Review round 1: a capability constant added to the catalog module itself is a catalog name.
     assert dotted_constants(SOURCE / "access_control.py") - set(CAPABILITY_CATALOG) == set()
 
