@@ -22,6 +22,10 @@ reader types each Unit's Electricity and Water reading with no photo; the readin
 Manager confirms them in Utilities (asking to read again reaches the reader in this bot). The
 flag beside a Unit asks the Technical team to check that meter (a Unit Problem).
 
+Daily checklists (step 4d, DL-177; staff checklists 24-25 Oct 2026): the Cleaning, Caretaker
+shift and Technical checks, and each patrol round of a caretaker's shift. The 18:00 summary for
+the Authorizers comes from the database (the pull job asks for it every run).
+
 The forms reach the office through the relay and the pull job, so the answer comes in the chat
 within about a minute.
 """
@@ -47,8 +51,10 @@ LOCATION_STATES: Final = frozenset({"OK", "NOT_FOUND", "OFF"})
 PHOTO_TYPES: Final = {"image/jpeg": "jpg", "image/png": "png"}
 CARD_PHOTOS: Final = "card-photos"
 REFUSED_PREFIX: Final = "check_refused_"
-FORM_TYPES: Final = frozenset({"CHECK", "CARD", "REPORT", "CLOSE", "METER", "METER_CHECK"})
-SAVED_FORMS: Final = frozenset({"REPORT", "CLOSE", "METER", "METER_CHECK"})
+FORM_TYPES: Final = frozenset(
+    {"CHECK", "CARD", "REPORT", "CLOSE", "METER", "METER_CHECK", "CHECKLIST", "PATROL"}
+)
+SAVED_FORMS: Final = frozenset({"REPORT", "CLOSE", "METER", "METER_CHECK", "CHECKLIST", "PATROL"})
 
 
 def _message(plain: dict[str, Any]) -> dict[str, Any] | None:
@@ -215,6 +221,12 @@ def handle_staff_form(
         elif form["type"] == "METER":
             result = store.staff_meter_readings(inbound, form, files)
             message = _meter_answer(result)
+        elif form["type"] == "CHECKLIST":
+            result = store.staff_checklist(inbound, form, files)
+            message = _checklist_answer(result)
+        elif form["type"] == "PATROL":
+            result = store.staff_patrol(inbound, form, files)
+            message = _patrol_answer(result)
         else:
             result = store.staff_meter_check(inbound, form, files)
             message = _meter_check_answer(result)
@@ -291,6 +303,56 @@ def _meter_check_answer(result: dict[str, Any]) -> dict[str, Any]:
     if outcome != "ADDED":
         return _say("staff.meter_check_invalid")
     return _say("staff.meter_check_saved", number=str(result.get("report_number") or ""))
+
+
+def _not_role(result: dict[str, Any]) -> dict[str, Any]:
+    kind = result.get("kind")
+    if kind == "CLEANING":
+        return _say("staff.checklist_not_cleaner")
+    if kind == "CARETAKER":
+        return _say("staff.checklist_not_caretaker")
+    return _say("staff.checklist_not_technician")
+
+
+def _checklist_answer(result: dict[str, Any]) -> dict[str, Any]:
+    """A daily checklist: how many tasks were done, and how many were not."""
+    outcome = result.get("result")
+    if outcome == "NOT_LINKED":
+        return _say("staff.check_refused_not_linked")
+    if outcome == "NOT_ROLE":
+        return _not_role(result)
+    if outcome == "NO_SHIFT":
+        return _say("staff.checklist_no_shift")
+    if outcome == "NOTHING_DUE":
+        return _say("staff.checklist_nothing_due")
+    done, problems = result.get("done"), result.get("problems")
+    if outcome != "SENT" or not isinstance(done, int) or not isinstance(problems, int):
+        return _say("staff.checklist_invalid")
+    total = str(done + problems)
+    if problems > 0:
+        return _say(
+            "staff.checklist_sent_problems", done=str(done), total=total, problems=str(problems)
+        )
+    return _say("staff.checklist_sent", done=str(done), total=total)
+
+
+def _patrol_answer(result: dict[str, Any]) -> dict[str, Any]:
+    """A patrol round: saved with the real time, or why not."""
+    outcome = result.get("result")
+    round_time = str(result.get("round") or "")
+    if outcome == "NOT_LINKED":
+        return _say("staff.check_refused_not_linked")
+    if outcome == "NOT_ROLE":
+        return _say("staff.checklist_not_caretaker")
+    if outcome == "NO_SHIFT":
+        return _say("staff.checklist_no_shift")
+    if outcome == "TOO_EARLY":
+        return _say("staff.patrol_too_early", round=round_time)
+    if outcome == "ROUND_DONE":
+        return _say("staff.patrol_done_before", round=round_time, at=str(result.get("at") or ""))
+    if outcome != "SENT":
+        return _say("staff.patrol_invalid")
+    return _say("staff.patrol_sent", round=round_time, at=str(result.get("at") or ""))
 
 
 def _card(

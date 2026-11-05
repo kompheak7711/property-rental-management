@@ -2777,6 +2777,21 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **Links:** DL-124, DL-174, DL-175.
 - **Decision date:** 2026-11-05.
 
+## DL-177 — Telegram bots: the daily checklists, patrol rounds and the 18:00 summary (bots step 4d)
+
+- **Type:** `TECHNICAL DECISION`
+- **Status:** `STEP 4D BUILT ON BRANCH claude/telegram-staff-bot; WAITS FOR THE OWNER'S TEST AND THE REAL TASK LISTS`
+- **Source:** the owner's staff checklist rules of 24-25 Oct 2026 (Cleaning daily, caretaker shifts Morning 06:30-15:30, Afternoon 14:30-23:30 and Night 22:30-07:30, Technical daily with tasks due on some days; the checklists are the basis of the Telegram forms; daily summaries go out at 18:00; staff see Khmer only) and the staff forms mock-up v14 (approved 3 Nov 2026). Technical choices by Claude under the owner's 2026-10-23 22:30 rule; no new business or money rule.
+- **(A) Three checklists.** Cleaning daily check (cleaners), Caretaker shift check (caretakers) and Technical daily check (the Technician). Authorizers may send all three. Each task due that day is answered Done or Not done (Cleaning), Done or Problem (Caretakers), Good or Needs fixing (Technical), with an optional short note. The floor-cleaning task asks which floor. Extra boxes: rooms checked out, problems found, supplies needed, market money in whole riel (a note only; it is not a ledger record), visitors, broken things, incidents, today's repairs and parts needed. No photo: a broken thing is sent with Report a problem.
+- **(B) Task lists with versions.** The lists are the mock-up's draft lists (two cleaning lists: the building and house 103). They live in the database with a version; a new list is a new version, and a sent check keeps the version it used. A task can be due on some days of the week, some months and some days of the month (so weekly, monthly, quarterly and 6-monthly tasks fit later), and a caretaker task on some shifts.
+- **(C) The caretaker's shift.** It comes from HR (the weekly plan, else the usual shift), from 30 minutes before the start to 2 hours after the end; the caretaker cannot pick another one. An Authorizer picks the shift. A check sent again the same day (and shift) is kept, and the newest counts.
+- **(D) Patrol rounds.** Each round of the shift (the mock-up's sample times) is sent on its own with the places walked (Chetana, rental rooms, parking), from 30 minutes before its time, once per shift; the office keeps the real time it came. The mock-up's "posted to the caretakers' group" waits: the bots have no group chats yet, so missed rounds show in the 18:00 summary.
+- **(E) 18:00 summary.** Once a day at 18:00 Property time, every Authorizer gets one Khmer message: for Cleaning and Technical, who sent today's check out of the people not on a day off, who did not, and the tasks not done or needing fixing; for caretakers, the patrol rounds due in the last 24 hours and the ones missed, the shift checks of the shifts that ended, the tasks with a problem and the incidents.
+- **Open:** the owner's real task lists and patrol times (the drafts stay until then); an app screen to read the sent checks (the summary and the database have them now); the Khmer texts need a native-speaker check.
+- **Built:** migration `20270623_334` (DB-TG-013), `relay/src/staff_app.ts`, `backend/src/property_rental/telegram_staff_bot.py`, the pull job.
+- **Links:** DL-174, DL-175, DL-176.
+- **Decision date:** 2026-11-05.
+
 ## DL-160 — Riel bank account
 
 - **Type:** `OWNER BUSINESS DECISION`

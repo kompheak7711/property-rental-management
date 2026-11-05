@@ -23,6 +23,12 @@
 // above it, shows "Look again" before sending; the readings wait for a Manager in Utilities.
 // The flag beside a Unit opens the Meter check request (which meter, the problem, a photo if
 // possible and a note) for the Technical team. The Khmer waits for the native-speaker check.
+//
+// Daily checklists (step 4d, DL-177; staff checklists 24-25 Oct 2026): Cleaning daily check
+// (cleaners), Caretaker shift check (caretakers; the shift comes from HR and is locked) and
+// Technical daily check (the Technician); Authorizers may open all three and pick the shift. Each
+// task due today is answered (Done or Not done, Done or Problem, Good or Needs fixing) with an
+// optional note, then the extra boxes. Caretakers send each patrol round with the places walked.
 
 const PAGE = String.raw`<!doctype html>
 <html lang="km">
@@ -147,7 +153,32 @@ const PAGE = String.raw`<!doctype html>
     problem: "បញ្ហា", BROKEN: "ខូច", CANNOT_READ: "មើលលេខមិនឃើញ", NOT_SURE: "លេខមិនប្រាកដ",
     OTHER_METER: "ផ្សេងៗ", photo_optional: "រូបថត (បើអាច រហូតដល់ 2)", mc_note: "កំណត់សម្គាល់",
     mc_hint: "បន្ទាប់ពីផ្ញើ សំណើនេះទៅក្រុមបច្ចេកទេស។ អ្នកបច្ចេកទេសនឹងពិនិត្យមីទ័រ។",
-    mc_ready: "សូមជ្រើសមីទ័រ និងបញ្ហា (ផ្សេងៗ ត្រូវសរសេរកំណត់សម្គាល់)។"
+    mc_ready: "សូមជ្រើសមីទ័រ និងបញ្ហា (ផ្សេងៗ ត្រូវសរសេរកំណត់សម្គាល់)។",
+    CLEANING: "បញ្ជីសម្អាតប្រចាំថ្ងៃ", CARETAKER: "បញ្ជីវេនប្រចាំថ្ងៃ", TECHNICAL: "បញ្ជីបច្ចេកទេសប្រចាំថ្ងៃ",
+    CLEANING_hint: "ការងាររាល់ថ្ងៃ និងការងារតាមថ្ងៃ", CARETAKER_hint: "ការងារវេនរបស់អ្នក និងការល្បាត",
+    TECHNICAL_hint: "ពិនិត្យអគារ និងបន្ទប់ជួល · 07:30 08:30",
+    open: "បើក", sent_today: "✓ បានផ្ញើថ្ងៃនេះ", day_off: "ថ្ងៃនេះជាថ្ងៃសម្រាករបស់អ្នក។",
+    which_list: "បញ្ជីណា", nothing_due: "ថ្ងៃនេះគ្មានការងារក្នុងបញ្ជីនេះទេ។",
+    your_shift: "វេនរបស់អ្នក", shift_locked: "អ្នកផ្ញើបានតែរបាយការណ៍វេនរបស់អ្នក។ ពេលធ្វើវេនជំនួស អ្នកគ្រប់គ្រងប្ដូរវេនក្នុងបញ្ជីបុគ្គលិក។",
+    pick_shift: "មើលវេន", no_shift: "ឥឡូវនេះ អ្នកមិនមានវេនក្នុងបញ្ជីបុគ្គលិកទេ។ សូមសួរអ្នកគ្រប់គ្រង។",
+    MORNING: "វេនព្រឹក", AFTERNOON: "វេនរសៀល", NIGHT: "វេនយប់",
+    ok_CLEANING: "ធ្វើរួច", bad_CLEANING: "មិនបានធ្វើ", ok_CARETAKER: "ធ្វើរួច", bad_CARETAKER: "មានបញ្ហា",
+    ok_TECHNICAL: "ល្អ", bad_TECHNICAL: "ត្រូវជួសជុល",
+    note_CLEANING: "ហេតុអ្វីមិនបានធ្វើ?", note_CARETAKER: "បញ្ហាអ្វី?", note_TECHNICAL: "តើត្រូវជួសជុលអ្វី?",
+    floor_no: "ជាន់ទី", more: "ព័ត៌មានបន្ថែម",
+    OUT_UNITS: "បន្ទប់អតិថិជនចេញ (លេខបន្ទប់)", PROBLEMS: "បញ្ហាដែលរកឃើញ (ខូច លេចទឹក កខ្វក់)",
+    SUPPLIES: "សម្ភារៈដែលត្រូវការ", MARKET_RIEL: "ចំណាយទិញផ្សារ (៛)", VISITORS: "ចំនួនភ្ញៀវ និងការដឹកជញ្ជូន",
+    BROKEN: "ធុងសំរាមខូច ឬរបស់ខូច", INCIDENT: "ឧប្បត្តិហេតុ (អ្វី កន្លែងណា ម៉ោងប៉ុន្មាន)",
+    FIXED_TODAY: "ការជួសជុលថ្ងៃនេះ (កន្លែង និងបញ្ហា)", PARTS: "គ្រឿងត្រូវការ",
+    market_hint: "លុយផ្សារជាលុយគ្រួសារ៖ រក្សាបង្កាន់ដៃទាំងអស់។",
+    incident_hint: "មានបញ្ហា៖ រក្សាសុវត្ថិភាពខ្លួន មិនឈ្លោះ ហៅអ្នកគ្រប់គ្រង។",
+    broken_hint: "បើមានរបស់ខូច សូមរាយការណ៍បញ្ហាផងដែរ (មានរូបថត)។",
+    parts_hint: "ទិញអ្វីមួយ៖ សួរអ្នកគ្រប់គ្រងមុន។ ជណ្តើរយន្តខូច៖ ប្រាប់អ្នកគ្រប់គ្រងឲ្យហៅក្រុមហ៊ុន។",
+    ck_ready: "សូមឆ្លើយគ្រប់ការងារ (លេខត្រូវតែជាលេខគត់)។",
+    answered: "បានឆ្លើយ ",
+    patrols: "ម៉ោងល្បាត", patrol_send: "ផ្ញើល្បាត", patrol_sent: "រួច", patrol_next: "ល្បាតបន្ទាប់",
+    patrol_wait: "រង់ចាំ", patrol_hint: "ចុចកន្លែងនីមួយៗពេលល្បាតរួច រួចចុច «ផ្ញើល្បាត»។ ម៉ោងពិតនឹងត្រូវកត់ទុក។ ល្បាតដែលខកខាន បង្ហាញក្នុងសង្ខេបម៉ោង 18:00។",
+    patrol_places: "សូមជ្រើសកន្លែងដែលបានល្បាត។"
   };
   var REASONS = ["NO_PHONE", "PHONE_BROKEN", "PHONE_LOST", "PHONE_STOLEN", "OTHER"];
   var CARD_ROLES = { CARETAKER: true, AUTHORIZER: true };
@@ -158,6 +189,12 @@ const PAGE = String.raw`<!doctype html>
   var METER_ROLES = { METER_READER: true, AUTHORIZER: true };
   var METER_PROBLEMS = ["BROKEN", "CANNOT_READ", "NOT_SURE", "OTHER"];
   var HIGH_KWH = 300, MAX_NOTE = 300;
+  var CK_ROLES = { CLEANING: "CLEANER", CARETAKER: "CARETAKER", TECHNICAL: "TECHNICIAN" };
+  var CK_ICONS = { CLEANING: "🧹", CARETAKER: "🛡", TECHNICAL: "🔧" };
+  var SHIFTS = ["MORNING", "AFTERNOON", "NIGHT"];
+  var NUMBER_EXTRAS = { MARKET_RIEL: 100000000, VISITORS: 1000 };
+  var LONG_EXTRAS = { PROBLEMS: true, INCIDENT: true, FIXED_TODAY: true };
+  var MAX_ITEM_NOTE = 200, MAX_EXTRA = 300, MAX_FLOOR = 20;
   var ICONS = { drop: "💧", zap: "⚡", snow: "❄️", lock: "🚪", window: "🪟", sofa: "🛋️",
     wifi: "📶", bug: "🐜", broom: "🧹", volume: "🔊", flame: "🔥", dots: "❓" };
 
@@ -165,7 +202,7 @@ const PAGE = String.raw`<!doctype html>
   var app = document.getElementById("app");
   var me = null, choices = {};
   var view = "home";
-  var rep = null, job = null, readings = {}, mc = null;
+  var rep = null, job = null, readings = {}, mc = null, ck = null, patrol = null;
   var recorder = null, recordTimer = null, recordStart = 0;
   var card = { mode: "IN", code: "", reason: "", text: "", photo: null };
   var error = "", note = "", busy = false;
@@ -425,8 +462,179 @@ const PAGE = String.raw`<!doctype html>
     if (count) { count.textContent = meterCount(); }
   }
 
+  // Daily checklists (step 4d): the lists of a kind, the person's shift, and the tasks due.
+  function lists(kind) {
+    return (choices.checklists || []).filter(function (row) { return row.kind === kind; });
+  }
+  function mayCheck(kind) {
+    return lists(kind).length > 0 && roles().some(function (role) { return role === CK_ROLES[kind] || role === "AUTHORIZER"; });
+  }
+  function ownDuty() {
+    return me && me.duty && roles().indexOf("CARETAKER") >= 0 ? me.duty : null;
+  }
+  function ckList() {
+    return (choices.checklists || []).filter(function (row) { return row.code === ck.code; })[0] || null;
+  }
+  function ckShift() { var duty = ownDuty(); return duty ? duty.shift : ck.shift; }
+  function ckItems() {
+    var list = ckList(), shift = ckShift();
+    if (!list) { return []; }
+    return list.items.filter(function (item) {
+      return list.kind !== "CARETAKER" || !item.sh || (shift && item.sh.indexOf(shift) >= 0);
+    });
+  }
+  function extraValue(code) {
+    var value = (ck.extras[code] || "").trim();
+    if (!NUMBER_EXTRAS[code]) { return value; }
+    if (!value) { return ""; }
+    var digits = value.replace(/[,\s]/g, "");
+    if (!/^\d{1,9}$/.test(digits) || Number(digits) > NUMBER_EXTRAS[code]) { return null; }
+    return Number(digits);
+  }
+  function ckReady() {
+    var list = ckList(), items = ckItems();
+    if (!list || !items.length) { return false; }
+    if (list.kind === "CARETAKER" && !ckShift()) { return false; }
+    if (!items.every(function (item) { return ck.answers[item.k]; })) { return false; }
+    return (list.extras || []).every(function (code) { return extraValue(code) !== null; });
+  }
+  function ckCount() {
+    var items = ckItems(), done = items.filter(function (item) { return ck.answers[item.k]; }).length;
+    return T.answered + done + T.of + items.length;
+  }
+  function newChecklist(kind) {
+    var options = lists(kind), code = options.length ? options[0].code : "";
+    if (kind === "CLEANING" && options.length > 1) {
+      var kept = "";
+      try { kept = window.localStorage.getItem("staff.clean") || ""; } catch (ignored) { kept = ""; }
+      if (options.some(function (row) { return row.code === kept; })) { code = kept; }
+    }
+    return { kind: kind, code: code, answers: {}, notes: {}, floor: "", extras: {}, shift: "" };
+  }
+  function patrolRounds() {
+    var list = ckList(), shift = ckShift();
+    return list && list.patrols && shift ? (list.patrols[shift] || []) : [];
+  }
+  function roundsSent() { var duty = ownDuty(); return (duty && duty.rounds) || []; }
+  function nextRound() {
+    var sent = roundsSent();
+    return patrolRounds().filter(function (time) { return sent.indexOf(time) < 0; })[0] || "";
+  }
+
+  function checklistView() {
+    var list = ckList(), kind = ck.kind;
+    var html = "<h1>" + CK_ICONS[kind] + " " + esc(list ? list.name : T[kind]) + "</h1>";
+    var back = '<button class="small" style="margin-top:12px" data-act="home">' + esc(T.back) + "</button>";
+    if (kind === "CLEANING" && lists(kind).length > 1) {
+      html += "<h2>" + esc(T.which_list) + '</h2><div class="list">' + lists(kind).map(function (row) {
+        return '<button class="choice' + (ck.code === row.code ? " on" : "") + '" data-act="ck-list" data-value="' +
+          esc(row.code) + '">' + esc(row.name) + "</button>";
+      }).join("") + "</div>";
+    }
+    if (me.day_off && kind !== "CARETAKER") { html += '<p class="hint">' + esc(T.day_off) + "</p>"; }
+    if (kind === "CARETAKER") {
+      var duty = ownDuty();
+      if (duty) {
+        html += "<h2>" + esc(T.your_shift) + "</h2><p><b>🔒 " + esc(T[duty.shift] || duty.shift_km) + "</b></p>" +
+          '<p class="hint">' + esc(T.shift_locked) + "</p>";
+      } else if (roles().indexOf("AUTHORIZER") >= 0) {
+        html += "<h2>" + esc(T.pick_shift) + '</h2><div class="row">' + SHIFTS.map(function (shift) {
+          return '<button class="choice' + (ck.shift === shift ? " on" : "") + '" data-act="ck-shift" data-value="' +
+            shift + '">' + esc(T[shift]) + "</button>";
+        }).join("") + "</div>";
+        if (!ck.shift) { return html + back; }
+      } else {
+        return html + '<p class="error">' + esc(T.no_shift) + "</p>" + back;
+      }
+    }
+    var items = ckItems();
+    if (!items.length) { return html + '<p class="hint">' + esc(T.nothing_due) + "</p>" + back; }
+    var section = null;
+    items.forEach(function (item) {
+      if (item.s !== section) { section = item.s; html += "<h2>" + item.s + ". " + esc(item.h) + "</h2>"; }
+      var answer = ck.answers[item.k] || "";
+      html += '<div class="card"><div>' + esc(item.t) + '</div><div class="row" style="margin-top:6px">' +
+        [["OK", T["ok_" + kind]], ["NOT_OK", T["bad_" + kind]]].map(function (pair) {
+          return '<button class="choice' + (answer === pair[0] ? " on" : "") + '" data-act="ck-answer" data-value="' +
+            esc(item.k) + ":" + pair[0] + '">' + esc(pair[1]) + "</button>";
+        }).join("") + "</div>";
+      if (item.f) {
+        html += '<input class="text" style="margin-top:6px" id="ck-floor" inputmode="numeric" maxlength="' + MAX_FLOOR +
+          '" placeholder="' + esc(T.floor_no) + '" value="' + esc(ck.floor) + '">';
+      }
+      if (answer === "NOT_OK") {
+        html += '<input class="text" style="margin-top:6px" id="ck-note-' + esc(item.k) + '" maxlength="' + MAX_ITEM_NOTE +
+          '" placeholder="' + esc(T["note_" + kind]) + '" value="' + esc(ck.notes[item.k] || "") + '">';
+      }
+      html += "</div>";
+    });
+    if (kind === "CARETAKER") { html += patrolBox(); }
+    var extras = (list && list.extras) || [];
+    if (extras.length) {
+      html += "<h2>" + esc(T.more) + "</h2>" + extras.map(function (code) {
+        var value = esc(ck.extras[code] || ""), hint = code === "MARKET_RIEL" ? T.market_hint : code === "INCIDENT" ? T.incident_hint :
+          code === "BROKEN" ? T.broken_hint : code === "PARTS" ? T.parts_hint : "";
+        var box = LONG_EXTRAS[code]
+          ? '<textarea id="ck-extra-' + code + '" maxlength="' + MAX_EXTRA + '">' + value + "</textarea>"
+          : '<input class="text" id="ck-extra-' + code + '"' + (NUMBER_EXTRAS[code] ? ' inputmode="numeric"' : "") +
+            ' maxlength="' + MAX_EXTRA + '" value="' + value + '">';
+        return '<label class="hint" for="ck-extra-' + code + '">' + esc(T[code]) + "</label>" + box +
+          (hint ? '<p class="hint">' + esc(hint) + "</p>" : "");
+      }).join("");
+    }
+    html += '<p class="hint" id="ck-count">' + esc(ckCount()) + "</p>";
+    return html + sendButton(ckReady(), T.ck_ready);
+  }
+  function patrolBox() {
+    var rounds = patrolRounds(), sent = roundsSent(), next = nextRound(), list = ckList();
+    if (!rounds.length) { return ""; }
+    var html = "<h2>" + esc(T.patrols) + " (" + rounds.length + ")</h2>";
+    rounds.forEach(function (time) {
+      var done = sent.indexOf(time) >= 0, current = time === next;
+      html += '<div class="card"><b>' + esc(time) + "</b> · " +
+        esc(done ? T.patrol_sent : current ? T.patrol_next : T.patrol_wait);
+      if (current) {
+        html += '<div class="row" style="margin-top:6px">' + (list.places || []).map(function (place) {
+          return '<button class="choice' + (patrol.places[place.k] ? " on" : "") + '" data-act="pt-place" data-value="' +
+            esc(place.k) + '">' + esc(place.t) + "</button>";
+        }).join("") + '</div><button class="small" style="margin-top:6px" data-act="pt-send" data-value="' + esc(time) + '"' +
+          (busy ? " disabled" : "") + ">" + esc(T.patrol_send) + "</button>";
+      }
+      html += "</div>";
+    });
+    return html + '<p class="hint">' + esc(T.patrol_hint) + "</p>";
+  }
+  function sendChecklist() {
+    if (!ckReady() || busy) { return; }
+    var list = ckList(), items = ckItems(), form = { type: "CHECKLIST", code: ck.code, answers: {}, notes: {}, extras: {} };
+    items.forEach(function (item) {
+      form.answers[item.k] = ck.answers[item.k];
+      var note = (ck.notes[item.k] || "").trim();
+      if (ck.answers[item.k] === "NOT_OK" && note) { form.notes[item.k] = note.slice(0, MAX_ITEM_NOTE); }
+    });
+    if (items.some(function (item) { return item.f; }) && ck.floor.trim()) { form.floor = ck.floor.trim().slice(0, MAX_FLOOR); }
+    (list.extras || []).forEach(function (code) {
+      var value = extraValue(code);
+      if (value !== "" && value !== null) { form.extras[code] = typeof value === "string" ? value.slice(0, MAX_EXTRA) : value; }
+    });
+    if (list.kind === "CARETAKER" && !ownDuty()) { form.shift = ck.shift; }
+    if (list.kind === "CLEANING") {
+      try { window.localStorage.setItem("staff.clean", ck.code); } catch (ignored) { /* the page works without it */ }
+    }
+    post(form, []);
+  }
+  function sendPatrol(time) {
+    var places = Object.keys(patrol.places).filter(function (key) { return patrol.places[key]; });
+    if (busy) { return; }
+    if (!places.length) { error = T.patrol_places; render(); return; }
+    var form = { type: "PATROL", round: time, places: places };
+    if (!ownDuty()) { form.shift = ck.shift; }
+    post(form, []);
+  }
+
   function render() {
     var html = "";
+    if (view === "checklist") { app.innerHTML = checklistView() + (error ? '<p class="error">' + esc(error) + "</p>" : ""); return; }
     if (view === "meter") { app.innerHTML = meterView() + (error ? '<p class="error">' + esc(error) + "</p>" : ""); return; }
     if (view === "metercheck") { app.innerHTML = meterCheckView() + (error ? '<p class="error">' + esc(error) + "</p>" : ""); return; }
     if (view === "report") { app.innerHTML = reportView() + (error ? '<p class="error">' + esc(error) + "</p>" : ""); return; }
@@ -450,6 +658,13 @@ const PAGE = String.raw`<!doctype html>
         html += '<div class="card"><h2>⚡ ' + esc(T.meter) + '</h2><p class="hint">' + esc(T.meter_hint) +
           '</p><button class="small" data-act="meter">' + esc(T.meter) + "</button></div>";
       }
+      ["CLEANING", "CARETAKER", "TECHNICAL"].forEach(function (kind) {
+        if (!mayCheck(kind)) { return; }
+        var sent = lists(kind).some(function (row) { return (me.sent || []).indexOf(row.code) >= 0; });
+        html += '<div class="card"><h2>' + CK_ICONS[kind] + " " + esc(T[kind]) + '</h2><p class="hint">' + esc(T[kind + "_hint"]) +
+          (sent ? " · " + esc(T.sent_today) : "") + '</p><button class="small" data-act="checklist" data-value="' + kind + '">' +
+          esc(T.open) + "</button></div>";
+      });
       if (mayScanCards()) {
         html += '<div class="card"><h2>▣ ' + esc(T.card) + '</h2><p class="hint">' + esc(T.card_hint) +
           '</p><button class="small" data-act="card">' + esc(T.scan_card) + "</button></div>";
@@ -694,6 +909,15 @@ const PAGE = String.raw`<!doctype html>
       view = "metercheck";
     }
     if (act === "meter-back") { view = "meter"; }
+    if (act === "checklist") { view = "checklist"; ck = newChecklist(value); patrol = { places: {} }; }
+    if (act === "ck-list") { ck = newChecklist("CLEANING"); ck.code = value; }
+    if (act === "ck-shift") { ck.shift = value; ck.answers = {}; ck.notes = {}; patrol = { places: {} }; }
+    if (act === "ck-answer") {
+      var pick = value.split(":");
+      ck.answers[pick[0]] = pick[1];
+    }
+    if (act === "pt-place") { patrol.places[value] = !patrol.places[value]; }
+    if (act === "pt-send") { sendPatrol(value); return; }
     if (act === "mc-meter") { mc.meter = value; }
     if (act === "mc-problem") { mc.problem = value; }
     if (act === "kind") { rep.kind = value; rep.unit = ""; rep.place = ""; rep.same = null; rep.decided = false; }
@@ -711,6 +935,7 @@ const PAGE = String.raw`<!doctype html>
       list.splice(Number(parts[1]), 1);
     }
     if (act === "send") {
+      if (view === "checklist") { sendChecklist(); return; }
       if (view === "report") { sendReport(); } else if (view === "meter") { sendReadings(); }
       else if (view === "metercheck") { sendMeterCheck(); } else { sendJob(); }
       return;
@@ -731,6 +956,14 @@ const PAGE = String.raw`<!doctype html>
       refreshMeterRow(Number(cell[2]));
       var ready = app.querySelector('[data-act="send"]');
       if (ready) { ready.disabled = busy || !meterReady(); }
+      return;
+    }
+    if (id && id.indexOf("ck-") === 0) {
+      if (id === "ck-floor") { ck.floor = value; }
+      else if (id.indexOf("ck-note-") === 0) { ck.notes[id.slice(8)] = value; }
+      else if (id.indexOf("ck-extra-") === 0) { ck.extras[id.slice(9)] = value; }
+      var sendList = app.querySelector('[data-act="send"]');
+      if (sendList) { sendList.disabled = busy || !ckReady(); }
       return;
     }
     if (id === "mcnote") {

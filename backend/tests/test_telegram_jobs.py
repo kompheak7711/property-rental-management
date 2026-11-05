@@ -312,6 +312,21 @@ class FakeStore:
         self.staff_scans.append(("METER_CHECK", 0, {"form": form, "media": media_ids}, inbound_id))
         return self.staff_answers.pop(0)
 
+    def staff_checklist(
+        self, inbound_id: str, form: dict[str, Any], media_ids: list[str]
+    ) -> dict[str, Any]:
+        self.staff_scans.append(("CHECKLIST", 0, {"form": form, "media": media_ids}, inbound_id))
+        return self.staff_answers.pop(0)
+
+    def staff_patrol(
+        self, inbound_id: str, form: dict[str, Any], media_ids: list[str]
+    ) -> dict[str, Any]:
+        self.staff_scans.append(("PATROL", 0, {"form": form, "media": media_ids}, inbound_id))
+        return self.staff_answers.pop(0)
+
+    def staff_daily_summary(self) -> int:
+        return 0
+
 
 def _client(relay: FakeRelay) -> RelayClient:
     return RelayClient(

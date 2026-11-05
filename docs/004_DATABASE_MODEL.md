@@ -5864,3 +5864,16 @@ Added by DL-176 (migration `20270622_333`, forward-only).
 - `app.telegram_staff_meter_check` (`telegram.operate`): a Meter check request (Electricity or Water; broken, cannot read, not sure, other with a note; up to 2 photos) becomes a Unit Problem (type Electricity or Water, source `STAFF_BOT`).
 - `app.staff_meter_readings_waiting` and `app.decide_staff_meter_readings` (`utility_readings.record`): the Utilities list and answer (API-TG-006). A confirmed reading goes through `record_utility_reading_api` with the person who confirmed it; asking again queues `staff.meter_again` to the reader.
 - `app.telegram_staff_form_data` now also gives the meters (Unit number and last reading of each type, no names) for the form.
+
+## DB-TG-013 — Staff daily checklists, patrol rounds and the 18:00 summary (bots step 4d)
+
+Added by DL-177 (migration `20270623_334`, forward-only).
+
+- `staff_checklists` (append-only): one version of a checklist (`code`, `version`, kind `CLEANING`, `CARETAKER` or `TECHNICAL`, the Khmer name, the extra boxes it asks, and for caretakers the patrol times per shift and the patrol places). The newest version of a code is the live one. Seeded with the mock-up's draft lists `CLEAN_BUILDING`, `CLEAN_HOUSE`, `CARETAKER` and `TECHNICAL`.
+- `staff_checklist_items` (append-only): one task of a version, with its section, order, Khmer text and when it is due (`iso_days`, `months`, `month_days`, `shifts`; empty means always), and whether it asks the floor.
+- `staff_checklist_reports` (append-only): one check sent in the Staff bot (inbound form, employee, Telegram user, work day, shift for caretakers, the answers `OK` or `NOT_OK` with notes, the floor, the extra boxes, the counts). A check sent again is a new row; the newest counts.
+- `staff_patrol_rounds` (append-only): one patrol round (work day, shift, planned time, places walked); once per round and shift; `created_at` is the real time.
+- `staff_summary_runs` (append-only): the 18:00 summary of a day (once per Property and day), its text and how many messages went out.
+- `app.telegram_staff_checklist` and `app.telegram_staff_patrol` (`telegram.operate`): save a check or a round from a pulled Staff form. Answers `SENT`, `NOT_LINKED`, `NOT_ROLE`, `NO_SHIFT`, `NOTHING_DUE`, `TOO_EARLY`, `ROUND_DONE` or `INVALID` (with the reason). Every task due must be answered, nothing else.
+- `app.telegram_staff_daily_summary` (`telegram.operate`): run by the pull job every minute; from 18:00 Property time it queues `staff.daily_summary` once to every live Authorizer link.
+- `app.telegram_staff_form_data` now also gives the checklists with the tasks due today, and for each person the caretaker's shift now with the rounds already sent, the checks already sent and a day off.

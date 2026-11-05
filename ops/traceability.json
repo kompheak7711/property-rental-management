@@ -63782,6 +63782,71 @@
       "test_path": "frontend/src/utilities/StaffReadings.test.tsx",
       "status": "implemented",
       "notes": "Telegram bots step 4c: Nothing shows when no reading waits or the list cannot be read; the client sends the answer with the CSRF token and refuses a list of the wrong shape."
+    },
+    {
+      "test_id": "test_the_forms_show_the_checklists_and_each_persons_state",
+      "upstream_ids": [
+        "DL-177",
+        "DB-TG-013"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_staff_checklists_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 4d: The Staff forms give the checklists with the tasks due today (by day of the week and shift) and each person's state: the caretaker's shift from HR with the rounds sent."
+    },
+    {
+      "test_id": "test_a_cleaner_sends_the_daily_check",
+      "upstream_ids": [
+        "DL-177",
+        "DB-TG-013"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_staff_checklists_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 4d: A cleaner's check needs every task due answered OK or NOT_OK, keeps notes, the floor and the extra boxes (market money in whole riel); a check sent again is kept and the newest counts; wrong forms, photos and other roles are refused."
+    },
+    {
+      "test_id": "test_a_caretaker_sends_the_shift_check_and_patrol_rounds",
+      "upstream_ids": [
+        "DL-177",
+        "DB-TG-013"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_staff_checklists_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 4d: A caretaker's check and patrol rounds use the shift from HR (an Authorizer picks it); a round is saved once per shift with the places walked; unknown rounds and places are refused."
+    },
+    {
+      "test_id": "test_the_1800_summary_goes_to_the_authorizers_once",
+      "upstream_ids": [
+        "DL-177",
+        "DB-TG-013"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_staff_checklists_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 4d: From 18:00 the Authorizers get one Khmer summary a day with who sent the checks, the tasks not done or needing fixing and the caretakers' rounds; before 18:00 and a second time nothing is sent."
+    },
+    {
+      "test_id": "test_the_new_functions_and_tables_are_behind_their_rights",
+      "upstream_ids": [
+        "DL-177",
+        "DB-TG-013"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_staff_checklists_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 4d: The checklist, patrol and summary functions need telegram.operate, the summary at a chosen time is not open to the runtime, the tables are closed to the runtime and never changed."
+    },
+    {
+      "test_id": "test_daily_checklists_and_patrol_rounds_answer_in_the_chat",
+      "upstream_ids": [
+        "DL-177"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_staff_bot.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 4d: The Staff bot answers the daily checks (sent, with problems, wrong role, no shift, nothing due, refused) and the patrol rounds (sent, already sent, too early) in Khmer, and the 18:00 summary renders."
     }
   ]
 }

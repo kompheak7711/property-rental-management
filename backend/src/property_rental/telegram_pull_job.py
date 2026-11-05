@@ -418,6 +418,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         store.remove_old_link_attempts()
         store.visit_reminders()
         store.visit_requests_remove_old()
+        # The 18:00 summary of the staff checklists for the Authorizers, once a day.
+        store.staff_daily_summary()
         if service_actor is not None:
             remove_old_card_photos(store, hr_files)
         push_form_data(client=client, store=store, status_directory=config.status_directory)

@@ -349,3 +349,60 @@ def test_utility_reading_and_meter_check_answer_in_the_chat() -> None:
         assert render(reply["text_code"], "km", reply["details"])
     # The database's "read again" message renders too.
     assert render("staff.meter_again", "km", {"units": "A103 ភ្លើង, B105 ទឹក"})
+
+
+def test_daily_checklists_and_patrol_rounds_answer_in_the_chat() -> None:
+    store = FakeStore()
+    store.staff_answers += [
+        {"result": "SENT", "repeated": False, "again": False, "done": 9, "problems": 0},
+        {"result": "SENT", "repeated": False, "again": True, "done": 7, "problems": 2},
+        {"result": "NOT_ROLE", "kind": "CLEANING"},
+        {"result": "NOT_ROLE", "kind": "TECHNICAL"},
+        {"result": "NO_SHIFT"},
+        {"result": "NOTHING_DUE"},
+        {"result": "INVALID", "reason": "answers"},
+        {"result": "SENT", "repeated": True, "done": 9, "problems": 0},
+    ]
+    checklist = {"type": "CHECKLIST", "code": "CLEAN_BUILDING", "answers": {"d1": "OK"}}
+    answers = []
+    for _ in range(8):
+        answers += send(store, checklist)
+    assert [code for code, _ in codes(answers)] == [
+        "staff.checklist_sent",
+        "staff.checklist_sent_problems",
+        "staff.checklist_not_cleaner",
+        "staff.checklist_not_technician",
+        "staff.checklist_no_shift",
+        "staff.checklist_nothing_due",
+        "staff.checklist_invalid",
+    ]
+    assert answers[0]["details"] == {"done": "9", "total": "9"}
+    assert answers[1]["details"] == {"done": "7", "total": "9", "problems": "2"}
+    assert store.staff_scans[0][0] == "CHECKLIST" and store.staff_scans[0][2]["media"] == []
+
+    store.staff_answers += [
+        {"result": "SENT", "repeated": False, "round": "11:30", "at": "11:42"},
+        {"result": "ROUND_DONE", "round": "11:30", "at": "11:42"},
+        {"result": "TOO_EARLY", "round": "14:00"},
+        {"result": "NOT_ROLE", "kind": "CARETAKER"},
+        {"result": "INVALID", "reason": "places"},
+    ]
+    patrol = {"type": "PATROL", "round": "11:30", "places": ["CHETANA", "PARKING"]}
+    answers = []
+    for _ in range(5):
+        answers += send(store, patrol)
+    assert [code for code, _ in codes(answers)] == [
+        "staff.patrol_sent",
+        "staff.patrol_done_before",
+        "staff.patrol_too_early",
+        "staff.checklist_not_caretaker",
+        "staff.patrol_invalid",
+    ]
+    assert answers[0]["details"] == {"round": "11:30", "at": "11:42"}
+    for reply in store.replies:
+        assert render(reply["text_code"], "km", reply["details"])
+    # The database's 18:00 summary renders too.
+    summary = render(
+        "staff.daily_summary", "km", {"date": "05/11/2026", "list": "🧹 សម្អាត៖ ផ្ញើ 2/2 នាក់"}
+    )
+    assert summary.startswith("📋 សង្ខេបប្រចាំថ្ងៃ 05/11/2026\n\n🧹")
