@@ -13,6 +13,8 @@ import {
   type CustomerDetail,
   CustomerConflictError,
 } from "../customerClient";
+import type { InvoiceResource } from "../invoiceClient";
+import { type InvoicesData, payerIds } from "../invoices/invoicesData";
 import { bookingRefusal } from "./NewBooking";
 import { ShortStaysPage } from "./ShortStaysPage";
 import {
@@ -1842,5 +1844,23 @@ describe("Daily and weekly rent: Short stays", () => {
       name: "U501 · Studio · no monthly Rent yet",
     });
     expect(option).toBeDisabled();
+  });
+
+  it("TEST-FE-1631 lists a guest who owes a stay Invoice in Receive payment", () => {
+    const owed = (customer: string, status: string, cents: number) =>
+      ({
+        customer_id: customer,
+        status,
+        outstanding_balance: { minor_units: String(cents) },
+      }) as unknown as InvoiceResource;
+    const data = {
+      invoices: [
+        owed("guest", "UNPAID", 6090),
+        owed("paid-guest", "PAID", 0),
+        owed("draft-guest", "DRAFT", 6090),
+      ],
+      customerLeases: new Map([["tenant", "lease-1"]]),
+    } as unknown as InvoicesData;
+    expect(payerIds(data).sort()).toEqual(["guest", "tenant"]);
   });
 });

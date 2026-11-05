@@ -31,7 +31,10 @@ import { st, type StaysTextKey } from "./text";
 function quoteProblem(error: unknown): StaysTextKey {
   if (!(error instanceof ShortStaysError)) return "f_failed";
   if (error.status === 403) return "f_step_right";
-  if (error.status === 409) return "q_not_free";
+  if (error.status === 409)
+    return error.detail?.includes("no monthly Rent") === true
+      ? "p_no_rent"
+      : "q_not_free";
   if (error.status === 422 || error.status === 404) return "q_wrong";
   return "f_failed";
 }
@@ -254,9 +257,17 @@ export function Quotes({
               >
                 <option value="">{st(language, "pick")}</option>
                 {units.map((unit) => (
-                  <option key={unit.unit_id} value={unit.unit_id}>
+                  // A quote is priced from the monthly Rent, so a Unit without one waits.
+                  <option
+                    disabled={unit.monthly_rent_usd_cents === null}
+                    key={unit.unit_id}
+                    value={unit.unit_id}
+                  >
                     {unit.unit_number} ·{" "}
                     {unitTypeText(language, unit.unit_type)}
+                    {unit.monthly_rent_usd_cents === null
+                      ? ` · ${st(language, "u_no_rent")}`
+                      : ""}
                   </option>
                 ))}
               </select>
