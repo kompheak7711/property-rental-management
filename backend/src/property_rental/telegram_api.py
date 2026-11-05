@@ -331,12 +331,12 @@ def _require_any(
 def create_telegram_router(
     resolver: ActorResolver, flow: TelegramPageFlow, settings: Settings
 ) -> APIRouter:
-    router = APIRouter(prefix="/telegram")
+    pages = APIRouter(prefix="/api/v1/properties/{property_id}", tags=["telegram"])
 
     def envelope(request: Request, data: object) -> Json:
         return {"data": data, "meta": {"request_id": request.state.request_id}}
 
-    @router.get("/links")
+    @pages.get("/telegram/links")
     def telegram_links(property_id: UUID, request: Request, response: Response) -> Json:
         actor = _require(request, resolver, TELEGRAM_READ, property_id)
         response.headers["Cache-Control"] = "private, no-store"
@@ -345,7 +345,7 @@ def create_telegram_router(
         except REFUSED as exc:
             raise _http(exc) from exc
 
-    @router.post("/links/{link_id}/remove")
+    @pages.post("/telegram/links/{link_id}/remove")
     def remove_telegram_link(
         property_id: UUID, link_id: UUID, body: RemoveLink, request: Request
     ) -> Json:
@@ -357,7 +357,7 @@ def create_telegram_router(
         except REFUSED as exc:
             raise _http(exc) from exc
 
-    @router.get("/health")
+    @pages.get("/telegram/health")
     def telegram_health(property_id: UUID, request: Request, response: Response) -> Json:
         actor = _require(request, resolver, TELEGRAM_READ, property_id)
         response.headers["Cache-Control"] = "private, no-store"
@@ -366,7 +366,7 @@ def create_telegram_router(
         except REFUSED as exc:
             raise _http(exc) from exc
 
-    @router.post("/outbox/{message_id}/retry", status_code=status.HTTP_201_CREATED)
+    @pages.post("/telegram/outbox/{message_id}/retry", status_code=status.HTTP_201_CREATED)
     def retry_telegram_message(property_id: UUID, message_id: UUID, request: Request) -> Json:
         actor = _require(request, resolver, TELEGRAM_OPERATE, property_id)
         require_browser_mutation(request, settings)
@@ -382,7 +382,7 @@ def create_telegram_router(
         except REFUSED as exc:
             raise _http(exc) from exc
 
-    @router.get("/contact")
+    @pages.get("/telegram/contact")
     def telegram_contact(property_id: UUID, request: Request, response: Response) -> Json:
         actor = _require(request, resolver, TELEGRAM_CONTACT, property_id)
         response.headers["Cache-Control"] = "private, no-store"
@@ -391,7 +391,7 @@ def create_telegram_router(
         except REFUSED as exc:
             raise _http(exc) from exc
 
-    @router.post("/contact/{message_id}/answer")
+    @pages.post("/telegram/contact/{message_id}/answer")
     def answer_telegram_contact(
         property_id: UUID, message_id: UUID, body: ContactAnswer, request: Request
     ) -> Json:
@@ -403,7 +403,7 @@ def create_telegram_router(
         except REFUSED as exc:
             raise _http(exc) from exc
 
-    @router.get("/faq")
+    @pages.get("/telegram/faq")
     def telegram_faq(property_id: UUID, request: Request, response: Response) -> Json:
         actor = _require_any(request, resolver, (TELEGRAM_FAQ, TELEGRAM_CONTACT), property_id)
         response.headers["Cache-Control"] = "private, no-store"
@@ -412,7 +412,7 @@ def create_telegram_router(
         except REFUSED as exc:
             raise _http(exc) from exc
 
-    @router.post("/faq")
+    @pages.post("/telegram/faq")
     def save_telegram_faq(property_id: UUID, body: FaqVersion, request: Request) -> Json:
         actor = _require(request, resolver, TELEGRAM_FAQ, property_id)
         require_browser_mutation(request, settings)
@@ -432,7 +432,7 @@ def create_telegram_router(
         except REFUSED as exc:
             raise _http(exc) from exc
 
-    @router.post("/faq/versions/{version_id}/approve")
+    @pages.post("/telegram/faq/versions/{version_id}/approve")
     def approve_telegram_faq(property_id: UUID, version_id: UUID, request: Request) -> Json:
         actor = _require(request, resolver, TELEGRAM_FAQ, property_id)
         require_browser_mutation(request, settings)
@@ -444,8 +444,6 @@ def create_telegram_router(
             )
         except REFUSED as exc:
             raise _http(exc) from exc
-
-    pages = APIRouter(prefix="/api/v1/properties/{property_id}", tags=["telegram"])
 
     @pages.get("/visit-requests")
     def visit_requests(property_id: UUID, request: Request, response: Response) -> Json:
@@ -498,5 +496,4 @@ def create_telegram_router(
         except REFUSED as exc:
             raise _http(exc) from exc
 
-    pages.include_router(router)
     return pages
