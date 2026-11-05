@@ -178,14 +178,32 @@ const PAGE = String.raw`<!doctype html>
     answered: "បានឆ្លើយ ",
     patrols: "ម៉ោងល្បាត", patrol_send: "ផ្ញើល្បាត", patrol_sent: "រួច", patrol_next: "ល្បាតបន្ទាប់",
     patrol_wait: "រង់ចាំ", patrol_hint: "ចុចកន្លែងនីមួយៗពេលល្បាតរួច រួចចុច «ផ្ញើល្បាត»។ ម៉ោងពិតនឹងត្រូវកត់ទុក។ ល្បាតដែលខកខាន បង្ហាញក្នុងសង្ខេបម៉ោង 18:00។",
-    patrol_places: "សូមជ្រើសកន្លែងដែលបានល្បាត។"
+    patrol_places: "សូមជ្រើសកន្លែងដែលបានល្បាត។",
+    unit_check: "ការត្រួតពិនិត្យបន្ទប់", unit_check_hint: "ពិនិត្យធម្មតា ឬពិនិត្យក្រោយជួសជុល",
+    kind: "ប្រភេទ", REGULAR: "ធម្មតា", AFTER_REPAIR: "ជួសជុល",
+    unit_only: "សរសេរតែលេខបន្ទប់។ កុំសរសេរឈ្មោះ ឬលេខទូរស័ព្ទអ្នកជួល។",
+    areas: "តំបន់", area_GOOD: "ល្អ", area_BROKEN: "ខូច", area_MISSING: "បាត់",
+    what_BROKEN: "តើអ្វីខូច?", what_MISSING: "តើអ្វីបាត់?",
+    no_area: "បន្ទប់គ្មានតំបន់ណាមួយ (ឧ. រានហាល)៖ ទុកចោល។",
+    uc_photos: "តំបន់ខូច ឬបាត់នីមួយៗ ត្រូវមានរូបថតយ៉ាងហោចណាស់ 1 · សរុបរហូតដល់ 5 ក្នុងទម្រង់មួយ។",
+    uc_becomes: "តំបន់ខូច ឬបាត់នីមួយៗ នឹងក្លាយជារបាយការណ៍បញ្ហា។ ការត្រួតពិនិត្យមិនធ្វើឲ្យមានថ្លៃទេ។",
+    notes: "កំណត់សម្គាល់",
+    uc_ready: "សូមជ្រើសបន្ទប់ ប្រភេទ និងតំបន់យ៉ាងហោចណាស់មួយ។ តំបន់ខូច ឬបាត់ ត្រូវសរសេរ និងថតរូប។",
+    maint: "ទម្រង់ត្រួតពិនិត្យការជួសជុល", maint_hint: "ការមកពិនិត្យដែលបានរៀបចំ៖ មូលហេតុ និងរូបថត",
+    visit: "ការមកពិនិត្យ", no_visits: "គ្មានការមកពិនិត្យដែលបានរៀបចំទេ។",
+    entry: "របៀបចូលបន្ទប់", URGENT: "បន្ទាន់", TENANT_OK: "អ្នកជួលយល់ព្រម", NOTICE: "ជូនដំណឹងមុន",
+    cause: "មូលហេតុ", WEAR: "ពុកផុយតាមការប្រើប្រាស់", DAMAGE: "អ្នកជួលធ្វើខូច", UNSURE: "មិនទាន់ដឹង",
+    cause_hint: "មានតែការរកឃើញដែលបានបញ្ជាក់ក្នុងកម្មវិធីប៉ុណ្ណោះ ទើបអាចក្លាយជាថ្លៃខូចខាត។",
+    fixed_now: "ជួសជុលភ្លាមៗ (ការងារបន្ទាន់)", fixed_yes: "ជួសជុលរួច", fixed_no: "មិនទាន់",
+    mt_photos: "រូបថត (យ៉ាងហោចណាស់ 1 រហូតដល់ 5)",
+    mt_ready: "សូមជ្រើសការងារ របៀបចូលបន្ទប់ មូលហេតុ ហើយថតរូប 1 សន្លឹក។"
   };
   var REASONS = ["NO_PHONE", "PHONE_BROKEN", "PHONE_LOST", "PHONE_STOLEN", "OTHER"];
   var CARD_ROLES = { CARETAKER: true, AUTHORIZER: true };
   var ROLE_NAMES = { CLEANER: "អ្នកសម្អាត", TECHNICIAN: "អ្នកបច្ចេកទេស",
     CARETAKER: "អ្នកថែរក្សាអគារ", METER_READER: "អ្នកអានមីទ័រ", AUTHORIZER: "អ្នកអនុម័ត" };
   var PHOTO_SIDE = 1600, MAX_REASON = 300, MAX_TEXT = 1000, MAX_VOICE_SECONDS = 60;
-  var LIMITS = { report: 4, after: 3, receipt: 2, mc: 2 };
+  var LIMITS = { report: 4, after: 3, receipt: 2, mc: 2, mt: 5 };
   var METER_ROLES = { METER_READER: true, AUTHORIZER: true };
   var METER_PROBLEMS = ["BROKEN", "CANNOT_READ", "NOT_SURE", "OTHER"];
   var HIGH_KWH = 300, MAX_NOTE = 300;
@@ -195,6 +213,8 @@ const PAGE = String.raw`<!doctype html>
   var NUMBER_EXTRAS = { MARKET_RIEL: 100000000, VISITORS: 1000 };
   var LONG_EXTRAS = { PROBLEMS: true, INCIDENT: true, FIXED_TODAY: true };
   var MAX_ITEM_NOTE = 200, MAX_EXTRA = 300, MAX_FLOOR = 20;
+  var TECH_ROLES = { TECHNICIAN: true, AUTHORIZER: true };
+  var MAX_FORM_PHOTOS = 5, MAX_FINDING = 300, MAX_UC_NOTE = 500, MAX_MT_NOTE = 400;
   var ICONS = { drop: "💧", zap: "⚡", snow: "❄️", lock: "🚪", window: "🪟", sofa: "🛋️",
     wifi: "📶", bug: "🐜", broom: "🧹", volume: "🔊", flame: "🔥", dots: "❓" };
 
@@ -202,7 +222,7 @@ const PAGE = String.raw`<!doctype html>
   var app = document.getElementById("app");
   var me = null, choices = {};
   var view = "home";
-  var rep = null, job = null, readings = {}, mc = null, ck = null, patrol = null;
+  var rep = null, job = null, readings = {}, mc = null, ck = null, patrol = null, uc = null, mt = null;
   var recorder = null, recordTimer = null, recordStart = 0;
   var card = { mode: "IN", code: "", reason: "", text: "", photo: null };
   var error = "", note = "", busy = false;
@@ -304,11 +324,11 @@ const PAGE = String.raw`<!doctype html>
     var money = jobCost();
     return !!money && money.parts + money.outside > 0 && job.receipts.length > 0;
   }
-  function photoRow(list, target) {
+  function photoRow(list, target, limit) {
     var html = '<div class="photos">' + list.map(function (photo, index) {
       return '<img alt="" src="' + photo.url + '" data-act="drop-photo" data-value="' + target + ":" + index + '">';
     }).join("");
-    if (list.length < LIMITS[target]) {
+    if (list.length < (limit === undefined ? LIMITS[target] : limit)) {
       html += '<label class="small">' + esc(T.add_photo) +
         '<input type="file" accept="image/*" capture="environment" data-photo="' + target + '" hidden></label>';
     }
@@ -632,6 +652,93 @@ const PAGE = String.raw`<!doctype html>
     post(form, []);
   }
 
+  function mayCheckUnits() { return roles().some(function (role) { return TECH_ROLES[role]; }); }
+  function visits() { return choices.visits || []; }
+  function unitAreas() { return choices.unit_areas || []; }
+  function newUnitCheck() { return { unit: "", kind: "", areas: {}, text: {}, photos: {}, note: "" }; }
+  function ucFound() {
+    return unitAreas().filter(function (area) {
+      var state = uc.areas[area.code];
+      return state === "BROKEN" || state === "MISSING";
+    });
+  }
+  function ucPhotoCount() {
+    return ucFound().reduce(function (sum, area) { return sum + (uc.photos[area.code] || []).length; }, 0);
+  }
+  function ucReady() {
+    if (!uc.unit || !uc.kind || !Object.keys(uc.areas).length) { return false; }
+    return ucFound().every(function (area) {
+      return (uc.text[area.code] || "").trim().length > 0 && (uc.photos[area.code] || []).length > 0;
+    }) && ucPhotoCount() <= MAX_FORM_PHOTOS;
+  }
+  function newMaint() { return { id: "", entry: "", cause: "", fixed: false, photos: [], note: "" }; }
+  function mtVisit() { return visits().filter(function (row) { return row.report_id === mt.id; })[0] || null; }
+  function mtReady() { return !!mt.id && !!mt.entry && !!mt.cause && mt.photos.length > 0; }
+  function picks(act, pairs, current) {
+    return '<div class="row">' + pairs.map(function (pair) {
+      return '<button class="choice' + (current === pair[0] ? " on" : "") + '" data-act="' + act + '" data-value="' +
+        pair[0] + '">' + esc(pair[1]) + "</button>";
+    }).join("") + "</div>";
+  }
+
+  function unitCheckView() {
+    var html = "<h1>🏠 " + esc(T.unit_check) + "</h1>";
+    html += "<h2>" + esc(T.unit) + '</h2><select id="uc-unit"><option value="">' + esc(T.choose) + "</option>" +
+      (choices.units || []).map(function (unit) {
+        return '<option value="' + esc(unit.id) + '"' + (uc.unit === unit.id ? " selected" : "") + ">" + esc(unit.number) + "</option>";
+      }).join("") + "</select>";
+    html += "<h2>" + esc(T.kind) + "</h2>" + picks("uc-kind", [["REGULAR", T.REGULAR], ["AFTER_REPAIR", T.AFTER_REPAIR]], uc.kind);
+    html += '<p class="hint">' + esc(T.unit_only) + "</p>";
+    html += "<h2>" + esc(T.areas) + '</h2><p class="hint">' + esc(T.no_area) + "</p>";
+    var room = MAX_FORM_PHOTOS - ucPhotoCount();
+    unitAreas().forEach(function (area) {
+      var state = uc.areas[area.code] || "";
+      html += '<div class="card"><b>' + esc(area.km) + "</b>" + picks("uc-area", ["GOOD", "BROKEN", "MISSING"].map(function (code) {
+        return [area.code + ":" + code, T["area_" + code]];
+      }), state ? area.code + ":" + state : "");
+      if (state === "BROKEN" || state === "MISSING") {
+        var list = uc.photos[area.code] || [];
+        html += '<input class="text" id="uc-text-' + esc(area.code) + '" maxlength="' + MAX_FINDING + '" placeholder="' +
+          esc(T["what_" + state]) + '" value="' + esc(uc.text[area.code] || "") + '">' +
+          photoRow(list, "uc-" + area.code, list.length + room);
+      }
+      html += "</div>";
+    });
+    html += '<p class="hint">' + esc(T.uc_photos) + "</p>";
+    html += "<h2>" + esc(T.notes) + '</h2><textarea id="uc-note" maxlength="' + MAX_UC_NOTE + '">' + esc(uc.note) + "</textarea>";
+    html += '<p class="hint">' + esc(T.uc_becomes) + "</p>";
+    return html + sendButton(ucReady(), T.uc_ready);
+  }
+
+  function maintView() {
+    var html = "<h1>🔧 " + esc(T.maint) + "</h1>";
+    if (!visits().length) {
+      return html + '<p class="hint">' + esc(T.no_visits) + '</p><button class="small" data-act="home">' + esc(T.back) + "</button>";
+    }
+    html += "<h2>" + esc(T.visit) + '</h2><div class="list">' + visits().map(function (row) {
+      var where = row.unit || [row.place_km, row.floor].filter(Boolean).join(" · ");
+      return '<button class="choice' + (mt.id === row.report_id ? " on" : "") + '" data-act="mt-visit" data-value="' +
+        esc(row.report_id) + '"><b>' + esc(row.report_number) + "</b> · " + esc(where) + " · " +
+        (ICONS[row.icon] || "") + " " + esc(row.type_km) + (row.urgent ? ' <span class="urgent">!</span>' : "") +
+        " · " + esc(row.visit_on) + " " + esc(row.visit_at) +
+        '<br><span class="hint">' + esc(row.description) + "</span></button>";
+    }).join("") + "</div>";
+    html += "<h2>" + esc(T.entry) + "</h2>" + picks("mt-entry", ["URGENT", "TENANT_OK", "NOTICE"].map(function (code) {
+      return [code, T[code]];
+    }), mt.entry);
+    html += "<h2>" + esc(T.cause) + "</h2>" + picks("mt-cause", ["WEAR", "DAMAGE", "UNSURE"].map(function (code) {
+      return [code, T[code]];
+    }), mt.cause) + '<p class="hint">' + esc(T.cause_hint) + "</p>";
+    var visit = mtVisit();
+    if (visit && visit.urgent) {
+      html += "<h2>" + esc(T.fixed_now) + "</h2>" + picks("mt-fixed", [["YES", T.fixed_yes], ["NO", T.fixed_no]],
+        mt.fixed ? "YES" : "NO");
+    }
+    html += "<h2>" + esc(T.mt_photos) + "</h2>" + photoRow(mt.photos, "mt");
+    html += "<h2>" + esc(T.notes) + '</h2><textarea id="mt-note" maxlength="' + MAX_MT_NOTE + '">' + esc(mt.note) + "</textarea>";
+    return html + sendButton(mtReady(), T.mt_ready);
+  }
+
   function render() {
     var html = "";
     if (view === "checklist") { app.innerHTML = checklistView() + (error ? '<p class="error">' + esc(error) + "</p>" : ""); return; }
@@ -639,6 +746,8 @@ const PAGE = String.raw`<!doctype html>
     if (view === "metercheck") { app.innerHTML = meterCheckView() + (error ? '<p class="error">' + esc(error) + "</p>" : ""); return; }
     if (view === "report") { app.innerHTML = reportView() + (error ? '<p class="error">' + esc(error) + "</p>" : ""); return; }
     if (view === "close") { app.innerHTML = jobView() + (error ? '<p class="error">' + esc(error) + "</p>" : ""); return; }
+    if (view === "unitcheck") { app.innerHTML = unitCheckView() + (error ? '<p class="error">' + esc(error) + "</p>" : ""); return; }
+    if (view === "maint") { app.innerHTML = maintView() + (error ? '<p class="error">' + esc(error) + "</p>" : ""); return; }
     if (view === "home") {
       html += "<h1>" + esc(me.name_km || me.name_en || "") + "</h1>";
       html += '<p class="hint">' + esc(roles().map(function (role) { return ROLE_NAMES[role] || role; }).join(" · "));
@@ -653,6 +762,12 @@ const PAGE = String.raw`<!doctype html>
       if (roles().indexOf("TECHNICIAN") >= 0) {
         html += '<div class="card"><h2>✓ ' + esc(T.close) + " (" + ((me.jobs || []).length) + ')</h2><p class="hint">' +
           esc(T.close_hint) + '</p><button class="small" data-act="close">' + esc(T.close) + "</button></div>";
+      }
+      if (mayCheckUnits()) {
+        html += '<div class="card"><h2>🏠 ' + esc(T.unit_check) + '</h2><p class="hint">' + esc(T.unit_check_hint) +
+          '</p><button class="small" data-act="unitcheck">' + esc(T.open) + "</button></div>";
+        html += '<div class="card"><h2>🔧 ' + esc(T.maint) + " (" + visits().length + ')</h2><p class="hint">' +
+          esc(T.maint_hint) + '</p><button class="small" data-act="maint">' + esc(T.open) + "</button></div>";
       }
       if (mayReadMeters()) {
         html += '<div class="card"><h2>⚡ ' + esc(T.meter) + '</h2><p class="hint">' + esc(T.meter_hint) +
@@ -885,6 +1000,39 @@ const PAGE = String.raw`<!doctype html>
     }).catch(function () { busy = false; error = T.failed; render(); });
   }
 
+  function sendUnitCheck() {
+    if (!ucReady() || busy) { return; }
+    var areas = {}, findings = {}, photos = [];
+    unitAreas().forEach(function (area) {
+      var state = uc.areas[area.code];
+      if (!state) { return; }
+      areas[area.code] = state;
+      if (state !== "GOOD") {
+        var list = uc.photos[area.code] || [];
+        findings[area.code] = { text: (uc.text[area.code] || "").trim().slice(0, MAX_FINDING), photos: list.length };
+        photos = photos.concat(list);
+      }
+    });
+    var form = { type: "UNIT_CHECK", unit_id: uc.unit, kind: uc.kind, areas: areas, findings: findings,
+      note: uc.note.trim().slice(0, MAX_UC_NOTE) || null };
+    busy = true; render();
+    files(photos).then(function (sent) {
+      busy = false;
+      return post(form, sent);
+    }).catch(function () { busy = false; error = T.failed; render(); });
+  }
+  function sendMaint() {
+    if (!mtReady() || busy) { return; }
+    var visit = mtVisit();
+    var form = { type: "MAINT_CHECK", report_id: mt.id, entry: mt.entry, cause: mt.cause,
+      fixed: !!(visit && visit.urgent && mt.fixed), note: mt.note.trim().slice(0, MAX_MT_NOTE) || null };
+    busy = true; render();
+    files(mt.photos).then(function (sent) {
+      busy = false;
+      return post(form, sent);
+    }).catch(function () { busy = false; error = T.failed; render(); });
+  }
+
   function saveCard() {
     if (!cardReady() || busy) { return; }
     base64(card.photo.blob).then(function (encoded) {
@@ -909,6 +1057,18 @@ const PAGE = String.raw`<!doctype html>
       view = "metercheck";
     }
     if (act === "meter-back") { view = "meter"; }
+    if (act === "unitcheck") { view = "unitcheck"; uc = newUnitCheck(); }
+    if (act === "maint") { view = "maint"; mt = newMaint(); }
+    if (act === "uc-kind") { uc.kind = value; }
+    if (act === "uc-area") {
+      var area = value.split(":");
+      uc.areas[area[0]] = area[1];
+      if (area[1] === "GOOD") { delete uc.text[area[0]]; delete uc.photos[area[0]]; }
+    }
+    if (act === "mt-visit") { mt.id = value; mt.fixed = false; }
+    if (act === "mt-entry") { mt.entry = value; }
+    if (act === "mt-cause") { mt.cause = value; }
+    if (act === "mt-fixed") { mt.fixed = value === "YES"; }
     if (act === "checklist") { view = "checklist"; ck = newChecklist(value); patrol = { places: {} }; }
     if (act === "ck-list") { ck = newChecklist("CLEANING"); ck.code = value; }
     if (act === "ck-shift") { ck.shift = value; ck.answers = {}; ck.notes = {}; patrol = { places: {} }; }
@@ -931,13 +1091,15 @@ const PAGE = String.raw`<!doctype html>
     if (act === "cost") { job.cost = value; }
     if (act === "drop-photo") {
       var parts = value.split(":"), list = parts[0] === "report" ? rep.photos : parts[0] === "after" ? job.after :
-        parts[0] === "mc" ? mc.photos : job.receipts;
+        parts[0] === "mc" ? mc.photos : parts[0] === "mt" ? mt.photos :
+        parts[0].indexOf("uc-") === 0 ? uc.photos[parts[0].slice(3)] : job.receipts;
       list.splice(Number(parts[1]), 1);
     }
     if (act === "send") {
       if (view === "checklist") { sendChecklist(); return; }
       if (view === "report") { sendReport(); } else if (view === "meter") { sendReadings(); }
-      else if (view === "metercheck") { sendMeterCheck(); } else { sendJob(); }
+      else if (view === "metercheck") { sendMeterCheck(); } else if (view === "unitcheck") { sendUnitCheck(); }
+      else if (view === "maint") { sendMaint(); } else { sendJob(); }
       return;
     }
     if (act === "card") { view = "card"; card = { mode: "IN", code: "", reason: "", text: "", photo: null }; }
@@ -966,6 +1128,14 @@ const PAGE = String.raw`<!doctype html>
       if (sendList) { sendList.disabled = busy || !ckReady(); }
       return;
     }
+    if (id === "uc-note" || (id && id.indexOf("uc-text-") === 0) || id === "mt-note") {
+      if (id === "uc-note") { uc.note = value; }
+      else if (id === "mt-note") { mt.note = value; }
+      else { uc.text[id.slice(8)] = value; }
+      var sendForm = app.querySelector('[data-act="send"]');
+      if (sendForm) { sendForm.disabled = busy || !(view === "maint" ? mtReady() : ucReady()); }
+      return;
+    }
     if (id === "mcnote") {
       mc.note = value;
       var sendCheck = app.querySelector('[data-act="send"]');
@@ -989,6 +1159,7 @@ const PAGE = String.raw`<!doctype html>
   });
   app.addEventListener("change", function (event) {
     if (event.target.id === "unit") { rep.unit = event.target.value; render(); return; }
+    if (event.target.id === "uc-unit") { uc.unit = event.target.value; render(); return; }
     if (event.target.id === "parts" || event.target.id === "outside") { render(); return; }
     var file = event.target.files && event.target.files[0];
     if (!file) { return; }
@@ -1000,6 +1171,10 @@ const PAGE = String.raw`<!doctype html>
         else if (target === "after") { job.after.push(photo); }
         else if (target === "receipt") { job.receipts.push(photo); }
         else if (target === "mc") { mc.photos.push(photo); }
+        else if (target === "mt") { mt.photos.push(photo); }
+        else if (target && target.indexOf("uc-") === 0) {
+          (uc.photos[target.slice(3)] = uc.photos[target.slice(3)] || []).push(photo);
+        }
         else { card.photo = photo; }
       }
       render();

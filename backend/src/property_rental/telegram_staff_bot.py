@@ -26,6 +26,11 @@ Daily checklists (step 4d, DL-177; staff checklists 24-25 Oct 2026): the Cleanin
 shift and Technical checks, and each patrol round of a caretaker's shift. The 18:00 summary for
 the Authorizers comes from the database (the pull job asks for it every run).
 
+Unit Check and Maintenance check (step 4e, DL-178; staff forms mock-up v14): the Technician
+marks each area of a Unit Good, Broken or Missing (each finding becomes a Unit Problem with its
+photos), and checks a planned visit (how staff entered, the cause, fixed at once when urgent),
+which moves the report to Checked. Who pays is decided by the Manager in the app.
+
 The forms reach the office through the relay and the pull job, so the answer comes in the chat
 within about a minute.
 """
@@ -51,10 +56,19 @@ LOCATION_STATES: Final = frozenset({"OK", "NOT_FOUND", "OFF"})
 PHOTO_TYPES: Final = {"image/jpeg": "jpg", "image/png": "png"}
 CARD_PHOTOS: Final = "card-photos"
 REFUSED_PREFIX: Final = "check_refused_"
-FORM_TYPES: Final = frozenset(
-    {"CHECK", "CARD", "REPORT", "CLOSE", "METER", "METER_CHECK", "CHECKLIST", "PATROL"}
+SAVED_FORMS: Final = frozenset(
+    {
+        "REPORT",
+        "CLOSE",
+        "METER",
+        "METER_CHECK",
+        "CHECKLIST",
+        "PATROL",
+        "UNIT_CHECK",
+        "MAINT_CHECK",
+    }
 )
-SAVED_FORMS: Final = frozenset({"REPORT", "CLOSE", "METER", "METER_CHECK", "CHECKLIST", "PATROL"})
+FORM_TYPES: Final = SAVED_FORMS | {"CHECK", "CARD"}
 
 
 def _message(plain: dict[str, Any]) -> dict[str, Any] | None:
@@ -227,6 +241,12 @@ def handle_staff_form(
         elif form["type"] == "PATROL":
             result = store.staff_patrol(inbound, form, files)
             message = _patrol_answer(result)
+        elif form["type"] == "UNIT_CHECK":
+            result = store.staff_unit_check(inbound, form, files)
+            message = _unit_check_answer(result)
+        elif form["type"] == "MAINT_CHECK":
+            result = store.staff_maintenance_check(inbound, form, files)
+            message = _maintenance_answer(result)
         else:
             result = store.staff_meter_check(inbound, form, files)
             message = _meter_check_answer(result)
@@ -353,6 +373,42 @@ def _patrol_answer(result: dict[str, Any]) -> dict[str, Any]:
     if outcome != "SENT":
         return _say("staff.patrol_invalid")
     return _say("staff.patrol_sent", round=round_time, at=str(result.get("at") or ""))
+
+
+def _unit_check_answer(result: dict[str, Any]) -> dict[str, Any]:
+    """A Unit Check: all good, or the Unit Problem numbers of what was found."""
+    outcome = result.get("result")
+    if outcome == "NOT_LINKED":
+        return _say("staff.check_refused_not_linked")
+    if outcome == "NOT_ROLE":
+        return _say("staff.tech_only")
+    numbers = result.get("numbers")
+    if outcome != "SENT" or not isinstance(numbers, list):
+        return _say("staff.unit_check_invalid")
+    if not numbers:
+        return _say("staff.unit_check_good")
+    return _say(
+        "staff.unit_check_findings",
+        count=str(len(numbers)),
+        numbers=", ".join(str(number) for number in numbers),
+    )
+
+
+def _maintenance_answer(result: dict[str, Any]) -> dict[str, Any]:
+    """A Maintenance check: the visit is checked (and fixed), or why not."""
+    outcome = result.get("result")
+    number = str(result.get("report_number") or "")
+    if outcome == "NOT_LINKED":
+        return _say("staff.check_refused_not_linked")
+    if outcome == "NOT_ROLE":
+        return _say("staff.tech_only")
+    if outcome == "NOT_PLANNED":
+        return _say("staff.maint_not_planned", number=number)
+    if outcome != "CHECKED":
+        return _say("staff.maint_invalid")
+    if result.get("fixed") is True:
+        return _say("staff.maint_fixed", number=number)
+    return _say("staff.maint_checked", number=number)
 
 
 def _card(

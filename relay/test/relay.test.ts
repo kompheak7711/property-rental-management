@@ -575,6 +575,8 @@ test("the Staff forms: the page, the person's name, roles and shift, then a card
   assert.match(html, /type: "METER_CHECK"/);
   assert.match(html, /type: "CHECKLIST"/);
   assert.match(html, /type: "PATROL"/);
+  assert.match(html, /type: "UNIT_CHECK"/);
+  assert.match(html, /type: "MAINT_CHECK"/);
 
   const mine = {
     name_km: "ពេជ ភក្រក្ដី",

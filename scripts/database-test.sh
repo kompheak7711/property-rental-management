@@ -376,6 +376,7 @@ database_test_suites='
   tests/test_telegram_staff_reports_migration.py
   tests/test_telegram_staff_meter_readings_migration.py
   tests/test_telegram_staff_checklists_migration.py
+  tests/test_telegram_staff_unit_checks_migration.py
   tests/test_hr_employees_migration.py
   tests/test_hr_payroll_migration.py
   tests/test_hr_attendance_migration.py

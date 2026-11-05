@@ -5877,3 +5877,16 @@ Added by DL-177 (migration `20270623_334`, forward-only).
 - `app.telegram_staff_checklist` and `app.telegram_staff_patrol` (`telegram.operate`): save a check or a round from a pulled Staff form. Answers `SENT`, `NOT_LINKED`, `NOT_ROLE`, `NO_SHIFT`, `NOTHING_DUE`, `TOO_EARLY`, `ROUND_DONE` or `INVALID` (with the reason). Every task due must be answered, nothing else.
 - `app.telegram_staff_daily_summary` (`telegram.operate`): run by the pull job every minute; from 18:00 Property time it queues `staff.daily_summary` once to every live Authorizer link.
 - `app.telegram_staff_form_data` now also gives the checklists with the tasks due today, and for each person the caretaker's shift now with the rounds already sent, the checks already sent and a day off.
+
+## DB-TG-014 — Staff Unit Check and Maintenance check (bots step 4e)
+
+Added by DL-178 (migration `20270624_335`, forward-only).
+
+- `staff_unit_checks` (append-only): one Unit Check sent in the Staff bot (inbound form, employee, Telegram user, Unit, day, kind `REGULAR` or `AFTER_REPAIR`, the areas marked `GOOD`, `BROKEN` or `MISSING`, the note, how many findings).
+- `staff_unit_check_findings` (append-only): one Broken or Missing area of a Unit Check, what is wrong, how many photos, and the Unit Problem it made (`report_id`, unique).
+- `staff_maintenance_checks` (append-only): a planned visit checked in the Staff bot (report, inbound form, employee, how staff entered `URGENT`, `TENANT_OK` or `NOTICE`, the cause, fixed at once, the note, how many photos).
+- `problem_report_media.stage` also takes `CHECK` (photos taken at the Maintenance check).
+- `app.telegram_staff_unit_check` (`telegram.operate`): saves a Unit Check from a pulled Staff form and makes one Unit Problem (source `STAFF_BOT`) with its photos for each finding. Answers `SENT` (with the report numbers), `NOT_LINKED`, `NOT_ROLE` or `INVALID` (with the reason).
+- `app.telegram_staff_maintenance_check` (`telegram.operate`): moves a planned visit to Checked through `app.problem_report_step`. Answers `CHECKED`, `NOT_PLANNED`, `NOT_LINKED`, `NOT_ROLE` or `INVALID`.
+- `app.telegram_staff_form_data` now also gives, in the shared choices, the planned visits (at most 12, urgent first) and the Unit Check areas.
+

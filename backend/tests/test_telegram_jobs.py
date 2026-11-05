@@ -327,6 +327,18 @@ class FakeStore:
     def staff_daily_summary(self) -> int:
         return 0
 
+    def staff_unit_check(
+        self, inbound_id: str, form: dict[str, Any], media_ids: list[str]
+    ) -> dict[str, Any]:
+        self.staff_scans.append(("UNIT_CHECK", 0, {"form": form, "media": media_ids}, inbound_id))
+        return self.staff_answers.pop(0)
+
+    def staff_maintenance_check(
+        self, inbound_id: str, form: dict[str, Any], media_ids: list[str]
+    ) -> dict[str, Any]:
+        self.staff_scans.append(("MAINT_CHECK", 0, {"form": form, "media": media_ids}, inbound_id))
+        return self.staff_answers.pop(0)
+
 
 def _client(relay: FakeRelay) -> RelayClient:
     return RelayClient(

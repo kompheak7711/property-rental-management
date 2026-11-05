@@ -63847,6 +63847,60 @@
       "test_path": "backend/tests/test_telegram_staff_bot.py",
       "status": "implemented",
       "notes": "Telegram bots step 4d: The Staff bot answers the daily checks (sent, with problems, wrong role, no shift, nothing due, refused) and the patrol rounds (sent, already sent, too early) in Khmer, and the 18:00 summary renders."
+    },
+    {
+      "test_id": "test_the_forms_show_the_planned_visits_and_the_unit_check_areas",
+      "upstream_ids": [
+        "DL-178",
+        "DB-TG-014"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_staff_unit_checks_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 4e: The Staff forms give the planned visits and the seven Unit Check areas in the shared choices, not in each person's data."
+    },
+    {
+      "test_id": "test_a_unit_check_makes_a_unit_problem_for_each_finding",
+      "upstream_ids": [
+        "DL-178",
+        "DB-TG-014"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_staff_unit_checks_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 4e: A Unit Check from the Technician or an Authorizer makes one Unit Problem with its photos for each Broken or Missing area; wrong Units, kinds, areas, findings, photos and other roles are refused; the same form twice saves it once."
+    },
+    {
+      "test_id": "test_a_maintenance_check_moves_the_visit_to_checked",
+      "upstream_ids": [
+        "DL-178",
+        "DB-TG-014"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_staff_unit_checks_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 4e: A Maintenance check moves a planned visit to Checked with the cause, how staff entered and the CHECK photos; fixed at once only for an urgent visit; a visit no longer planned is refused."
+    },
+    {
+      "test_id": "test_the_new_functions_are_behind_the_telegram_right",
+      "upstream_ids": [
+        "DL-178",
+        "DB-TG-014"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_staff_unit_checks_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 4e: The Unit Check and Maintenance check functions need telegram.operate; the tables are closed to the runtime and never changed."
+    },
+    {
+      "test_id": "test_unit_checks_and_maintenance_checks_answer_in_the_chat",
+      "upstream_ids": [
+        "DL-178"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_staff_bot.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 4e: The Staff bot answers the Unit Check (all good, findings with their numbers, wrong role, refused) and the Maintenance check (checked, fixed, not planned, refused) in Khmer."
     }
   ]
 }

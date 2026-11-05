@@ -406,3 +406,48 @@ def test_daily_checklists_and_patrol_rounds_answer_in_the_chat() -> None:
         "staff.daily_summary", "km", {"date": "05/11/2026", "list": "🧹 សម្អាត៖ ផ្ញើ 2/2 នាក់"}
     )
     assert summary.startswith("📋 សង្ខេបប្រចាំថ្ងៃ 05/11/2026\n\n🧹")
+
+
+def test_unit_checks_and_maintenance_checks_answer_in_the_chat() -> None:
+    store = FakeStore()
+    store.staff_answers += [
+        {"result": "SENT", "repeated": False, "findings": 0, "numbers": []},
+        {"result": "SENT", "repeated": False, "findings": 2, "numbers": ["UP000101", "UP000102"]},
+        {"result": "NOT_ROLE"},
+        {"result": "INVALID", "reason": "findings"},
+        {"result": "SENT", "repeated": True, "findings": 0, "numbers": []},
+    ]
+    unit_check = {"type": "UNIT_CHECK", "unit_id": "u-1", "kind": "REGULAR", "areas": {}}
+    answers = []
+    for _ in range(5):
+        answers += send(store, unit_check)
+    assert [code for code, _ in codes(answers)] == [
+        "staff.unit_check_good",
+        "staff.unit_check_findings",
+        "staff.tech_only",
+        "staff.unit_check_invalid",
+    ]
+    assert answers[1]["details"] == {"count": "2", "numbers": "UP000101, UP000102"}
+    assert store.staff_scans[0][0] == "UNIT_CHECK"
+
+    store.staff_answers += [
+        {"result": "CHECKED", "repeated": False, "report_number": "UP000103", "fixed": False},
+        {"result": "CHECKED", "repeated": False, "report_number": "UP000104", "fixed": True},
+        {"result": "NOT_PLANNED", "report_number": "UP000103"},
+        {"result": "NOT_ROLE"},
+        {"result": "INVALID", "reason": "fixed"},
+    ]
+    maintenance = {"type": "MAINT_CHECK", "report_id": "r-1", "entry": "URGENT", "cause": "WEAR"}
+    answers = []
+    for _ in range(5):
+        answers += send(store, maintenance)
+    assert [code for code, _ in codes(answers)] == [
+        "staff.maint_checked",
+        "staff.maint_fixed",
+        "staff.maint_not_planned",
+        "staff.tech_only",
+        "staff.maint_invalid",
+    ]
+    assert answers[0]["details"] == {"number": "UP000103"}
+    for reply in store.replies:
+        assert render(reply["text_code"], "km", reply["details"])

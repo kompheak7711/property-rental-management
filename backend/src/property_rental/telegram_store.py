@@ -125,6 +125,14 @@ class TelegramStore(Protocol):
 
     def staff_daily_summary(self) -> int: ...
 
+    def staff_unit_check(
+        self, inbound_id: str, form: dict[str, Any], media_ids: list[str]
+    ) -> dict[str, Any]: ...
+
+    def staff_maintenance_check(
+        self, inbound_id: str, form: dict[str, Any], media_ids: list[str]
+    ) -> dict[str, Any]: ...
+
 
 class PostgresTelegramStore:
     def __init__(
@@ -540,4 +548,28 @@ class PostgresTelegramStore:
             self._one(
                 "SELECT app.telegram_staff_daily_summary(%s, %s)", self._property, self._actor
             )
+        )
+
+    def staff_unit_check(
+        self, inbound_id: str, form: dict[str, Any], media_ids: list[str]
+    ) -> dict[str, Any]:
+        return self._staff_dict(
+            "SELECT app.telegram_staff_unit_check(%s, %s, %s::jsonb, %s::jsonb, %s)",
+            self._property,
+            inbound_id,
+            json.dumps(form),
+            json.dumps(media_ids),
+            self._actor,
+        )
+
+    def staff_maintenance_check(
+        self, inbound_id: str, form: dict[str, Any], media_ids: list[str]
+    ) -> dict[str, Any]:
+        return self._staff_dict(
+            "SELECT app.telegram_staff_maintenance_check(%s, %s, %s::jsonb, %s::jsonb, %s)",
+            self._property,
+            inbound_id,
+            json.dumps(form),
+            json.dumps(media_ids),
+            self._actor,
         )

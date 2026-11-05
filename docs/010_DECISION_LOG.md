@@ -2792,6 +2792,19 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **Links:** DL-174, DL-175, DL-176.
 - **Decision date:** 2026-11-05.
 
+## DL-178 — Telegram bots: the Unit Check and the Maintenance check (bots step 4e)
+
+- **Type:** `TECHNICAL DECISION`
+- **Status:** `STEP 4E BUILT ON BRANCH claude/telegram-staff-bot; WAITS FOR THE OWNER'S TEST`
+- **Source:** the staff forms mock-up v14 (approved 3 Nov 2026: Unit Check with seven areas Good, Broken or Missing, up to 5 photos for each finding, Unit number only; Maintenance check with how staff entered and the cause, "Customer caused" never makes a charge by itself) and DL-115 (a Unit Check never makes a charge; only a confirmed finding in the app can become a Damage charge). Technical choices by Claude under the owner's 2026-10-23 22:30 rule; no new business or money rule.
+- **(A) Who.** The Technician and the Authorizers (Owner and Manager) see both forms.
+- **(B) Unit Check.** Pick the Unit and the kind (regular, or after a repair), then mark the areas: living room, bedroom, bathroom, kitchen, balcony, air conditioner, and keys, key cards and remotes. A Unit without an area leaves it out (at least one area). Each Broken or Missing area needs what is wrong and at least one photo. The Telegram relay takes at most 5 photos in one form, so a Unit Check has at most 5 photos in all (the mock-up said 5 for each finding). Each finding becomes a Unit Problem in the one Problem reports list (source Staff bot; type Air conditioner, Door lock for keys, else Other), so the Manager plans it as usual. The mock-up v14's seven areas replace the "ten checks" of DL-115 for the Telegram form.
+- **(C) Maintenance check.** Pick a planned visit (Visit planned), say how staff entered (urgent, the tenant agreed, notice given first) and the cause (wear, the tenant caused it, not sure yet), take 1 to 5 photos and write a note. An urgent visit may be marked fixed at once. The report moves to Checked with the cause and a note naming who checked it and how they entered; the Manager decides who pays in the app as before. The mock-up's Status (reported, being repaired, done) is not asked: Close job (DL-175) already marks a repair done.
+- **Open:** an app screen to read the sent Unit Checks (each finding is already a Problem report); the Khmer texts need a native-speaker check.
+- **Built:** migration `20270624_335` (DB-TG-014), `relay/src/staff_app.ts`, `backend/src/property_rental/telegram_staff_bot.py`.
+- **Links:** DL-115, DL-175, DL-177.
+- **Decision date:** 2026-11-05.
+
 ## DL-160 — Riel bank account
 
 - **Type:** `OWNER BUSINESS DECISION`
