@@ -24,6 +24,7 @@ import {
   type StayCalendar,
   type StayPrice,
   type StayQuote,
+  type WeekReport,
 } from "./shortStaysClient";
 
 const NOW = new Date("2026-11-04T03:00:00Z"); // 10:00 in Phnom Penh
@@ -219,6 +220,53 @@ function guestHistory(extra: Partial<GuestHistory> = {}): GuestHistory {
   };
 }
 
+function weekReport(extra: Partial<WeekReport> = {}): WeekReport {
+  return {
+    from: "2026-11-02",
+    to: "2026-11-08",
+    so_far: true,
+    base_occupancy_points: 4000,
+    change_over_usd_cents: 500,
+    linen_usd_cents: 200,
+    units: [
+      {
+        unit_id: "u-501",
+        unit_number: "U501",
+        nights: 3,
+        income_usd_cents: 6090,
+        site_fees_usd_cents: 0,
+        cleaning_usd_cents: 700,
+        net_usd_cents: 5390,
+      },
+      {
+        unit_id: "u-503",
+        unit_number: "U503",
+        nights: 0,
+        income_usd_cents: 0,
+        site_fees_usd_cents: 0,
+        cleaning_usd_cents: 0,
+        net_usd_cents: 0,
+      },
+    ],
+    totals: {
+      units: 2,
+      unit_nights: 14,
+      nights: 3,
+      income_usd_cents: 6090,
+      site_fees_usd_cents: 0,
+      cleaning_usd_cents: 700,
+      net_usd_cents: 5390,
+      occupancy_points: 2142,
+    },
+    leases: [],
+    damages: [],
+    complaints: [],
+    sources: [{ source: "WALK_IN", site_name: null, stays: 1 }],
+    cancellations: { count: 0, kept_usd_cents: 0 },
+    ...extra,
+  };
+}
+
 function fakeApi(overrides: Partial<ShortStaysApi> = {}): ShortStaysApi {
   return {
     calendar: vi.fn((_: string, from: string, days: number) =>
@@ -251,6 +299,10 @@ function fakeApi(overrides: Partial<ShortStaysApi> = {}): ShortStaysApi {
     addGuestNote: vi.fn(() => Promise.reject(new Error("not used"))),
     quotes: vi.fn(() => Promise.resolve([])),
     quote: vi.fn(() => Promise.reject(new Error("not used"))),
+    weekReport: vi.fn((_: string, from: string) =>
+      Promise.resolve(weekReport({ from })),
+    ),
+    complaint: vi.fn(() => Promise.resolve()),
     ...overrides,
   };
 }
@@ -1492,7 +1544,7 @@ describe("Daily and weekly rent: Short stays", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByDisplayValue(
-        "Thank you for staying at CHETANA Residence, Lim Dara! If you enjoyed your stay, please leave us a review on Agoda. It helps us a lot.",
+        "Thank you for staying with CHETANA Residence, Lim! If you liked your stay, please leave us a short review on Google Maps: https://search.google.com/local/writereview?placeid=ChIJH87t_fRTCTER6g_sn780yZI",
       ),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Mark as asked" }));
@@ -1520,6 +1572,8 @@ describe("Daily and weekly rent: Short stays", () => {
       check_in_time: 840,
       check_out_time: 720,
       deposit_usd_cents: 5000,
+      month_only_usd_cents: 40500,
+      monthly_rent_usd_cents: 26900,
     };
     const quote = vi.fn(() => Promise.resolve(made));
     const quotes = vi.fn(() => Promise.resolve([] as StayQuote[]));
@@ -1558,6 +1612,9 @@ describe("Daily and weekly rent: Short stays", () => {
     );
     expect((message as HTMLTextAreaElement).value).toContain(
       "06/11/2026 to 09/11/2026, 3 nights\nTotal $54.60\nCheck-in from 14:00, check-out by 12:00.",
+    );
+    expect((message as HTMLTextAreaElement).value).toContain(
+      "Staying longer? 1 month only: $405.00. A Lease of 6 or 12 months: $269.00 a month.",
     );
     expect(screen.getByRole("link", { name: "Book this" })).toHaveAttribute(
       "href",
@@ -1602,6 +1659,45 @@ describe("Daily and weekly rent: Short stays", () => {
       ),
     ).toBeInTheDocument();
     expect(guest).toHaveBeenCalledWith("p-1", "c-1");
+  });
+
+  it("TEST-FE-1627 shows the weekly report to the Manager and records a tenant's complaint", async () => {
+    const complaint = vi.fn(() => Promise.resolve());
+    const api = fakeApi({ complaint });
+    show();
+    expect(await screen.findByRole("table")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Weekly report" })).toBeNull();
+    cleanup();
+    show({ api, capabilities: new Set([...DESK, "short_stays.approve"]) });
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Weekly report" }),
+    );
+    // Today is Wednesday 04/11: the week from Monday 02/11, no next week yet.
+    expect(api.weekReport).toHaveBeenCalledWith("p-1", "2026-11-02");
+    expect(
+      await screen.findByText("21.4%", { selector: "b" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("3 of 14 unit-nights paid · before the test 40.0%"),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText("$53.90").length).toBeGreaterThan(0);
+    expect(screen.getByRole("button", { name: "Next week" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Week before" }));
+    expect(api.weekReport).toHaveBeenLastCalledWith("p-1", "2026-10-26");
+    await screen.findByText("21.4%", { selector: "b" });
+    fireEvent.click(screen.getByRole("button", { name: "Save complaint" }));
+    expect(screen.getByText("Write what happened first.")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("What happened"), {
+      target: { value: " Noise after midnight " },
+    });
+    fireEvent.change(screen.getByLabelText("Tenant's Unit"), {
+      target: { value: "u-501" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save complaint" }));
+    expect(complaint).toHaveBeenCalledWith("p-1", {
+      what: "Noise after midnight",
+      unit_id: "u-501",
+    });
   });
 
   it("TEST-FE-1605 speaks Khmer and hides New booking without the front-desk right", async () => {

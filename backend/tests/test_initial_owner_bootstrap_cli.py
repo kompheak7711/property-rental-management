@@ -1060,6 +1060,8 @@ def test_fastapi_openapi_inventory_has_no_bootstrap_or_unauthenticated_owner_res
         "/api/v1/properties/{property_id}/short-stays/guests/{customer_id}": {"get"},
         "/api/v1/properties/{property_id}/short-stays/guests/{customer_id}/notes": {"post"},
         "/api/v1/properties/{property_id}/short-stays/quotes": {"get", "post"},
+        "/api/v1/properties/{property_id}/short-stays/report": {"get"},
+        "/api/v1/properties/{property_id}/short-stays/complaints": {"post"},
         "/api/v1/properties/{property_id}/short-stays/housekeeping": {"get"},
         "/api/v1/properties/{property_id}/short-stays/site-calendars": {"get", "post"},
         "/api/v1/properties/{property_id}/short-stays/housekeeping/{task_id}": {"post"},

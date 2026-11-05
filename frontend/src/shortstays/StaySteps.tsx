@@ -1265,6 +1265,10 @@ export function DiscountCard({
   );
 }
 
+/** The owner's Google Maps place (mock-up round 31): the review link sent after a stay. */
+export const REVIEW_LINK =
+  "https://search.google.com/local/writereview?placeid=ChIJH87t_fRTCTER6g_sn780yZI";
+
 /** Step 5b: after the check-out the desk sends a review request once. */
 export function ReviewCard({
   language,
@@ -1288,8 +1292,8 @@ export function ReviewCard({
   const message = st(
     language,
     "rv_message",
-    booking.guest_name,
-    booking.site_name === null ? "" : st(language, "rv_on", booking.site_name),
+    booking.guest_name.split(" ")[0] ?? booking.guest_name,
+    REVIEW_LINK,
   );
   return (
     <section aria-labelledby="ss-review" className="ui-card">

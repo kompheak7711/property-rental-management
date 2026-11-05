@@ -90,6 +90,11 @@ class InMemoryStays:
         self._check(property_id)
         return [{"quote_id": "q-1", "quote_number": "SQ260001"}]
 
+    def week_report(self, property_id: UUID, start: date, *, actor_id: str) -> Json:
+        self._check(property_id)
+        self.calls.append(("week_report", start))
+        return {"from": start.isoformat(), "units": []}
+
     def act(
         self, property_id: UUID, action: Action, target: UUID, body: Json, *, actor_id: str
     ) -> Json:
@@ -355,3 +360,32 @@ def test_quotes_and_a_guests_history() -> None:
     found = client(flow, "short_stays.read").get(guest)
     assert found.status_code == 200 and found.json()["data"]["notes"] == []
     assert client(flow, "short_stays.read").get(f"{base(flow)}/guests/{uuid4()}").status_code == 404
+
+
+def test_the_weekly_report_needs_the_approve_right_and_a_complaint_the_desk() -> None:
+    flow = InMemoryStays()
+    url = f"{base(flow)}/report?from=2026-11-02"
+    assert client(flow, "short_stays.read", "short_stays.desk").get(url).status_code == 403
+    answer = client(flow, "short_stays.approve").get(url)
+    assert answer.status_code == 200 and answer.headers["Cache-Control"] == "private, no-store"
+    assert flow.calls[-1][0] == "week_report"
+    assert flow.calls[-1][1] == date(2026, 11, 2)
+    assert client(flow, "short_stays.approve").get(f"{base(flow)}/report").status_code == 422
+    complaints = f"{base(flow)}/complaints"
+    body = {"what": " Noise after midnight ", "noted_on": "2026-11-04"}
+    assert (
+        client(flow, "short_stays.approve").post(complaints, json=body, headers=HEADERS).status_code
+        == 403
+    )
+    made = client(flow, "short_stays.desk").post(complaints, json=body, headers=HEADERS)
+    assert made.status_code == 201
+    assert flow.calls[-1] == (
+        "complaint",
+        (flow.property_id, {"what": "Noise after midnight", "noted_on": "2026-11-04"}),
+    )
+    assert (
+        client(flow, "short_stays.desk")
+        .post(complaints, json={"what": ""}, headers=HEADERS)
+        .status_code
+        == 422
+    )

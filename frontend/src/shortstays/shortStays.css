@@ -200,3 +200,16 @@ td.ss-clash {
 .ss-notes > li:last-child {
   border-bottom: 0;
 }
+
+/* Step 5c: the weekly report's figures are not buttons. */
+.ui-kpi.ss-static {
+  cursor: default;
+}
+.ui-kpi.ss-static:hover {
+  border-color: var(--border);
+}
+@media print {
+  .ui-filters .ui-actions {
+    display: none;
+  }
+}

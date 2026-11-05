@@ -16,7 +16,9 @@ first month (`short_stays.desk`). Step 5a adds the booking-site calendar links
 sign-in (`GET /api/v1/short-stays/ical/{token}.ics`: busy dates only). Step 5b adds quotes
 (`GET`/`POST .../quotes`), a guest's history and notes (`GET .../guests/{id}`,
 `POST .../guests/{id}/notes`), the review request after check-out (`short_stays.desk`) and the
-Manager's extra discount before the Invoice (`short_stays.approve`). The database
+Manager's extra discount before the Invoice (`short_stays.approve`). Step 5c adds the weekly
+report (`GET .../report?from=`, `short_stays.approve`) and a monthly tenant's complaint about
+short-stay guests (`POST .../complaints`, `short_stays.desk`). The database
 functions check the rights again, price the stay from the owner's rules and keep one booking per
 Unit and night.
 """
@@ -77,6 +79,7 @@ Action = Literal[
     "guest_note",
     "review",
     "quote",
+    "complaint",
 ]
 # Step 3 (migration 20270602_312): each action is one database function that checks the right
 # again. "version" is the booking version the screen read (refused with 412 when it changed).
@@ -108,6 +111,8 @@ ACTION_SQL: dict[str, str] = {
     "guest_note": "SELECT app.add_guest_note(%(p)s, %(t)s, %(b)s, %(a)s, %(c)s)",
     "review": "SELECT app.ask_short_stay_review(%(p)s, %(t)s, %(a)s, %(c)s)",
     "quote": "SELECT app.make_short_stay_quote(%(p)s, %(b)s, %(a)s, %(c)s)",
+    # Step 5c (migration 20270608_318): the target is the Property.
+    "complaint": "SELECT app.record_short_stay_complaint(%(p)s, %(b)s, %(a)s, %(c)s)",
 }
 
 
@@ -133,6 +138,8 @@ class ShortStayFlow(Protocol):
     def guest(self, property_id: UUID, customer_id: UUID, *, actor_id: str) -> Json: ...
 
     def quotes(self, property_id: UUID, *, actor_id: str) -> list[Json]: ...
+
+    def week_report(self, property_id: UUID, start: date, *, actor_id: str) -> Json: ...
 
     def act(
         self, property_id: UUID, action: Action, target: UUID, body: Json, *, actor_id: str
@@ -170,6 +177,9 @@ class UnavailableShortStayFlow:
         raise ProductUnavailable
 
     def quotes(self, property_id: UUID, **_: object) -> list[Json]:
+        raise ProductUnavailable
+
+    def week_report(self, property_id: UUID, start: date, **_: object) -> Json:
         raise ProductUnavailable
 
     def act(self, property_id: UUID, action: Action, target: UUID, body: Json, **_: object) -> Json:
@@ -273,6 +283,14 @@ class PostgresShortStayFlow:
         if not isinstance(found, list):
             raise ProductUnavailable("Short-stay persistence is unavailable")
         return [_json(item) for item in found]
+
+    def week_report(self, property_id: UUID, start: date, *, actor_id: str) -> Json:
+        return _json(
+            self._one(
+                "SELECT app.short_stay_week_report(%s, %s, %s)",
+                (property_id, start, UUID(actor_id)),
+            )
+        )
 
     def act(
         self, property_id: UUID, action: Action, target: UUID, body: Json, *, actor_id: str
@@ -407,6 +425,14 @@ class GuestNote(BaseModel):
     note: Note
     problem_guest: bool = False
     booking_id: Id | None = None
+
+
+class Complaint(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    what: Note
+    unit_id: Id | None = None
+    noted_on: Day | None = None
 
 
 class NewQuote(BaseModel):
@@ -641,6 +667,24 @@ def create_short_stays_router(
     @router.post("/quotes", status_code=status.HTTP_201_CREATED)
     def make_short_stay_quote(property_id: UUID, body: NewQuote, request: Request) -> Json:
         return act(request, property_id, SHORT_STAYS_DESK, "quote", property_id, body)
+
+    @router.get("/report")
+    def short_stay_week_report(
+        property_id: UUID,
+        request: Request,
+        response: Response,
+        start: Annotated[date, Query(alias="from")],
+    ) -> Json:
+        actor = _require(request, resolver, SHORT_STAYS_APPROVE, property_id)
+        response.headers["Cache-Control"] = "private, no-store"
+        try:
+            return envelope(request, flow.week_report(property_id, start, actor_id=actor.actor_id))
+        except REFUSED as exc:
+            raise _http(exc) from exc
+
+    @router.post("/complaints", status_code=status.HTTP_201_CREATED)
+    def record_short_stay_complaint(property_id: UUID, body: Complaint, request: Request) -> Json:
+        return act(request, property_id, SHORT_STAYS_DESK, "complaint", property_id, body)
 
     @router.get("/housekeeping")
     def short_stay_housekeeping(

@@ -38,7 +38,16 @@ function quoteProblem(error: unknown): StaysTextKey {
 
 /** The message for the guest, in the screen's language. */
 export function quoteMessage(language: Language, quote: StayQuote): string {
-  return st(
+  const month =
+    quote.month_only_usd_cents === null || quote.monthly_rent_usd_cents === null
+      ? ""
+      : `\n${st(
+          language,
+          "q_month",
+          usdFromCents(quote.month_only_usd_cents),
+          usdFromCents(quote.monthly_rent_usd_cents),
+        )}`;
+  return `${st(
     language,
     "q_message",
     quote.quote_number,
@@ -51,7 +60,7 @@ export function quoteMessage(language: Language, quote: StayQuote): string {
     timeText(quote.check_in_time),
     timeText(quote.check_out_time),
     usdFromCents(quote.deposit_usd_cents),
-  );
+  )}${month}`;
 }
 
 export function Quotes({

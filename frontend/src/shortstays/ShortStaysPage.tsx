@@ -2,7 +2,7 @@
 // "#/shortstays" shows the Calendar (one row per Unit, one square per night) and the Bookings
 // list; "#/shortstays/new" (or "new:<Unit id>:<day>" from a free square) is New booking and
 // "#/shortstays/st:<id>" one booking. Step 4a adds the Cleaning tab (one day's cleans); step 5b
-// the Quotes tab. Buttons show only to a person who holds the right; the
+// the Quotes tab, step 5c the Weekly report (Owner and Manager). Buttons show only to a person who holds the right; the
 // server checks every right and every night again.
 
 import "../shell/screens.css";
@@ -26,6 +26,7 @@ import { NewBookingForm } from "./NewBooking";
 import { nightOf } from "./nights";
 import { Quotes } from "./Quotes";
 import { SiteCalendars } from "./SiteCalendars";
+import { WeekReport } from "./WeekReport";
 import {
   addDays,
   type Booking,
@@ -99,7 +100,7 @@ function weekday(language: Language, day: string): string {
   }).format(new Date(`${day}T00:00:00Z`));
 }
 
-type Tab = "cal" | "list" | "clean" | "quotes" | "sites";
+type Tab = "cal" | "list" | "clean" | "quotes" | "report" | "sites";
 
 export function ShortStaysPage({
   language,
@@ -123,13 +124,7 @@ export function ShortStaysPage({
   const sequence = useRef(0);
 
   const load = useCallback(() => {
-    if (
-      propertyId === "" ||
-      tab === "clean" ||
-      tab === "quotes" ||
-      tab === "sites"
-    )
-      return;
+    if (propertyId === "" || (tab !== "cal" && tab !== "list")) return;
     const operation = ++sequence.current;
     setFailed(false);
     const read =
@@ -574,7 +569,7 @@ export function ShortStaysPage({
       <div className="ui-filters">
         <div aria-label={st(language, "tabs")} className="ui-seg" role="group">
           {(may("short_stays.approve")
-            ? (["cal", "list", "clean", "quotes", "sites"] as const)
+            ? (["cal", "list", "clean", "quotes", "report", "sites"] as const)
             : (["cal", "list", "clean", "quotes"] as const)
           ).map((value) => (
             <button
@@ -596,6 +591,15 @@ export function ShortStaysPage({
         listView
       ) : tab === "quotes" ? (
         <Quotes
+          api={api}
+          key={propertyId}
+          language={language}
+          may={may}
+          propertyId={propertyId}
+          today={today}
+        />
+      ) : tab === "report" ? (
+        <WeekReport
           api={api}
           key={propertyId}
           language={language}

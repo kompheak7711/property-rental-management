@@ -314,6 +314,73 @@ export interface StayQuote {
   check_in_time: number;
   check_out_time: number;
   deposit_usd_cents: number;
+  /** Step 5c: the month prices next to the stay. */
+  month_only_usd_cents: number | null;
+  monthly_rent_usd_cents: number | null;
+}
+
+/** Step 5c: one Unit's week in the report; money in cents. */
+export interface ReportUnit {
+  unit_id: string;
+  unit_number: string;
+  nights: number;
+  income_usd_cents: number;
+  site_fees_usd_cents: number;
+  cleaning_usd_cents: number;
+  net_usd_cents: number;
+}
+
+/** Step 5c: the weekly short-stay report (Owner and Manager). */
+export interface WeekReport {
+  from: string;
+  to: string;
+  so_far: boolean;
+  /** Basis points: 4000 = 40%. */
+  base_occupancy_points: number;
+  change_over_usd_cents: number;
+  linen_usd_cents: number;
+  units: ReportUnit[];
+  totals: {
+    units: number;
+    unit_nights: number;
+    nights: number;
+    income_usd_cents: number;
+    site_fees_usd_cents: number;
+    cleaning_usd_cents: number;
+    net_usd_cents: number;
+    occupancy_points: number;
+  };
+  leases: {
+    booking_id: string;
+    booking_number: string;
+    guest_name: string;
+    lease_id: string;
+    lease_unit_number: string;
+    off_usd_cents: number;
+  }[];
+  damages: {
+    damage_id: string;
+    booking_id: string;
+    booking_number: string;
+    unit_number: string;
+    description: string;
+    amount_usd_cents: number;
+    status: string;
+  }[];
+  complaints: {
+    complaint_id: string;
+    noted_on: string;
+    unit_number: string | null;
+    what: string;
+  }[];
+  sources: { source: BookingSource; site_name: string | null; stays: number }[];
+  cancellations: { count: number; kept_usd_cents: number };
+}
+
+export interface NewComplaint {
+  what: string;
+  unit_id?: string;
+  noted_on?: string;
 }
 
 export interface NewQuote {
@@ -471,6 +538,8 @@ export interface ShortStaysApi {
   ) => Promise<GuestHistory>;
   quotes: (propertyId: string) => Promise<StayQuote[]>;
   quote: (propertyId: string, quote: NewQuote) => Promise<StayQuote>;
+  weekReport: (propertyId: string, from: string) => Promise<WeekReport>;
+  complaint: (propertyId: string, complaint: NewComplaint) => Promise<void>;
 }
 
 export class ShortStaysError extends Error {
@@ -881,6 +950,88 @@ function quoteOf(value: unknown): StayQuote {
     check_in_time: whole(row.check_in_time),
     check_out_time: whole(row.check_out_time),
     deposit_usd_cents: whole(row.deposit_usd_cents),
+    month_only_usd_cents: maybeWhole(row.month_only_usd_cents),
+    monthly_rent_usd_cents: maybeWhole(row.monthly_rent_usd_cents),
+  };
+}
+
+function reportOf(value: unknown): WeekReport {
+  const row = record(value);
+  const totals = record(row.totals);
+  const cancels = record(row.cancellations);
+  return {
+    from: text(row.from),
+    to: text(row.to),
+    so_far: row.so_far === true,
+    base_occupancy_points: whole(row.base_occupancy_points),
+    change_over_usd_cents: whole(row.change_over_usd_cents),
+    linen_usd_cents: whole(row.linen_usd_cents),
+    units: list(row.units).map((entry) => {
+      const unit = record(entry);
+      return {
+        unit_id: text(unit.unit_id),
+        unit_number: text(unit.unit_number),
+        nights: whole(unit.nights),
+        income_usd_cents: whole(unit.income_usd_cents),
+        site_fees_usd_cents: whole(unit.site_fees_usd_cents),
+        cleaning_usd_cents: whole(unit.cleaning_usd_cents),
+        net_usd_cents: whole(unit.net_usd_cents),
+      };
+    }),
+    totals: {
+      units: whole(totals.units),
+      unit_nights: whole(totals.unit_nights),
+      nights: whole(totals.nights),
+      income_usd_cents: whole(totals.income_usd_cents),
+      site_fees_usd_cents: whole(totals.site_fees_usd_cents),
+      cleaning_usd_cents: whole(totals.cleaning_usd_cents),
+      net_usd_cents: whole(totals.net_usd_cents),
+      occupancy_points: whole(totals.occupancy_points),
+    },
+    leases: list(row.leases).map((entry) => {
+      const lease = record(entry);
+      return {
+        booking_id: text(lease.booking_id),
+        booking_number: text(lease.booking_number),
+        guest_name: text(lease.guest_name),
+        lease_id: text(lease.lease_id),
+        lease_unit_number: text(lease.lease_unit_number),
+        off_usd_cents: whole(lease.off_usd_cents),
+      };
+    }),
+    damages: list(row.damages).map((entry) => {
+      const damage = record(entry);
+      return {
+        damage_id: text(damage.damage_id),
+        booking_id: text(damage.booking_id),
+        booking_number: text(damage.booking_number),
+        unit_number: text(damage.unit_number),
+        description: text(damage.description),
+        amount_usd_cents: whole(damage.amount_usd_cents),
+        status: text(damage.status),
+      };
+    }),
+    complaints: list(row.complaints).map((entry) => {
+      const complaint = record(entry);
+      return {
+        complaint_id: text(complaint.complaint_id),
+        noted_on: text(complaint.noted_on),
+        unit_number: maybeText(complaint.unit_number),
+        what: text(complaint.what),
+      };
+    }),
+    sources: list(row.sources).map((entry) => {
+      const source = record(entry);
+      return {
+        source: oneOf(SOURCES, source.source),
+        site_name: maybeText(source.site_name),
+        stays: whole(source.stays),
+      };
+    }),
+    cancellations: {
+      count: whole(cancels.count),
+      kept_usd_cents: whole(cancels.kept_usd_cents),
+    },
   };
 }
 
@@ -1033,6 +1184,15 @@ export const shortStaysApi: ShortStaysApi = {
     list(await request(`${base(propertyId)}/quotes`)).map(quoteOf),
   quote: async (propertyId, quote) =>
     quoteOf(await request(`${base(propertyId)}/quotes`, post(quote))),
+  weekReport: async (propertyId, from) =>
+    reportOf(
+      await request(
+        `${base(propertyId)}/report?from=${encodeURIComponent(from)}`,
+      ),
+    ),
+  complaint: async (propertyId, complaint) => {
+    await request(`${base(propertyId)}/complaints`, post(complaint));
+  },
 };
 
 /** Adds days to an ISO day ("2026-11-04" + 3 → "2026-11-07"), in UTC so no clock shifts it. */
