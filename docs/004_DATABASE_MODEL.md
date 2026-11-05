@@ -5658,6 +5658,17 @@ Owner decisions: DESIGN.md round 22 (Financial statements: Customer debt aging, 
 - `gl_budget_warning(property, actor, day)` (`ledger.read`): the two Budget warning Business rules on a day, percent off in hundredths (`BUDGET_PCT`) and smallest amount off in cents (`BUDGET_MIN`).
 - The other reports read the phase 5 report functions of migration `20270411_261` and the ledger tables with the runtime login, after the route has checked `ledger.read`.
 
+## DB-GL-008 — Riel bank account (General Ledger, DL-160)
+
+Owner decisions: the cards of 04/11/2026 12:05 ("Riel bank account per method") and 17:52 ("Same as riel cash"). Migration `20270609_320` (forward-only; changes the GL tables named below).
+
+- `app.gl_accounts.cash_kind` may be `BANK_KHR`. The chart template and every Property that has 1020 get `1021 ABA Bank · KHR account` (ធនាគារ ABA · រៀល), Asset, current, `BANK_KHR`.
+- `app.gl_method_accounts.riel_account_id` (nullable; FK with the Property): the riel account of a Payment Method, a `CASH_KHR` or `BANK_KHR` account. A Refund method has none (Refunds are paid in USD). A method's main account is never `BANK_KHR`. `gl_set_method_account` takes `p_riel_account_code` as a new last argument; `gl_method_list` answers `riel_account_code` and `riel_account_name`.
+- Posting (`gl_app_record_events`): a riel Payment goes to its method's riel account; with none it goes where it went before (1011 for a `CASH_USD` method, else the method's account).
+- A `BANK_KHR` account keeps riel on every line (`gl_check_line`), except a month-end valuation and its reversal. The riel it holds is the sum of its riel lines. `gl_value_riel` values it at the month-end rate like riel cash; the difference goes to 4100. Money moves in or out of it are typed in riel with the rate; Expenses may be paid from it in riel. It is not counted (`gl_count_cash`), cannot take a typed line (adjusting entries, Opening balances), and the month-end checks BANK_MATCHED and RIEL_VALUED include it.
+- Bank matching: `app.gl_bank_reconciliations.statement_riel` (nullable). `gl_match_bank` takes `p_statement_riel` after `p_statement_cents`; a `BANK_KHR` account is matched in riel (the statement in riel against its riel lines) and `statement_balance_cents` holds the dollars of the cleared lines. `gl_bank_lines` answers `riel_minor` and leaves out valuation lines, which cannot be matched.
+- Waits for later: bill payments, owner money, advances and paybacks in or out of 1021.
+
 ## DB-BS-001 — Settings › Business: numbering, Invoice types, Property fields (V1.1 part 2)
 
 DL-118. Migration `20270421_271`, forward-only.
@@ -5717,3 +5728,26 @@ Added by DL-124 (migration `20270426_276`, forward-only).
 - `app.authorized_nonrecurring_obligations.problem_report_id` (unique): a Damage charge comes from a Move-out finding or from one Problem report, and must match its Lease, main tenant and amount.
 - Business rules area REPAIRS: REPEAT_COUNT, REPEAT_DAYS, TR_URGENT_HOURS, TR_PLAN_WORKDAYS, TR_AUTO_CLOSE_DAYS.
 - Functions: `app.problem_reports_read`, `app.problem_report_read`, `app.problem_report_choices`, `app.add_problem_report`, `app.problem_report_step` (runtime) and `app.record_problem_tenant_answer` (financial; AGREED makes the Damage Invoice draft). New rights `problem_reports.read`, `.add`, `.plan`, `.join` (group Operations); the default roles get a new version: the Owner and the Manager all four, Staff read and add.
+
+## DB-PR-002 — Problem report repair cost
+
+Added by DL-130 (migration `20270510_290`, forward-only).
+
+- `app.problem_report_cost_sets` (`report_id`, `set_no`, `no_cost`, `note`, entered at and by) and `app.problem_report_cost_lines` (`line_no` 1 to 20, `kind` PARTS or OUTSIDE_WORKER, `description` at most 200, `currency` USD or KHR, `amount_minor`: cents or whole riel). The latest set is the cost shown.
+- `app.problem_report_cost_checks` (one per set: `receipt_seen` always true, `spent_on`, `paid_how` OWN_MONEY or CASH, checked at and by) and `app.problem_report_cost_expense_requests` (the check, the currency and the Expense request it made, unique). All four are append-only, no truncate.
+- Functions: `app.record_problem_report_cost` (`problem_reports.add`; expected version; from Repair planned on) and `app.check_problem_report_cost` (`problem_reports.costs`; expected version; calls `app.gl_submit_expense_request` as an URGENT_REPORT on 6050 for the Unit, one per currency, riel at the latest rate), both runtime. `app.problem_report_json` gains `cost` on the full read. New right `problem_reports.costs` (permission PROBLEM_REPORTS_COSTS, group Operations); the default Owner and Manager roles get a new version with it.
+
+## DB-PR-003 — Problem report Home card and Monthly report
+
+Added by DL-131 (migration `20270511_291`, forward-only, read only).
+
+- `app.problem_report_summary(property, actor)` (`problem_reports.read`): `open`, `urgent`, `late`, and `costs_to_check` (each latest cost entry, not No cost, with no check yet: report, kind, Unit or shared place, when typed, totals by currency).
+- `app.problem_report_month(property, actor, month)` (`problem_reports.plan`; `month` is a first day, from 2026-01-01 to this month, else 22023): the counts, `by_type`, `by_place`, `repeats`, `late_now`, `cost_by_unit` and `cost_by_type` of DL-131. Helpers `app.problem_report_late` and `app.problem_report_cost_parts` (not granted).
+
+## DB-PR-004 — Problem report from an inspection finding
+
+Added by DL-132 (migration `20270512_292`, forward-only).
+
+- `app.problem_report_inspection_links` (`report_id` primary key, `finding_id` unique, created at and by): append-only, no truncate. One report per finding.
+- `app.add_problem_report` takes the source `INSPECTION` only with a `finding_id`: a Unit Problem in the inspected Lease's Unit, from an inspection not replaced, and a finding with no report yet (22023 or 55000 otherwise). `app.problem_report_json` gains `finding` (inspection, Lease, day, number and text).
+- `app.problem_report_finding(property, actor, finding)` (`problem_reports.add`, runtime): what the form copies (Unit, text, day), whether the inspection was replaced, and the report the finding already has.

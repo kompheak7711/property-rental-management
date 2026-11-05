@@ -208,7 +208,7 @@ def test_migration_310_follows_the_ledger_method_fix() -> None:
     config = Config(str(Path(__file__).parents[1] / "alembic.ini"))
     scripts = ScriptDirectory.from_config(config)
     revision = scripts.get_revision(REVISION)
-    assert revision is not None and revision.down_revision == "20270429_279"
+    assert revision is not None and revision.down_revision == "20270609_320"
     with pytest.raises(RuntimeError, match="forward-only"):
         revision.module.downgrade()
 

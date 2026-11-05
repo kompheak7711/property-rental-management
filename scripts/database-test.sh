@@ -360,6 +360,9 @@ database_test_suites='
   tests/test_products_stock_migration.py
   tests/test_quotations_migration.py
   tests/test_problem_reports_migration.py
+  tests/test_problem_report_costs_migration.py
+  tests/test_problem_report_month_migration.py
+  tests/test_problem_report_from_finding_migration.py
   tests/test_short_stay_migration.py
   tests/test_short_stay_booking_migration.py
   tests/test_short_stay_check_in_migration.py
@@ -387,6 +390,7 @@ ledger_database_test_suites='
   tests/test_gl_asset_register_migration.py
   tests/test_gl_budget_sheet_migration.py
   tests/test_gl_opening_sheet_migration.py
+  tests/test_gl_riel_bank_migration.py
 '
 
 for database_test_file in $database_test_suites $ledger_database_test_suites; do

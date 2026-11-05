@@ -150,14 +150,15 @@ def test_the_capability_catalog_names_every_capability_the_code_checks() -> None
     # and `ledger.write_off` of part 3, and the 6 product and stock rights (V1.1 part 4, DL-121),
     # and `quotations.read` and `quotations.make` (V1.1 part 6, DL-123; the database alone checks
     # `quotations.lower_price`), and the 4 Problem report rights (V1.1 part 7, DL-124), and the
-    # 5 short-stay rights (`short_stays.read`, `.desk`, `.housekeeping`, `.approve`, `.credit`).
-    assert len(found - NON_CAPABILITY_LABELS) == 107
+    # 5 short-stay rights (`short_stays.read`, `.desk`, `.housekeeping`, `.approve`, `.credit`),
+    # and `problem_reports.costs` (DL-130).
+    assert len(found - NON_CAPABILITY_LABELS) == 108
     # Review round 1: a capability constant added to the catalog module itself is a catalog name.
     assert dotted_constants(SOURCE / "access_control.py") - set(CAPABILITY_CATALOG) == set()
 
 
 def test_the_catalog_holds_the_approved_new_names() -> None:
-    assert len(CAPABILITY_CATALOG) == 118
+    assert len(CAPABILITY_CATALOG) == 119
     assert list(CAPABILITY_CATALOG) == sorted(CAPABILITY_CATALOG)
     assert all(DOTTED.fullmatch(name) and len(name) <= 128 for name in CAPABILITY_CATALOG)
     assert all(description.strip() for description in CAPABILITY_CATALOG.values())
@@ -193,7 +194,7 @@ def test_each_capability_has_one_grant_path() -> None:
     assert paths["rent_nonpayment.evaluate"] == "service_principal"
     assert paths["billing.generate"] == "bundle"
     assert BUNDLE_CAPABILITIES == {c for c, path in paths.items() if path == "bundle"}
-    assert len(BUNDLE_CAPABILITIES) == 115
+    assert len(BUNDLE_CAPABILITIES) == 116
     with pytest.raises(KeyError):
         capability_grant_path("reports.export")
 
@@ -360,6 +361,8 @@ STAFF_NEVER = frozenset(
         # extra discounts; only the Owner or a Manager turns late-cancel money into Credit.
         "short_stays.approve",
         "short_stays.credit",
+        # DL-130: only a Manager or the Owner checks repair costs.
+        "problem_reports.costs",
     }
 )
 # Owner answer (a) to Q-2026-10-21-164: none of these nine is in the Staff bundle.
