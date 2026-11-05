@@ -41,6 +41,11 @@ DOCUMENTS = {
     # V1.1 part 7 (DL-124): Problem reports, migration 20270426_276.
     "UNIT_PROBLEM": "UPyy000n",
     "BUILDING_PROBLEM": "BPyy000n",
+    # HRIS phase 6: Salary loans and the payroll list (migration 20270501_301), overtime
+    # requests (migration 20270502_302).
+    "SALARY_LOAN": "SLyy000n",
+    "PAYROLL": "PAYyy000n",
+    "OVERTIME": "OTyy000n",
 }
 SET_RULE = "SELECT app.set_business_rule(%s, %s, %s, %s::date, %s, %s, gen_random_uuid())"
 
