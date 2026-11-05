@@ -170,3 +170,14 @@ td.ss-unpaid {
   flex-wrap: wrap;
   gap: 8px;
 }
+
+/* Step 5a: nights a booking site holds, and our booking on a night a site also holds. */
+td.ss-hold {
+  background: var(--sunken);
+  border-style: dashed;
+}
+
+td.ss-clash {
+  outline: 2px solid var(--err);
+  outline-offset: -2px;
+}

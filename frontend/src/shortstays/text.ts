@@ -444,6 +444,7 @@ const TEXT = {
   ev_EARLY_CHECK_IN: ["Early check-in added", "បានបន្ថែមការចូលមុនម៉ោង"],
   ev_LATE_CHECK_OUT: ["Late check-out added", "បានបន្ថែមការចេញយឺត"],
   tab_clean: ["Cleaning", "ការសម្អាត"],
+  tab_sites: ["Booking sites", "គេហទំព័រកក់"],
   cl_prev: ["Day before", "ថ្ងៃមុន"],
   cl_next: ["Next day", "ថ្ងៃបន្ទាប់"],
   cl_none: [
@@ -529,6 +530,48 @@ const TEXT = {
   ],
   ls_open: ["Open the Lease", "បើកកិច្ចសន្យា"],
   ev_LEASE_LINKED: ["Lease linked", "បានភ្ជាប់កិច្ចសន្យា"],
+  b_SITE_HOLD: [
+    "Booked on {0}, {1} to {2}. Only a booking from {0} may take these nights.",
+    "បានកក់នៅ {0} ពី {1} ដល់ {2}។ មានតែការកក់ពី {0} ទេ ដែលអាចយកយប់ទាំងនេះ។",
+  ],
+  cal_clash: [
+    "{0} also has these nights: check both bookings.",
+    "{0} ក៏មានយប់ទាំងនេះដែរ៖ ពិនិត្យការកក់ទាំងពីរ។",
+  ],
+  sc_s: [
+    "Paste each room's calendar link (iCal or export link) from Booking.com, Agoda or Airbnb. The app reads it every 15 minutes and keeps those nights for that site.",
+    "បិទភ្ជាប់តំណប្រតិទិន (iCal ឬតំណនាំចេញ) របស់បន្ទប់នីមួយៗពី Booking.com, Agoda ឬ Airbnb។ កម្មវិធីអានវារៀងរាល់ 15 នាទី ហើយរក្សាយប់ទាំងនោះសម្រាប់គេហទំព័រនោះ។",
+  ],
+  sc_none: ["No calendar links yet.", "មិនទាន់មានតំណប្រតិទិនទេ។"],
+  sc_off: ["Off", "បិទ"],
+  sc_waiting: ["Not read yet", "មិនទាន់អាន"],
+  sc_ok: ["Read", "បានអាន"],
+  sc_failed: ["Could not read", "មិនអាចអានបាន"],
+  sc_read: [
+    "Last read {0} · {1} booked ranges ahead",
+    "អានចុងក្រោយ {0} · {1} ចន្លោះដែលបានកក់ខាងមុខ",
+  ],
+  sc_url: ["Calendar link", "តំណប្រតិទិន"],
+  sc_save: ["Save link", "រក្សាទុកតំណ"],
+  sc_cancel: ["Cancel", "បោះបង់"],
+  sc_change: ["Change link", "ប្ដូរតំណ"],
+  sc_turn_off: ["Turn off", "បិទ"],
+  sc_turn_on: ["Turn on", "បើក"],
+  sc_add: ["Add a calendar link", "បន្ថែមតំណប្រតិទិន"],
+  sc_add_b: ["Add link", "បន្ថែមតំណ"],
+  sc_taken: [
+    "This room already has a link for that site.",
+    "បន្ទប់នេះមានតំណសម្រាប់គេហទំព័រនោះរួចហើយ។",
+  ],
+  sc_bad: ["Check the link and try again.", "ពិនិត្យតំណ ហើយព្យាយាមម្ដងទៀត។"],
+  e_link: [
+    "A calendar link starts with https://",
+    "តំណប្រតិទិនចាប់ផ្ដើមដោយ https://",
+  ],
+  e_link_form: [
+    "Pick the room and the site, and paste a link that starts with https://",
+    "ជ្រើសបន្ទប់ និងគេហទំព័រ ហើយបិទភ្ជាប់តំណដែលចាប់ផ្ដើមដោយ https://",
+  ],
 } as const satisfies Record<string, readonly [string, string]>;
 
 export type StaysTextKey = keyof typeof TEXT;

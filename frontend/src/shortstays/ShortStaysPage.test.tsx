@@ -62,6 +62,7 @@ function calendar(from: string, days: number): StayCalendar {
         ],
         leases: [],
         reserved: false,
+        site_holds: [],
       },
       {
         unit_id: "u-503",
@@ -75,6 +76,7 @@ function calendar(from: string, days: number): StayCalendar {
           { lease_id: "l-1", start_date: "2026-11-10", end_date: "2027-05-09" },
         ],
         reserved: false,
+        site_holds: [],
       },
     ],
   };
@@ -113,6 +115,7 @@ function price0(extra: Partial<StayPrice> = {}): StayPrice {
     month_only_usd_cents: 40500,
     suggest_month: false,
     blockers: [],
+    site_holds: [],
     ...extra,
   };
 }
@@ -217,6 +220,8 @@ function fakeApi(overrides: Partial<ShortStaysApi> = {}): ShortStaysApi {
     finishTask: vi.fn(() =>
       Promise.resolve({ day: "2026-11-04", today: "2026-11-04", tasks: [] }),
     ),
+    siteCalendars: vi.fn(() => Promise.resolve([])),
+    saveSiteCalendar: vi.fn(() => Promise.reject(new Error("not used"))),
     ...overrides,
   };
 }
@@ -277,6 +282,12 @@ function fakeCustomers(overrides: Partial<CustomerApi> = {}): CustomerApi {
     create: vi.fn(() => Promise.resolve(customer())),
     ...overrides,
   } as unknown as CustomerApi;
+}
+
+function byId(id: string): HTMLElement {
+  const found = document.getElementById(id);
+  if (found === null) throw new Error(`No element #${id}`);
+  return found;
 }
 
 const DESK = new Set(["short_stays.read", "short_stays.desk"]);
@@ -1184,6 +1195,146 @@ describe("Daily and weekly rent: Short stays", () => {
     expect(
       screen.getByRole("link", { name: "Open the Lease" }),
     ).toHaveAttribute("href", "#/leases/l-9");
+  });
+
+  it("TEST-FE-1618 shows a booking site's nights, and a clash with our own booking", async () => {
+    const held = (from: string, days: number): StayCalendar => {
+      const found = calendar(from, days);
+      return {
+        ...found,
+        units: found.units.map((unit) =>
+          unit.unit_id !== "u-501"
+            ? unit
+            : {
+                ...unit,
+                site_holds: [
+                  {
+                    hold_id: "h-1",
+                    site_name: "Agoda",
+                    start_on: "2026-11-07",
+                    end_on: "2026-11-10",
+                    clash: true,
+                  },
+                ],
+              },
+        ),
+      };
+    };
+    show({
+      api: fakeApi({
+        calendar: vi.fn((_: string, from: string, days: number) =>
+          Promise.resolve(held(from, days)),
+        ),
+      }),
+    });
+    const table = await screen.findByRole("table");
+    const u501 = within(table).getByRole("row", { name: /U501/ });
+    // 07/11 is our guest's last night and Agoda's first: a clash.
+    const clash = within(u501).getAllByRole("cell")[3];
+    expect(clash).toHaveClass("ss-clash");
+    expect(clash).toHaveAttribute(
+      "title",
+      "Agoda also has these nights: check both bookings.",
+    );
+    // Then Agoda's own nights, closed for every other booking.
+    expect(within(u501).getAllByText("Agoda")).toHaveLength(2);
+  });
+
+  it("TEST-FE-1619 sets up a booking site's calendar link and turns it off", async () => {
+    const link = {
+      calendar_id: "c-1",
+      unit_id: "u-501",
+      unit_number: "U501",
+      site_name: "Agoda",
+      import_url: "https://agoda.example/ical/1",
+      active: true,
+      last_read_at: "2026-11-04T03:00:00Z",
+      last_read_ok: false,
+      last_error: "The site answered 404",
+      version: 2,
+      holds: 0,
+    };
+    const siteCalendars = vi.fn(() => Promise.resolve([link]));
+    const saveSiteCalendar = vi.fn(() => Promise.resolve(link));
+    show({
+      api: fakeApi({ siteCalendars, saveSiteCalendar }),
+      capabilities: new Set([...DESK, "short_stays.approve"]),
+    });
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Booking sites" }),
+    );
+    expect(
+      await screen.findByText("The site answered 404"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Could not read")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Add link" }));
+    expect(
+      screen.getByText(
+        "Pick the room and the site, and paste a link that starts with https://",
+      ),
+    ).toBeInTheDocument();
+    expect(saveSiteCalendar).not.toHaveBeenCalled();
+    fireEvent.change(byId("sc-unit"), {
+      target: { value: "u-503" },
+    });
+    fireEvent.change(byId("sc-site"), {
+      target: { value: "Airbnb" },
+    });
+    fireEvent.change(byId("sc-url"), {
+      target: { value: " https://airbnb.example/cal.ics " },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Add link" }));
+    expect(saveSiteCalendar).toHaveBeenCalledWith("p-1", {
+      unit_id: "u-503",
+      site_name: "Airbnb",
+      import_url: "https://airbnb.example/cal.ics",
+      active: true,
+    });
+    await waitFor(() => {
+      expect(siteCalendars).toHaveBeenCalledTimes(2);
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Turn off" }));
+    expect(saveSiteCalendar).toHaveBeenLastCalledWith("p-1", {
+      calendar_id: "c-1",
+      version: 2,
+      site_name: "Agoda",
+      import_url: "https://agoda.example/ical/1",
+      active: false,
+    });
+  });
+
+  it("TEST-FE-1620 hides Booking sites without the approve right", async () => {
+    show();
+    expect(await screen.findByRole("table")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Booking sites" })).toBeNull();
+  });
+
+  it("TEST-FE-1621 warns that a booking site holds the nights, except for that site's own guest", async () => {
+    go("#/shortstays/new:u-503:2026-11-06");
+    const hold = {
+      hold_id: "h-1",
+      site_name: "Agoda",
+      start_on: "2026-11-06",
+      end_on: "2026-11-08",
+      clash: false,
+    };
+    show({
+      api: fakeApi({
+        price: vi.fn(() => Promise.resolve(price0({ site_holds: [hold] }))),
+      }),
+    });
+    const warning =
+      "Booked on Agoda, 06/11/2026 to 08/11/2026. Only a booking from Agoda may take these nights.";
+    expect(await screen.findByText(warning)).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText(/^Booked by/), {
+      target: { value: "BOOKING_SITE" },
+    });
+    fireEvent.change(byId("sb-site"), {
+      target: { value: "Agoda" },
+    });
+    await waitFor(() => {
+      expect(screen.queryByText(warning)).toBeNull();
+    });
   });
 
   it("TEST-FE-1605 speaks Khmer and hides New booking without the front-desk right", async () => {

@@ -23,6 +23,7 @@ import { BookingDetail } from "./BookingDetail";
 import { CleaningList } from "./CleaningList";
 import { NewBookingForm } from "./NewBooking";
 import { nightOf } from "./nights";
+import { SiteCalendars } from "./SiteCalendars";
 import {
   addDays,
   type Booking,
@@ -96,7 +97,7 @@ function weekday(language: Language, day: string): string {
   }).format(new Date(`${day}T00:00:00Z`));
 }
 
-type Tab = "cal" | "list" | "clean";
+type Tab = "cal" | "list" | "clean" | "sites";
 
 export function ShortStaysPage({
   language,
@@ -120,7 +121,7 @@ export function ShortStaysPage({
   const sequence = useRef(0);
 
   const load = useCallback(() => {
-    if (propertyId === "" || tab === "clean") return;
+    if (propertyId === "" || tab === "clean" || tab === "sites") return;
     const operation = ++sequence.current;
     setFailed(false);
     const read =
@@ -312,8 +313,17 @@ export function ShortStaysPage({
                                 booking.status === "BOOKED" && !booking.paid
                                   ? " ss-unpaid"
                                   : ""
-                              }`}
+                              }${night.clash === null ? "" : " ss-clash"}`}
                               key={day}
+                              title={
+                                night.clash === null
+                                  ? undefined
+                                  : st(
+                                      language,
+                                      "cal_clash",
+                                      night.clash.site_name,
+                                    )
+                              }
                             >
                               <a
                                 href={hashForPage(
@@ -347,6 +357,24 @@ export function ShortStaysPage({
                                       )}
                                 </span>
                               </a>
+                            </td>
+                          );
+                        }
+                        if (night.kind === "HOLD") {
+                          return (
+                            <td className="ss-night ss-hold" key={day}>
+                              <span
+                                title={st(
+                                  language,
+                                  "b_SITE_HOLD",
+                                  night.hold.site_name,
+                                  dayText(night.hold.start_on),
+                                  dayText(night.hold.end_on),
+                                )}
+                              >
+                                <Icon name="lock" small />
+                                <span>{night.hold.site_name}</span>
+                              </span>
                             </td>
                           );
                         }
@@ -537,7 +565,10 @@ export function ShortStaysPage({
       </div>
       <div className="ui-filters">
         <div aria-label={st(language, "tabs")} className="ui-seg" role="group">
-          {(["cal", "list", "clean"] as const).map((value) => (
+          {(may("short_stays.approve")
+            ? (["cal", "list", "clean", "sites"] as const)
+            : (["cal", "list", "clean"] as const)
+          ).map((value) => (
             <button
               aria-pressed={tab === value}
               key={value}
@@ -555,6 +586,14 @@ export function ShortStaysPage({
         calendarView
       ) : tab === "list" ? (
         listView
+      ) : tab === "sites" ? (
+        <SiteCalendars
+          api={api}
+          key={propertyId}
+          language={language}
+          propertyId={propertyId}
+          today={today}
+        />
       ) : (
         <CleaningList
           api={api}

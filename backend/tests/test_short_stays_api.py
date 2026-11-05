@@ -16,6 +16,7 @@ from fastapi.testclient import TestClient
 from property_rental.app import create_app
 from property_rental.identity import AuthenticatedActor, CapabilityGrant
 from property_rental.products_api import Json, ProductConflict, ProductNotFound
+from property_rental.settings import Settings
 from property_rental.short_stays_api import Action
 
 HEADERS = {
@@ -66,12 +67,28 @@ class InMemoryStays:
         self._check(property_id)
         return {"day": str(day), "tasks": []}
 
+    def site_calendars(self, property_id: UUID, *, actor_id: str) -> list[Json]:
+        self._check(property_id)
+        return [{"calendar_id": "c-1", "site_name": "Agoda"}]
+
+    def calendar_feed(self, token: str) -> Json | None:
+        if token != FEED_TOKEN:
+            return None
+        return {
+            "unit_number": "U501",
+            "site_name": "Agoda",
+            "busy": [{"uid": "st-1", "start_on": "2026-11-10", "end_on": "2026-11-12"}],
+        }
+
     def act(
         self, property_id: UUID, action: Action, target: UUID, body: Json, *, actor_id: str
     ) -> Json:
         self._check(property_id)
         self.calls.append((action, (target, body)))
         return {"booking_id": str(target), "status": "BOOKED"}
+
+
+FEED_TOKEN = "ab" * 32
 
 
 def client(flow: InMemoryStays, *capabilities: str) -> TestClient:
@@ -230,3 +247,43 @@ def test_the_cleaning_list_of_a_day_needs_the_read_right() -> None:
     assert answer.status_code == 200
     assert answer.json()["data"] == {"day": "2026-11-05", "tasks": []}
     assert answer.headers["Cache-Control"] == "private, no-store"
+
+
+def test_booking_site_links_need_the_approve_right() -> None:
+    flow = InMemoryStays()
+    url = f"{base(flow)}/site-calendars"
+    assert client(flow, "short_stays.read", "short_stays.desk").get(url).status_code == 403
+    approver = client(flow, "short_stays.approve")
+    listed = approver.get(url)
+    assert listed.status_code == 200 and listed.headers["Cache-Control"] == "private, no-store"
+    new = {"unit_id": str(uuid4()), "site_name": " Agoda ", "import_url": "https://a.example/1"}
+    desk = client(flow, "short_stays.desk")
+    assert desk.post(url, json=new, headers=HEADERS).status_code == 403
+    assert approver.post(url, json=new, headers=HEADERS).status_code == 200
+    sent = new | {"site_name": "Agoda", "active": True}
+    assert flow.calls[-1] == ("site_calendar", (flow.property_id, sent))
+    change = {"calendar_id": str(uuid4()), "version": 3, "site_name": "Agoda", "active": False}
+    assert approver.post(url, json=change, headers=HEADERS).status_code == 200
+    for wrong in (
+        new | {"import_url": "http://a.example/1"},
+        {"site_name": "Agoda"},
+        new | {"calendar_id": str(uuid4()), "version": 1},
+        change | {"version": None},
+    ):
+        assert approver.post(url, json=wrong, headers=HEADERS).status_code == 422, wrong
+
+
+def test_our_calendar_is_read_by_its_token_without_a_sign_in() -> None:
+    flow = InMemoryStays()
+    # Off unless the owner opens it: the app stays office-only.
+    closed = TestClient(create_app(short_stay_flow=flow))
+    assert closed.get(f"/api/v1/short-stays/ical/{FEED_TOKEN}.ics").status_code == 404
+    opened = Settings(short_stay_public_calendar=True)
+    reader = TestClient(create_app(settings=opened, short_stay_flow=flow))
+    answer = reader.get(f"/api/v1/short-stays/ical/{FEED_TOKEN}.ics")
+    assert answer.status_code == 200
+    assert answer.headers["content-type"].startswith("text/calendar")
+    assert "DTSTART;VALUE=DATE:20261110\r\nDTEND;VALUE=DATE:20261112" in answer.text
+    assert "SUMMARY:Not available" in answer.text
+    assert reader.get(f"/api/v1/short-stays/ical/{'cd' * 32}.ics").status_code == 404
+    assert reader.get("/api/v1/short-stays/ical/short.ics").status_code == 404

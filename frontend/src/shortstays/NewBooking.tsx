@@ -34,7 +34,7 @@ import {
 } from "./shortStaysClient";
 import { hasText, st } from "./text";
 
-const SITES = ["Booking.com", "Agoda", "Airbnb"];
+export const SITES = ["Booking.com", "Agoda", "Airbnb"];
 
 /** The price lines kept with a booking, or worked out for the price box. */
 export function PriceLines({
@@ -239,6 +239,12 @@ export function NewBookingForm({
   };
 
   const count = Number(guestCount);
+  // Step 5a: nights a booking site holds; a booking from that same site is that guest.
+  const heldBy = (price?.site_holds ?? []).filter(
+    (hold) =>
+      source !== "BOOKING_SITE" ||
+      hold.site_name.toLowerCase() !== siteName.toLowerCase(),
+  );
   const problems: Record<string, string | null> = {
     in: dayOk ? null : st(language, "e_in"),
     nights: nights === null ? st(language, "e_nights") : null,
@@ -255,7 +261,7 @@ export function NewBookingForm({
         ? st(language, "e_site")
         : null,
     free:
-      price !== null && price.blockers.length > 0
+      price !== null && (price.blockers.length > 0 || heldBy.length > 0)
         ? st(language, "e_free")
         : null,
   };
@@ -436,6 +442,24 @@ export function NewBookingForm({
               </p>
             </div>
           )}
+          {heldBy.length > 0 && (
+            <div className="ui-notice err" role="note">
+              <Icon name="alert" />
+              <ul className="ui-plain">
+                {heldBy.map((hold) => (
+                  <li key={hold.hold_id}>
+                    {st(
+                      language,
+                      "b_SITE_HOLD",
+                      hold.site_name,
+                      dayText(hold.start_on),
+                      dayText(hold.end_on),
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           {price.blockers.length > 0 && (
             <div className="ui-notice err" role="note">
               <Icon name="alert" />
@@ -557,7 +581,13 @@ export function NewBookingForm({
               <option value="">{st(language, "pick")}</option>
               {(units ?? []).map((unit) => {
                 const free =
-                  checkOut === "" || freeForStay(unit, checkIn, checkOut);
+                  checkOut === "" ||
+                  freeForStay(
+                    unit,
+                    checkIn,
+                    checkOut,
+                    source === "BOOKING_SITE" ? siteName : null,
+                  );
                 return (
                   <option
                     disabled={!free && unit.unit_id !== unitId}

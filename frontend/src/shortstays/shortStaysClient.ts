@@ -70,6 +70,42 @@ export interface StayPrice {
   suggest_month: boolean;
   /** Why the Unit cannot be booked for these nights: PAST, BOOKED, LEASE, RESERVED … */
   blockers: string[];
+  /** Step 5a: nights a booking site holds; only a booking from that site may take them. */
+  site_holds: SiteHold[];
+}
+
+/** Step 5a: a booked range read from a booking site's calendar. */
+export interface SiteHold {
+  hold_id: string;
+  site_name: string;
+  start_on: string;
+  end_on: string;
+  /** The calendar only: a booking from somewhere else has the same nights. */
+  clash: boolean;
+}
+
+/** Step 5a: a booking site's calendar link for one Unit. */
+export interface SiteCalendar {
+  calendar_id: string;
+  unit_id: string;
+  unit_number: string;
+  site_name: string;
+  import_url: string | null;
+  active: boolean;
+  last_read_at: string | null;
+  last_read_ok: boolean | null;
+  last_error: string | null;
+  version: number;
+  holds: number;
+}
+
+export interface SiteCalendarSave {
+  unit_id?: string;
+  calendar_id?: string;
+  version?: number;
+  site_name: string;
+  import_url?: string;
+  active: boolean;
 }
 
 export interface CalendarBooking {
@@ -94,6 +130,7 @@ export interface CalendarUnit {
   bookings: CalendarBooking[];
   leases: { lease_id: string; start_date: string; end_date: string }[];
   reserved: boolean;
+  site_holds: SiteHold[];
 }
 
 export interface StayCalendar {
@@ -345,6 +382,11 @@ export interface ShortStaysApi {
     taskId: string,
     finish: { skip: boolean; note?: string },
   ) => Promise<CleaningDay>;
+  siteCalendars: (propertyId: string) => Promise<SiteCalendar[]>;
+  saveSiteCalendar: (
+    propertyId: string,
+    link: SiteCalendarSave,
+  ) => Promise<SiteCalendar>;
 }
 
 export class ShortStaysError extends Error {
@@ -466,6 +508,38 @@ export function priceOf(value: unknown): StayPrice {
     month_only_usd_cents: maybeWhole(row.month_only_usd_cents),
     suggest_month: row.suggest_month === true,
     blockers: list(row.blockers).map(text),
+    site_holds: list(row.site_holds ?? []).map(holdOf),
+  };
+}
+
+function holdOf(value: unknown): SiteHold {
+  const row = record(value);
+  return {
+    hold_id: text(row.hold_id),
+    site_name: text(row.site_name),
+    start_on: text(row.start_on),
+    end_on: text(row.end_on),
+    clash: row.clash === true,
+  };
+}
+
+export function siteCalendarOf(value: unknown): SiteCalendar {
+  const row = record(value);
+  return {
+    calendar_id: text(row.calendar_id),
+    unit_id: text(row.unit_id),
+    unit_number: text(row.unit_number),
+    site_name: text(row.site_name),
+    import_url: maybeText(row.import_url),
+    active: row.active === true,
+    last_read_at: maybeText(row.last_read_at),
+    last_read_ok:
+      row.last_read_ok === null || row.last_read_ok === undefined
+        ? null
+        : row.last_read_ok === true,
+    last_error: maybeText(row.last_error),
+    version: whole(row.version),
+    holds: whole(row.holds),
   };
 }
 
@@ -506,6 +580,7 @@ export function calendarOf(value: unknown): StayCalendar {
           };
         }),
         reserved: unit.reserved === true,
+        site_holds: list(unit.site_holds ?? []).map(holdOf),
       };
     }),
   };
@@ -781,6 +856,14 @@ export const shortStaysApi: ShortStaysApi = {
         `${base(propertyId)}/housekeeping/${encodeURIComponent(taskId)}`,
         post(finish),
       ),
+    ),
+  siteCalendars: async (propertyId) =>
+    list(await request(`${base(propertyId)}/site-calendars`)).map(
+      siteCalendarOf,
+    ),
+  saveSiteCalendar: async (propertyId, link) =>
+    siteCalendarOf(
+      await request(`${base(propertyId)}/site-calendars`, post(link)),
     ),
 };
 

@@ -11,19 +11,23 @@ early check-in and late check-out fee and extending a stay (`short_stays.desk`),
 list of a day (`GET .../housekeeping`, `short_stays.read`) with its done or skipped cleans
 (`short_stays.housekeeping`). Step 4b adds cancel and no-show (`short_stays.desk`) and the
 late-cancel credit (`short_stays.credit`). Step 4c links the guest's Lease draft for $50 off its
-first month (`short_stays.desk`). The database
+first month (`short_stays.desk`). Step 5a adds the booking-site calendar links
+(`short_stays.approve`) and our own calendar for each site, read by its private token without a
+sign-in (`GET /api/v1/short-stays/ical/{token}.ics`: busy dates only). The database
 functions check the rights again, price the stay from the owner's rules and keep one booking per
 Unit and night.
 """
 
 from __future__ import annotations
 
+import re
 from datetime import date
 from typing import Annotated, Literal, Protocol
 from uuid import UUID, uuid4
 
 import psycopg
-from fastapi import APIRouter, Query, Request, Response, status
+from fastapi import APIRouter, HTTPException, Query, Request, Response, status
+from fastapi.responses import PlainTextResponse
 from psycopg.types.json import Jsonb
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
@@ -40,6 +44,7 @@ from property_rental.products_api import (
     _require,
 )
 from property_rental.settings import Settings
+from property_rental.short_stay_ical import write_calendar
 
 SHORT_STAYS_READ = "short_stays.read"
 SHORT_STAYS_DESK = "short_stays.desk"
@@ -64,6 +69,7 @@ Action = Literal[
     "cancel",
     "credit",
     "link_lease",
+    "site_calendar",
 ]
 # Step 3 (migration 20270602_312): each action is one database function that checks the right
 # again. "version" is the booking version the screen read (refused with 412 when it changed).
@@ -85,6 +91,11 @@ ACTION_SQL: dict[str, str] = {
     "credit": "SELECT app.give_short_stay_credit(%(p)s, %(t)s, %(b)s, %(a)s, %(c)s)",
     # Step 4c (migration 20270605_315).
     "link_lease": "SELECT app.link_short_stay_lease(%(p)s, %(t)s, %(b)s, %(a)s, %(c)s)",
+    # Step 5a (migration 20270606_316): the target is the Property; a change carries its version.
+    "site_calendar": (
+        "SELECT app.save_booking_site_calendar(%(p)s, %(b)s || "
+        "jsonb_strip_nulls(jsonb_build_object('version', %(v)s::integer)), %(a)s, %(c)s)"
+    ),
 }
 
 
@@ -102,6 +113,10 @@ class ShortStayFlow(Protocol):
     def book(self, property_id: UUID, booking: Json, *, actor_id: str) -> UUID: ...
 
     def housekeeping(self, property_id: UUID, day: date, *, actor_id: str) -> Json: ...
+
+    def site_calendars(self, property_id: UUID, *, actor_id: str) -> list[Json]: ...
+
+    def calendar_feed(self, token: str) -> Json | None: ...
 
     def act(
         self, property_id: UUID, action: Action, target: UUID, body: Json, *, actor_id: str
@@ -127,6 +142,12 @@ class UnavailableShortStayFlow:
         raise ProductUnavailable
 
     def housekeeping(self, property_id: UUID, day: date, **_: object) -> Json:
+        raise ProductUnavailable
+
+    def site_calendars(self, property_id: UUID, **_: object) -> list[Json]:
+        raise ProductUnavailable
+
+    def calendar_feed(self, token: str) -> Json | None:
         raise ProductUnavailable
 
     def act(self, property_id: UUID, action: Action, target: UUID, body: Json, **_: object) -> Json:
@@ -202,6 +223,18 @@ class PostgresShortStayFlow:
                 (property_id, day, UUID(actor_id)),
             )
         )
+
+    def site_calendars(self, property_id: UUID, *, actor_id: str) -> list[Json]:
+        found = self._one(
+            "SELECT app.booking_site_calendars_read(%s, %s)", (property_id, UUID(actor_id))
+        )
+        if not isinstance(found, list):
+            raise ProductUnavailable("Short-stay persistence is unavailable")
+        return [_json(item) for item in found]
+
+    def calendar_feed(self, token: str) -> Json | None:
+        found = self._one("SELECT app.booking_site_calendar_feed(%s)", (token,))
+        return None if found is None else _json(found)
 
     def act(
         self, property_id: UUID, action: Action, target: UUID, body: Json, *, actor_id: str
@@ -299,6 +332,24 @@ class Credit(BaseModel):
 
     amount_usd_cents: Annotated[int, Field(ge=1, le=100_000_000)]
     note: Note
+
+
+class SiteCalendar(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    # A new link names its Unit; a change names the link and the version the screen read.
+    unit_id: Id | None = None
+    calendar_id: Id | None = None
+    version: Annotated[int, Field(ge=1)] | None = None
+    site_name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=80)]
+    import_url: (
+        Annotated[
+            str,
+            StringConstraints(strip_whitespace=True, max_length=2000, pattern=r"^https://[^\s]+$"),
+        ]
+        | None
+    ) = None
+    active: bool = True
 
 
 class LinkLease(BaseModel):
@@ -492,6 +543,26 @@ def create_short_stays_router(
         except REFUSED as exc:
             raise _http(exc) from exc
 
+    @router.get("/site-calendars")
+    def booking_site_calendars(property_id: UUID, request: Request, response: Response) -> Json:
+        actor = _require(request, resolver, SHORT_STAYS_APPROVE, property_id)
+        response.headers["Cache-Control"] = "private, no-store"
+        try:
+            return envelope(request, flow.site_calendars(property_id, actor_id=actor.actor_id))
+        except REFUSED as exc:
+            raise _http(exc) from exc
+
+    @router.post("/site-calendars")
+    def save_booking_site_calendar(property_id: UUID, body: SiteCalendar, request: Request) -> Json:
+        if (body.calendar_id is None) == (body.unit_id is None) or (
+            body.calendar_id is not None and body.version is None
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail="A new link names its Unit; a change names the link and its version",
+            )
+        return act(request, property_id, SHORT_STAYS_APPROVE, "site_calendar", property_id, body)
+
     @router.post("/housekeeping/{task_id}")
     def finish_housekeeping_task(
         property_id: UUID, task_id: UUID, body: Finish, request: Request
@@ -501,10 +572,36 @@ def create_short_stays_router(
     return router
 
 
+def create_short_stay_feed_router(flow: ShortStayFlow) -> APIRouter:
+    """Our calendar for a booking site: no sign-in, the long private token is the key."""
+    router = APIRouter(prefix="/api/v1/short-stays", tags=["short stays"])
+
+    @router.get("/ical/{token}.ics", response_class=PlainTextResponse)
+    def short_stay_calendar_feed(token: str) -> PlainTextResponse:
+        if re.fullmatch(r"[0-9a-f]{64}", token) is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        try:
+            found = flow.calendar_feed(token)
+        except REFUSED as exc:
+            raise _http(exc) from exc
+        if found is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        busy = found.get("busy")
+        name = f"{found.get('unit_number', '')} {found.get('site_name', '')}".strip()
+        return PlainTextResponse(
+            write_calendar(name, busy if isinstance(busy, list) else []),
+            media_type="text/calendar; charset=utf-8",
+            headers={"Cache-Control": "no-store"},
+        )
+
+    return router
+
+
 __all__ = [
     "NewBooking",
     "PostgresShortStayFlow",
     "ShortStayFlow",
     "UnavailableShortStayFlow",
+    "create_short_stay_feed_router",
     "create_short_stays_router",
 ]
