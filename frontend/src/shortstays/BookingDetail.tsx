@@ -6,9 +6,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { dayText, momentText, usdFromCents } from "../shell/format";
 import { Icon } from "../shell/icons";
-import { hashForPage } from "../shell/navigation";
 import { openPageInAddress } from "../shell/useHashPage";
 import type { Language } from "../signInText";
+import { GuestPanel } from "./GuestPanel";
 import { PriceLines } from "./NewBooking";
 import { BookingChip, nightsText, unitTypeText } from "./ShortStaysPage";
 import {
@@ -24,10 +24,12 @@ import {
   CheckOutCard,
   DamagesCard,
   DepositCard,
+  DiscountCard,
   ExtendCard,
   FeesCard,
   LeaseCard,
   PaymentCard,
+  ReviewCard,
   RoomCheckCard,
   type StepsProps,
   timeText,
@@ -220,6 +222,12 @@ export function BookingDetail({
           </p>
         </div>
       </div>
+      {booking.problem_guest && (
+        <div className="ui-notice warn" role="note">
+          <Icon name="alert" />
+          <p>{st(language, "gh_problem")}</p>
+        </div>
+      )}
       {notice !== null && (
         <div className="ui-notice ok" role="status">
           <Icon name="check" />
@@ -285,6 +293,7 @@ export function BookingDetail({
           <PaymentCard key={`pay:${cards}`} {...steps} />
           <DepositCard key={`dep:${cards}`} {...steps} />
           <FeesCard key={`fee:${cards}`} {...steps} />
+          <DiscountCard key={`disc:${cards}`} {...steps} />
           <section aria-labelledby="ss-price" className="ui-card">
             <h2 id="ss-price">{st(language, "d_price")}</h2>
             <PriceLines language={language} lines={booking.lines} />
@@ -303,25 +312,15 @@ export function BookingDetail({
           <LeaseCard key={`lease:${cards}`} {...steps} />
           <RoomCheckCard key={`room:${cards}`} {...steps} />
           <DamagesCard key={`dmg:${cards}`} {...steps} />
-          <section aria-labelledby="ss-guest" className="ui-card">
-            <h2 id="ss-guest">{st(language, "d_guest")}</h2>
-            <p>
-              <b>{booking.guest_name}</b>
-              {booking.guest_phone !== null && (
-                <span className="ui-sub2 ui-num">{booking.guest_phone}</span>
-              )}
-            </p>
-            {may("customers.read") && (
-              <div className="ui-actions">
-                <a
-                  className="ui-btn"
-                  href={hashForPage("customers", booking.customer_id)}
-                >
-                  {st(language, "d_open_customer")}
-                </a>
-              </div>
-            )}
-          </section>
+          <ReviewCard key={`rev:${cards}`} {...steps} />
+          <GuestPanel
+            api={api}
+            booking={booking}
+            key={booking.customer_id}
+            language={language}
+            may={may}
+            propertyId={propertyId}
+          />
           <section aria-labelledby="ss-hist" className="ui-card">
             <h2 id="ss-hist">{st(language, "d_hist")}</h2>
             <ol className="ui-timeline">

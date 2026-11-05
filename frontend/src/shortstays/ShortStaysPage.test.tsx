@@ -16,12 +16,14 @@ import {
 import { ShortStaysPage } from "./ShortStaysPage";
 import {
   type Booking,
+  type GuestHistory,
   type NewBooking,
   type PriceLine,
   type ShortStaysApi,
   ShortStaysError,
   type StayCalendar,
   type StayPrice,
+  type StayQuote,
 } from "./shortStaysClient";
 
 const NOW = new Date("2026-11-04T03:00:00Z"); // 10:00 in Phnom Penh
@@ -168,6 +170,9 @@ const BOOKING: Booking = {
   lease_off_usd_cents: 5000,
   lease_offer: null,
   lease_drafts: [],
+  returning_guest: false,
+  problem_guest: false,
+  review_asked_at: null,
 };
 
 /** Booking b-1 checks in today (04/11) for 3 nights. */
@@ -182,6 +187,7 @@ const INVOICE = {
   invoice_number: "INV-000123",
   status: "ISSUED",
   total_usd_cents: 6090,
+  due_usd_cents: 6090,
 };
 
 const DEPOSIT: NonNullable<Booking["deposit"]> = {
@@ -195,6 +201,23 @@ const DEPOSIT: NonNullable<Booking["deposit"]> = {
   taken_at: "2026-11-04T03:00:00Z",
   ended_at: null,
 };
+
+function guestHistory(extra: Partial<GuestHistory> = {}): GuestHistory {
+  return {
+    customer_id: "c-1",
+    legal_name: "Lim Dara",
+    phone_number: "010 333 444",
+    stays: [],
+    stays_done: 0,
+    nights_done: 0,
+    spent_usd_cents: 0,
+    returning: false,
+    problem_guest: false,
+    notes: [],
+    thank_you_usd_cents: 300,
+    ...extra,
+  };
+}
 
 function fakeApi(overrides: Partial<ShortStaysApi> = {}): ShortStaysApi {
   return {
@@ -222,6 +245,12 @@ function fakeApi(overrides: Partial<ShortStaysApi> = {}): ShortStaysApi {
     ),
     siteCalendars: vi.fn(() => Promise.resolve([])),
     saveSiteCalendar: vi.fn(() => Promise.reject(new Error("not used"))),
+    guest: vi.fn((_: string, customerId: string) =>
+      Promise.resolve(guestHistory({ customer_id: customerId })),
+    ),
+    addGuestNote: vi.fn(() => Promise.reject(new Error("not used"))),
+    quotes: vi.fn(() => Promise.resolve([])),
+    quote: vi.fn(() => Promise.reject(new Error("not used"))),
     ...overrides,
   };
 }
@@ -1335,6 +1364,244 @@ describe("Daily and weekly rent: Short stays", () => {
     await waitFor(() => {
       expect(screen.queryByText(warning)).toBeNull();
     });
+  });
+
+  it("TEST-FE-1622 shows the guest's history and notes, and adds a problem-guest note", async () => {
+    const history = guestHistory({
+      stays: [
+        {
+          booking_id: "b-0",
+          booking_number: "ST250009",
+          unit_number: "U503",
+          check_in_on: "2025-12-01",
+          check_out_on: "2025-12-03",
+          status: "CHECKED_OUT",
+          source: "WALK_IN",
+          site_name: null,
+          total_usd_cents: 5200,
+        },
+      ],
+      stays_done: 1,
+      nights_done: 2,
+      spent_usd_cents: 5200,
+      returning: true,
+    });
+    const addGuestNote = vi.fn(() =>
+      Promise.resolve({
+        ...history,
+        problem_guest: true,
+        notes: [
+          {
+            note: "Loud music at night",
+            problem_guest: true,
+            created_at: "2026-11-04T04:00:00Z",
+            booking_number: "ST260001",
+          },
+        ],
+      }),
+    );
+    show({
+      api: fakeApi({
+        get: vi.fn(() =>
+          Promise.resolve({ ...BOOKING, returning_guest: true }),
+        ),
+        guest: vi.fn(() => Promise.resolve(history)),
+        addGuestNote,
+      }),
+    });
+    go("#/shortstays/st:b-1");
+    expect(
+      await screen.findByText("1 stays done · 2 nights · $52.00 spent"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Returning guest")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "ST250009" })).toHaveAttribute(
+      "href",
+      "#/shortstays/st%3Ab-0",
+    );
+    expect(screen.getByText("No notes yet.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Add note" }));
+    expect(screen.getByText("Write the note first.")).toBeInTheDocument();
+    expect(addGuestNote).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByLabelText("New note"), {
+      target: { value: " Loud music at night " },
+    });
+    fireEvent.click(screen.getByLabelText(/^Problem guest/));
+    fireEvent.click(screen.getByRole("button", { name: "Add note" }));
+    expect(addGuestNote).toHaveBeenCalledWith("p-1", BOOKING.customer_id, {
+      note: "Loud music at night",
+      problem_guest: true,
+      booking_id: "b-1",
+    });
+    expect(await screen.findByText("Loud music at night")).toBeInTheDocument();
+    expect(screen.getAllByText("Problem guest").length).toBeGreaterThan(0);
+  });
+
+  it("TEST-FE-1623 lets only the Owner or Manager give an extra discount with a reason", async () => {
+    const step = vi.fn(() => Promise.resolve(BOOKING));
+    show({ api: fakeApi({ step }) });
+    go("#/shortstays/st:b-1");
+    expect(
+      await screen.findByRole("heading", { name: "Payment" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Extra discount" }),
+    ).toBeNull();
+    cleanup();
+    show({
+      api: fakeApi({ step }),
+      capabilities: new Set([...DESK, "short_stays.approve"]),
+    });
+    go("#/shortstays/st:b-1");
+    expect(
+      await screen.findByRole("heading", { name: "Extra discount" }),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Give the discount" }));
+    expect(
+      screen.getByText("Type an amount less than the stay and a reason."),
+    ).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Discount ($)"), {
+      target: { value: "10" },
+    });
+    fireEvent.change(screen.getByLabelText("Reason"), {
+      target: { value: " Stayed last year " },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Give the discount" }));
+    expect(step).toHaveBeenCalledWith("p-1", "b-1", "discount", {
+      version: BOOKING.version,
+      amount_usd_cents: 1000,
+      reason: "Stayed last year",
+    });
+  });
+
+  it("TEST-FE-1624 asks for a review once after the check-out", async () => {
+    const out: Booking = {
+      ...BOOKING,
+      status: "CHECKED_OUT",
+      payment: "PAID",
+      invoice: INVOICE,
+      source: "BOOKING_SITE",
+      site_name: "Agoda",
+    };
+    const step = vi.fn(() =>
+      Promise.resolve({ ...out, review_asked_at: "2026-11-04T05:00:00Z" }),
+    );
+    show({ api: fakeApi({ get: vi.fn(() => Promise.resolve(out)), step }) });
+    go("#/shortstays/st:b-1");
+    expect(
+      await screen.findByRole("heading", { name: "Ask for a review" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByDisplayValue(
+        "Thank you for staying at CHETANA Residence, Lim Dara! If you enjoyed your stay, please leave us a review on Agoda. It helps us a lot.",
+      ),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Mark as asked" }));
+    expect(step).toHaveBeenCalledWith("p-1", "b-1", "review", null);
+    expect(await screen.findByText(/^Review asked for on/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Mark as asked" })).toBeNull();
+  });
+
+  it("TEST-FE-1625 makes a quote with today's price and a message for the guest", async () => {
+    const made: StayQuote = {
+      quote_id: "q-1",
+      quote_number: "SQ260001",
+      unit_id: "u-503",
+      unit_number: "U503",
+      unit_type: "ONE_BEDROOM",
+      guest_name: "Sok Chenda",
+      guest_contact: "@chenda",
+      guest_count: 2,
+      check_in_on: "2026-11-06",
+      check_out_on: "2026-11-09",
+      nights: 3,
+      total_usd_cents: 5460,
+      lines: LINES,
+      made_on: "2026-11-04",
+      check_in_time: 840,
+      check_out_time: 720,
+      deposit_usd_cents: 5000,
+    };
+    const quote = vi.fn(() => Promise.resolve(made));
+    const quotes = vi.fn(() => Promise.resolve([] as StayQuote[]));
+    quotes.mockResolvedValueOnce([]).mockResolvedValue([made]);
+    show({ api: fakeApi({ quote, quotes }) });
+    fireEvent.click(await screen.findByRole("button", { name: "Quotes" }));
+    expect(await screen.findByText("No quotes yet.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Make the quote" }));
+    expect(
+      screen.getByText(
+        "Pick the room, type the guest's name, 1 to 10 guests and the nights.",
+      ),
+    ).toBeInTheDocument();
+    fireEvent.change(byId("sq-unit"), { target: { value: "u-503" } });
+    fireEvent.change(byId("sq-in"), { target: { value: "06/11/2026" } });
+    fireEvent.change(byId("sq-nights"), { target: { value: "3" } });
+    fireEvent.change(byId("sq-guests"), { target: { value: "2" } });
+    fireEvent.change(byId("sq-name"), { target: { value: " Sok Chenda " } });
+    fireEvent.change(byId("sq-contact"), { target: { value: "@chenda" } });
+    fireEvent.click(screen.getByRole("button", { name: "Make the quote" }));
+    expect(quote).toHaveBeenCalledWith("p-1", {
+      unit_id: "u-503",
+      guest_name: "Sok Chenda",
+      guest_contact: "@chenda",
+      guest_count: 2,
+      check_in_on: "2026-11-06",
+      check_out_on: "2026-11-09",
+    });
+    expect(
+      await screen.findByText(
+        "Quote SQ260001 made. Copy the message for the guest.",
+      ),
+    ).toBeInTheDocument();
+    const message = screen.getByDisplayValue(
+      /^CHETANA Residence: quote SQ260001/,
+    );
+    expect((message as HTMLTextAreaElement).value).toContain(
+      "06/11/2026 to 09/11/2026, 3 nights\nTotal $54.60\nCheck-in from 14:00, check-out by 12:00.",
+    );
+    expect(screen.getByRole("link", { name: "Book this" })).toHaveAttribute(
+      "href",
+      "#/shortstays/new%3Au-503%3A2026-11-06",
+    );
+    expect(await screen.findByText("SQ260001")).toBeInTheDocument();
+  });
+
+  it("TEST-FE-1626 tells the desk about a returning guest's thank-you and a problem guest", async () => {
+    go("#/shortstays/new:u-503:2026-11-06");
+    const guest = vi.fn(() =>
+      Promise.resolve(
+        guestHistory({
+          returning: true,
+          problem_guest: true,
+          notes: [
+            {
+              note: "Left without paying for drinks",
+              problem_guest: true,
+              created_at: "2026-10-01T04:00:00Z",
+              booking_number: "ST250009",
+            },
+          ],
+        }),
+      ),
+    );
+    show({ api: fakeApi({ guest }) });
+    await screen.findByText("1 × night $26.00");
+    fireEvent.change(screen.getByLabelText("Find a guest by name or phone"), {
+      target: { value: "010" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Find" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Choose" }));
+    expect(
+      await screen.findByText(
+        "Returning guest: $3.00 thank-you comes off a direct booking.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Problem guest. Read the notes before you book: Left without paying for drinks",
+      ),
+    ).toBeInTheDocument();
+    expect(guest).toHaveBeenCalledWith("p-1", "c-1");
   });
 
   it("TEST-FE-1605 speaks Khmer and hides New booking without the front-desk right", async () => {

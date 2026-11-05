@@ -181,3 +181,22 @@ td.ss-clash {
   outline: 2px solid var(--err);
   outline-offset: -2px;
 }
+
+/* Step 5b: a message to copy for the guest (quote, review request) and the guest's notes. */
+.ss-message {
+  width: 100%;
+  font: inherit;
+  white-space: pre-wrap;
+  resize: vertical;
+}
+.ss-notes > li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  align-items: baseline;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line, #e5e7eb);
+}
+.ss-notes > li:last-child {
+  border-bottom: 0;
+}

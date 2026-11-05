@@ -97,7 +97,11 @@ export function PaymentCard({
           </a>{" "}
           ·{" "}
           <span className="ui-num">
-            {usdFromCents(booking.invoice.total_usd_cents)}
+            {st(
+              language,
+              "pay_due",
+              usdFromCents(booking.invoice.due_usd_cents),
+            )}
           </span>
         </p>
       )}
@@ -1162,4 +1166,180 @@ export function LeaseCard({
       </div>
     </section>
   );
+}
+
+/** Step 5b: the Owner's or Manager's extra discount, with a reason, before the Invoice. */
+export function DiscountCard({
+  language,
+  booking,
+  may,
+  busy,
+  onStep,
+}: StepsProps) {
+  const [amount, setAmount] = useState("");
+  const [reason, setReason] = useState("");
+  const [checked, setChecked] = useState(false);
+  const given = booking.lines.find((line) => line.kind === "EXTRA_DISCOUNT");
+  const open = booking.status === "BOOKED" && booking.payment === "NOT_BILLED";
+  if (given === undefined && (!open || !may("short_stays.approve")))
+    return null;
+  if (given !== undefined) {
+    return (
+      <section aria-labelledby="ss-disc" className="ui-card">
+        <h2 id="ss-disc">{st(language, "dc_t")}</h2>
+        <p>
+          {st(
+            language,
+            "dc_given",
+            usdFromCents(-given.amount_usd_cents),
+            booking.history
+              .filter((event) => event.kind === "DISCOUNT")
+              .map((event) => event.note ?? "")
+              .join(" "),
+          )}
+        </p>
+      </section>
+    );
+  }
+  const cents = centsOf(amount);
+  const wrong =
+    cents === null || cents >= booking.total_usd_cents || reason.trim() === "";
+  const give = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setChecked(true);
+    if (wrong) return;
+    onStep("discount", {
+      version: booking.version,
+      amount_usd_cents: cents,
+      reason: reason.trim(),
+    });
+  };
+  return (
+    <section aria-labelledby="ss-disc" className="ui-card">
+      <h2 id="ss-disc">{st(language, "dc_t")}</h2>
+      <p className="ui-small ui-muted">{st(language, "dc_s")}</p>
+      <form className="ui-form" noValidate onSubmit={give}>
+        <div className="ui-row2">
+          <div className="ui-field">
+            <label htmlFor="ss-disc-amount">{st(language, "dc_amount")}</label>
+            <input
+              aria-invalid={
+                checked && (cents === null || cents >= booking.total_usd_cents)
+              }
+              disabled={busy}
+              id="ss-disc-amount"
+              inputMode="decimal"
+              onChange={(event) => {
+                setAmount(event.currentTarget.value);
+              }}
+              value={amount}
+            />
+          </div>
+          <div className="ui-field">
+            <label htmlFor="ss-disc-reason">{st(language, "dc_reason")}</label>
+            <input
+              aria-invalid={checked && reason.trim() === ""}
+              disabled={busy}
+              id="ss-disc-reason"
+              maxLength={500}
+              onChange={(event) => {
+                setReason(event.currentTarget.value);
+              }}
+              value={reason}
+            />
+          </div>
+        </div>
+        {checked && wrong && (
+          <p className="ui-error">
+            <Icon name="alert" small />
+            <span>{st(language, "dc_wrong")}</span>
+          </p>
+        )}
+        <div className="ui-actions">
+          <button className="ui-btn" disabled={busy} type="submit">
+            {st(language, "dc_b")}
+          </button>
+        </div>
+      </form>
+    </section>
+  );
+}
+
+/** Step 5b: after the check-out the desk sends a review request once. */
+export function ReviewCard({
+  language,
+  booking,
+  may,
+  busy,
+  onStep,
+}: StepsProps) {
+  const [copied, setCopied] = useState(false);
+  if (booking.status !== "CHECKED_OUT") return null;
+  if (booking.review_asked_at !== null)
+    return (
+      <section aria-labelledby="ss-review" className="ui-card">
+        <h2 id="ss-review">{st(language, "rv_t")}</h2>
+        <p className="ui-small ui-muted">
+          {st(language, "rv_done", momentText(booking.review_asked_at))}
+        </p>
+      </section>
+    );
+  if (!may("short_stays.desk")) return null;
+  const message = st(
+    language,
+    "rv_message",
+    booking.guest_name,
+    booking.site_name === null ? "" : st(language, "rv_on", booking.site_name),
+  );
+  return (
+    <section aria-labelledby="ss-review" className="ui-card">
+      <h2 id="ss-review">{st(language, "rv_t")}</h2>
+      <p className="ui-small ui-muted">{st(language, "rv_s")}</p>
+      <textarea
+        aria-labelledby="ss-review"
+        className="ss-message"
+        readOnly
+        rows={4}
+        value={message}
+      />
+      {copied && (
+        <p className="ui-small" role="status">
+          {st(language, "rv_copied")}
+        </p>
+      )}
+      <div className="ui-actions">
+        <button
+          className="ui-btn"
+          onClick={() => {
+            void copyText(message).then(setCopied);
+          }}
+          type="button"
+        >
+          {st(language, "rv_copy")}
+        </button>
+        <button
+          className="ui-btn primary"
+          disabled={busy}
+          onClick={() => {
+            onStep("review", null);
+          }}
+          type="button"
+        >
+          {st(language, "rv_b")}
+        </button>
+      </div>
+    </section>
+  );
+}
+
+/** Puts text on the clipboard; false when the browser does not allow it. */
+export async function copyText(value: string): Promise<boolean> {
+  try {
+    if (typeof navigator === "undefined" || !("clipboard" in navigator))
+      return false;
+    await navigator.clipboard.writeText(value);
+    return true;
+  } catch {
+    return false;
+  }
 }

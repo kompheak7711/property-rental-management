@@ -224,6 +224,8 @@ export interface Booking {
     invoice_number: string;
     status: string;
     total_usd_cents: number;
+    /** Step 5b: what the guest owes after the thank-you or discount credit. */
+    due_usd_cents: number;
   } | null;
   deposit: StayDeposit | null;
   room_check: RoomCheck | null;
@@ -249,6 +251,78 @@ export interface Booking {
   lease_offer: StayLeaseOffer | null;
   /** The guest's Lease drafts in this building, not linked yet. */
   lease_drafts: StayLeaseDraft[];
+  /** Step 5b: the guest stayed and checked out before this stay. */
+  returning_guest: boolean;
+  /** A note marks the guest as a problem guest. */
+  problem_guest: boolean;
+  review_asked_at: string | null;
+}
+
+/** Step 5b: one stay in a guest's history. */
+export interface GuestStay {
+  booking_id: string;
+  booking_number: string;
+  unit_number: string;
+  check_in_on: string;
+  check_out_on: string;
+  status: BookingStatus;
+  source: BookingSource;
+  site_name: string | null;
+  total_usd_cents: number;
+}
+
+export interface GuestNote {
+  note: string;
+  problem_guest: boolean;
+  created_at: string;
+  booking_number: string | null;
+}
+
+/** Step 5b: a guest's stays in this building, the notes and the problem-guest mark. */
+export interface GuestHistory {
+  customer_id: string;
+  legal_name: string;
+  phone_number: string | null;
+  stays: GuestStay[];
+  stays_done: number;
+  nights_done: number;
+  spent_usd_cents: number;
+  returning: boolean;
+  problem_guest: boolean;
+  notes: GuestNote[];
+  /** Today's thank-you for a returning direct guest (0 when only a note was added). */
+  thank_you_usd_cents: number;
+}
+
+/** Step 5b: today's price for a Unit and nights, to send to the guest. Not a promise. */
+export interface StayQuote {
+  quote_id: string;
+  quote_number: string;
+  unit_id: string | null;
+  unit_number: string | null;
+  unit_type: string;
+  guest_name: string | null;
+  guest_contact: string | null;
+  guest_count: number;
+  check_in_on: string;
+  check_out_on: string;
+  nights: number;
+  total_usd_cents: number;
+  lines: PriceLine[];
+  made_on: string;
+  /** Minutes after midnight. */
+  check_in_time: number;
+  check_out_time: number;
+  deposit_usd_cents: number;
+}
+
+export interface NewQuote {
+  unit_id: string;
+  guest_name: string;
+  guest_contact?: string;
+  guest_count: number;
+  check_in_on: string;
+  check_out_on: string;
 }
 
 /** Step 3: the actions on one booking; each answers with the booking as it is now. */
@@ -264,7 +338,9 @@ export type StayStep =
   | "extend"
   | "cancel"
   | "credit"
-  | "lease";
+  | "lease"
+  | "discount"
+  | "review";
 
 /** Step 4c: the guest's Lease, with the money off its first month kept from the link. */
 export interface StayLeaseOffer {
@@ -387,6 +463,14 @@ export interface ShortStaysApi {
     propertyId: string,
     link: SiteCalendarSave,
   ) => Promise<SiteCalendar>;
+  guest: (propertyId: string, customerId: string) => Promise<GuestHistory>;
+  addGuestNote: (
+    propertyId: string,
+    customerId: string,
+    note: { note: string; problem_guest: boolean; booking_id?: string },
+  ) => Promise<GuestHistory>;
+  quotes: (propertyId: string) => Promise<StayQuote[]>;
+  quote: (propertyId: string, quote: NewQuote) => Promise<StayQuote>;
 }
 
 export class ShortStaysError extends Error {
@@ -676,6 +760,9 @@ export function bookingOf(value: unknown): Booking {
             invoice_number: text(invoice.invoice_number),
             status: text(invoice.status),
             total_usd_cents: whole(invoice.total_usd_cents),
+            due_usd_cents: whole(
+              invoice.due_usd_cents ?? invoice.total_usd_cents,
+            ),
           },
     deposit: depositOf(row.deposit),
     room_check: roomCheckOf(row.room_check),
@@ -730,6 +817,70 @@ export function bookingOf(value: unknown): Booking {
         monthly_rent_usd_cents: whole(draft.monthly_rent_usd_cents),
       };
     }),
+    returning_guest: row.returning_guest === true,
+    problem_guest: row.problem_guest === true,
+    review_asked_at: maybeText(row.review_asked_at),
+  };
+}
+
+function guestOf(value: unknown): GuestHistory {
+  const row = record(value);
+  return {
+    customer_id: text(row.customer_id),
+    legal_name: text(row.legal_name),
+    phone_number: maybeText(row.phone_number),
+    stays: list(row.stays).map((entry) => {
+      const stay = record(entry);
+      return {
+        booking_id: text(stay.booking_id),
+        booking_number: text(stay.booking_number),
+        unit_number: text(stay.unit_number),
+        check_in_on: text(stay.check_in_on),
+        check_out_on: text(stay.check_out_on),
+        status: oneOf(STATUSES, stay.status),
+        source: oneOf(SOURCES, stay.source),
+        site_name: maybeText(stay.site_name),
+        total_usd_cents: whole(stay.total_usd_cents),
+      };
+    }),
+    stays_done: whole(row.stays_done),
+    nights_done: whole(row.nights_done),
+    spent_usd_cents: whole(row.spent_usd_cents),
+    returning: row.returning === true,
+    problem_guest: row.problem_guest === true,
+    notes: list(row.notes).map((entry) => {
+      const note = record(entry);
+      return {
+        note: text(note.note),
+        problem_guest: note.problem_guest === true,
+        created_at: text(note.created_at),
+        booking_number: maybeText(note.booking_number),
+      };
+    }),
+    thank_you_usd_cents: whole(row.thank_you_usd_cents ?? 0),
+  };
+}
+
+function quoteOf(value: unknown): StayQuote {
+  const row = record(value);
+  return {
+    quote_id: text(row.quote_id),
+    quote_number: text(row.quote_number),
+    unit_id: maybeText(row.unit_id),
+    unit_number: maybeText(row.unit_number),
+    unit_type: text(row.unit_type),
+    guest_name: maybeText(row.guest_name),
+    guest_contact: maybeText(row.guest_contact),
+    guest_count: whole(row.guest_count),
+    check_in_on: text(row.check_in_on),
+    check_out_on: text(row.check_out_on),
+    nights: whole(row.nights),
+    total_usd_cents: whole(row.total_usd_cents),
+    lines: list(row.lines).map(lineOf),
+    made_on: text(row.made_on),
+    check_in_time: whole(row.check_in_time),
+    check_out_time: whole(row.check_out_time),
+    deposit_usd_cents: whole(row.deposit_usd_cents),
   };
 }
 
@@ -865,6 +1016,23 @@ export const shortStaysApi: ShortStaysApi = {
     siteCalendarOf(
       await request(`${base(propertyId)}/site-calendars`, post(link)),
     ),
+  guest: async (propertyId, customerId) =>
+    guestOf(
+      await request(
+        `${base(propertyId)}/guests/${encodeURIComponent(customerId)}`,
+      ),
+    ),
+  addGuestNote: async (propertyId, customerId, note) =>
+    guestOf(
+      await request(
+        `${base(propertyId)}/guests/${encodeURIComponent(customerId)}/notes`,
+        post(note),
+      ),
+    ),
+  quotes: async (propertyId) =>
+    list(await request(`${base(propertyId)}/quotes`)).map(quoteOf),
+  quote: async (propertyId, quote) =>
+    quoteOf(await request(`${base(propertyId)}/quotes`, post(quote))),
 };
 
 /** Adds days to an ISO day ("2026-11-04" + 3 → "2026-11-07"), in UTC so no clock shifts it. */

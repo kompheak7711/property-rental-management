@@ -25,6 +25,7 @@ import {
   type Booking,
   type BookingSource,
   type CalendarUnit,
+  type GuestHistory,
   type NewBooking,
   type PriceLine,
   SOURCES,
@@ -164,6 +165,8 @@ export function NewBookingForm({
   const [phone, setPhone] = useState("");
   const [idNumber, setIdNumber] = useState("");
   const [guestProblem, setGuestProblem] = useState<GuestProblem | null>(null);
+  // Step 5b: a picked guest's history, for the thank-you and the problem-guest mark.
+  const [history, setHistory] = useState<GuestHistory | null>(null);
   const [checked, setChecked] = useState(false);
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
@@ -193,6 +196,24 @@ export function NewBookingForm({
       current = false;
     };
   }, [api, propertyId, checkIn, nights, dayOk]);
+
+  const guestId = guest?.customer_id ?? "";
+  useEffect(() => {
+    setHistory(null);
+    if (guestId === "") return;
+    let current = true;
+    void api
+      .guest(propertyId, guestId)
+      .then((found) => {
+        if (current) setHistory(found);
+      })
+      .catch(() => {
+        // The hints are a help only; the booking is priced by the server either way.
+      });
+    return () => {
+      current = false;
+    };
+  }, [api, propertyId, guestId]);
 
   // The price box follows the Unit and the nights.
   useEffect(() => {
@@ -439,6 +460,34 @@ export function NewBookingForm({
               <Icon name="info" />
               <p>
                 {st(language, "hint", usdFromCents(price.month_only_usd_cents))}
+              </p>
+            </div>
+          )}
+          {history !== null &&
+            history.returning &&
+            source !== "BOOKING_SITE" &&
+            history.thank_you_usd_cents > 0 && (
+              <div className="ui-notice ok" role="note">
+                <Icon name="check" />
+                <p>
+                  {st(
+                    language,
+                    "nb_returning",
+                    usdFromCents(history.thank_you_usd_cents),
+                  )}
+                </p>
+              </div>
+            )}
+          {history?.problem_guest === true && (
+            <div className="ui-notice warn" role="note">
+              <Icon name="alert" />
+              <p>
+                {st(
+                  language,
+                  "nb_problem",
+                  history.notes.find((entry) => entry.problem_guest)?.note ??
+                    "",
+                )}
               </p>
             </div>
           )}

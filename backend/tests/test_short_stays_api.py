@@ -80,6 +80,16 @@ class InMemoryStays:
             "busy": [{"uid": "st-1", "start_on": "2026-11-10", "end_on": "2026-11-12"}],
         }
 
+    def guest(self, property_id: UUID, customer_id: UUID, *, actor_id: str) -> Json:
+        self._check(property_id)
+        if customer_id != self.booking_id:
+            raise ProductNotFound("the guest does not exist")
+        return {"customer_id": str(customer_id), "stays": [], "notes": []}
+
+    def quotes(self, property_id: UUID, *, actor_id: str) -> list[Json]:
+        self._check(property_id)
+        return [{"quote_id": "q-1", "quote_number": "SQ260001"}]
+
     def act(
         self, property_id: UUID, action: Action, target: UUID, body: Json, *, actor_id: str
     ) -> Json:
@@ -189,6 +199,17 @@ def test_each_step_of_a_stay_needs_its_own_right() -> None:
         (f"{booking}/cancel", {"version": 7, "reason": "Flight changed"}, "short_stays.desk"),
         (f"{booking}/credit", {"amount_usd_cents": 2000, "note": "Sick"}, "short_stays.credit"),
         (f"{booking}/lease", {"lease_id": str(uuid4())}, "short_stays.desk"),
+        (
+            f"{booking}/discount",
+            {"version": 8, "amount_usd_cents": 500, "reason": "Old friend"},
+            "short_stays.approve",
+        ),
+        (f"{booking}/review", None, "short_stays.desk"),
+        (
+            f"{base(flow)}/guests/{flow.booking_id}/notes",
+            {"note": "Quiet guest", "problem_guest": False},
+            "short_stays.desk",
+        ),
     )
     for url, body, right in steps:
         others = {
@@ -218,7 +239,14 @@ def test_each_step_of_a_stay_needs_its_own_right() -> None:
         "cancel",
         "credit",
         "link_lease",
+        "discount",
+        "review",
+        "guest_note",
     ]
+    assert flow.calls[-3][1] == (
+        flow.booking_id,
+        {"version": 8, "amount_usd_cents": 500, "reason": "Old friend"},
+    )
     desk = client(flow, "short_stays.desk")
     # A card number never reaches the database as last 4 digits; unknown fields are refused.
     for wrong in (
@@ -229,6 +257,14 @@ def test_each_step_of_a_stay_needs_its_own_right() -> None:
         assert desk.post(f"{booking}/deposit", json=wrong, headers=HEADERS).status_code == 422
     assert desk.post(f"{booking}/check-in", json={"version": 3}, headers=HEADERS).status_code == 422
     assert desk.post(f"{booking}/cancel", json={"version": 7}, headers=HEADERS).status_code == 422
+    approver = client(flow, "short_stays.approve")
+    for wrong_discount in (
+        {"version": 8, "amount_usd_cents": 500},
+        {"version": 8, "amount_usd_cents": 0, "reason": "Free"},
+        {"amount_usd_cents": 500, "reason": "No version"},
+    ):
+        answer = approver.post(f"{booking}/discount", json=wrong_discount, headers=HEADERS)
+        assert answer.status_code == 422, wrong_discount
     for wrong_fee in ({"version": 5, "kind": "PARKING"}, {"kind": "LATE_CHECK_OUT"}):
         assert desk.post(f"{booking}/fee", json=wrong_fee, headers=HEADERS).status_code == 422
     assert (
@@ -287,3 +323,35 @@ def test_our_calendar_is_read_by_its_token_without_a_sign_in() -> None:
     assert "SUMMARY:Not available" in answer.text
     assert reader.get(f"/api/v1/short-stays/ical/{'cd' * 32}.ics").status_code == 404
     assert reader.get("/api/v1/short-stays/ical/short.ics").status_code == 404
+
+
+def test_quotes_and_a_guests_history() -> None:
+    flow = InMemoryStays()
+    url = f"{base(flow)}/quotes"
+    assert client(flow, "short_stays.desk").get(url).status_code == 403
+    listed = client(flow, "short_stays.read").get(url)
+    assert listed.status_code == 200 and listed.headers["Cache-Control"] == "private, no-store"
+    assert listed.json()["data"][0]["quote_number"] == "SQ260001"
+    quote = {
+        "unit_id": str(uuid4()),
+        "guest_name": " Sok Chenda ",
+        "guest_contact": "@chenda",
+        "guest_count": 2,
+        "check_in_on": "2026-11-20",
+        "check_out_on": "2026-11-23",
+    }
+    assert (
+        client(flow, "short_stays.read").post(url, json=quote, headers=HEADERS).status_code == 403
+    )
+    made = client(flow, "short_stays.desk").post(url, json=quote, headers=HEADERS)
+    assert made.status_code == 201
+    assert flow.calls[-1] == ("quote", (flow.property_id, quote | {"guest_name": "Sok Chenda"}))
+    wrong = quote | {"guest_count": 11}
+    assert (
+        client(flow, "short_stays.desk").post(url, json=wrong, headers=HEADERS).status_code == 422
+    )
+    guest = f"{base(flow)}/guests/{flow.booking_id}"
+    assert client(flow, "short_stays.desk").get(guest).status_code == 403
+    found = client(flow, "short_stays.read").get(guest)
+    assert found.status_code == 200 and found.json()["data"]["notes"] == []
+    assert client(flow, "short_stays.read").get(f"{base(flow)}/guests/{uuid4()}").status_code == 404

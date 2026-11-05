@@ -13,7 +13,10 @@ list of a day (`GET .../housekeeping`, `short_stays.read`) with its done or skip
 late-cancel credit (`short_stays.credit`). Step 4c links the guest's Lease draft for $50 off its
 first month (`short_stays.desk`). Step 5a adds the booking-site calendar links
 (`short_stays.approve`) and our own calendar for each site, read by its private token without a
-sign-in (`GET /api/v1/short-stays/ical/{token}.ics`: busy dates only). The database
+sign-in (`GET /api/v1/short-stays/ical/{token}.ics`: busy dates only). Step 5b adds quotes
+(`GET`/`POST .../quotes`), a guest's history and notes (`GET .../guests/{id}`,
+`POST .../guests/{id}/notes`), the review request after check-out (`short_stays.desk`) and the
+Manager's extra discount before the Invoice (`short_stays.approve`). The database
 functions check the rights again, price the stay from the owner's rules and keep one booking per
 Unit and night.
 """
@@ -70,6 +73,10 @@ Action = Literal[
     "credit",
     "link_lease",
     "site_calendar",
+    "discount",
+    "guest_note",
+    "review",
+    "quote",
 ]
 # Step 3 (migration 20270602_312): each action is one database function that checks the right
 # again. "version" is the booking version the screen read (refused with 412 when it changed).
@@ -96,6 +103,11 @@ ACTION_SQL: dict[str, str] = {
         "SELECT app.save_booking_site_calendar(%(p)s, %(b)s || "
         "jsonb_strip_nulls(jsonb_build_object('version', %(v)s::integer)), %(a)s, %(c)s)"
     ),
+    # Step 5b (migration 20270607_317): a note's target is the guest; a quote's the Property.
+    "discount": "SELECT app.give_short_stay_discount(%(p)s, %(t)s, %(b)s, %(v)s, %(a)s, %(c)s)",
+    "guest_note": "SELECT app.add_guest_note(%(p)s, %(t)s, %(b)s, %(a)s, %(c)s)",
+    "review": "SELECT app.ask_short_stay_review(%(p)s, %(t)s, %(a)s, %(c)s)",
+    "quote": "SELECT app.make_short_stay_quote(%(p)s, %(b)s, %(a)s, %(c)s)",
 }
 
 
@@ -117,6 +129,10 @@ class ShortStayFlow(Protocol):
     def site_calendars(self, property_id: UUID, *, actor_id: str) -> list[Json]: ...
 
     def calendar_feed(self, token: str) -> Json | None: ...
+
+    def guest(self, property_id: UUID, customer_id: UUID, *, actor_id: str) -> Json: ...
+
+    def quotes(self, property_id: UUID, *, actor_id: str) -> list[Json]: ...
 
     def act(
         self, property_id: UUID, action: Action, target: UUID, body: Json, *, actor_id: str
@@ -148,6 +164,12 @@ class UnavailableShortStayFlow:
         raise ProductUnavailable
 
     def calendar_feed(self, token: str) -> Json | None:
+        raise ProductUnavailable
+
+    def guest(self, property_id: UUID, customer_id: UUID, **_: object) -> Json:
+        raise ProductUnavailable
+
+    def quotes(self, property_id: UUID, **_: object) -> list[Json]:
         raise ProductUnavailable
 
     def act(self, property_id: UUID, action: Action, target: UUID, body: Json, **_: object) -> Json:
@@ -235,6 +257,22 @@ class PostgresShortStayFlow:
     def calendar_feed(self, token: str) -> Json | None:
         found = self._one("SELECT app.booking_site_calendar_feed(%s)", (token,))
         return None if found is None else _json(found)
+
+    def guest(self, property_id: UUID, customer_id: UUID, *, actor_id: str) -> Json:
+        return _json(
+            self._one(
+                "SELECT app.short_stay_guest(%s, %s, %s)",
+                (property_id, customer_id, UUID(actor_id)),
+            )
+        )
+
+    def quotes(self, property_id: UUID, *, actor_id: str) -> list[Json]:
+        found = self._one(
+            "SELECT app.short_stay_quotes_read(%s, %s)", (property_id, UUID(actor_id))
+        )
+        if not isinstance(found, list):
+            raise ProductUnavailable("Short-stay persistence is unavailable")
+        return [_json(item) for item in found]
 
     def act(
         self, property_id: UUID, action: Action, target: UUID, body: Json, *, actor_id: str
@@ -356,6 +394,38 @@ class LinkLease(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
 
     lease_id: Id
+
+
+class Discount(Version):
+    amount_usd_cents: Annotated[int, Field(ge=1, le=100_000_000)]
+    reason: Note
+
+
+class GuestNote(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    note: Note
+    problem_guest: bool = False
+    booking_id: Id | None = None
+
+
+class NewQuote(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    # A quote names a Customer or just a name and a contact (a Telegram name or a phone).
+    unit_id: Id
+    customer_id: Id | None = None
+    guest_name: (
+        Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=120)]
+        | None
+    ) = None
+    guest_contact: (
+        Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=120)]
+        | None
+    ) = None
+    guest_count: Annotated[int, Field(ge=1, le=10)]
+    check_in_on: Day
+    check_out_on: Day
 
 
 def create_short_stays_router(
@@ -531,6 +601,46 @@ def create_short_stays_router(
         property_id: UUID, booking_id: UUID, body: LinkLease, request: Request
     ) -> Json:
         return act(request, property_id, SHORT_STAYS_DESK, "link_lease", booking_id, body)
+
+    @router.post("/bookings/{booking_id}/discount")
+    def give_short_stay_discount(
+        property_id: UUID, booking_id: UUID, body: Discount, request: Request
+    ) -> Json:
+        return act(request, property_id, SHORT_STAYS_APPROVE, "discount", booking_id, body)
+
+    @router.post("/bookings/{booking_id}/review")
+    def ask_short_stay_review(property_id: UUID, booking_id: UUID, request: Request) -> Json:
+        return act(request, property_id, SHORT_STAYS_DESK, "review", booking_id, None)
+
+    @router.get("/guests/{customer_id}")
+    def read_short_stay_guest(
+        property_id: UUID, customer_id: UUID, request: Request, response: Response
+    ) -> Json:
+        actor = _require(request, resolver, SHORT_STAYS_READ, property_id)
+        response.headers["Cache-Control"] = "private, no-store"
+        try:
+            return envelope(request, flow.guest(property_id, customer_id, actor_id=actor.actor_id))
+        except REFUSED as exc:
+            raise _http(exc) from exc
+
+    @router.post("/guests/{customer_id}/notes")
+    def add_guest_note(
+        property_id: UUID, customer_id: UUID, body: GuestNote, request: Request
+    ) -> Json:
+        return act(request, property_id, SHORT_STAYS_DESK, "guest_note", customer_id, body)
+
+    @router.get("/quotes")
+    def short_stay_quotes(property_id: UUID, request: Request, response: Response) -> Json:
+        actor = _require(request, resolver, SHORT_STAYS_READ, property_id)
+        response.headers["Cache-Control"] = "private, no-store"
+        try:
+            return envelope(request, flow.quotes(property_id, actor_id=actor.actor_id))
+        except REFUSED as exc:
+            raise _http(exc) from exc
+
+    @router.post("/quotes", status_code=status.HTTP_201_CREATED)
+    def make_short_stay_quote(property_id: UUID, body: NewQuote, request: Request) -> Json:
+        return act(request, property_id, SHORT_STAYS_DESK, "quote", property_id, body)
 
     @router.get("/housekeeping")
     def short_stay_housekeeping(
