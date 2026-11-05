@@ -701,8 +701,8 @@ const TEXT = {
   rp_after: ["After costs", "ក្រោយដកថ្លៃ"],
   rp_all: ["All units", "បន្ទប់ទាំងអស់"],
   rp_note: [
-    "Site fees are the booking-site share (set in Settings). Cleaning covers cleaning and laundry: {0} per change-over, plus {1} for each towel and sheet change.",
-    "កម្រៃគេហទំព័រ ជាចំណែករបស់គេហទំព័រកក់ (កំណត់ក្នុងការកំណត់)។ សម្អាត រួមទាំងសម្អាត និងបោកអ៊ុត៖ {0} ក្នុងមួយការប្ដូរភ្ញៀវ បូក {1} សម្រាប់ការប្ដូរកន្សែង និងកម្រាលម្ដងៗ។",
+    "Site fees are the booking-site share (0% until you set it in Settings). Cleaning covers cleaning and laundry: {0} per change-over, plus {1} for each towel and sheet change.",
+    "កម្រៃគេហទំព័រ ជាចំណែករបស់គេហទំព័រកក់ (០% រហូតដល់អ្នកកំណត់ក្នុងការកំណត់)។ សម្អាត រួមទាំងសម្អាត និងបោកអ៊ុត៖ {0} ក្នុងមួយការប្ដូរភ្ញៀវ បូក {1} សម្រាប់ការប្ដូរកន្សែង និងកម្រាលម្ដងៗ។",
   ],
   rp_leases_t: ["Guests who signed a Lease", "ភ្ញៀវដែលបានចុះកិច្ចសន្យា"],
   rp_lease_row: [

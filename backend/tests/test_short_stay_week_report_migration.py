@@ -108,7 +108,8 @@ def test_the_week_counts_paid_nights_money_and_costs(stay_database: BookingDatab
     assert studio["net_usd_cents"] == walk_total - 700
     one = row(report, "U503")
     assert (one["nights"], one["income_usd_cents"]) == (2, agoda_total)
-    assert one["site_fees_usd_cents"] == agoda_total * 1500 // 10000
+    # Site fees start at 0% until the owner sets them (owner 05/11).
+    assert one["site_fees_usd_cents"] == 0
     assert row(report, "U505")["nights"] == 0
     totals = report["totals"]
     assert totals["nights"] == 4

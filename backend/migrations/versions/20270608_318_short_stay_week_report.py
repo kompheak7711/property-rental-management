@@ -5,7 +5,7 @@ The PRD "How we judge the test" (owner 03/11/2026): occupancy (the share of unit
 paid), income per unit each week after cleaning, laundry and booking-site costs, the guests who
 signed a monthly Lease, and damage and complaints from monthly tenants, compared with the 40%
 occupancy before the test. The booking-site fees and the cleaning costs are used only by this
-report; the owner sets the real values in Settings (PRD "Price details").
+report. Site fees start at 0% (owner 05/11: no site is connected yet); the owner sets them in Settings.
 
 Readings by Claude (owner rule 2026-10-23 22:30, non-money): a week is 7 days from the day asked
 for (the screen asks for Mondays); the Units in the report are the Units for rent that are empty,
@@ -31,14 +31,14 @@ depends_on: str | Sequence[str] | None = None
 
 RANGE = "app.business_rules_program_range()"
 RANGE_BEFORE = "OR (v_code = 'TR_AUTO_CLOSE_DAYS' AND NEW.value NOT BETWEEN 1 AND 30)"
-SEED_REASON = "First value: PRD estimate for the weekly report (owner sets the real value)"
+SEED_REASON = "Starts at 0%: the owner sets each site share when the site is connected"
 
 # code, unit, value, lowest, highest, English, Khmer
 RULES = (
     (
         "SS_SITE_FEE_BOOKING_COM",
         "PERCENT",
-        1500,
+        0,
         0,
         5000,
         "Report only: Booking.com share of each booking",
@@ -47,7 +47,7 @@ RULES = (
     (
         "SS_SITE_FEE_AGODA",
         "PERCENT",
-        1500,
+        0,
         0,
         5000,
         "Report only: Agoda share of each booking",
@@ -56,7 +56,7 @@ RULES = (
     (
         "SS_SITE_FEE_AIRBNB",
         "PERCENT",
-        1500,
+        0,
         0,
         5000,
         "Report only: Airbnb share of each booking",

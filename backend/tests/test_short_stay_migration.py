@@ -64,10 +64,10 @@ OWNER_RULES = {
     "SS_CHANGE_OVER_COST": 500,
     "SS_LINEN_COST": 200,
     "SS_CALENDAR_SYNC_MINUTES": 15,
-    # Step 5c (318): report only, the owner sets the real values.
-    "SS_SITE_FEE_BOOKING_COM": 1500,
-    "SS_SITE_FEE_AGODA": 1500,
-    "SS_SITE_FEE_AIRBNB": 1500,
+    # Step 5c (318): report only; site fees start at 0% until the owner sets them.
+    "SS_SITE_FEE_BOOKING_COM": 0,
+    "SS_SITE_FEE_AGODA": 0,
+    "SS_SITE_FEE_AIRBNB": 0,
     "SS_BASE_OCCUPANCY": 4000,
 }
 
