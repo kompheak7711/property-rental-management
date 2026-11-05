@@ -2685,3 +2685,18 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **Links:** DL-126, DL-128, DL-129.
 - **Decision date:** 2026-11-05.
 
+
+## DL-171 — Telegram bots: the Customer bot and Visit requests from it (bots step 3a)
+
+- **Type:** `TECHNICAL DECISION`
+- **Status:** `STEP 3A BUILT ON BRANCH claude/telegram-bots; WAITS FOR THE OWNER'S TEST`
+- **Source:** the CRM mock-up (customer bot view, 28 Oct to 2 Nov 2026; "Send an inquiry" wording 2 Nov), the owner's CRM rules (28 Oct 2026: first come, first served; a repeat joins the old request and keeps its place; the front desk, Managers and the Owner work the list), the owner's 2 Nov rule (the Customer bot books visits and shows fixed FAQ answers; no AI chat) and DESIGN rounds 9, 10 and 13 (Visit requests, contact methods). Technical choices by Claude under the owner's 2026-10-23 22:30 rule; no new business rule.
+- **(A) The Customer bot.** Start asks for Khmer or English, then the menu: Send an inquiry, FAQ, Contact office. Send an inquiry asks one question at a time: how to contact them (Telegram, Email, Phone call or SMS, WhatsApp), their own phone (Telegram's share button; not asked again once shared), the email when they chose Email, the name, the Unit Type (the Property's Unit Types from Settings), the visit day (the next six working days are buttons; a typed day such as 12/11 also works; 2 to 30 days ahead, Monday to Saturday; Skip is allowed) with Morning or Afternoon, the move-in month (three months from two weeks ahead, or Later) and a note (Skip allowed). The bot then shows the request to check; "Send an inquiry" saves it and answers with its number and "Staff will call you within 2 working hours". Back to menu leaves at any step. The bot never says which Units are free.
+- **(B) Visit requests.** Each inquiry is a row in `visit_requests` (append-only), numbered from Settings > Business > Numbers (VISIT_REQUEST, VRyy000n, as the Problem report numbers; the mock-up's "R-0142" was a sample). A new inquiry from a person or a phone that already has a request joins that request and keeps its place; the bot says so with both numbers. The database checks every answer again.
+- **(C) The app.** Bookings > Visit requests (`visit_requests.read`: Owner, Manager and Staff), oldest first, with the customer and phone, how to contact them (and the email), the Unit Type and move-in month, the preferred day and part, the note and the status (New), and the joined asks under each request.
+- **(D) Contact office and FAQ in the Customer bot.** Contact office asks for the phone first ("so our customer service team can reach you"), then one written message; the office's Reply comes back in the Customer bot with its menu. FAQ shows the approved questions for customers (DL-170).
+- **Next (step 3b):** Take, Record a call (3 no-answer days), Late after 2 working hours, Book and move a visit with the Telegram confirmation and the 08:00 reminder, the "Send by hand today" box, Visited and No-show, Close with a reason, Make Reservation, Spam and Block (Manager), the 12-month removal of name, phone and account, and the dashboard.
+- **Open:** the Khmer texts marked new need a native-speaker check.
+- **Built:** migration `20270525_287` (DB-TG-007), API-TG-003, `backend/src/property_rental/telegram_customer_bot.py`, `frontend/src/telegram/`, TEST-FE-1309 and 1310.
+- **Links:** DL-115, DL-124, DL-126, DL-170.
+- **Decision date:** 2026-11-05.

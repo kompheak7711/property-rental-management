@@ -15,6 +15,10 @@ FAQ page (`telegram.faq`, or `telegram.contact` to read only); `POST .../telegra
 question (a new version; the Owner's is used at once) and
 `POST .../telegram/faq/versions/{version_id}/approve` is the Owner's approval (`telegram.faq`).
 
+Step 3a (DL-171): `GET .../visit-requests` answers the Visit requests tab of Bookings: the
+requests the Customer bot saved, oldest first, each with the inquiries that joined it
+(`visit_requests.read`: the Owner, the Manager and Staff).
+
 The database functions check the rights again.
 """
 
@@ -49,6 +53,7 @@ TELEGRAM_READ = "telegram.read"
 TELEGRAM_OPERATE = "telegram.operate"
 TELEGRAM_CONTACT = "telegram.contact"
 TELEGRAM_FAQ = "telegram.faq"
+VISIT_REQUESTS_READ = "visit_requests.read"
 Reason = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=300)]
 AnswerText = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=600)]
 Question = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=160)]
@@ -78,6 +83,8 @@ class TelegramPageFlow(Protocol):
 
     def approve_faq(self, property_id: UUID, version_id: UUID, *, actor_id: str) -> Json: ...
 
+    def visit_requests(self, property_id: UUID, *, actor_id: str) -> Json: ...
+
 
 class UnavailableTelegramPageFlow:
     def links(self, property_id: UUID, **_: object) -> Json:
@@ -105,6 +112,9 @@ class UnavailableTelegramPageFlow:
         raise ProductUnavailable
 
     def approve_faq(self, property_id: UUID, version_id: UUID, **_: object) -> Json:
+        raise ProductUnavailable
+
+    def visit_requests(self, property_id: UUID, **_: object) -> Json:
         raise ProductUnavailable
 
 
@@ -190,6 +200,11 @@ class PostgresTelegramPageFlow:
             )
         )
 
+    def visit_requests(self, property_id: UUID, *, actor_id: str) -> Json:
+        return _json(
+            self._one("SELECT app.visit_requests_page(%s, %s)", (property_id, UUID(actor_id)))
+        )
+
 
 class RemoveLink(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
@@ -232,7 +247,7 @@ def _require_any(
 def create_telegram_router(
     resolver: ActorResolver, flow: TelegramPageFlow, settings: Settings
 ) -> APIRouter:
-    router = APIRouter(prefix="/api/v1/properties/{property_id}/telegram", tags=["telegram"])
+    router = APIRouter(prefix="/telegram")
 
     def envelope(request: Request, data: object) -> Json:
         return {"data": data, "meta": {"request_id": request.state.request_id}}
@@ -346,4 +361,16 @@ def create_telegram_router(
         except REFUSED as exc:
             raise _http(exc) from exc
 
-    return router
+    pages = APIRouter(prefix="/api/v1/properties/{property_id}", tags=["telegram"])
+
+    @pages.get("/visit-requests")
+    def visit_requests(property_id: UUID, request: Request, response: Response) -> Json:
+        actor = _require(request, resolver, VISIT_REQUESTS_READ, property_id)
+        response.headers["Cache-Control"] = "private, no-store"
+        try:
+            return envelope(request, flow.visit_requests(property_id, actor_id=actor.actor_id))
+        except REFUSED as exc:
+            raise _http(exc) from exc
+
+    pages.include_router(router)
+    return pages

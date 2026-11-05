@@ -17,6 +17,7 @@ export type PageId =
   | "locations"
   | "customers"
   | "reservations"
+  | "visitreqs"
   | "leases"
   | "letters"
   | "moveout"
@@ -99,7 +100,8 @@ export const MENU: readonly MenuGroup[] = [
         icon: "calendar",
         // new
         label: ["Bookings", "ការកក់"],
-        tabs: ["reservations"],
+        // Telegram bots step 3a (DL-171): Visit requests from the Customer bot.
+        tabs: ["reservations", "visitreqs"],
       },
       {
         page: "leases",
@@ -181,6 +183,7 @@ const PAGE_NAMES: Record<PageId, readonly [string, string]> = {
   locations: ["Locations", "ទីតាំង"],
   customers: ["Customers", "អតិថិជន"],
   reservations: ["Reservations", "ការកក់ទុក"],
+  visitreqs: ["Visit requests", "សំណើមកមើលបន្ទប់"],
   leases: ["Leases", "កិច្ចសន្យាជួល"],
   letters: ["Letters", "លិខិត"],
   moveout: ["Move-out", "ការចាកចេញ"],
@@ -233,6 +236,8 @@ const PAGE_NEEDS: Record<PageId, readonly string[] | null> = {
   locations: ["products.read"],
   customers: ["customers.read"],
   reservations: ["reservations.read"],
+  // Telegram bots step 3a (DL-171): the Owner, the Manager and Staff.
+  visitreqs: ["visit_requests.read"],
   leases: ["leases.read"],
   letters: ["rent_nonpayment.read", "leases.warn"],
   moveout: ["deposits.read", "final_settlements.prepare", "leases.move_out"],

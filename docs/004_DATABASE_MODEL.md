@@ -5797,3 +5797,11 @@ Added by DL-170 (migration `20270524_286`, forward-only).
 - Rights (group Administration): `telegram.contact` "Answer Contact office" (Owner, Manager and Staff bundles) and `telegram.faq` "Edit the FAQ" (Owner and Manager). New Properties seed the same.
 - The runtime login cannot read the tables. Functions: `app.telegram_contact_add` and `app.telegram_faq_for_bot` (`telegram.operate`); `app.telegram_contact_page` and `app.telegram_contact_answer` (`telegram.contact`); `app.telegram_faq_page` (`telegram.faq` or `telegram.contact`); `app.telegram_faq_save` (`telegram.faq`; the Owner's save is approved at once); `app.telegram_faq_approve` (`telegram.faq` and the Owner account only).
 
+
+## DB-TG-007 — Visit requests from the Customer bot (bots step 3a)
+
+Added by DL-171 (migration `20270525_287`, forward-only).
+
+- `app.visit_requests` (Property, number VRyy000n from `app.number_rules` type VISIT_REQUEST, source TELEGRAM, the pulled update in `telegram_inbound_events` (once), Telegram account and chat, language, contact by TELEGRAM, EMAIL, PHONE or WHATSAPP, the shared phone (E.164), the email (only and always for EMAIL), name 1 to 120 letters, Unit Type code, visit day and part MORNING or AFTERNOON (both or neither), move-in month (the first day; empty is Later), note up to 500 letters, `joined_to` the first request of the same person or phone, received, by whom). Append-only; statuses, calls, visits, closing and the 12-month removal of personal data come in step 3b.
+- Rights (group Leasing): `visit_requests.read` "See Visit requests" (Owner, Manager and Staff bundles). New Properties seed the same.
+- The runtime login cannot read the table. Functions: `app.telegram_customer_choices` (today, the Unit Types, the person's shared phone) and `app.telegram_visit_request_add` (checks every answer: a visit day 2 to 30 days ahead and not a Sunday, a move-in month from this month; answers ADDED, JOINED, REPEATED or NO_PHONE) for `telegram.operate`; `app.visit_requests_page` (`visit_requests.read`, oldest first with the joined asks). `app.telegram_contact_answer` now gives the office's Reply in the Customer bot the Customer bot menu.

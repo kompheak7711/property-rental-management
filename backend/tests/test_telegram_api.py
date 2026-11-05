@@ -1,9 +1,11 @@
-"""Telegram app pages API (bots step 2c, DL-128, API-TG-001; step 2d part 2, DL-170).
+"""Telegram app pages API (bots step 2c, DL-128, API-TG-001; step 2d part 2, DL-170; step 3a,
+DL-171).
 
 Reading the Linked tenants and Telegram health pages needs `telegram.read`; Remove link and Retry
 need `telegram.operate` and the browser mutation checks. Contact office needs `telegram.contact`;
 the FAQ is read with `telegram.faq` or `telegram.contact` and changed with `telegram.faq`. The
-database refusals map to 403, 404 and 409.
+database refusals map to 403, 404 and 409. The Visit requests list (step 3a, DL-171) needs
+`visit_requests.read`.
 """
 
 from __future__ import annotations
@@ -99,6 +101,10 @@ class InMemoryTelegram:
             raise ProductForbidden("Only the Owner approves a FAQ answer")
         self.approved.append(version_id)
         return {"number": 1, "version_number": 1}
+
+    def visit_requests(self, property_id: UUID, *, actor_id: str) -> Json:
+        self._check(property_id)
+        return {"requests": [{"number": "VR260001", "joined": []}], "today": "2026-11-05"}
 
 
 def client(flow: InMemoryTelegram, *capabilities: str) -> TestClient:
@@ -204,3 +210,15 @@ def test_the_faq_is_read_by_contact_staff_and_changed_with_its_right() -> None:
     flow.owner = True
     approved = manager.post(approve, headers=HEADERS)
     assert approved.status_code == 200 and flow.approved == [version]
+
+
+def test_the_visit_requests_list_needs_its_right() -> None:
+    flow = InMemoryTelegram()
+    url = f"/api/v1/properties/{flow.property_id}/visit-requests"
+    assert client(flow, "telegram.read").get(url).status_code == 403
+    answer = client(flow, "visit_requests.read").get(url)
+    assert answer.status_code == 200
+    assert answer.headers["Cache-Control"] == "private, no-store"
+    assert answer.json()["data"]["requests"][0]["number"] == "VR260001"
+    other = InMemoryTelegram()
+    assert client(other, "visit_requests.read").get(url).status_code == 403

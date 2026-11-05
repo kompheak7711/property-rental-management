@@ -175,11 +175,18 @@ def _sender_name(message: dict[str, Any]) -> str | None:
 
 
 def _faq_answer(
-    entries: list[dict[str, Any]], language: str, typed: str, tapped: str | None
+    entries: list[dict[str, Any]],
+    language: str,
+    typed: str,
+    tapped: str | None,
+    *,
+    keyboard: str = "tenant.faq",
+    home: str = "tenant.menu",
 ) -> dict[str, Any]:
-    """The list of questions as buttons, or the answer to the one the person tapped."""
+    """The list of questions as buttons, or the answer to the one the person tapped (both bots:
+    the Customer bot passes its own keyboards)."""
     if not entries:
-        return _say("tenant.faq_none", "tenant.menu")
+        return _say("tenant.faq_none", home)
     suffix = "km" if language == "km" else "en"
     choices = [
         f"{entry.get('number')}. {entry.get('question_' + suffix) or ''}" for entry in entries
@@ -191,12 +198,12 @@ def _faq_answer(
             if entry.get("number") == number:
                 return _say(
                     "tenant.faq_answer",
-                    "tenant.faq",
+                    keyboard,
                     question=str(entry.get("question_" + suffix) or ""),
                     answer=str(entry.get("answer_" + suffix) or ""),
                     choices=choices,
                 )
-    return _say("tenant.faq_list", "tenant.faq", choices=choices)
+    return _say("tenant.faq_list", keyboard, choices=choices)
 
 
 def _hello(state: dict[str, Any]) -> dict[str, Any]:

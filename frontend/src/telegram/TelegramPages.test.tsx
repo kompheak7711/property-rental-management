@@ -13,6 +13,7 @@ import {
   FaqPageView,
   LinkedTenantsPage,
   TelegramHealthPage,
+  VisitRequestsPageView,
 } from "./TelegramPages";
 import {
   type ContactPage,
@@ -21,10 +22,12 @@ import {
   type LinksPage,
   type TelegramApi,
   TelegramError,
+  type VisitRequestsPage,
   contactPageOf,
   faqPageOf,
   healthPageOf,
   linksPageOf,
+  visitRequestsPageOf,
 } from "./telegramClient";
 
 afterEach(() => {
@@ -217,6 +220,50 @@ const FAQ: FaqPage = {
   ],
 };
 
+const SOKHA = {
+  id: "vr-1",
+  number: "VR260001",
+  received_at: "2026-11-05T03:05:00Z",
+  name: "Sokha Chan",
+  phone: "+85512800200",
+  contact_by: "EMAIL",
+  email: "sokha@example.com",
+  language: "en",
+  unit_type: "TWO_BEDROOM",
+  unit_type_en: "2 bedrooms",
+  unit_type_km: "បន្ទប់គេង ២",
+  visit_on: "2026-11-09",
+  visit_part: "AFTERNOON",
+  move_in_month: "2026-12",
+  note: "A high floor, please.",
+};
+
+const VISITS: VisitRequestsPage = {
+  today: "2026-11-05",
+  requests: [
+    {
+      ...SOKHA,
+      status: "NEW",
+      joined: [
+        {
+          ...SOKHA,
+          id: "vr-2",
+          number: "VR260002",
+          contact_by: "WHATSAPP",
+          email: null,
+          unit_type: "STUDIO",
+          unit_type_en: "Studio",
+          unit_type_km: "ស្ទូឌីយោ",
+          visit_on: null,
+          visit_part: null,
+          move_in_month: null,
+          note: null,
+        },
+      ],
+    },
+  ],
+};
+
 function fakeApi(extra: Partial<TelegramApi> = {}): TelegramApi {
   return {
     contact: vi.fn(() => Promise.resolve(CONTACT)),
@@ -240,6 +287,7 @@ function fakeApi(extra: Partial<TelegramApi> = {}): TelegramApi {
         })),
       }),
     ),
+    visitRequests: vi.fn(() => Promise.resolve(VISITS)),
     links: vi.fn(() => Promise.resolve(LINKS)),
     removeLink: vi.fn(() => Promise.resolve({ ...LINKS, linked: [] })),
     health: vi.fn(() => Promise.resolve(HEALTH)),
@@ -791,6 +839,79 @@ describe("Office › Telegram", () => {
     expect(() =>
       faqPageOf({
         questions: [{ ...FAQ.questions[0], current: { for_bots: "ALL" } }],
+      }),
+    ).toThrow(TelegramError);
+  });
+
+  it("TEST-FE-1309 Visit requests lists the Customer bot's requests oldest first with the customer, phone, how to contact, what they want, the day they prefer and the note; a later ask of the same person shows under it as Joined", async () => {
+    const api = fakeApi();
+    render(
+      <VisitRequestsPageView
+        active
+        api={api}
+        capabilities={new Set(["visit_requests.read"])}
+        language="en"
+        propertyId="prop-1"
+      />,
+    );
+    expect(await screen.findByText("VR260001")).toBeTruthy();
+    expect(screen.getByText("1 requests")).toBeTruthy();
+    expect(screen.getAllByText("Sokha Chan")).toHaveLength(2);
+    expect(screen.getByText("sokha@example.com")).toBeTruthy();
+    expect(screen.getByText("2 bedrooms")).toBeTruthy();
+    expect(screen.getByText("move in 12/2026")).toBeTruthy();
+    expect(screen.getByText("09/11/2026, Afternoon")).toBeTruthy();
+    expect(screen.getByText("A high floor, please.")).toBeTruthy();
+    expect(screen.getByText("New")).toBeTruthy();
+    // The second ask joins the first and keeps its place.
+    expect(screen.getByText("joins VR260001")).toBeTruthy();
+    expect(screen.getByText("Joined")).toBeTruthy();
+    expect(screen.getByText("WhatsApp")).toBeTruthy();
+    expect(screen.getByText("move in Later")).toBeTruthy();
+    expect(screen.getByText("No day yet")).toBeTruthy();
+    expect(api.visitRequests).toHaveBeenCalledWith("prop-1");
+    cleanup();
+
+    const empty = fakeApi({
+      visitRequests: vi.fn(() =>
+        Promise.resolve({ today: "2026-11-05", requests: [] }),
+      ),
+    });
+    render(
+      <VisitRequestsPageView
+        active
+        api={empty}
+        capabilities={new Set(["visit_requests.read"])}
+        language="km"
+        propertyId="prop-1"
+      />,
+    );
+    expect(
+      await screen.findByText("គ្មានសំណើមកមើលបន្ទប់នៅទីនេះទេ។"),
+    ).toBeTruthy();
+  });
+
+  it("TEST-FE-1310 the client reads Visit requests from the Bookings address and refuses a list of the wrong shape", async () => {
+    const calls: string[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((path: string) => {
+        calls.push(path);
+        return Promise.resolve(
+          new Response(JSON.stringify({ data: VISITS, meta: {} }), {
+            status: 200,
+          }),
+        );
+      }),
+    );
+    const { telegramApi } = await import("./telegramClient");
+    expect(await telegramApi.visitRequests("p 1")).toEqual(VISITS);
+    expect(calls).toEqual(["/api/v1/properties/p%201/visit-requests"]);
+    expect(() => visitRequestsPageOf({ requests: [] })).toThrow(TelegramError);
+    expect(() =>
+      visitRequestsPageOf({
+        today: "2026-11-05",
+        requests: [{ ...VISITS.requests[0], joined: null }],
       }),
     ).toThrow(TelegramError);
   });

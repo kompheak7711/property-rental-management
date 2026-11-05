@@ -2,8 +2,9 @@
 // tenants ("#/tglinks") and Telegram health ("#/tghealth"). Reading needs telegram.read;
 // Remove link and Retry show only to a person with telegram.operate. Step 2d part 2 (DL-170):
 // the tabs Contact office ("#/tgcontact", telegram.contact) and FAQ ("#/tgfaq", read with
-// telegram.contact, changed with telegram.faq; only the Owner approves). The server checks every
-// right again. No bot key is ever shown.
+// telegram.contact, changed with telegram.faq; only the Owner approves). Step 3a (DL-171):
+// Bookings › Visit requests ("#/visitreqs", visit_requests.read), the requests the Customer bot
+// saves. The server checks every right again. No bot key is ever shown.
 
 import "../shell/screens.css";
 
@@ -15,7 +16,7 @@ import {
   useState,
 } from "react";
 
-import { momentText } from "../shell/format";
+import { dayText, momentText } from "../shell/format";
 import { Icon } from "../shell/icons";
 import { Chip, Dialog } from "../shell/ui";
 import type { Language } from "../signInText";
@@ -33,6 +34,8 @@ import {
   type TelegramApi,
   TelegramError,
   telegramApi as defaultTelegramApi,
+  type VisitInquiry,
+  type VisitRequestsPage,
 } from "./telegramClient";
 import { hasText, tt } from "./text";
 
@@ -1558,5 +1561,168 @@ function FaqDialog({
         </p>
       )}
     </Dialog>
+  );
+}
+
+// ---------------------------------------------------------------- Visit requests
+
+function contactBy(language: Language, inquiry: VisitInquiry): string {
+  const key = `ch_${inquiry.contact_by}`;
+  return hasText(key) ? tt(language, key) : inquiry.contact_by;
+}
+
+function unitTypeName(language: Language, inquiry: VisitInquiry): string {
+  const name = language === "km" ? inquiry.unit_type_km : inquiry.unit_type_en;
+  return name ?? inquiry.unit_type;
+}
+
+function moveIn(language: Language, inquiry: VisitInquiry): string {
+  if (inquiry.move_in_month === null) return tt(language, "vr_later");
+  const [year = "", month = ""] = inquiry.move_in_month.split("-");
+  return `${month}/${year}`;
+}
+
+function prefers(language: Language, inquiry: VisitInquiry): string {
+  if (inquiry.visit_on === null) return tt(language, "vr_no_day");
+  const key = `part_${inquiry.visit_part ?? ""}`;
+  const part = hasText(key) ? tt(language, key) : "";
+  return part === ""
+    ? dayText(inquiry.visit_on)
+    : `${dayText(inquiry.visit_on)}, ${part}`;
+}
+
+function statusName(language: Language, status: string): string {
+  const key = `vst_${status}`;
+  return hasText(key) ? tt(language, key) : status;
+}
+
+function InquiryCells({
+  language,
+  inquiry,
+}: {
+  language: Language;
+  inquiry: VisitInquiry;
+}) {
+  return (
+    <>
+      <td>
+        {inquiry.name}
+        <span className="ui-sub2 ui-num">{inquiry.phone}</span>
+      </td>
+      <td className="ui-wide">
+        {contactBy(language, inquiry)}
+        {inquiry.email !== null && (
+          <span className="ui-sub2">{inquiry.email}</span>
+        )}
+      </td>
+      <td>
+        {unitTypeName(language, inquiry)}
+        <span className="ui-sub2">
+          {tt(language, "vr_movein", moveIn(language, inquiry))}
+        </span>
+      </td>
+      <td>{prefers(language, inquiry)}</td>
+      <td className="ui-wide">
+        <span className="ui-muted">{inquiry.note ?? ""}</span>
+      </td>
+    </>
+  );
+}
+
+export function VisitRequestsPageView({
+  language,
+  propertyId,
+  active,
+  api = defaultTelegramApi,
+}: TelegramPageProps) {
+  const page = usePage<VisitRequestsPage>(
+    propertyId,
+    active,
+    api.visitRequests,
+  );
+  if (propertyId === "") return <NoProperty language={language} />;
+  const head = (
+    <div className="ui-head">
+      <p>{tt(language, "vr_sub")}</p>
+    </div>
+  );
+  if (page.data === null)
+    return (
+      <>
+        {head}
+        <Waiting failed={page.failed} language={language} onRetry={page.load} />
+      </>
+    );
+  const { requests } = page.data;
+  return (
+    <>
+      {head}
+      <section aria-labelledby="vr-list" className="ui-card pad0">
+        <div className="ui-listbar">
+          <h2 id="vr-list">
+            {tt(language, "vr_title")}{" "}
+            <span className="ui-muted ui-num">
+              {tt(language, "vr_n", requests.length)}
+            </span>
+          </h2>
+        </div>
+        {requests.length === 0 ? (
+          <p className="ui-empty">{tt(language, "vr_none")}</p>
+        ) : (
+          <div className="ui-tablewrap">
+            <table className="ui-table">
+              <thead>
+                <tr>
+                  <th scope="col">{tt(language, "vr_col_req")}</th>
+                  <th scope="col">{tt(language, "vr_col_who")}</th>
+                  <th className="ui-wide" scope="col">
+                    {tt(language, "vr_col_ch")}
+                  </th>
+                  <th scope="col">{tt(language, "vr_col_wants")}</th>
+                  <th scope="col">{tt(language, "vr_col_pref")}</th>
+                  <th className="ui-wide" scope="col">
+                    {tt(language, "vr_col_note")}
+                  </th>
+                  <th scope="col">{tt(language, "vr_col_status")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {requests.map((request) => [
+                  <tr key={request.id}>
+                    <td>
+                      <span className="ui-num">{request.number}</span>
+                      <span className="ui-sub2 ui-num">
+                        {momentText(request.received_at)}
+                      </span>
+                    </td>
+                    <InquiryCells inquiry={request} language={language} />
+                    <td>
+                      <Chip tone="info">
+                        {statusName(language, request.status)}
+                      </Chip>
+                    </td>
+                  </tr>,
+                  ...request.joined.map((kid) => (
+                    <tr className="ui-joined" key={kid.id}>
+                      <td>
+                        <span className="ui-num">{kid.number}</span>
+                        <span className="ui-sub2">
+                          {tt(language, "vr_joins", request.number)}
+                        </span>
+                      </td>
+                      <InquiryCells inquiry={kid} language={language} />
+                      <td>
+                        <Chip tone="neutral">{tt(language, "vst_JOINED")}</Chip>
+                      </td>
+                    </tr>
+                  )),
+                ])}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+      <p className="ui-muted">{tt(language, "vr_how")}</p>
+    </>
   );
 }

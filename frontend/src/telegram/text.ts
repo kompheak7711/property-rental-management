@@ -1,7 +1,7 @@
 // Telegram bots step 2c (DL-128): the words of Office › Telegram, Linked tenants and Telegram
-// health, and step 2d part 2 (DL-170): Contact office and FAQ, in English and Khmer, from the
-// mock-up round 29 (i18n34.js, keys tg_*). Khmer marked "new" is not in the mock-up and needs
-// the native check.
+// health, step 2d part 2 (DL-170): Contact office and FAQ, and step 3a (DL-171): Bookings ›
+// Visit requests, in English and Khmer, from the mock-up round 29 (i18n34.js, keys tg_*) and
+// earlier rounds. Khmer marked "new" is not in the mock-up and needs the native check.
 
 import type { Language } from "../signInText";
 
@@ -388,6 +388,46 @@ const TEXT = {
     // new
     "សំណួរនេះបានប្ដូររួចហើយ។ បញ្ជីត្រូវបានអានម្ដងទៀត។",
   ],
+  // Telegram bots step 3a (DL-171): Bookings › Visit requests, words from the mock-up rounds 9,
+  // 10 and 13 (i18n11.js, i18n13.js, i18n25.js; keys vr_*, ch_*).
+  vr_sub: [
+    "New customers who asked to see a Unit. Oldest first: first come, first served.",
+    "អតិថិជនថ្មីដែលសុំមកមើលបន្ទប់។ ចាស់មុន៖ មកមុន បានមុន។",
+  ],
+  vr_how: [
+    "Customers send a request from the Telegram bot. They choose how we contact them: Telegram, email, phone call or SMS, or WhatsApp. A new request from the same phone joins the open one and keeps its place.",
+    "អតិថិជនផ្ញើសំណើពី Telegram bot។ ពួកគេជ្រើសរបៀបទាក់ទង៖ Telegram អ៊ីមែល ទូរស័ព្ទ ឬ SMS ឬ WhatsApp។ សំណើថ្មីពីលេខទូរស័ព្ទដដែល ភ្ជាប់ទៅសំណើដែលកំពុងបើក ហើយរក្សាលំដាប់ដដែល។",
+  ],
+  vr_title: ["Visit requests", "សំណើមកមើលបន្ទប់"],
+  vr_n: ["{0} requests", "សំណើ {0}"],
+  vr_none: ["No visit requests here.", "គ្មានសំណើមកមើលបន្ទប់នៅទីនេះទេ។"],
+  vr_col_req: ["Request", "សំណើ"],
+  vr_col_who: ["Customer", "អតិថិជន"],
+  vr_col_ch: ["Contact by", "ទាក់ទងតាម"],
+  vr_col_wants: ["Wants", "ចង់បាន"],
+  vr_col_pref: ["Prefers", "ចូលចិត្ត"],
+  vr_col_note: ["Note from the person", "កំណត់សម្គាល់ពីអ្នកសុំ"],
+  vr_col_status: ["Status", "ស្ថានភាព"],
+  vr_movein: ["move in {0}", "ចូលនៅ {0}"],
+  vr_later: ["Later", "ពេលក្រោយ"],
+  vr_no_day: [
+    "No day yet",
+    // new
+    "មិនទាន់កំណត់ថ្ងៃ",
+  ],
+  vr_joins: [
+    "joins {0}",
+    // new
+    "ភ្ជាប់ទៅ {0}",
+  ],
+  ch_TELEGRAM: ["Telegram", "Telegram"],
+  ch_EMAIL: ["Email", "អ៊ីមែល"],
+  ch_PHONE: ["Phone call or SMS", "ទូរស័ព្ទ ឬ SMS"],
+  ch_WHATSAPP: ["WhatsApp", "WhatsApp"],
+  part_MORNING: ["Morning", "ព្រឹក"],
+  part_AFTERNOON: ["Afternoon", "រសៀល"],
+  vst_NEW: ["New", "ថ្មី"],
+  vst_JOINED: ["Joined", "បានភ្ជាប់"],
 } as const satisfies Record<string, readonly [string, string]>;
 
 export type TelegramTextKey = keyof typeof TEXT;

@@ -63173,6 +63173,122 @@
       "test_path": "frontend/src/telegram/TelegramPages.test.tsx",
       "status": "implemented",
       "notes": "Telegram bots step 2d part 2: The client reads and sends Contact office and FAQ with the browser token and refuses a wrong answer shape."
+    },
+    {
+      "test_id": "test_an_inquiry_is_saved_with_a_number_and_a_repeat_joins_it",
+      "upstream_ids": [
+        "DL-171",
+        "DB-TG-007"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_customer_bot_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 3a: An inquiry needs the shared phone, is checked again, gets a VR number once, a repeat of the same person joins it, and Staff see the list oldest first."
+    },
+    {
+      "test_id": "test_the_offices_reply_to_a_customer_shows_the_customer_menu",
+      "upstream_ids": [
+        "DL-171",
+        "DB-TG-007"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_customer_bot_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 3a: The office's Reply to a Customer bot message is sent by the Customer bot with its menu; the page shows the shared phone."
+    },
+    {
+      "test_id": "test_start_asks_for_the_language_then_shows_the_three_choices",
+      "upstream_ids": [
+        "DL-171"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_customer_bot.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 3a: Start asks for Khmer or English, then shows Send an inquiry, FAQ and Contact office."
+    },
+    {
+      "test_id": "test_an_inquiry_asks_each_question_then_saves_the_request",
+      "upstream_ids": [
+        "DL-171"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_customer_bot.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 3a: Send an inquiry asks each question in order, refuses answers that do not fit, shows the request to check and saves it with its number."
+    },
+    {
+      "test_id": "test_a_known_phone_is_not_asked_again_and_skips_are_allowed",
+      "upstream_ids": [
+        "DL-171"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_customer_bot.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 3a: A shared phone is not asked again; the day, the move-in month and the note can be skipped; a joined request names both numbers."
+    },
+    {
+      "test_id": "test_back_to_menu_leaves_the_inquiry_and_a_lost_phone_asks_again",
+      "upstream_ids": [
+        "DL-171"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_customer_bot.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 3a: Back to menu leaves the inquiry; with no phone on file the bot asks to share it."
+    },
+    {
+      "test_id": "test_contact_office_asks_for_the_phone_first_then_takes_one_message",
+      "upstream_ids": [
+        "DL-171",
+        "DL-170"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_customer_bot.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 3a: Contact office in the Customer bot asks for the own phone first, then saves one written message."
+    },
+    {
+      "test_id": "test_the_faq_shows_the_customer_questions",
+      "upstream_ids": [
+        "DL-171",
+        "DL-170"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_customer_bot.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 3a: FAQ in the Customer bot lists the customer questions as buttons and answers the one tapped."
+    },
+    {
+      "test_id": "test_the_visit_requests_list_needs_its_right",
+      "upstream_ids": [
+        "DL-171",
+        "API-TG-003"
+      ],
+      "test_level": "API",
+      "test_path": "backend/tests/test_telegram_api.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 3a: The Visit requests list needs visit_requests.read for that Property and is not cached."
+    },
+    {
+      "test_id": "TEST-FE-1309",
+      "upstream_ids": [
+        "DL-171"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/telegram/TelegramPages.test.tsx",
+      "status": "implemented",
+      "notes": "Telegram bots step 3a: Visit requests lists the requests oldest first with customer, contact, wants, preferred day and note, and the joined asks under each."
+    },
+    {
+      "test_id": "TEST-FE-1310",
+      "upstream_ids": [
+        "DL-171",
+        "API-TG-003"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/telegram/TelegramPages.test.tsx",
+      "status": "implemented",
+      "notes": "Telegram bots step 3a: The client reads Visit requests from the Bookings address and refuses a wrong shape."
     }
   ]
 }

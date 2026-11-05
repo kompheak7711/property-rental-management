@@ -118,6 +118,10 @@ class FakeStore:
         # Contact office and FAQ (migration 20270524_286).
         self.contacts: list[tuple[str, str, int, int, str, str | None, str]] = []
         self.faq: list[dict[str, Any]] = []
+        # The Customer bot (migration 20270525_287).
+        self.choices: dict[str, Any] = {"today": "2026-11-05", "unit_types": [], "phone": None}
+        self.inquiries: list[tuple[str, int, int, str, dict[str, Any]]] = []
+        self.inquiry_answers: list[dict[str, Any]] = []
 
     def record_item(self, item: dict[str, Any]) -> dict[str, Any]:
         if item["relay_item_id"] in self.items:
@@ -219,6 +223,15 @@ class FakeStore:
 
     def faq_for_bot(self, bot: str) -> list[dict[str, Any]]:
         return self.faq
+
+    def customer_choices(self, user: int) -> dict[str, Any]:
+        return self.choices
+
+    def visit_request_add(
+        self, inbound_id: str, user: int, chat: int, language: str, request: dict[str, Any]
+    ) -> dict[str, Any]:
+        self.inquiries.append((inbound_id, user, chat, language, dict(request)))
+        return self.inquiry_answers.pop(0)
 
 
 def _client(relay: FakeRelay) -> RelayClient:

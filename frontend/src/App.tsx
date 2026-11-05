@@ -167,6 +167,7 @@ import {
   FaqPageView,
   LinkedTenantsPage,
   TelegramHealthPage,
+  VisitRequestsPageView,
 } from "./telegram/TelegramPages";
 import type { TelegramApi } from "./telegram/telegramClient";
 import type { QuotationsApi } from "./quotations/quotationsClient";
@@ -2029,6 +2030,19 @@ export function App({
       >
         <ContactOfficePage
           active={shown("tgcontact")}
+          api={telegramApi}
+          capabilities={capabilities}
+          language={language}
+          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
+        />
+      </div>
+      <div
+        className="shell-page"
+        data-page="visitreqs"
+        hidden={!shown("visitreqs")}
+      >
+        <VisitRequestsPageView
+          active={shown("visitreqs")}
           api={telegramApi}
           capabilities={capabilities}
           language={language}

@@ -166,6 +166,39 @@ export interface FaqSaved {
   page: FaqPage;
 }
 
+/** One inquiry from the Customer bot (step 3a, DL-171). */
+export interface VisitInquiry {
+  id: string;
+  number: string;
+  received_at: string;
+  name: string;
+  phone: string;
+  /** TELEGRAM, EMAIL, PHONE or WHATSAPP. */
+  contact_by: string;
+  email: string | null;
+  language: string;
+  unit_type: string;
+  unit_type_en: string | null;
+  unit_type_km: string | null;
+  visit_on: string | null;
+  /** MORNING or AFTERNOON. */
+  visit_part: string | null;
+  /** "YYYY-MM", or null for Later. */
+  move_in_month: string | null;
+  note: string | null;
+}
+
+export interface VisitRequest extends VisitInquiry {
+  status: string;
+  /** Later inquiries of the same person or phone, which keep this request's place. */
+  joined: VisitInquiry[];
+}
+
+export interface VisitRequestsPage {
+  requests: VisitRequest[];
+  today: string;
+}
+
 export interface TelegramApi {
   links: (propertyId: string) => Promise<LinksPage>;
   /** Removes a link with a reason and answers the page again. */
@@ -194,6 +227,7 @@ export interface TelegramApi {
   ) => Promise<FaqSaved>;
   /** The Owner approves the version waiting and answers the page again. */
   approveFaq: (propertyId: string, versionId: string) => Promise<FaqPage>;
+  visitRequests: (propertyId: string) => Promise<VisitRequestsPage>;
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -467,6 +501,42 @@ export function faqPageOf(value: unknown): FaqPage {
   };
 }
 
+function inquiryOf(value: unknown): VisitInquiry {
+  const row = record(value);
+  return {
+    id: text(row.id),
+    number: text(row.number),
+    received_at: text(row.received_at),
+    name: text(row.name),
+    phone: text(row.phone),
+    contact_by: text(row.contact_by),
+    email: maybeText(row.email),
+    language: text(row.language),
+    unit_type: text(row.unit_type),
+    unit_type_en: maybeText(row.unit_type_en),
+    unit_type_km: maybeText(row.unit_type_km),
+    visit_on: maybeText(row.visit_on),
+    visit_part: maybeText(row.visit_part),
+    move_in_month: maybeText(row.move_in_month),
+    note: maybeText(row.note),
+  };
+}
+
+export function visitRequestsPageOf(value: unknown): VisitRequestsPage {
+  const page = record(value);
+  return {
+    today: text(page.today),
+    requests: list(page.requests).map((item) => {
+      const row = record(item);
+      return {
+        ...inquiryOf(row),
+        status: text(row.status),
+        joined: list(row.joined).map(inquiryOf),
+      };
+    }),
+  };
+}
+
 export const telegramApi: TelegramApi = {
   async links(propertyId) {
     return linksPageOf(await request(`${root(propertyId)}/links`));
@@ -527,5 +597,12 @@ export const telegramApi: TelegramApi = {
       ),
     );
     return faqPageOf(answer.faq);
+  },
+  async visitRequests(propertyId) {
+    return visitRequestsPageOf(
+      await request(
+        `/api/v1/properties/${encodeURIComponent(propertyId)}/visit-requests`,
+      ),
+    );
   },
 };

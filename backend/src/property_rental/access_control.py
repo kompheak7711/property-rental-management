@@ -141,6 +141,7 @@ CAPABILITY_CATALOG: Final[dict[str, str]] = {
     "utility_rates.manage": "Change Utility Rates",
     "utility_readings.correct": "Correct a Utility Reading",
     "utility_readings.record": "Record Utility Readings",
+    "visit_requests.read": "See the Visit requests new customers send",
 }
 
 GrantPath = Literal["bundle", "per_user", "owner_class", "service_principal"]
@@ -247,6 +248,9 @@ STAFF_PROBLEM_REPORT_CAPABILITIES: Final = frozenset(
 # Telegram bots step 2d part 2 (migration `20270524_286`, DL-170, round 29 rights): Staff answer
 # Contact office; the Owner and the Manager edit the FAQ (the Owner alone approves it).
 STAFF_TELEGRAM_CAPABILITIES: Final = frozenset({"telegram.contact"})
+# Telegram bots step 3a (migration `20270525_287`, DL-171): the front desk, Managers and the
+# Owner work the Visit requests the Customer bot sends (owner 28 Oct 2026).
+STAFF_VISIT_REQUEST_CAPABILITIES: Final = frozenset({"visit_requests.read"})
 STAFF_DEFAULT_BUNDLE_CAPABILITIES: Final = (
     STAFF_L1C_BUNDLE_CAPABILITIES
     | STAFF_RENT_LETTER_CAPABILITIES
@@ -255,6 +259,7 @@ STAFF_DEFAULT_BUNDLE_CAPABILITIES: Final = (
     | STAFF_QUOTATION_CAPABILITIES
     | STAFF_PROBLEM_REPORT_CAPABILITIES
     | STAFF_TELEGRAM_CAPABILITIES
+    | STAFF_VISIT_REQUEST_CAPABILITIES
 )
 # The default Manager bundle: every bundle capability except the Owner-only rights.
 MANAGER_DEFAULT_BUNDLE_CAPABILITIES: Final = (

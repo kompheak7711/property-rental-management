@@ -369,6 +369,7 @@ database_test_suites='
   tests/test_telegram_app_pages_migration.py
   tests/test_telegram_tenant_report_updates_migration.py
   tests/test_telegram_contact_faq_migration.py
+  tests/test_telegram_customer_bot_migration.py
 '
 # The General Ledger suites run first, in a pytest run of their own on the new database: the other
 # suites leave balances on the one Property (up to the largest bigint) that no books can hold.

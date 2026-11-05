@@ -11,9 +11,11 @@ from collections.abc import Mapping
 from typing import Final
 
 MAX_FIELD_CHARACTERS: Final = 300
-# A field the bot builds itself from fixed texts (My requests) may be longer.
-LONG_FIELDS: Final = {"list": 3000, "text": 600, "answer": 800}
-# A keyboard whose buttons the bot builds (the FAQ questions): at most this many, each this long.
+# A field the bot builds itself from fixed texts (My requests), or a long answer or note, may
+# be longer.
+LONG_FIELDS: Final = {"list": 3000, "text": 600, "answer": 800, "note": 500}
+# A keyboard whose buttons the bot builds (FAQ questions, Unit Types, days, months): at most
+# this many, each this long.
 MAX_CHOICES: Final = 30
 MAX_CHOICE_CHARACTERS: Final = 60
 MAX_MESSAGE_CHARACTERS: Final = 4000
@@ -317,6 +319,141 @@ TEXTS: Final[dict[str, dict[str, str]]] = {
         "km": "{number} · {type}៖ ភ្ជាប់ទៅ {main}",
         "en": "{number} · {type}: joined to {main}",
     },
+    # Step 3a (DL-171): the Customer bot, from the owner-approved CRM mock-up (customer bot view)
+    # and the FAQ document. Texts marked "new" are not in the mock-up and need the Khmer check.
+    "customer.welcome": {
+        "km": (
+            "សូមស្វាគមន៍មកកាន់ CHETANA Residence។\n"
+            "Welcome to CHETANA Residence.\n\n"
+            "សូមជ្រើសរើសភាសា។ Please choose a language."
+        ),
+        "en": (
+            "សូមស្វាគមន៍មកកាន់ CHETANA Residence។\n"
+            "Welcome to CHETANA Residence.\n\n"
+            "សូមជ្រើសរើសភាសា។ Please choose a language."
+        ),
+    },
+    "customer.menu": {
+        "km": "តើយើងអាចជួយអ្វីលោកអ្នកបាន?",
+        "en": "How can we help you today?",
+    },
+    "customer.contact_phone": {
+        "km": "សូមចែករំលែកលេខទូរស័ព្ទ ដើម្បីឱ្យផ្នែកបម្រើអតិថិជនរបស់យើងអាចទាក់ទងលោកអ្នកបាន។",
+        "en": "Please share your phone number so our customer service team can reach you.",
+    },
+    "customer.contact_ask": {
+        "km": "សូមសរសេរសាររបស់លោកអ្នក។",
+        "en": "Please write your message.",
+    },
+    "customer.contact_saved": {
+        "km": ("សូមអរគុណ។ ផ្នែកបម្រើអតិថិជនរបស់យើងនឹងឆ្លើយតបពីថ្ងៃច័ន្ទ ដល់ថ្ងៃសៅរ៍ ម៉ោង ០៧:០០ ដល់ ១៧:០០។"),
+        "en": (
+            "Thank you. Our customer service team will reply Monday to Saturday, 07:00 to 17:00."
+        ),
+    },
+    "customer.ask_how": {
+        "km": "តើយើងគួរទាក់ទងអ្នកតាមរបៀបណា?",
+        "en": "How should we contact you?",
+    },
+    "customer.ask_phone": {
+        "km": "សូមចែករំលែកលេខទូរស័ព្ទរបស់អ្នក។ បុគ្គលិកនឹងប្រើវាដើម្បីហៅទៅអ្នក។",
+        "en": "Please share your phone number. Staff will use it to call you.",
+    },
+    # new
+    "customer.phone_again": {
+        "km": "សូមចុច «ចែករំលែកលេខទូរស័ព្ទ» ខាងក្រោម។ យើងត្រូវការលេខរបស់លោកអ្នកផ្ទាល់។",
+        "en": "Please tap “Share my phone number” below. We need your own number.",
+    },
+    "customer.ask_email": {
+        "km": "សូមសរសេរអាសយដ្ឋានអ៊ីមែលរបស់អ្នក។",
+        "en": "Please type your email address.",
+    },
+    # new
+    "customer.email_again": {
+        "km": "អាសយដ្ឋានអ៊ីមែលនេះមិនត្រឹមត្រូវ។ សូមសរសេរម្ដងទៀត ឧទាហរណ៍ name@example.com។",
+        "en": "This email address does not look right. Please type it again, "
+        "for example name@example.com.",
+    },
+    "customer.ask_name": {
+        "km": "តើអ្នកឈ្មោះអ្វី?",
+        "en": "What is your name?",
+    },
+    "customer.ask_type": {
+        "km": "តើអ្នកចង់បានប្រភេទបន្ទប់មួយណា?",
+        "en": "Which Unit Type do you want?",
+    },
+    # new
+    "customer.type_again": {
+        "km": "សូមចុចលើប្រភេទបន្ទប់មួយខាងក្រោម។",
+        "en": "Please tap one of the Unit Types below.",
+    },
+    "customer.ask_day": {
+        "km": "តើអ្នកចង់មកមើលនៅថ្ងៃណា?",
+        "en": "Which day would you like to visit?",
+    },
+    # new
+    "customer.day_again": {
+        "km": (
+            "សូមជ្រើសរើសថ្ងៃខាងក្រោម ឬសរសេរថ្ងៃ ឧទាហរណ៍ 12/11។ "
+            "ថ្ងៃមកមើលគឺពី ២ ដល់ ៣០ ថ្ងៃខាងមុខ ពីថ្ងៃច័ន្ទ ដល់ថ្ងៃសៅរ៍។"
+        ),
+        "en": (
+            "Please choose a day below or type one, for example 12/11. "
+            "A visit is 2 to 30 days from today, Monday to Saturday."
+        ),
+    },
+    "customer.ask_part": {
+        "km": "ពេលព្រឹក ឬពេលរសៀល?",
+        "en": "Morning or afternoon?",
+    },
+    "customer.ask_move": {
+        "km": "តើអ្នកចង់ចូលស្នាក់នៅពេលណា?",
+        "en": "When do you want to move in?",
+    },
+    "customer.ask_note": {
+        "km": "មានអ្វីផ្សេងទៀតដែលយើងគួរដឹងទេ? អ្នកអាចរំលងបាន។",
+        "en": "Anything else we should know? You can skip this.",
+    },
+    "customer.check": {
+        "km": (
+            "សូមពិនិត្យសំណើរបស់អ្នក។\n\n"
+            "ឈ្មោះ៖ {name}\nទូរស័ព្ទ៖ {phone}\nទាក់ទងតាម៖ {contact}\n"
+            "ប្រភេទបន្ទប់៖ {type}\nមកមើល៖ {visit}\nចូលស្នាក់នៅ៖ {move}\nកំណត់សម្គាល់៖ {note}"
+        ),
+        "en": (
+            "Please check your request.\n\n"
+            "Name: {name}\nPhone: {phone}\nContact by: {contact}\n"
+            "Unit Type: {type}\nVisit: {visit}\nMove in: {move}\nNote: {note}"
+        ),
+    },
+    # new
+    "customer.no_day": {"km": "មិនទាន់កំណត់", "en": "No day yet"},
+    "customer.request_received": {
+        "km": (
+            "យើងបានទទួលសំណើរបស់អ្នក។ លេខ៖ {number}។\n"
+            "បុគ្គលិកនឹងហៅទៅអ្នកក្នុងរយៈពេល 2 ម៉ោងធ្វើការ។\n"
+            "ម៉ោងធ្វើការ៖ ថ្ងៃច័ន្ទ ដល់ថ្ងៃសៅរ៍ ម៉ោង 07:00 ដល់ 17:00។"
+        ),
+        "en": (
+            "We received your request. Number: {number}.\n"
+            "Staff will call you within 2 working hours.\n"
+            "Working hours: Monday to Saturday, 07:00 to 17:00."
+        ),
+    },
+    # new
+    "customer.request_joined": {
+        "km": (
+            "យើងមានសំណើរបស់អ្នករួចហើយ ({main})។ យើងបានបន្ថែមព័ត៌មាននេះទៅវា (លេខ៖ {number})។\n"
+            "បុគ្គលិកនឹងហៅទៅអ្នកក្នុងរយៈពេល 2 ម៉ោងធ្វើការ។\n"
+            "ម៉ោងធ្វើការ៖ ថ្ងៃច័ន្ទ ដល់ថ្ងៃសៅរ៍ ម៉ោង 07:00 ដល់ 17:00។"
+        ),
+        "en": (
+            "We already have your request ({main}). We added these details to it "
+            "(number {number}).\n"
+            "Staff will call you within 2 working hours.\n"
+            "Working hours: Monday to Saturday, 07:00 to 17:00."
+        ),
+    },
     # Report states as the tenant sees them (the app's words, Building > Problem reports).
     "status.RECEIVED": {"km": "បានទទួល", "en": "Received"},
     "status.PLANNED": {"km": "បានរៀបចំការមកពិនិត្យ", "en": "Visit planned"},
@@ -342,6 +479,16 @@ TEXTS: Final[dict[str, dict[str, str]]] = {
     "button.not_fixed": {"km": "មិនទាន់រួច", "en": "Not fixed"},
     "button.khmer": {"km": "ភាសាខ្មែរ", "en": "ភាសាខ្មែរ"},
     "button.english": {"km": "English", "en": "English"},
+    # Customer bot buttons (step 3a, CRM mock-up).
+    "button.inquiry": {"km": "ផ្ញើការសាកសួរ", "en": "Send an inquiry"},
+    "button.by_telegram": {"km": "Telegram", "en": "Telegram"},
+    "button.by_email": {"km": "អ៊ីមែល", "en": "Email"},
+    "button.by_phone": {"km": "ទូរស័ព្ទ ឬ SMS", "en": "Phone call or SMS"},
+    "button.by_whatsapp": {"km": "WhatsApp", "en": "WhatsApp"},
+    "button.morning": {"km": "ពេលព្រឹក", "en": "Morning"},
+    "button.afternoon": {"km": "ពេលរសៀល", "en": "Afternoon"},
+    "button.later": {"km": "ក្រោយ", "en": "Later"},
+    "button.skip": {"km": "រំលង", "en": "Skip"},
 }
 
 # The keyboards a message can show under the chat. Each button is a label code above; a
@@ -354,11 +501,26 @@ KEYBOARDS: Final[dict[str, list[list[str]]]] = {
     "tenant.reject": [["button.link", "button.contact"]],
     "tenant.check": [["button.fixed", "button.not_fixed"], ["button.my_requests"]],
     "tenant.back": [["button.back_menu"]],
+    # Step 3a: the Customer bot.
+    "customer.menu": [["button.inquiry"], ["button.faq", "button.contact"]],
+    "customer.how": [
+        ["button.by_telegram", "button.by_email"],
+        ["button.by_phone", "button.by_whatsapp"],
+        ["button.back_menu"],
+    ],
+    "customer.share_phone": [["button.share_phone"], ["button.back_menu"]],
+    "customer.part": [["button.morning", "button.afternoon"], ["button.back_menu"]],
+    "customer.skip": [["button.skip"], ["button.back_menu"]],
+    "customer.send": [["button.inquiry"], ["button.back_menu"]],
 }
 # Keyboards whose first buttons the bot builds (details[field], one button a row), followed by
 # fixed rows.
 CHOICE_KEYBOARDS: Final[dict[str, tuple[str, list[list[str]]]]] = {
     "tenant.faq": ("choices", [["button.back_menu"]]),
+    "customer.faq": ("choices", [["button.back_menu"]]),
+    "customer.types": ("choices", [["button.back_menu"]]),
+    "customer.days": ("choices", [["button.skip"], ["button.back_menu"]]),
+    "customer.months": ("choices", [["button.later"], ["button.back_menu"]]),
 }
 CONTACT_BUTTONS: Final = frozenset({"button.share_phone"})
 # Buttons on the message itself that open a Mini App form on the relay

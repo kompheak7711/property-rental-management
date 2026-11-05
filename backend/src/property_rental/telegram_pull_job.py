@@ -33,6 +33,7 @@ from property_rental.operations_config import (
     load_operations_config,
 )
 from property_rental.operations_status import format_time, utc_now, write_status
+from property_rental.telegram_customer_bot import handle_customer_update
 from property_rental.telegram_phone import normalize_phone
 from property_rental.telegram_relay_client import RelayClient, RelayError, RelayItem, read_pull_key
 from property_rental.telegram_seal import SealError, load_office_private_key, open_sealed
@@ -94,7 +95,7 @@ def _ping(bot: str, plain: dict[str, Any], saved: dict[str, Any], store: Telegra
 
 
 HANDLERS: Final[dict[str, list[Handler]]] = {
-    "update": [_ping, handle_tenant_update],
+    "update": [_ping, handle_tenant_update, handle_customer_update],
     "form": [handle_tenant_form],
 }
 
