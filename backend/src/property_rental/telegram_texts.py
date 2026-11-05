@@ -496,6 +496,125 @@ TEXTS: Final[dict[str, dict[str, str]]] = {
             "Reminder: your visit to CHETANA Residence is tomorrow, {day} at {time}. See you soon."
         ),
     },
+    # Step 4a: the Staff bot (Khmer only, owner rule; the English is the same Khmer text).
+    # The Khmer waits for the native-speaker check.
+    "staff.ask_phone": {
+        "km": (
+            "សួស្តី! នេះជាបូតបុគ្គលិក CHETANA។\n"
+            "សូមចុច «ចែករំលែកលេខទូរស័ព្ទ» ខាងក្រោម ដើម្បីស្នើសុំចូលប្រើ។ ម្ចាស់ ឬអ្នកគ្រប់គ្រងនឹងអនុម័ត។"
+        ),
+        "en": (
+            "សួស្តី! នេះជាបូតបុគ្គលិក CHETANA។\n"
+            "សូមចុច «ចែករំលែកលេខទូរស័ព្ទ» ខាងក្រោម ដើម្បីស្នើសុំចូលប្រើ។ ម្ចាស់ ឬអ្នកគ្រប់គ្រងនឹងអនុម័ត។"
+        ),
+    },
+    "staff.waiting": {
+        "km": "សូមអរគុណ។ សំណើរបស់អ្នកបានផ្ញើហើយ។ អ្នកនឹងទទួលបានសារ នៅពេលម្ចាស់ ឬអ្នកគ្រប់គ្រងអនុម័ត។",
+        "en": "សូមអរគុណ។ សំណើរបស់អ្នកបានផ្ញើហើយ។ អ្នកនឹងទទួលបានសារ នៅពេលម្ចាស់ ឬអ្នកគ្រប់គ្រងអនុម័ត។",
+    },
+    "staff.hello": {
+        "km": "សួស្តី {name}។ សូមចុច «របាយការណ៍» ដើម្បីចូលធ្វើការ ចេញពីការងារ ឬបំពេញទម្រង់។",
+        "en": "សួស្តី {name}។ សូមចុច «របាយការណ៍» ដើម្បីចូលធ្វើការ ចេញពីការងារ ឬបំពេញទម្រង់។",
+    },
+    "staff.approved": {
+        "km": "អ្នកត្រូវបានអនុម័តហើយ។ សូមចុច «របាយការណ៍» ដើម្បីចាប់ផ្តើម។",
+        "en": "អ្នកត្រូវបានអនុម័តហើយ។ សូមចុច «របាយការណ៍» ដើម្បីចាប់ផ្តើម។",
+    },
+    "staff.refused": {
+        "km": "សំណើរបស់អ្នកមិនត្រូវបានអនុម័តទេ។ សូមសួរអ្នកគ្រប់គ្រង។",
+        "en": "សំណើរបស់អ្នកមិនត្រូវបានអនុម័តទេ។ សូមសួរអ្នកគ្រប់គ្រង។",
+    },
+    "staff.not_ready": {
+        "km": "បូតបុគ្គលិកមិនទាន់រៀបចំរួចនៅឡើយទេ។ សូមសួរអ្នកគ្រប់គ្រង។",
+        "en": "បូតបុគ្គលិកមិនទាន់រៀបចំរួចនៅឡើយទេ។ សូមសួរអ្នកគ្រប់គ្រង។",
+    },
+    "staff.check_in_ok": {
+        "km": "✅ បានចូលធ្វើការ ម៉ោង {time} នៅ {place}។",
+        "en": "✅ បានចូលធ្វើការ ម៉ោង {time} នៅ {place}។",
+    },
+    "staff.check_in_late": {
+        "km": "✅ បានចូលធ្វើការ ម៉ោង {time}។ យឺត {minutes} នាទី។",
+        "en": "✅ បានចូលធ្វើការ ម៉ោង {time}។ យឺត {minutes} នាទី។",
+    },
+    "staff.check_in_needs_check": {
+        "km": "✅ បានចូលធ្វើការ ម៉ោង {time}។ អ្នកគ្រប់គ្រងនឹងពិនិត្យទីតាំងរបស់អ្នក។",
+        "en": "✅ បានចូលធ្វើការ ម៉ោង {time}។ អ្នកគ្រប់គ្រងនឹងពិនិត្យទីតាំងរបស់អ្នក។",
+    },
+    "staff.check_out_ok": {
+        "km": "✅ បានចេញពីការងារ ម៉ោង {time}។ អរគុណ!",
+        "en": "✅ បានចេញពីការងារ ម៉ោង {time}។ អរគុណ!",
+    },
+    "staff.card_in_ok": {
+        "km": "✅ បានកត់ត្រាការចូលធ្វើការរបស់ {name} ម៉ោង {time}។",
+        "en": "✅ បានកត់ត្រាការចូលធ្វើការរបស់ {name} ម៉ោង {time}។",
+    },
+    "staff.card_out_ok": {
+        "km": "✅ បានកត់ត្រាការចេញពីការងាររបស់ {name} ម៉ោង {time}។",
+        "en": "✅ បានកត់ត្រាការចេញពីការងាររបស់ {name} ម៉ោង {time}។",
+    },
+    "staff.card_not_ready": {
+        "km": "❌ ការស្កេនកាតមិនទាន់រៀបចំរួចនៅឡើយទេ។ សូមសួរអ្នកគ្រប់គ្រង។",
+        "en": "❌ ការស្កេនកាតមិនទាន់រៀបចំរួចនៅឡើយទេ។ សូមសួរអ្នកគ្រប់គ្រង។",
+    },
+    "staff.refused_other": {
+        "km": "❌ មិនអាចកត់ត្រាបានទេ។ សូមសួរអ្នកគ្រប់គ្រង។",
+        "en": "❌ មិនអាចកត់ត្រាបានទេ។ សូមសួរអ្នកគ្រប់គ្រង។",
+    },
+    "staff.check_refused_bad_scan": {
+        "km": "❌ មិនអាចអាន QR បានទេ។ សូមស្កេនម្តងទៀត។",
+        "en": "❌ មិនអាចអាន QR បានទេ។ សូមស្កេនម្តងទៀត។",
+    },
+    "staff.check_refused_not_linked": {
+        "km": "❌ គណនីរបស់អ្នកមិនទាន់បានភ្ជាប់ទេ។ សូមសួរអ្នកគ្រប់គ្រង។",
+        "en": "❌ គណនីរបស់អ្នកមិនទាន់បានភ្ជាប់ទេ។ សូមសួរអ្នកគ្រប់គ្រង។",
+    },
+    "staff.check_refused_location_off": {
+        "km": "❌ សូមបើក Location នៅលើទូរស័ព្ទ ហើយស្កេនម្តងទៀត។",
+        "en": "❌ សូមបើក Location នៅលើទូរស័ព្ទ ហើយស្កេនម្តងទៀត។",
+    },
+    "staff.check_refused_qr_unknown": {
+        "km": "❌ QR នេះមិនមែនជា QR ចូលធ្វើការរបស់ CHETANA ទេ។",
+        "en": "❌ QR នេះមិនមែនជា QR ចូលធ្វើការរបស់ CHETANA ទេ។",
+    },
+    "staff.check_refused_qr_replaced": {
+        "km": "❌ QR នេះចាស់ហើយ។ សូមស្កេន QR ថ្មីនៅទីតាំង។",
+        "en": "❌ QR នេះចាស់ហើយ។ សូមស្កេន QR ថ្មីនៅទីតាំង។",
+    },
+    "staff.check_refused_not_working": {
+        "km": "❌ ថ្ងៃនេះអ្នកមិនមានវេនធ្វើការទេ។ សូមសួរអ្នកគ្រប់គ្រង។",
+        "en": "❌ ថ្ងៃនេះអ្នកមិនមានវេនធ្វើការទេ។ សូមសួរអ្នកគ្រប់គ្រង។",
+    },
+    "staff.check_refused_already_in": {
+        "km": "❌ អ្នកបានចូលធ្វើការរួចហើយ។",
+        "en": "❌ អ្នកបានចូលធ្វើការរួចហើយ។",
+    },
+    "staff.check_refused_too_early": {
+        "km": "❌ ឆាប់ពេក។ វេនរបស់អ្នកចាប់ផ្តើមម៉ោង {starts}។ សូមស្កេនម្តងទៀតជិតម៉ោងចាប់ផ្តើម។",
+        "en": "❌ ឆាប់ពេក។ វេនរបស់អ្នកចាប់ផ្តើមម៉ោង {starts}។ សូមស្កេនម្តងទៀតជិតម៉ោងចាប់ផ្តើម។",
+    },
+    "staff.check_refused_not_checked_in": {
+        "km": "❌ អ្នកមិនទាន់បានចូលធ្វើការទេ ដូច្នេះមិនអាចចេញបានទេ។",
+        "en": "❌ អ្នកមិនទាន់បានចូលធ្វើការទេ ដូច្នេះមិនអាចចេញបានទេ។",
+    },
+    "staff.check_refused_month_locked": {
+        "km": "❌ ខែនេះបានបិទសម្រាប់ប្រាក់ខែហើយ។ សូមសួរអ្នកគ្រប់គ្រង។",
+        "en": "❌ ខែនេះបានបិទសម្រាប់ប្រាក់ខែហើយ។ សូមសួរអ្នកគ្រប់គ្រង។",
+    },
+    "staff.check_refused_not_caretaker": {
+        "km": "❌ មានតែអ្នកថែរក្សាអគារ ឬអ្នកអនុម័តទេ ដែលអាចស្កេនកាតបាន។",
+        "en": "❌ មានតែអ្នកថែរក្សាអគារ ឬអ្នកអនុម័តទេ ដែលអាចស្កេនកាតបាន។",
+    },
+    "staff.check_refused_card_unknown": {"km": "❌ កាតនេះមិនស្គាល់ទេ។", "en": "❌ កាតនេះមិនស្គាល់ទេ។"},
+    "staff.check_refused_card_stopped": {
+        "km": "❌ កាតនេះត្រូវបានប្តូរហើយ។ សូមប្រើកាតថ្មី។",
+        "en": "❌ កាតនេះត្រូវបានប្តូរហើយ។ សូមប្រើកាតថ្មី។",
+    },
+    "staff.check_refused_own_card": {
+        "km": "❌ អ្នកមិនអាចស្កេនកាតរបស់ខ្លួនឯងបានទេ។ សូមប្រើ «ចូល» ឬ «ចេញ» នៅលើទូរស័ព្ទរបស់អ្នក។",
+        "en": "❌ អ្នកមិនអាចស្កេនកាតរបស់ខ្លួនឯងបានទេ។ សូមប្រើ «ចូល» ឬ «ចេញ» នៅលើទូរស័ព្ទរបស់អ្នក។",
+    },
+    "staff.check_refused_need_reason": {"km": "❌ សូមជ្រើសរើសមូលហេតុ។", "en": "❌ សូមជ្រើសរើសមូលហេតុ។"},
+    "staff.check_refused_need_photo": {"km": "❌ សូមថតរូបបុគ្គលិក។", "en": "❌ សូមថតរូបបុគ្គលិក។"},
     # Report states as the tenant sees them (the app's words, Building > Problem reports).
     "status.RECEIVED": {"km": "បានទទួល", "en": "Received"},
     "status.PLANNED": {"km": "បានរៀបចំការមកពិនិត្យ", "en": "Visit planned"},
@@ -531,6 +650,8 @@ TEXTS: Final[dict[str, dict[str, str]]] = {
     "button.afternoon": {"km": "ពេលរសៀល", "en": "Afternoon"},
     "button.later": {"km": "ក្រោយ", "en": "Later"},
     "button.skip": {"km": "រំលង", "en": "Skip"},
+    # Staff bot (step 4a): the button that opens the Staff forms; Khmer only.
+    "button.reports": {"km": "របាយការណ៍", "en": "របាយការណ៍"},
 }
 
 # The keyboards a message can show under the chat. Each button is a label code above; a
@@ -554,6 +675,8 @@ KEYBOARDS: Final[dict[str, list[list[str]]]] = {
     "customer.part": [["button.morning", "button.afternoon"], ["button.back_menu"]],
     "customer.skip": [["button.skip"], ["button.back_menu"]],
     "customer.send": [["button.inquiry"], ["button.back_menu"]],
+    # Step 4a: the Staff bot.
+    "staff.share_phone": [["button.share_phone"]],
 }
 # Keyboards whose first buttons the bot builds (details[field], one button a row), followed by
 # fixed rows.
@@ -572,6 +695,7 @@ APP_KEYBOARDS: Final[dict[str, tuple[str, list[list[tuple[str, str]]]]]] = {
         "tenant",
         [[("button.unit_problem", "unit")], [("button.building_problem", "building")]],
     ),
+    "staff.open": ("staff", [[("button.reports", "home")]]),
 }
 REMOVE_KEYBOARD: Final = "remove"
 

@@ -1,0 +1,253 @@
+"""The Staff bot conversation and forms (step 4a, DL-174), with the database in memory.
+
+Join with Start and the person's own phone, the Reports button for linked staff, check-in and
+card scan answers, the card photo kept in the HR files folder (and removed when refused or
+old), and the scanned codes kept out of the saved message.
+"""
+
+from __future__ import annotations
+
+import hashlib
+from pathlib import Path
+from typing import Any
+
+from cryptography.hazmat.primitives.asymmetric import rsa
+
+from property_rental.telegram_pull_job import run_pull
+from property_rental.telegram_staff_bot import (
+    handle_staff_form,
+    handle_staff_update,
+    remove_old_card_photos,
+)
+from property_rental.telegram_texts import TEXTS, keyboard_markup, render
+from test_telegram_jobs import FakeRelay, FakeStore, _client
+from test_telegram_jobs import office_key as office_key
+
+USER = 880001
+NAME = "យ៉ន់ ដានេ"
+
+
+def say(store: FakeStore, text: str | None = None, **message: Any) -> list[dict[str, Any]]:
+    before = len(store.replies)
+    body: dict[str, Any] = {
+        "from": {"id": USER, "first_name": "Dane", "last_name": "Yon"},
+        "chat": {"id": USER, "type": message.pop("chat_type", "private")},
+        **message,
+    }
+    if text is not None:
+        body["text"] = text
+    plain = {"telegram_user_id": USER, "chat_id": USER, "payload": {"message": body}}
+    handle_staff_update("STAFF", plain, {"saved": True, "inbound_id": "in-1"}, store)
+    return store.replies[before:]
+
+
+def send(
+    store: FakeStore, form: dict[str, Any], *, folder: Path | None = None, held: Any = None
+) -> list[dict[str, Any]]:
+    before = len(store.replies)
+    plain = {
+        "telegram_user_id": USER,
+        "chat_id": USER,
+        "payload": {"form": form, "role": "STAFF"},
+        "office": {
+            "received_at": "2026-11-05T00:35:00+00:00",
+            "held_media": held or [],
+            "hr_files": str(folder) if folder else "",
+        },
+    }
+    handle_staff_form("STAFF", plain, {"saved": True, "inbound_id": "in-2"}, store)
+    return store.replies[before:]
+
+
+def codes(replies: list[dict[str, Any]]) -> list[tuple[str, str | None]]:
+    return [(reply["text_code"], reply.get("keyboard")) for reply in replies]
+
+
+def test_a_new_person_shares_their_phone_and_waits_for_the_answer() -> None:
+    store = FakeStore()
+    assert codes(say(store, "/start")) == [("staff.ask_phone", "staff.share_phone")]
+    # Someone else's contact does not count.
+    other = {"user_id": 999, "phone_number": "85512345678"}
+    assert codes(say(store, contact=other)) == [("staff.ask_phone", "staff.share_phone")]
+    own = {"user_id": USER, "phone_number": "012 345 678"}
+    waiting = say(store, contact=own)
+    assert codes(waiting) == [("staff.waiting", "remove")]
+    assert waiting[0]["language"] == "km"
+    assert store.staff_joins == [(USER, "Dane Yon", "+85512345678")]
+    assert codes(say(store, "hello")) == [("staff.waiting", "remove")]
+    # Only private chats; the shared base answers "ping".
+    assert say(store, "/start", chat_type="group") == []
+    assert say(store, "ping") == []
+
+    store.staff[USER] = {"name_km": NAME, "roles": ["CLEANER"]}
+    hello = say(store, "/start")
+    assert codes(hello) == [("staff.hello", "staff.open")]
+    assert hello[0]["details"] == {"name": NAME}
+    markup = keyboard_markup("staff.open", "km", "relay.example.workers.dev")
+    assert markup == {
+        "inline_keyboard": [
+            [
+                {
+                    "text": "របាយការណ៍",
+                    "web_app": {
+                        "url": "https://relay.example.workers.dev/app/staff?form=home&lang=km"
+                    },
+                }
+            ]
+        ]
+    }
+
+
+def test_without_the_service_actor_the_bot_says_it_is_not_ready() -> None:
+    store = FakeStore()
+    store.staff_ready = False
+    assert codes(say(store, "/start")) == [("staff.not_ready", "remove")]
+    assert codes(send(store, {"type": "CHECK", "mode": "IN", "qr": "x"})) == [
+        ("staff.not_ready", None)
+    ]
+
+
+def test_check_in_and_out_answers_with_the_time() -> None:
+    store = FakeStore()
+    store.staff_answers += [
+        {"ok": True, "reply_key": "check_in_ok", "time": "06:35", "place_km": "ប៉ុស្តិ៍យាម"},
+        {"ok": True, "reply_key": "check_in_late", "time": "06:52", "late_minutes": 22},
+        {"ok": False, "reason": "TOO_EARLY", "reply_key": "check_refused_too_early",
+         "starts": "06:30"},
+        {"ok": False, "reason": "NEW_RULE", "reply_key": "check_refused_new_rule"},
+        {"ok": True, "reply_key": "check_out_ok", "time": "15:31"},
+    ]  # fmt: skip
+    form = {
+        "type": "CHECK",
+        "mode": "IN",
+        "qr": "CHETANA-P-abc",
+        "location": {"status": "OK", "latitude": 11.55, "longitude": 104.92, "extra": "x"},
+        "phone_time": "2026-11-05T07:35:00+07:00",
+        "anything": "else",
+    }
+    first = send(store, form)
+    assert codes(first) == [("staff.check_in_ok", None)]
+    assert first[0]["details"] == {"time": "06:35", "place": "ប៉ុស្តិ៍យាម"}
+    kind, user, scan, at = store.staff_scans[0]
+    assert (kind, user, at) == ("CHECK", USER, "2026-11-05T00:35:00+00:00")
+    # Only what the HR rules read goes on.
+    assert scan == {
+        "mode": "IN",
+        "qr": "CHETANA-P-abc",
+        "location": {"status": "OK", "latitude": 11.55, "longitude": 104.92},
+        "phone_time": "2026-11-05T07:35:00+07:00",
+    }
+    assert send(store, form)[0]["details"] == {"time": "06:52", "minutes": 22}
+    early = send(store, form | {"location": {"status": "OFF"}})
+    assert codes(early) == [("staff.check_refused_too_early", None)]
+    assert early[0]["details"] == {"starts": "06:30"}
+    assert store.staff_scans[2][2]["location"] == {"status": "OFF"}
+    # A refusal the bot has no words for gets the general answer.
+    assert codes(send(store, form)) == [("staff.refused_other", None)]
+    assert codes(send(store, form | {"mode": "OUT"})) == [("staff.check_out_ok", None)]
+    # Every answer renders in Khmer.
+    for reply in store.replies:
+        assert render(reply["text_code"], "km", reply["details"])
+
+
+def test_card_scan_keeps_the_photo_in_the_hr_folder(tmp_path: Path) -> None:
+    store = FakeStore()
+    photo = b"\xff\xd8\xff half-body photo"
+    sha = hashlib.sha256(photo).hexdigest()
+    held = [{"content_type": "image/jpeg", "sha256": sha, "data": photo}]
+    form = {"type": "CARD", "mode": "IN", "card": "CHETANA-E-xyz", "reason": "NO_PHONE"}
+
+    # Without the HR files folder nothing is sent on.
+    assert codes(send(store, form, held=held)) == [("staff.card_not_ready", None)]
+    assert store.staff_scans == []
+
+    store.staff_answers.append(
+        {"ok": True, "direction": "IN", "time": "06:40", "name_km": "គំរូ គ្មានទូរស័ព្ទ"}
+    )
+    done = send(store, form, folder=tmp_path, held=held)
+    assert codes(done) == [("staff.card_in_ok", None)]
+    assert done[0]["details"] == {"name": "គំរូ គ្មានទូរស័ព្ទ", "time": "06:40"}
+    scan = store.staff_scans[0][2]
+    key = f"card-photos/{sha}.jpg"
+    assert scan == {
+        "mode": "IN",
+        "card": "CHETANA-E-xyz",
+        "reason": "NO_PHONE",
+        "reason_text": "",
+        "photo": {"sha256": sha, "byte_size": len(photo), "media_type": "image/jpeg",
+                  "storage_key": key},
+    }  # fmt: skip
+    assert (tmp_path / key).read_bytes() == photo
+
+    # A refused scan keeps no photo; a file kept before is not touched.
+    other = b"\xff\xd8\xff another photo"
+    other_key = f"card-photos/{hashlib.sha256(other).hexdigest()}.jpg"
+    store.staff_answers.append({"ok": False, "reply_key": "check_refused_need_reason"})
+    refused = send(
+        store,
+        form | {"reason": "OTHER"},
+        folder=tmp_path,
+        held=[{"content_type": "image/jpeg", "sha256": "x", "data": other}],
+    )
+    assert codes(refused) == [("staff.check_refused_need_reason", None)]
+    assert not (tmp_path / other_key).exists()
+    store.staff_answers.append({"ok": False, "reply_key": "check_refused_already_in"})
+    send(store, form, folder=tmp_path, held=held)
+    assert (tmp_path / key).exists()
+    # No photo: HR answers that one is needed.
+    store.staff_answers.append({"ok": False, "reply_key": "check_refused_need_photo"})
+    assert codes(send(store, form, folder=tmp_path)) == [("staff.check_refused_need_photo", None)]
+    assert "photo" not in store.staff_scans[-1][2]
+
+    # The HR rule's old photos: the file goes, then the removal is recorded.
+    store.photos_due = [
+        {"file_id": "f1", "storage_key": key},
+        {"file_id": "f2", "storage_key": "../outside.jpg"},
+    ]
+    assert remove_old_card_photos(store, tmp_path) == 1
+    assert not (tmp_path / key).exists()
+    assert store.photos_removed == ["f1"]
+    assert remove_old_card_photos(store, None) == 0
+
+
+def test_the_pull_holds_card_photos_and_keeps_codes_out(
+    office_key: rsa.RSAPrivateKey, tmp_path: Path
+) -> None:
+    relay, store = FakeRelay(office_key), FakeStore()
+    photo = b"\xff\xd8\xff card photo"
+    sha = hashlib.sha256(photo).hexdigest()
+    plain = {
+        "v": 1,
+        "telegram_user_id": USER,
+        "chat_id": USER,
+        "language_code": "km",
+        "payload": {
+            "form": {"type": "CARD", "mode": "IN", "card": "CHETANA-E-secret",
+                     "reason": "PHONE_BROKEN"},
+            "role": "STAFF",
+        },
+        "media": [{"id": "media-0101", "content_type": "image/jpeg", "sha256": sha,
+                   "size": len(photo)}],
+    }  # fmt: skip
+    relay.add("item-0101", plain, {"media-0101": photo})
+    relay.items["item-0101"] |= {"bot": "STAFF", "kind": "form"}
+    store.staff_answers.append({"ok": True, "direction": "IN", "time": "06:40", "name_km": NAME})
+    media, hr = tmp_path / "media", tmp_path / "hr"
+    result = run_pull(
+        client=_client(relay), key=office_key, store=store, media_directory=media,
+        hr_files_directory=hr,
+    )  # fmt: skip
+    assert result.saved == 1
+    saved = store.items["item-0101"]
+    assert saved["media"] == [] and saved["summary"]["held_media"] == 1
+    assert "card" not in saved["payload"]["form"]
+    assert not media.exists()
+    assert (hr / f"card-photos/{sha}.jpg").read_bytes() == photo
+    assert store.staff_scans[0][2]["card"] == "CHETANA-E-secret"
+    assert codes(store.replies) == [("staff.card_in_ok", None)]
+
+
+def test_staff_texts_are_khmer_only() -> None:
+    for code, texts in TEXTS.items():
+        if code.startswith("staff."):
+            assert texts["km"] == texts["en"], code

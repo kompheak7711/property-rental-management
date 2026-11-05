@@ -2733,6 +2733,23 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **Links:** DL-112, DL-171, DL-172.
 - **Decision date:** 2026-11-05.
 
+## DL-174 — Telegram bots: the Staff bot joins staff and takes check-in and card scans (bots step 4a)
+
+- **Type:** `TECHNICAL DECISION`
+- **Status:** `STEP 4A BUILT ON BRANCH claude/telegram-staff-bot; WAITS FOR THE OWNER'S TEST`
+- **Source:** the owner's staff rules (24 Oct 2026: staff join with Start and their phone, the Owner or a Manager approves and gives the role; staff see Khmer only), the check-in rules of 3 Nov 2026 (Location on before the scan, the phone finds its place, card scan first with reason and photo; HR plan PR-HR-060 to 068) and the staff forms mock-up v14. HR owns the staff tables and the scan rules (HR branch, migrations `20270430_300` to `20270503_303`). Technical choices by Claude under the owner's 2026-10-23 22:30 rule; no new business rule.
+- **(A) Join.** A new person taps Start in the Staff bot and shares their own Telegram phone (someone else's contact does not count). That makes a request in HR > Staff requests. When the Owner or a Manager links it to an employee with report roles, or refuses it, the person hears it from the bot. A linked person gets the Reports button.
+- **(B) Staff forms.** Reports opens the Staff forms (a Mini App on the relay, `/app/staff`), in Khmer, with the person's name, roles and shift. The relay lets in only linked staff (the office sends the list when it changes).
+- **(C) Check in and Check out.** The form asks for the phone's Location first (Telegram's location access); if it is off, it says so and opens the settings. Then the camera scans the place QR. The HR rules decide (too early, late, needs check, already in), and the bot answers in the chat with the time, about a minute later (the relay's pull every minute).
+- **(D) Scan employee card.** Caretakers and Authorizers: check in or out, scan the card, pick the reason (Other needs a text) and take a half-body photo; Save stays off until all are given. The photo is kept in the HR files folder, not with the Telegram photos, so the 90-day rule removes it; a refused scan keeps no photo. The person's name comes back in the chat answer (the mock-up showed it at once; the relay holds no staff data to show it).
+- **(E) Accounts.** The HR functions take only a service actor, so the Telegram jobs get one more setting, the service actor (`--service-actor-id`), and the HR files folder. Without them the Staff bot answers that it is not ready. The scanned QR and card texts are not kept in the saved message.
+- **Branch:** the Staff bot needs the HR tables, so it is built on `claude/telegram-staff-bot` (the Telegram branch plus the HR branch); migration `20270619_330` joins the two migration lines. It merges after PR #7 and the HR PR #10.
+- **Next (step 4b):** Report a problem (walk-round) and Close job, and the urgent alert to the caretaker on shift.
+- **Open:** the Khmer texts need a native-speaker check.
+- **Built:** migrations `20270619_330` and `20270620_331` (DB-TG-010), `backend/src/property_rental/telegram_staff_bot.py`, `relay/src/staff_app.ts`.
+- **Links:** DL-125, DL-127, DL-171.
+- **Decision date:** 2026-11-05.
+
 ## DL-160 — Riel bank account
 
 - **Type:** `OWNER BUSINESS DECISION`

@@ -63526,6 +63526,98 @@
       "test_path": "frontend/src/ledger/LedgerPage.test.tsx",
       "status": "implemented",
       "notes": "Riel bank account: Needs check sets a Payment Method's riel account and keeps the riel bank out of the main account list."
+    },
+    {
+      "test_id": "test_join_answer_and_who",
+      "upstream_ids": [
+        "DL-174",
+        "DB-TG-010"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_staff_bot_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 4a: A Start with the own phone becomes an HR staff request through the jobs' account and the service actor; the person hears Approved with the Reports button or Not approved; the relay list holds only linked staff with roles and shift."
+    },
+    {
+      "test_id": "test_check_and_card_scans_answer_in_property_time",
+      "upstream_ids": [
+        "DL-174",
+        "DB-TG-010"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_staff_bot_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 4a: Check-in and card scans go through the Telegram rights and the HR rules and answer with the time and the shift start in Property time; old card photos are listed only for the jobs."
+    },
+    {
+      "test_id": "test_a_new_person_shares_their_phone_and_waits_for_the_answer",
+      "upstream_ids": [
+        "DL-174"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_staff_bot.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 4a: Start asks for the own phone; another person's contact does not count; a waiting person is told so; a linked person gets the Reports button that opens /app/staff."
+    },
+    {
+      "test_id": "test_without_the_service_actor_the_bot_says_it_is_not_ready",
+      "upstream_ids": [
+        "DL-174"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_staff_bot.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 4a: Without the service actor the Staff bot answers that it is not ready."
+    },
+    {
+      "test_id": "test_check_in_and_out_answers_with_the_time",
+      "upstream_ids": [
+        "DL-174"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_staff_bot.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 4a: A check-in or check-out form sends only the fields the HR rules read and is answered in Khmer with the time, the minutes late or the shift start; an unknown refusal gets the general answer."
+    },
+    {
+      "test_id": "test_card_scan_keeps_the_photo_in_the_hr_folder",
+      "upstream_ids": [
+        "DL-174"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_staff_bot.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 4a: A card scan photo is written to the HR files folder; a refused scan removes the new file but never an older one; old photos are deleted, then recorded."
+    },
+    {
+      "test_id": "test_the_pull_holds_card_photos_and_keeps_codes_out",
+      "upstream_ids": [
+        "DL-174"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_staff_bot.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 4a: The pull job keeps a card photo out of the Telegram photos and the scanned card text out of the saved message."
+    },
+    {
+      "test_id": "test_staff_texts_are_khmer_only",
+      "upstream_ids": [
+        "DL-174"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_staff_bot.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 4a: Every Staff bot text is Khmer in both languages (owner rule)."
+    },
+    {
+      "test_id": "the Staff forms: the page, the person's name, roles and shift, then a card scan with its photo",
+      "upstream_ids": [
+        "DL-174"
+      ],
+      "test_level": "unit",
+      "test_path": "relay/test/relay.test.ts",
+      "status": "implemented",
+      "notes": "Telegram bots step 4a: The relay serves /app/staff (Location, QR scan, card scan), gives a linked person their name, roles and shift, and seals a card scan form with its photo."
     }
   ]
 }
