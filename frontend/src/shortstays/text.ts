@@ -172,6 +172,11 @@ const TEXT = {
     // new
     "ម៉ាស៊ីនមេបានបដិសេធការកក់នេះ។ ពិនិត្យអ្វីដែលអ្នកបានវាយ។",
   ],
+  f_why: [
+    "This booking was not made: {0}",
+    // new
+    "ការកក់នេះមិនបានធ្វើទេ៖ {0}",
+  ],
   f_failed: [
     "This was not saved. Check the connection and try again.",
     "មិនបានរក្សាទុកទេ។ ពិនិត្យការតភ្ជាប់ ហើយសាកម្តងទៀត។",

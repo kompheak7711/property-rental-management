@@ -13,6 +13,7 @@ import {
   type CustomerDetail,
   CustomerConflictError,
 } from "../customerClient";
+import { bookingRefusal } from "./NewBooking";
 import { ShortStaysPage } from "./ShortStaysPage";
 import {
   type Booking,
@@ -1802,5 +1803,22 @@ describe("Daily and weekly rent: Short stays", () => {
     ).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /ការកក់ថ្មី/ })).toBeNull();
     expect(screen.getAllByText("ទំនេរ").length).toBeGreaterThan(0);
+  });
+
+  it("TEST-FE-1629 shows the real reason when a booking is refused", () => {
+    const refused = (detail: string) =>
+      bookingRefusal("en", new ShortStaysError(409, detail));
+    expect(
+      refused("The Unit is already booked on one of these nights"),
+    ).toMatch(/Someone has just booked/);
+    expect(
+      refused("The Unit cannot be booked for these nights: LEASE"),
+    ).toMatch(/cannot be booked in this Unit/);
+    expect(
+      refused("The Unit has no monthly Rent to price a short stay from"),
+    ).toMatch(/no monthly Rent/);
+    expect(refused("The nights are booked on Agoda")).toBe(
+      "This booking was not made: The nights are booked on Agoda",
+    );
   });
 });

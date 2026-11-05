@@ -81,10 +81,19 @@ export function PriceLines({
 export function bookingRefusal(language: Language, error: unknown): string {
   if (error instanceof ShortStaysError) {
     if (error.status === 403) return st(language, "f_right");
-    if (error.status === 409)
-      return error.detail?.includes("cannot be booked") === true
-        ? st(language, "e_free")
-        : st(language, "f_taken");
+    if (error.status === 409) {
+      const detail = error.detail ?? "";
+      if (detail.includes("cannot be booked")) return st(language, "e_free");
+      if (detail.includes("no monthly Rent")) return st(language, "p_no_rent");
+      // Only a clash on the nights (with a booking or a Lease) is "just booked"; any other
+      // refusal shows the server's own reason, so the desk knows what to fix.
+      if (
+        detail === "" ||
+        /already booked|Lease on one of these nights/.test(detail)
+      )
+        return st(language, "f_taken");
+      return st(language, "f_why", detail);
+    }
     if (error.status === 422 || error.status === 404)
       return st(language, "f_refused");
   }
