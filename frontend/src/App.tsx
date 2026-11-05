@@ -168,6 +168,10 @@ import { LoansPage } from "./hr/LoansPage";
 import { PayrollPage } from "./hr/PayrollPage";
 import type { ProblemsApi } from "./problems/problemsClient";
 import {
+  type StaffReadingsApi,
+  staffReadingsApi as defaultStaffReadingsApi,
+} from "./utilities/staffReadingsClient";
+import {
   ContactOfficePage,
   FaqPageView,
   LinkedTenantsPage,
@@ -203,6 +207,8 @@ export interface AppProps {
   quotationsApi?: QuotationsApi;
   /** V1.1 part 7: Building › Problem reports; the real server when not given. */
   problemsApi?: ProblemsApi;
+  /** Telegram bots step 4c: readings from the Staff bot in Utilities. */
+  staffReadingsApi?: StaffReadingsApi;
   /** Telegram bots step 2c: Office › Telegram; the real server when not given. */
   telegramApi?: TelegramApi;
   /** HRIS phase 6: Office › Employees and payroll; the real server when not given. */
@@ -692,6 +698,7 @@ export function App({
   openingApi,
   quotationsApi,
   problemsApi,
+  staffReadingsApi = defaultStaffReadingsApi,
   telegramApi,
   hrApi,
   propertyApi = propertyConfigurationApi,
@@ -1761,6 +1768,7 @@ export function App({
           language={language}
           leaseApi={leaseApi}
           propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
+          staffReadingsApi={staffReadingsApi}
           testApp={environment !== "production"}
           unitApi={unitApi ?? defaultUnitApi}
           utilityApi={utilityApi}

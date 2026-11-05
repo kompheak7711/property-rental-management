@@ -15,7 +15,14 @@
 // voice note (up to 1 minute). At a place with an open Building problem the person picks Same
 // problem or Something else. Close job (Technicians): pick a planned repair, take the after
 // photo (1 to 3) and choose No cost, or the parts and paid outside workers in dollars with a
-// receipt photo (1 or 2). The Khmer waits for the native-speaker check.
+// receipt photo (1 or 2).
+//
+// Utility reading (step 4c, DL-176; meter readers and Authorizers): one table of each Unit with a
+// meter, Electricity (kWh) and Water (m³), with last month's reading under each box. No photo
+// (owner rule, 22 Oct 2026). A reading lower than last month, or Electricity more than 300 kWh
+// above it, shows "Look again" before sending; the readings wait for a Manager in Utilities.
+// The flag beside a Unit opens the Meter check request (which meter, the problem, a photo if
+// possible and a note) for the Technical team. The Khmer waits for the native-speaker check.
 
 const PAGE = String.raw`<!doctype html>
 <html lang="km">
@@ -70,6 +77,13 @@ const PAGE = String.raw`<!doctype html>
     border: 1px solid var(--line); border-radius: 10px; background: inherit; color: inherit; }
   .money { display: flex; gap: 8px; }
   .money label { flex: 1; font-size: 14px; }
+  table.util { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  table.util th { font-size: 13px; text-align: left; padding: 4px; color: var(--tg-theme-hint-color, var(--muted)); }
+  table.util td { padding: 4px; vertical-align: top; }
+  table.util input.text { padding: 8px; }
+  table.util tr.warn td { background: #fff4e5; }
+  .small-line { font-size: 12px; margin: 2px 0 0; }
+  td.flagline { font-size: 13px; padding-top: 0; }
   [hidden] { display: none !important; }
 </style>
 </head>
@@ -118,14 +132,32 @@ const PAGE = String.raw`<!doctype html>
     receipt: "រូបថតវិក្កយបត្រ (ត្រូវតែមាន រហូតដល់ 2)",
     total: "សរុប $", total_hint: "អ្នកគ្រប់គ្រងពិនិត្យ រួចកម្មវិធីធ្វើសំណើចំណាយ។",
     close_ready: "ថតរូបក្រោយជួសជុល ហើយជ្រើសថ្លៃ (មានថ្លៃ ត្រូវមានចំនួន និងរូបថតវិក្កយបត្រ)។",
-    sent: "បានផ្ញើហើយ។ លទ្ធផលនឹងមកក្នុងការជជែក ក្នុងរយៈពេលប្រហែលមួយនាទី។"
+    sent: "បានផ្ញើហើយ។ លទ្ធផលនឹងមកក្នុងការជជែក ក្នុងរយៈពេលប្រហែលមួយនាទី។",
+    meter: "អំណានមីទ័រទឹក និងភ្លើង", meter_hint: "កត់អំណានមីទ័រគ្រប់បន្ទប់ រួចផ្ញើឲ្យអ្នកគ្រប់គ្រងពិនិត្យ",
+    col_unit: "បន្ទប់", col_e: "ភ្លើង (kWh)", col_w: "ទឹក (m³)", last: "ខែមុន ",
+    look_again: "ត្រួតពិនិត្យម្ដងទៀត", lower_e: "អំណានភ្លើងទាបជាងខែមុន", lower_w: "អំណានទឹកទាបជាងខែមុន",
+    high_e: "ប្រើភ្លើងច្រើនជាងធម្មតាខ្លាំង", look_hint: "សូមមើលមីទ័រម្តងទៀត មុនពេលផ្ញើ។",
+    not_number: "សូមសរសេរលេខ", filled: "បានបំពេញ ", of: " ក្នុងចំណោម ", units_word: " បន្ទប់",
+    to_check: " ត្រូវពិនិត្យ",
+    meter_note: "មិនចាំបាច់ថតរូប។ អ្នកគ្រប់គ្រង ឬអ្នកមានសិទ្ធិ នឹងបញ្ជាក់អំណាន មុនចេញវិក្កយបត្រទឹកភ្លើង។",
+    send_review: "ផ្ញើឱ្យពិនិត្យ", no_meters: "មិនទាន់មានមីទ័រក្នុងកម្មវិធីទេ។",
+    meter_ready: "សូមបំពេញអំណានយ៉ាងហោចណាស់មួយ ជាលេខត្រឹមត្រូវ។",
+    meter_flag: "រាយការណ៍បញ្ហាមីទ័រ",
+    metercheck: "សំណើពិនិត្យមីទ័រ", meter_which: "មីទ័រ", meter_e: "ភ្លើង", meter_w: "ទឹក",
+    problem: "បញ្ហា", BROKEN: "ខូច", CANNOT_READ: "មើលលេខមិនឃើញ", NOT_SURE: "លេខមិនប្រាកដ",
+    OTHER_METER: "ផ្សេងៗ", photo_optional: "រូបថត (បើអាច រហូតដល់ 2)", mc_note: "កំណត់សម្គាល់",
+    mc_hint: "បន្ទាប់ពីផ្ញើ សំណើនេះទៅក្រុមបច្ចេកទេស។ អ្នកបច្ចេកទេសនឹងពិនិត្យមីទ័រ។",
+    mc_ready: "សូមជ្រើសមីទ័រ និងបញ្ហា (ផ្សេងៗ ត្រូវសរសេរកំណត់សម្គាល់)។"
   };
   var REASONS = ["NO_PHONE", "PHONE_BROKEN", "PHONE_LOST", "PHONE_STOLEN", "OTHER"];
   var CARD_ROLES = { CARETAKER: true, AUTHORIZER: true };
   var ROLE_NAMES = { CLEANER: "អ្នកសម្អាត", TECHNICIAN: "អ្នកបច្ចេកទេស",
     CARETAKER: "អ្នកថែរក្សាអគារ", METER_READER: "អ្នកអានមីទ័រ", AUTHORIZER: "អ្នកអនុម័ត" };
   var PHOTO_SIDE = 1600, MAX_REASON = 300, MAX_TEXT = 1000, MAX_VOICE_SECONDS = 60;
-  var LIMITS = { report: 4, after: 3, receipt: 2 };
+  var LIMITS = { report: 4, after: 3, receipt: 2, mc: 2 };
+  var METER_ROLES = { METER_READER: true, AUTHORIZER: true };
+  var METER_PROBLEMS = ["BROKEN", "CANNOT_READ", "NOT_SURE", "OTHER"];
+  var HIGH_KWH = 300, MAX_NOTE = 300;
   var ICONS = { drop: "💧", zap: "⚡", snow: "❄️", lock: "🚪", window: "🪟", sofa: "🛋️",
     wifi: "📶", bug: "🐜", broom: "🧹", volume: "🔊", flame: "🔥", dots: "❓" };
 
@@ -133,7 +165,7 @@ const PAGE = String.raw`<!doctype html>
   var app = document.getElementById("app");
   var me = null, choices = {};
   var view = "home";
-  var rep = null, job = null;
+  var rep = null, job = null, readings = {}, mc = null;
   var recorder = null, recordTimer = null, recordStart = 0;
   var card = { mode: "IN", code: "", reason: "", text: "", photo: null };
   var error = "", note = "", busy = false;
@@ -148,6 +180,54 @@ const PAGE = String.raw`<!doctype html>
   function cardReady() {
     return card.code && card.reason && card.photo &&
       (card.reason !== "OTHER" || card.text.trim().length > 0);
+  }
+
+  function mayReadMeters() { return roles().some(function (role) { return METER_ROLES[role]; }); }
+  function meters() { return choices.meters || []; }
+  // A typed reading: digits with up to 3 decimals, as a number; "" is empty; null is wrong.
+  function readingValue(value) {
+    if (!value || !value.trim()) { return ""; }
+    var match = /^\s*(\d{1,9})(\.\d{1,3})?\s*$/.exec(value);
+    return match ? Number(match[1] + (match[2] || "")) : null;
+  }
+  function typed(id) { return readings[id] || (readings[id] = { e: "", w: "" }); }
+  // What to look at again for one Unit (mock-up v14): lower than last month, or Electricity
+  // more than 300 kWh above it, or not a number.
+  function meterFlags(row) {
+    var out = [], value = typed(row.id);
+    [["e", T.lower_e], ["w", T.lower_w]].forEach(function (pair) {
+      var meter = row[pair[0]];
+      if (!meter) { return; }
+      var number = readingValue(value[pair[0]]);
+      if (number === null) { out.push(T.not_number); return; }
+      if (number === "" || meter.last == null) { return; }
+      if (number < meter.last) { out.push(pair[1]); }
+      else if (pair[0] === "e" && number - meter.last > HIGH_KWH) { out.push(T.high_e); }
+    });
+    return out;
+  }
+  function meterReady() {
+    var any = false, wrong = false;
+    meters().forEach(function (row) {
+      ["e", "w"].forEach(function (key) {
+        if (!row[key]) { return; }
+        var number = readingValue(typed(row.id)[key]);
+        if (number === null) { wrong = true; } else if (number !== "") { any = true; }
+      });
+    });
+    return any && !wrong;
+  }
+  function meterCount() {
+    var rows = meters(), filled = 0, flagged = 0;
+    rows.forEach(function (row) {
+      var value = typed(row.id);
+      if ((!row.e || readingValue(value.e) !== "") && (!row.w || readingValue(value.w) !== "")) { filled += 1; }
+      if (meterFlags(row).length) { flagged += 1; }
+    });
+    return T.filled + filled + T.of + rows.length + T.units_word + (flagged ? " · " + flagged + T.to_check : "");
+  }
+  function mcReady() {
+    return !!mc && !!mc.meter && !!mc.problem && (mc.problem !== "OTHER" || mc.note.trim().length > 0);
   }
 
   function newReport() {
@@ -289,8 +369,66 @@ const PAGE = String.raw`<!doctype html>
     return html + sendButton(jobReady(), T.close_ready);
   }
 
+  function meterCell(row, key, index) {
+    if (!row[key]) { return "<td>–</td>"; }
+    var last = row[key].last;
+    return '<td><input class="text" inputmode="decimal" id="m-' + key + "-" + index + '" aria-label="' +
+      esc(row.n + " " + (key === "e" ? T.meter_e : T.meter_w)) + '" value="' + esc(typed(row.id)[key]) + '">' +
+      '<div class="hint small-line">' + esc(T.last) + (last == null ? "–" : esc(last)) + "</div></td>";
+  }
+  function flagLine(row) {
+    var flags = meterFlags(row);
+    return flags.length ? '<span class="urgent">' + esc(T.look_again) + "</span> " + esc(flags.join("។ ") + "។ " + T.look_hint) : "";
+  }
+  function meterView() {
+    var rows = meters();
+    var html = "<h1>⚡ " + esc(T.meter) + "</h1>";
+    if (!rows.length) {
+      return html + '<p class="hint">' + esc(T.no_meters) + '</p><button class="small" data-act="home">' + esc(T.back) + "</button>";
+    }
+    html += '<table class="util"><thead><tr><th>' + esc(T.col_unit) + "</th><th>" + esc(T.col_e) + "</th><th>" +
+      esc(T.col_w) + "</th><th></th></tr></thead><tbody>" + rows.map(function (row, index) {
+        var flags = meterFlags(row);
+        return '<tr id="row-' + index + '"' + (flags.length ? ' class="warn"' : "") + "><td><b>" + esc(row.n) + "</b></td>" +
+          meterCell(row, "e", index) + meterCell(row, "w", index) +
+          '<td><button class="small" data-act="metercheck" data-value="' + index + '" aria-label="' +
+          esc(T.meter_flag + " " + row.n) + '" title="' + esc(T.meter_flag) + '">⚑</button></td></tr>' +
+          '<tr><td colspan="4" class="flagline" id="flag-' + index + '">' + flagLine(row) + "</td></tr>";
+      }).join("") + "</tbody></table>";
+    html += '<p class="hint" id="count">' + esc(meterCount()) + "</p>";
+    html += '<p class="hint">' + esc(T.meter_note) + "</p>";
+    return html + sendButton(meterReady(), T.meter_ready).replace(esc(T.send) + "</button>", esc(T.send_review) + "</button>");
+  }
+  function meterCheckView() {
+    var row = meters()[mc.index];
+    var html = "<h1>⚑ " + esc(T.metercheck) + "</h1><p><b>" + esc(T.col_unit) + " " + esc(row.n) + "</b></p>";
+    html += "<h2>" + esc(T.meter_which) + '</h2><div class="row">' + [["ELECTRICITY", T.meter_e], ["WATER", T.meter_w]].map(function (pair) {
+      return '<button class="choice' + (mc.meter === pair[0] ? " on" : "") + '" data-act="mc-meter" data-value="' + pair[0] + '">' +
+        esc(pair[1]) + "</button>";
+    }).join("") + "</div>";
+    html += "<h2>" + esc(T.problem) + '</h2><div class="row">' + METER_PROBLEMS.map(function (problem) {
+      return '<button class="choice' + (mc.problem === problem ? " on" : "") + '" data-act="mc-problem" data-value="' + problem + '">' +
+        esc(problem === "OTHER" ? T.OTHER_METER : T[problem]) + "</button>";
+    }).join("") + "</div>";
+    html += "<h2>" + esc(T.photo_optional) + "</h2>" + photoRow(mc.photos, "mc");
+    html += "<h2>" + esc(T.mc_note) + '</h2><textarea id="mcnote" maxlength="' + MAX_NOTE + '">' + esc(mc.note) + "</textarea>";
+    html += '<p class="hint">' + esc(T.mc_hint) + "</p>";
+    return html + sendButton(mcReady(), T.mc_ready).replace('data-act="home"', 'data-act="meter-back"');
+  }
+  function refreshMeterRow(index) {
+    var row = meters()[index];
+    var line = document.getElementById("flag-" + index);
+    if (line) { line.innerHTML = flagLine(row); }
+    var tr = document.getElementById("row-" + index);
+    if (tr) { tr.className = meterFlags(row).length ? "warn" : ""; }
+    var count = document.getElementById("count");
+    if (count) { count.textContent = meterCount(); }
+  }
+
   function render() {
     var html = "";
+    if (view === "meter") { app.innerHTML = meterView() + (error ? '<p class="error">' + esc(error) + "</p>" : ""); return; }
+    if (view === "metercheck") { app.innerHTML = meterCheckView() + (error ? '<p class="error">' + esc(error) + "</p>" : ""); return; }
     if (view === "report") { app.innerHTML = reportView() + (error ? '<p class="error">' + esc(error) + "</p>" : ""); return; }
     if (view === "close") { app.innerHTML = jobView() + (error ? '<p class="error">' + esc(error) + "</p>" : ""); return; }
     if (view === "home") {
@@ -307,6 +445,10 @@ const PAGE = String.raw`<!doctype html>
       if (roles().indexOf("TECHNICIAN") >= 0) {
         html += '<div class="card"><h2>✓ ' + esc(T.close) + " (" + ((me.jobs || []).length) + ')</h2><p class="hint">' +
           esc(T.close_hint) + '</p><button class="small" data-act="close">' + esc(T.close) + "</button></div>";
+      }
+      if (mayReadMeters()) {
+        html += '<div class="card"><h2>⚡ ' + esc(T.meter) + '</h2><p class="hint">' + esc(T.meter_hint) +
+          '</p><button class="small" data-act="meter">' + esc(T.meter) + "</button></div>";
       }
       if (mayScanCards()) {
         html += '<div class="card"><h2>▣ ' + esc(T.card) + '</h2><p class="hint">' + esc(T.card_hint) +
@@ -506,6 +648,28 @@ const PAGE = String.raw`<!doctype html>
     }).catch(function () { busy = false; error = T.failed; render(); });
   }
 
+  function sendReadings() {
+    if (!meterReady() || busy) { return; }
+    var rows = [];
+    meters().forEach(function (row) {
+      var value = typed(row.id), entry = { unit_id: row.id, electricity: null, water: null }, any = false;
+      if (row.e && readingValue(value.e) !== "") { entry.electricity = readingValue(value.e); any = true; }
+      if (row.w && readingValue(value.w) !== "") { entry.water = readingValue(value.w); any = true; }
+      if (any) { rows.push(entry); }
+    });
+    post({ type: "METER", readings: rows }, []);
+  }
+  function sendMeterCheck() {
+    if (!mcReady() || busy) { return; }
+    var form = { type: "METER_CHECK", unit_id: meters()[mc.index].id, meter: mc.meter, problem: mc.problem,
+      note: mc.note.trim().slice(0, MAX_NOTE) || null };
+    busy = true; render();
+    files(mc.photos).then(function (sent) {
+      busy = false;
+      return post(form, sent);
+    }).catch(function () { busy = false; error = T.failed; render(); });
+  }
+
   function saveCard() {
     if (!cardReady() || busy) { return; }
     base64(card.photo.blob).then(function (encoded) {
@@ -522,6 +686,16 @@ const PAGE = String.raw`<!doctype html>
     if (act === "check") { check(value); return; }
     if (act === "report") { view = "report"; rep = newReport(); }
     if (act === "close") { view = "close"; job = newJob(); }
+    if (act === "meter") { view = "meter"; }
+    if (act === "metercheck") {
+      var row = meters()[Number(value)];
+      mc = { index: Number(value), meter: row && row.e && !row.w ? "ELECTRICITY" : row && row.w && !row.e ? "WATER" : "",
+        problem: "", photos: [], note: "" };
+      view = "metercheck";
+    }
+    if (act === "meter-back") { view = "meter"; }
+    if (act === "mc-meter") { mc.meter = value; }
+    if (act === "mc-problem") { mc.problem = value; }
     if (act === "kind") { rep.kind = value; rep.unit = ""; rep.place = ""; rep.same = null; rep.decided = false; }
     if (act === "place") { rep.place = value; rep.same = null; rep.decided = false; }
     if (act === "type") { rep.type = value; }
@@ -532,10 +706,15 @@ const PAGE = String.raw`<!doctype html>
     if (act === "job") { job.id = value; }
     if (act === "cost") { job.cost = value; }
     if (act === "drop-photo") {
-      var parts = value.split(":"), list = parts[0] === "report" ? rep.photos : parts[0] === "after" ? job.after : job.receipts;
+      var parts = value.split(":"), list = parts[0] === "report" ? rep.photos : parts[0] === "after" ? job.after :
+        parts[0] === "mc" ? mc.photos : job.receipts;
       list.splice(Number(parts[1]), 1);
     }
-    if (act === "send") { if (view === "report") { sendReport(); } else { sendJob(); } return; }
+    if (act === "send") {
+      if (view === "report") { sendReport(); } else if (view === "meter") { sendReadings(); }
+      else if (view === "metercheck") { sendMeterCheck(); } else { sendJob(); }
+      return;
+    }
     if (act === "card") { view = "card"; card = { mode: "IN", code: "", reason: "", text: "", photo: null }; }
     if (act === "home") { view = "home"; }
     if (act === "mode") { card.mode = value; }
@@ -546,6 +725,20 @@ const PAGE = String.raw`<!doctype html>
   });
   app.addEventListener("input", function (event) {
     var id = event.target.id, value = event.target.value;
+    var cell = /^m-(e|w)-(\d+)$/.exec(id || "");
+    if (cell) {
+      typed(meters()[Number(cell[2])].id)[cell[1]] = value;
+      refreshMeterRow(Number(cell[2]));
+      var ready = app.querySelector('[data-act="send"]');
+      if (ready) { ready.disabled = busy || !meterReady(); }
+      return;
+    }
+    if (id === "mcnote") {
+      mc.note = value;
+      var sendCheck = app.querySelector('[data-act="send"]');
+      if (sendCheck) { sendCheck.disabled = busy || !mcReady(); }
+      return;
+    }
     if (id === "text" || id === "floor" || id === "parts" || id === "outside") {
       if (id === "text") { rep.text = value; }
       if (id === "floor") { rep.floor = value; }
@@ -573,6 +766,7 @@ const PAGE = String.raw`<!doctype html>
         if (target === "report") { rep.photos.push(photo); }
         else if (target === "after") { job.after.push(photo); }
         else if (target === "receipt") { job.receipts.push(photo); }
+        else if (target === "mc") { mc.photos.push(photo); }
         else { card.photo = photo; }
       }
       render();

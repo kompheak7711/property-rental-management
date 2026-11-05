@@ -63672,6 +63672,116 @@
       "test_path": "backend/tests/test_telegram_staff_bot.py",
       "status": "implemented",
       "notes": "Telegram bots step 4b: The Staff bot answers Report a problem (saved, urgent, joined, refused) and Close job (done with or without cost, not open, cost checked, not a Technician) in Khmer; the same form twice is answered once."
+    },
+    {
+      "test_id": "test_the_form_shows_the_meters_and_their_last_readings",
+      "upstream_ids": [
+        "DL-176",
+        "DB-TG-012"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_staff_meter_readings_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 4c: The Staff forms give each Unit with a meter that can be read and the last reading of each type, with no names; the meter reader's roles come with the person."
+    },
+    {
+      "test_id": "test_readings_wait_for_the_manager_who_confirms_or_asks_again",
+      "upstream_ids": [
+        "DL-176",
+        "DB-TG-012",
+        "API-TG-006"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_staff_meter_readings_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 4c: Readings from the meter reader are saved once and flagged lower or much higher; wrong rows, photos and other roles are refused; Confirm makes normal meter readings on the day read, Ask to read again tells the reader, a meter already read that day stays waiting until Don't use."
+    },
+    {
+      "test_id": "test_a_meter_check_request_is_a_unit_problem",
+      "upstream_ids": [
+        "DL-176",
+        "DB-TG-012"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_staff_meter_readings_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 4c: A Meter check request becomes a Unit Problem (Electricity or Water, source Staff bot) with its photo; Other needs a note; at most 2 photos; the same form twice gives the same report."
+    },
+    {
+      "test_id": "test_the_new_functions_are_behind_their_rights",
+      "upstream_ids": [
+        "DL-176",
+        "DB-TG-012"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_staff_meter_readings_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 4c: The Staff form functions need telegram.operate, the Utilities list and answer need utility_readings.record, the tables are closed to the runtime and never changed."
+    },
+    {
+      "test_id": "test_utility_reading_and_meter_check_answer_in_the_chat",
+      "upstream_ids": [
+        "DL-176"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_staff_bot.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 4c: The Staff bot answers the Utility reading (sent, with readings to look at, not a meter reader, refused) and the Meter check request in Khmer; the same form twice is answered once."
+    },
+    {
+      "test_id": "test_staff_readings_need_the_right_to_record_readings",
+      "upstream_ids": [
+        "DL-176",
+        "API-TG-006"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_staff_meter_readings_api.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 4c: The Utilities staff readings list and answer need utility_readings.record and are not cached."
+    },
+    {
+      "test_id": "test_an_answer_is_checked",
+      "upstream_ids": [
+        "DL-176",
+        "API-TG-006"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_staff_meter_readings_api.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 4c: An answer needs the browser checks, a known decision and 1 to 500 readings; an unknown reading is 404."
+    },
+    {
+      "test_id": "TEST-FE-1517",
+      "upstream_ids": [
+        "DL-176",
+        "API-TG-006"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/utilities/StaffReadings.test.tsx",
+      "status": "implemented",
+      "notes": "Telegram bots step 4c: Readings from the Staff bot show a card on Meter readings; Check readings shows previous and current readings, ticks the ones that look right, and Confirm saves them."
+    },
+    {
+      "test_id": "TEST-FE-1518",
+      "upstream_ids": [
+        "DL-176",
+        "API-TG-006"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/utilities/StaffReadings.test.tsx",
+      "status": "implemented",
+      "notes": "Telegram bots step 4c: Ask to read again names the Units, a reading already saved that day is left waiting, Don't use closes it, and nothing ticked is refused on the screen."
+    },
+    {
+      "test_id": "TEST-FE-1519",
+      "upstream_ids": [
+        "DL-176",
+        "API-TG-006"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/utilities/StaffReadings.test.tsx",
+      "status": "implemented",
+      "notes": "Telegram bots step 4c: Nothing shows when no reading waits or the list cannot be read; the client sends the answer with the CSRF token and refuses a list of the wrong shape."
     }
   ]
 }

@@ -107,6 +107,14 @@ class TelegramStore(Protocol):
         self, inbound_id: str, form: dict[str, Any], media_ids: list[str]
     ) -> dict[str, Any]: ...
 
+    def staff_meter_readings(
+        self, inbound_id: str, form: dict[str, Any], media_ids: list[str]
+    ) -> dict[str, Any]: ...
+
+    def staff_meter_check(
+        self, inbound_id: str, form: dict[str, Any], media_ids: list[str]
+    ) -> dict[str, Any]: ...
+
 
 class PostgresTelegramStore:
     def __init__(
@@ -462,6 +470,30 @@ class PostgresTelegramStore:
     ) -> dict[str, Any]:
         return self._staff_dict(
             "SELECT app.telegram_staff_close_job(%s, %s, %s::jsonb, %s::jsonb, %s)",
+            self._property,
+            inbound_id,
+            json.dumps(form),
+            json.dumps(media_ids),
+            self._actor,
+        )
+
+    def staff_meter_readings(
+        self, inbound_id: str, form: dict[str, Any], media_ids: list[str]
+    ) -> dict[str, Any]:
+        return self._staff_dict(
+            "SELECT app.telegram_staff_meter_readings(%s, %s, %s::jsonb, %s::jsonb, %s)",
+            self._property,
+            inbound_id,
+            json.dumps(form),
+            json.dumps(media_ids),
+            self._actor,
+        )
+
+    def staff_meter_check(
+        self, inbound_id: str, form: dict[str, Any], media_ids: list[str]
+    ) -> dict[str, Any]:
+        return self._staff_dict(
+            "SELECT app.telegram_staff_meter_check(%s, %s, %s::jsonb, %s::jsonb, %s)",
             self._property,
             inbound_id,
             json.dumps(form),

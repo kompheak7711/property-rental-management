@@ -17,6 +17,11 @@ Technician closes a planned repair with the after photo and the cost. The databa
 the one Problem reports list; an urgent report reaches the caretaker on shift and the Authorizers
 from the database itself.
 
+Utility reading and Meter check request (step 4c, DL-176; owner rule 22 Oct 2026): the meter
+reader types each Unit's Electricity and Water reading with no photo; the readings wait until a
+Manager confirms them in Utilities (asking to read again reaches the reader in this bot). The
+flag beside a Unit asks the Technical team to check that meter (a Unit Problem).
+
 The forms reach the office through the relay and the pull job, so the answer comes in the chat
 within about a minute.
 """
@@ -42,7 +47,8 @@ LOCATION_STATES: Final = frozenset({"OK", "NOT_FOUND", "OFF"})
 PHOTO_TYPES: Final = {"image/jpeg": "jpg", "image/png": "png"}
 CARD_PHOTOS: Final = "card-photos"
 REFUSED_PREFIX: Final = "check_refused_"
-FORM_TYPES: Final = frozenset({"CHECK", "CARD", "REPORT", "CLOSE"})
+FORM_TYPES: Final = frozenset({"CHECK", "CARD", "REPORT", "CLOSE", "METER", "METER_CHECK"})
+SAVED_FORMS: Final = frozenset({"REPORT", "CLOSE", "METER", "METER_CHECK"})
 
 
 def _message(plain: dict[str, Any]) -> dict[str, Any] | None:
@@ -194,7 +200,7 @@ def handle_staff_form(
     def reply(message: dict[str, Any]) -> None:
         store.bot_reply(BOT, user, chat, None, None, LANGUAGE, [message])
 
-    if form["type"] in {"REPORT", "CLOSE"}:
+    if form["type"] in SAVED_FORMS:
         inbound = saved.get("inbound_id")
         media = saved.get("media_ids")
         if not isinstance(inbound, str):
@@ -203,9 +209,15 @@ def handle_staff_form(
         if form["type"] == "REPORT":
             result = store.staff_problem_report(inbound, form, files)
             message = _report_answer(result)
-        else:
+        elif form["type"] == "CLOSE":
             result = store.staff_close_job(inbound, form, files)
             message = _close_answer(result)
+        elif form["type"] == "METER":
+            result = store.staff_meter_readings(inbound, form, files)
+            message = _meter_answer(result)
+        else:
+            result = store.staff_meter_check(inbound, form, files)
+            message = _meter_check_answer(result)
         if result.get("repeated") is not True:
             reply(message)
         return
@@ -253,6 +265,32 @@ def _close_answer(result: dict[str, Any]) -> dict[str, Any]:
             "staff.close_done_cost", number=number, amount=f"{cents // 100}.{cents % 100:02d}"
         )
     return _say("staff.close_done", number=number)
+
+
+def _meter_answer(result: dict[str, Any]) -> dict[str, Any]:
+    """Utility reading: how many readings wait for the Manager, and how many to look at."""
+    outcome = result.get("result")
+    if outcome == "NOT_LINKED":
+        return _say("staff.check_refused_not_linked")
+    if outcome == "NOT_METER_READER":
+        return _say("staff.meter_not_reader")
+    count = result.get("count")
+    if outcome != "SENT" or not isinstance(count, int):
+        return _say("staff.meter_invalid")
+    flagged = result.get("flagged")
+    if isinstance(flagged, int) and flagged > 0:
+        return _say("staff.meter_sent_flagged", count=str(count), flagged=str(flagged))
+    return _say("staff.meter_sent", count=str(count))
+
+
+def _meter_check_answer(result: dict[str, Any]) -> dict[str, Any]:
+    """Meter check request: the Unit Problem number for the Technical team."""
+    outcome = result.get("result")
+    if outcome == "NOT_LINKED":
+        return _say("staff.check_refused_not_linked")
+    if outcome != "ADDED":
+        return _say("staff.meter_check_invalid")
+    return _say("staff.meter_check_saved", number=str(result.get("report_number") or ""))
 
 
 def _card(

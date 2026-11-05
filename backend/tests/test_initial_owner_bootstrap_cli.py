@@ -1055,6 +1055,9 @@ def test_fastapi_openapi_inventory_has_no_bootstrap_or_unauthenticated_owner_res
         "/api/v1/properties/{property_id}/visit-requests": {"get"},
         "/api/v1/properties/{property_id}/visit-requests/{request_id}": {"get"},
         "/api/v1/properties/{property_id}/visit-requests/{request_id}/{action}": {"post"},
+        # Telegram bots step 4c (DL-176): staff readings in Utilities.
+        "/api/v1/properties/{property_id}/staff-meter-readings": {"get"},
+        "/api/v1/properties/{property_id}/staff-meter-readings/decisions": {"post"},
         # HRIS phase 6: Employees and payroll.
         "/api/v1/properties/{property_id}/hr/employees": {"get", "post"},
         "/api/v1/properties/{property_id}/hr/choices": {"get"},

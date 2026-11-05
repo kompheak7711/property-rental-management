@@ -5852,3 +5852,15 @@ Added by DL-175 (migration `20270621_332`, forward-only).
 - `app.telegram_staff_problem_report` and `app.telegram_staff_close_job` (`telegram.operate`): check the linked person (a working link today; Close job needs the Technician role), the form and its files, then save the report (source `STAFF_BOT`), or record the cost (`record_problem_report_cost`) and the Done step (`problem_report_step`). They answer with a fixed result (`ADDED`, `DONE`, `NOT_LINKED`, `NOT_TECHNICIAN`, `NOT_OPEN`, `COST_CHECKED`, `INVALID`).
 - `app.telegram_staff_form_data` now adds the Units (number only) to the choices and, for a Technician, the planned repairs (at most 12).
 - The deferred trigger `telegram_staff_urgent_alert` on `problem_reports` queues `staff.urgent` at the end of the change for the caretakers on shift and the Authorizers, unless the report was joined at once; never to the person who sent it.
+
+## DB-TG-012 — Staff Utility readings and the Meter check request (bots step 4c)
+
+Added by DL-176 (migration `20270622_333`, forward-only).
+
+- `staff_meter_reading_runs` (append-only): one Utility reading form sent in the Staff bot (inbound form, Telegram user, employee, the day it was read). One form is saved once.
+- `staff_meter_reading_proposals` (append-only): one typed reading per meter in a form, with the last saved reading before that day and the flag `LOWER` (lower than last) or `HIGH` (Electricity more than 300 kWh above last).
+- `staff_meter_reading_decisions` (append-only): the answer for a reading, `CONFIRMED` (with the `utility_readings` row it became), `ASK_AGAIN` or `NOT_USED`; one answer per reading.
+- `app.telegram_staff_meter_readings` (`telegram.operate`): the meter reader (or an Authorizer) sends Unit, Electricity and Water with no photo; each value needs a meter that can be read today (installed, not broken, not removed); a wrong row refuses the whole form. Answers `SENT` (count, flagged), `NOT_LINKED`, `NOT_METER_READER` or `INVALID`.
+- `app.telegram_staff_meter_check` (`telegram.operate`): a Meter check request (Electricity or Water; broken, cannot read, not sure, other with a note; up to 2 photos) becomes a Unit Problem (type Electricity or Water, source `STAFF_BOT`).
+- `app.staff_meter_readings_waiting` and `app.decide_staff_meter_readings` (`utility_readings.record`): the Utilities list and answer (API-TG-006). A confirmed reading goes through `record_utility_reading_api` with the person who confirmed it; asking again queues `staff.meter_again` to the reader.
+- `app.telegram_staff_form_data` now also gives the meters (Unit number and last reading of each type, no names) for the form.

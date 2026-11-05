@@ -2764,6 +2764,19 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **Links:** DL-124, DL-127, DL-129, DL-130, DL-174.
 - **Decision date:** 2026-11-05.
 
+## DL-176 — Telegram bots: the meter reader's Utility reading form and the Meter check request (bots step 4c)
+
+- **Type:** `TECHNICAL DECISION`
+- **Status:** `STEP 4C BUILT ON BRANCH claude/telegram-staff-bot; WAITS FOR THE OWNER'S TEST`
+- **Source:** the owner's rule of 22 Oct 2026 (meter readings need no photo), the staff forms mock-up v14 (approved 3 Nov 2026: one table of Unit, Electricity and Water with last month under each box; "Look again" when lower than last month or Electricity much higher; a flag that asks the Technical team to check a meter), the bots plan rev 29 (staff readings wait until a Manager confirms them in Utilities, so billing does not change) and DESIGN.md ("Meter readings sent by Telegram go to Utilities, Check readings"). Technical choices by Claude under the owner's 2026-10-23 22:30 rule; no new business or money rule.
+- **(A) Utility reading form.** People with the Meter reader role (and Authorizers) see every Unit with a meter that can be read and type the readings. Only meters that are installed, not broken and not removed are shown. "Look again" shows for a reading lower than last month, and for Electricity more than 300 kWh above it (the mock-up's number). A wrong row (no such meter, not a number) refuses the whole form, and nothing of it is kept.
+- **(B) The readings wait.** A staff reading is not a meter reading. It waits on Utilities > Meter readings ("Readings from the Staff bot"), in the same columns as the import check. Someone who may record readings ticks readings and chooses Confirm (each becomes a normal meter reading on the day it was read, recorded by that person), Ask to read again (the reader gets one Khmer message naming the Units and meters), or Don't use. A meter that already has a reading that day is not overwritten; it stays waiting until it is not used. Readings that look right start ticked.
+- **(C) Meter check request.** The flag beside a Unit asks which meter and what is wrong (broken, cannot read the number, number not sure, other with a note), with up to 2 photos if possible. It becomes a Unit Problem (Electricity or Water) from the Staff bot in the one Problem reports list, for the Technical team.
+- **Open:** the Telegram review of readings by the Manager in the bot (mock-up v14 "Confirm readings" for Authorizers) is not built; readings are confirmed in the app. The Khmer texts need a native-speaker check.
+- **Built:** migration `20270622_333` (DB-TG-012), API-TG-006, `backend/src/property_rental/staff_meter_readings_api.py`, `relay/src/staff_app.ts`, `frontend/src/utilities/StaffReadings.tsx`.
+- **Links:** DL-124, DL-174, DL-175.
+- **Decision date:** 2026-11-05.
+
 ## DL-160 — Riel bank account
 
 - **Type:** `OWNER BUSINESS DECISION`

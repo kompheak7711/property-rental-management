@@ -311,3 +311,41 @@ def test_report_a_problem_and_close_job_answer_in_the_chat() -> None:
         assert render(reply["text_code"], "km", reply["details"])
     # The urgent alert the database queues renders too.
     assert render("staff.urgent", "km", {"number": "BP260003", "type": "សុវត្ថិភាព", "where": "B1"})
+
+
+def test_utility_reading_and_meter_check_answer_in_the_chat() -> None:
+    store = FakeStore()
+    store.staff_answers += [
+        {"result": "SENT", "repeated": False, "count": 12, "flagged": 0},
+        {"result": "SENT", "repeated": False, "count": 12, "flagged": 3},
+        {"result": "NOT_METER_READER"},
+        {"result": "INVALID", "reason": "value"},
+        {"result": "NOT_LINKED"},
+        {"result": "SENT", "repeated": True, "count": 12, "flagged": 3},
+        {"result": "ADDED", "repeated": False, "report_number": "UP260031"},
+        {"result": "INVALID", "reason": "say_what"},
+    ]
+    meter = {"type": "METER", "readings": [{"unit_id": "u-1", "electricity": 4236}]}
+    answers = []
+    for _ in range(6):
+        answers += send(store, meter)
+    assert [code for code, _ in codes(answers)] == [
+        "staff.meter_sent",
+        "staff.meter_sent_flagged",
+        "staff.meter_not_reader",
+        "staff.meter_invalid",
+        "staff.check_refused_not_linked",
+    ]
+    assert answers[1]["details"] == {"count": "12", "flagged": "3"}
+    assert store.staff_scans[0][0] == "METER" and store.staff_scans[0][2]["media"] == []
+    check = {"type": "METER_CHECK", "unit_id": "u-1", "meter": "WATER", "problem": "BROKEN"}
+    answers = send(store, check) + send(store, check)
+    assert [code for code, _ in codes(answers)] == [
+        "staff.meter_check_saved",
+        "staff.meter_check_invalid",
+    ]
+    assert answers[0]["details"] == {"number": "UP260031"}
+    for reply in store.replies:
+        assert render(reply["text_code"], "km", reply["details"])
+    # The database's "read again" message renders too.
+    assert render("staff.meter_again", "km", {"units": "A103 ភ្លើង, B105 ទឹក"})
