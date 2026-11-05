@@ -189,14 +189,89 @@ export interface VisitInquiry {
 }
 
 export interface VisitRequest extends VisitInquiry {
+  /** NEW, CONTACTED, VISIT_BOOKED, VISITED, NO_SHOW, CLOSED or SPAM (step 3b, DL-172). */
   status: string;
+  /** Who has the request (Take or Give to), or null. */
+  staff_id: string | null;
+  staff: string | null;
+  mine: boolean;
+  /** Working minutes since it arrived (Monday to Saturday, 07:00 to 17:00). */
+  waiting_minutes: number;
+  /** New, nobody took it, more than 2 working hours. */
+  late: boolean;
+  no_answer_days: number;
+  calls: number;
+  /** The visit booked, local time "YYYY-MM-DDTHH:MM", or null. */
+  visit_local: string | null;
+  visit_staff: string | null;
+  /** Why it closed (PRICE ... CANCELLED), or null. */
+  reason: string | null;
+  close_note: string | null;
+  /** CONFIRMATION and REMINDER still to send by hand (not a Telegram customer). */
+  to_send: string[];
   /** Later inquiries of the same person or phone, which keep this request's place. */
   joined: VisitInquiry[];
+}
+
+export interface VisitWorker {
+  id: string;
+  name: string;
 }
 
 export interface VisitRequestsPage {
   requests: VisitRequest[];
   today: string;
+  /** The Property's address, for the words sent by hand. */
+  address: string;
+  /** The people who work Visit requests (Give to, Book a visit). */
+  workers: VisitWorker[];
+  me: string;
+  can_work: boolean;
+  can_manage: boolean;
+}
+
+export interface VisitHistoryStep {
+  at: string;
+  kind: string;
+  by: string | null;
+  staff: string | null;
+  answered: boolean | null;
+  visit_at: string | null;
+  reason: string | null;
+  what: string | null;
+  note: string | null;
+  sent_by_bot: boolean;
+}
+
+export interface VisitRequestDetail extends VisitRequest {
+  history: VisitHistoryStep[];
+}
+
+export type VisitAction =
+  | "take"
+  | "give"
+  | "call"
+  | "book"
+  | "visited"
+  | "no-show"
+  | "close"
+  | "reopen"
+  | "spam"
+  | "sent";
+
+export interface VisitStepBody {
+  staff_id?: string;
+  answered?: boolean;
+  /** Local time "YYYY-MM-DDTHH:MM". */
+  visit_at?: string;
+  reason?: string;
+  what?: "CONFIRMATION" | "REMINDER";
+  note?: string;
+}
+
+export interface VisitStepDone {
+  request: VisitRequestDetail;
+  page: VisitRequestsPage;
 }
 
 export interface TelegramApi {
@@ -228,6 +303,17 @@ export interface TelegramApi {
   /** The Owner approves the version waiting and answers the page again. */
   approveFaq: (propertyId: string, versionId: string) => Promise<FaqPage>;
   visitRequests: (propertyId: string) => Promise<VisitRequestsPage>;
+  visitRequest: (
+    propertyId: string,
+    requestId: string,
+  ) => Promise<VisitRequestDetail>;
+  /** One step on a request; answers the request and the list again. */
+  visitStep: (
+    propertyId: string,
+    requestId: string,
+    action: VisitAction,
+    body: VisitStepBody,
+  ) => Promise<VisitStepDone>;
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -522,19 +608,75 @@ function inquiryOf(value: unknown): VisitInquiry {
   };
 }
 
+function flag(value: unknown): boolean {
+  if (typeof value !== "boolean") throw new TelegramError();
+  return value;
+}
+
+function visitRequestOf(value: unknown): VisitRequest {
+  const row = record(value);
+  return {
+    ...inquiryOf(row),
+    status: text(row.status),
+    staff_id: maybeText(row.staff_id),
+    staff: maybeText(row.staff),
+    mine: row.mine === true,
+    waiting_minutes: whole(row.waiting_minutes),
+    late: flag(row.late),
+    no_answer_days: whole(row.no_answer_days),
+    calls: whole(row.calls),
+    visit_local: maybeText(row.visit_local),
+    visit_staff: maybeText(row.visit_staff),
+    reason: maybeText(row.reason),
+    close_note: maybeText(row.close_note),
+    to_send: list(row.to_send).map(text),
+    joined: list(row.joined).map(inquiryOf),
+  };
+}
+
 export function visitRequestsPageOf(value: unknown): VisitRequestsPage {
   const page = record(value);
   return {
     today: text(page.today),
-    requests: list(page.requests).map((item) => {
-      const row = record(item);
+    address: text(page.address),
+    me: text(page.me),
+    can_work: flag(page.can_work),
+    can_manage: flag(page.can_manage),
+    workers: list(page.workers).map((item) => {
+      const worker = record(item);
+      return { id: text(worker.id), name: text(worker.name) };
+    }),
+    requests: list(page.requests).map(visitRequestOf),
+  };
+}
+
+export function visitRequestDetailOf(value: unknown): VisitRequestDetail {
+  const row = record(value);
+  return {
+    ...visitRequestOf(row),
+    history: list(row.history).map((item) => {
+      const step = record(item);
       return {
-        ...inquiryOf(row),
-        status: text(row.status),
-        joined: list(row.joined).map(inquiryOf),
+        at: text(step.at),
+        kind: text(step.kind),
+        by: maybeText(step.by),
+        staff: maybeText(step.staff),
+        answered:
+          step.answered === null || step.answered === undefined
+            ? null
+            : flag(step.answered),
+        visit_at: maybeText(step.visit_at),
+        reason: maybeText(step.reason),
+        what: maybeText(step.what),
+        note: maybeText(step.note),
+        sent_by_bot: step.sent_by_bot === true,
       };
     }),
   };
+}
+
+function visitRoot(propertyId: string, requestId: string): string {
+  return `/api/v1/properties/${encodeURIComponent(propertyId)}/visit-requests/${encodeURIComponent(requestId)}`;
 }
 
 export const telegramApi: TelegramApi = {
@@ -604,5 +746,22 @@ export const telegramApi: TelegramApi = {
         `/api/v1/properties/${encodeURIComponent(propertyId)}/visit-requests`,
       ),
     );
+  },
+  async visitRequest(propertyId, requestId) {
+    return visitRequestDetailOf(
+      await request(visitRoot(propertyId, requestId)),
+    );
+  },
+  async visitStep(propertyId, requestId, action, body) {
+    const answer = record(
+      await request(
+        `${visitRoot(propertyId, requestId)}/${action}`,
+        post(body),
+      ),
+    );
+    return {
+      request: visitRequestDetailOf(answer.request),
+      page: visitRequestsPageOf(answer.page),
+    };
   },
 };

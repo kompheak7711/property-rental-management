@@ -454,6 +454,44 @@ TEXTS: Final[dict[str, dict[str, str]]] = {
             "Working hours: Monday to Saturday, 07:00 to 17:00."
         ),
     },
+    "customer.visit_booked": {
+        "km": (
+            "ការមកមើលរបស់អ្នកត្រូវបានកក់។\n"
+            "ថ្ងៃ៖ {day} ម៉ោង {time}\n"
+            "អាសយដ្ឋាន៖ {address}\n"
+            "បុគ្គលិក៖ {staff}\n"
+            "បើចង់ប្ដូរម៉ោង សូមចុច «ទាក់ទងការិយាល័យ»។"
+        ),
+        "en": (
+            "Your visit is booked.\n"
+            "Date: {day} at {time}\n"
+            "Address: {address}\n"
+            "Staff: {staff}\n"
+            "To change the time, tap Contact office."
+        ),
+    },
+    "customer.visit_moved": {
+        "km": (
+            "ការមកមើលរបស់អ្នកត្រូវបានប្ដូរ។\n"
+            "ថ្ងៃថ្មី៖ {day} ម៉ោង {time}\n"
+            "អាសយដ្ឋាន៖ {address}\n"
+            "បុគ្គលិក៖ {staff}\n"
+            "បើចង់ប្ដូរម៉ោង សូមចុច «ទាក់ទងការិយាល័យ»។"
+        ),
+        "en": (
+            "Your visit has moved.\n"
+            "New date: {day} at {time}\n"
+            "Address: {address}\n"
+            "Staff: {staff}\n"
+            "To change the time, tap Contact office."
+        ),
+    },
+    "customer.visit_reminder": {
+        "km": ("រំលឹក៖ ការមកមើល CHETANA Residence របស់អ្នកគឺនៅថ្ងៃស្អែក {day} ម៉ោង {time}។ ជួបគ្នាឆាប់ៗ។"),
+        "en": (
+            "Reminder: your visit to CHETANA Residence is tomorrow, {day} at {time}. See you soon."
+        ),
+    },
     # Report states as the tenant sees them (the app's words, Building > Problem reports).
     "status.RECEIVED": {"km": "បានទទួល", "en": "Received"},
     "status.PLANNED": {"km": "បានរៀបចំការមកពិនិត្យ", "en": "Visit planned"},

@@ -41,6 +41,7 @@ class InMemoryTelegram:
     answers: list[tuple[UUID, str, str]] = field(default_factory=list)
     saved: list[Json] = field(default_factory=list)
     approved: list[UUID] = field(default_factory=list)
+    steps: list[tuple[str, Json]] = field(default_factory=list)
     owner: bool = False
 
     def _check(self, property_id: UUID) -> None:
@@ -105,6 +106,18 @@ class InMemoryTelegram:
     def visit_requests(self, property_id: UUID, *, actor_id: str) -> Json:
         self._check(property_id)
         return {"requests": [{"number": "VR260001", "joined": []}], "today": "2026-11-05"}
+
+    def visit_request(self, property_id: UUID, request_id: UUID, *, actor_id: str) -> Json:
+        self._check(property_id)
+        return {"id": str(request_id), "status": "NEW", "history": []}
+
+    def visit_step(
+        self, property_id: UUID, request_id: UUID, action: str, body: Json, *, actor_id: str
+    ) -> None:
+        self._check(property_id)
+        if action == "TAKE" and self.steps:
+            raise ProductConflict("Someone already took this request")
+        self.steps.append((action, body))
 
 
 def client(flow: InMemoryTelegram, *capabilities: str) -> TestClient:
@@ -204,6 +217,10 @@ def test_the_faq_is_read_by_contact_staff_and_changed_with_its_right() -> None:
     saved = manager.post(url, json=body, headers=HEADERS)
     assert saved.status_code == 200 and saved.json()["data"]["saved"]["approved"] is False
     assert flow.saved[0]["question_id"] is None and flow.saved[0]["question_en"] == "Office hours?"
+    # A change to a saved question names it.
+    question = str(uuid4())
+    edited = manager.post(url, json=body | {"question_id": question}, headers=HEADERS)
+    assert edited.status_code == 200 and flow.saved[1]["question_id"] == question
     version = uuid4()
     approve = f"{url}/versions/{version}/approve"
     assert manager.post(approve, headers=HEADERS).status_code == 403
@@ -222,3 +239,51 @@ def test_the_visit_requests_list_needs_its_right() -> None:
     assert answer.json()["data"]["requests"][0]["number"] == "VR260001"
     other = InMemoryTelegram()
     assert client(other, "visit_requests.read").get(url).status_code == 403
+
+
+def test_a_visit_request_step_needs_work_and_a_manager_gives_or_marks_spam() -> None:
+    flow = InMemoryTelegram()
+    request_id = uuid4()
+    url = f"/api/v1/properties/{flow.property_id}/visit-requests/{request_id}"
+    assert client(flow, "visit_requests.work").get(url).status_code == 403
+    shown = client(flow, "visit_requests.read").get(url)
+    assert shown.status_code == 200 and shown.json()["data"]["status"] == "NEW"
+    staff = client(flow, "visit_requests.read", "visit_requests.work")
+    assert (
+        client(flow, "visit_requests.read")
+        .post(f"{url}/take", json={}, headers=HEADERS)
+        .status_code
+        == 403
+    )
+    taken = staff.post(f"{url}/take", json={}, headers=HEADERS)
+    assert taken.status_code == 200
+    assert set(taken.json()["data"]) == {"request", "page"}
+    assert staff.post(f"{url}/take", json={}, headers=HEADERS).status_code == 409
+    worker = str(uuid4())
+    assert staff.post(f"{url}/give", json={"staff_id": worker}, headers=HEADERS).status_code == 403
+    manager = client(flow, "visit_requests.read", "visit_requests.work", "visit_requests.manage")
+    assert (
+        manager.post(f"{url}/give", json={"staff_id": worker}, headers=HEADERS).status_code == 200
+    )
+    booked = staff.post(
+        f"{url}/book", json={"visit_at": "2026-11-09T10:00", "note": " Bring the keys "},
+        headers=HEADERS,
+    )  # fmt: skip
+    assert booked.status_code == 200
+    assert staff.post(f"{url}/no-show", json={}, headers=HEADERS).status_code == 200
+    for wrong in (
+        {"visit_at": "9 Nov 10am"},
+        {"reason": "BORED"},
+        {"answered": "yes"},
+        {"what": "LETTER"},
+        {"note": "x" * 301},
+        {"extra": 1},
+    ):
+        assert staff.post(f"{url}/close", json=wrong, headers=HEADERS).status_code == 422
+    assert staff.post(f"{url}/dance", json={}, headers=HEADERS).status_code == 422
+    assert flow.steps == [
+        ("TAKE", {}),
+        ("GIVE", {"staff_id": worker}),
+        ("BOOK", {"visit_at": "2026-11-09T10:00", "note": "Bring the keys"}),
+        ("NO_SHOW", {}),
+    ]

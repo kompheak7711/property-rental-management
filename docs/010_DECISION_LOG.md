@@ -2700,3 +2700,20 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **Built:** migration `20270525_287` (DB-TG-007), API-TG-003, `backend/src/property_rental/telegram_customer_bot.py`, `frontend/src/telegram/`, TEST-FE-1309 and 1310.
 - **Links:** DL-115, DL-124, DL-126, DL-170.
 - **Decision date:** 2026-11-05.
+
+## DL-172 — Telegram bots: working the Visit requests (bots step 3b)
+
+- **Type:** `TECHNICAL DECISION`
+- **Status:** `STEP 3B BUILT ON BRANCH claude/telegram-bots; WAITS FOR THE OWNER'S TEST`
+- **Source:** the owner's CRM rules of 28 Oct 2026 (first come, first served; Take; a Manager gives a request to another person; Late after 2 working hours, Monday to Saturday 07:00 to 17:00; 3 no-answer days before "Could not reach"; Telegram confirmation and the 08:00 reminder the day before; "Send by hand today" for phone and WhatsApp; Spam by a Manager) and the CRM mock-up (request detail, closing reasons, Customer cancelled). Technical choices by Claude under the owner's 2026-10-23 22:30 rule; no new business rule.
+- **(A) Steps.** Every step is a row in `visit_request_events` (append-only, with who and when): Take, Give to (Manager), Record a call (Answered or No answer, with a note), Book a visit and Move it (day, time and who shows the Unit; Monday to Saturday, 07:00 to 17:00, from now), Visited and No-show (on or after the visit day), Close as Not interested with a reason (Price too high, Unit Type not free, Location, Found another place, Move-in date too far, Could not reach, Other with a note) or as Customer cancelled, Reopen (with a note), Spam (Manager, with a note; not while a visit is booked), Sent by hand. The status comes from the steps: New, Contacted, Visit booked, Visited, No-show, Closed, Spam.
+- **(B) Who.** Anyone with `visit_requests.work` (Owner, Manager, Staff) takes a request nobody has. After that only the person who has it, or a Manager (`visit_requests.manage`: Owner and Manager), records steps. Only a Manager reopens Spam.
+- **(C) Messages.** A Telegram customer gets "Your visit is booked" (or "has moved") from the Customer bot at once, and the reminder at 08:00 the day before (the Telegram jobs check every run). Other customers (phone, WhatsApp and, until the app sends email, email) are in "Send by hand today" with the words in the customer's language, Copy text and Mark sent.
+- **(D) Joining.** A new inquiry joins only an open request; after a request closed, the person starts a new one.
+- **(E) The app.** Bookings > Visit requests gets the cards Waiting now, Late, Visits booked and Mine, the Waited and Staff columns, the Send by hand today box and a request window with the buttons the person may use and the whole history.
+- **Changed by Claude:** the mock-up's 3-request cap was not built; the join rule of DL-171 covers repeats. The FAQ editor's question number is now read as text, so changing a saved FAQ question works (it was refused before).
+- **Next (step 3c):** Make Reservation from a request, Block a Telegram account, the 12-month removal of name, phone and account, the dashboard (this month, reasons, sources), and Units to show on Book visit.
+- **Open:** the Khmer texts marked new need a native-speaker check; email sending is not built, so email customers are sent by hand.
+- **Built:** migration `20270526_288` (DB-TG-008), API-TG-004, `telegram_texts.py` (customer.visit_booked, visit_moved, visit_reminder), `frontend/src/telegram/`, TEST-FE-1311 to 1313.
+- **Links:** DL-170, DL-171.
+- **Decision date:** 2026-11-05.

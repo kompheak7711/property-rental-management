@@ -22,11 +22,14 @@ import {
   type LinksPage,
   type TelegramApi,
   TelegramError,
+  type VisitRequest,
+  type VisitRequestDetail,
   type VisitRequestsPage,
   contactPageOf,
   faqPageOf,
   healthPageOf,
   linksPageOf,
+  visitRequestDetailOf,
   visitRequestsPageOf,
 } from "./telegramClient";
 
@@ -238,31 +241,56 @@ const SOKHA = {
   note: "A high floor, please.",
 };
 
-const VISITS: VisitRequestsPage = {
+const WORK = {
+  staff_id: null,
+  staff: null,
+  mine: false,
+  waiting_minutes: 70,
+  late: false,
+  no_answer_days: 0,
+  calls: 0,
+  visit_local: null,
+  visit_staff: null,
+  reason: null,
+  close_note: null,
+  to_send: [],
+};
+
+const PAGE_FACTS = {
   today: "2026-11-05",
-  requests: [
+  address: "Near Camko Roundabout",
+  workers: [
+    { id: "staff-1", name: "Dara" },
+    { id: "boss-1", name: "Sophea" },
+  ],
+  me: "staff-1",
+  can_work: true,
+  can_manage: false,
+};
+
+const FIRST: VisitRequest = {
+  ...SOKHA,
+  ...WORK,
+  status: "NEW",
+  joined: [
     {
       ...SOKHA,
-      status: "NEW",
-      joined: [
-        {
-          ...SOKHA,
-          id: "vr-2",
-          number: "VR260002",
-          contact_by: "WHATSAPP",
-          email: null,
-          unit_type: "STUDIO",
-          unit_type_en: "Studio",
-          unit_type_km: "ស្ទូឌីយោ",
-          visit_on: null,
-          visit_part: null,
-          move_in_month: null,
-          note: null,
-        },
-      ],
+      id: "vr-2",
+      number: "VR260002",
+      contact_by: "WHATSAPP",
+      email: null,
+      unit_type: "STUDIO",
+      unit_type_en: "Studio",
+      unit_type_km: "ស្ទូឌីយោ",
+      visit_on: null,
+      visit_part: null,
+      move_in_month: null,
+      note: null,
     },
   ],
 };
+
+const VISITS: VisitRequestsPage = { ...PAGE_FACTS, requests: [FIRST] };
 
 function fakeApi(extra: Partial<TelegramApi> = {}): TelegramApi {
   return {
@@ -288,6 +316,13 @@ function fakeApi(extra: Partial<TelegramApi> = {}): TelegramApi {
       }),
     ),
     visitRequests: vi.fn(() => Promise.resolve(VISITS)),
+    visitRequest: vi.fn(() => Promise.resolve({ ...FIRST, history: [] })),
+    visitStep: vi.fn(() =>
+      Promise.resolve({
+        request: { ...FIRST, history: [] },
+        page: VISITS,
+      }),
+    ),
     links: vi.fn(() => Promise.resolve(LINKS)),
     removeLink: vi.fn(() => Promise.resolve({ ...LINKS, linked: [] })),
     health: vi.fn(() => Promise.resolve(HEALTH)),
@@ -874,7 +909,7 @@ describe("Office › Telegram", () => {
 
     const empty = fakeApi({
       visitRequests: vi.fn(() =>
-        Promise.resolve({ today: "2026-11-05", requests: [] }),
+        Promise.resolve({ ...PAGE_FACTS, requests: [] }),
       ),
     });
     render(
@@ -914,5 +949,329 @@ describe("Office › Telegram", () => {
         requests: [{ ...VISITS.requests[0], joined: null }],
       }),
     ).toThrow(TelegramError);
+  });
+  it("TEST-FE-1311 Visit requests shows the Waiting, Late, Visits booked and Mine cards, and Send by hand today gives the words in the customer's language to copy and Mark sent", async () => {
+    const booked: VisitRequest = {
+      ...FIRST,
+      ...WORK,
+      id: "vr-3",
+      number: "VR260003",
+      name: "Rithy",
+      language: "km",
+      contact_by: "WHATSAPP",
+      email: null,
+      status: "VISIT_BOOKED",
+      staff_id: "staff-1",
+      staff: "Dara",
+      mine: true,
+      visit_local: "2026-11-07T09:00",
+      visit_staff: "Dara",
+      to_send: ["CONFIRMATION"],
+      joined: [],
+    };
+    const late: VisitRequest = {
+      ...FIRST,
+      id: "vr-4",
+      number: "VR260004",
+      waiting_minutes: 185,
+      late: true,
+      joined: [],
+    };
+    const page: VisitRequestsPage = {
+      ...PAGE_FACTS,
+      requests: [late, booked],
+    };
+    const sent = { ...page, requests: [late, { ...booked, to_send: [] }] };
+    const visitStep = vi.fn(() =>
+      Promise.resolve({ request: { ...booked, history: [] }, page: sent }),
+    );
+    const api = fakeApi({
+      visitRequests: vi.fn(() => Promise.resolve(page)),
+      visitStep,
+    });
+    render(
+      <VisitRequestsPageView
+        active
+        api={api}
+        capabilities={new Set(["visit_requests.read"])}
+        language="en"
+        propertyId="prop-1"
+      />,
+    );
+    expect(
+      await screen.findByRole("button", { name: /^Late: 1\./ }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: /^Waiting now: 1\./ }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: /^Visits booked: 1\./ }),
+    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^Mine: 1\./ })).toBeTruthy();
+    expect(screen.getByText("3 h 5 min")).toBeTruthy();
+    expect(screen.getAllByText("Late").length).toBeGreaterThan(1);
+    // The words go in the customer's language (Khmer here), with the day and the address.
+    const box = screen.getByRole("region", { name: "Send by hand today" });
+    expect(within(box).getByText("Visit confirmation")).toBeTruthy();
+    expect(
+      within(box).getByText(/ថ្ងៃ៖ ថ្ងៃសៅរ៍ 07\/11\/2026 ម៉ោង 09:00/),
+    ).toBeTruthy();
+    expect(within(box).getByText(/Near Camko Roundabout/)).toBeTruthy();
+    fireEvent.click(within(box).getByRole("button", { name: "Mark sent" }));
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("region", { name: "Send by hand today" }),
+      ).toBeNull();
+    });
+    expect(visitStep).toHaveBeenCalledWith("prop-1", "vr-3", "sent", {
+      what: "CONFIRMATION",
+    });
+    // A card shows only its requests.
+    fireEvent.click(screen.getByRole("button", { name: /^Late: 1\./ }));
+    expect(screen.getByText("Showing: Late")).toBeTruthy();
+    expect(screen.queryByText("VR260003")).toBeNull();
+  });
+
+  it("TEST-FE-1312 a Visit request opens with Take; the person who has it records calls, books a visit Monday to Saturday and closes it; a Manager gives it and marks Spam with a note; the history is shown", async () => {
+    const fresh: VisitRequestDetail = {
+      ...FIRST,
+      contact_by: "TELEGRAM",
+      email: null,
+      history: [],
+    };
+    const mine: VisitRequestDetail = {
+      ...fresh,
+      status: "CONTACTED",
+      staff_id: "staff-1",
+      staff: "Dara",
+      mine: true,
+      calls: 1,
+      history: [
+        {
+          at: "2026-11-05T03:10:00Z",
+          kind: "TAKEN",
+          by: "Dara",
+          staff: "Dara",
+          answered: null,
+          visit_at: null,
+          reason: null,
+          what: null,
+          note: null,
+          sent_by_bot: false,
+        },
+        {
+          at: "2026-11-05T03:20:00Z",
+          kind: "CALL",
+          by: "Dara",
+          staff: null,
+          answered: true,
+          visit_at: null,
+          reason: null,
+          what: null,
+          note: "Wants Monday",
+          sent_by_bot: false,
+        },
+      ],
+    };
+    const visitStep = vi.fn(() =>
+      Promise.resolve({ request: mine, page: VISITS }),
+    );
+    const api = fakeApi({
+      visitRequest: vi.fn(() => Promise.resolve(fresh)),
+      visitStep,
+    });
+    render(
+      <VisitRequestsPageView
+        active
+        api={api}
+        capabilities={new Set(["visit_requests.read"])}
+        language="en"
+        propertyId="prop-1"
+      />,
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Open VR260001" }),
+    );
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).queryByText("Record a call")).toBeNull();
+    expect(within(dialog).queryByText("Manager")).toBeNull();
+    fireEvent.click(
+      await within(dialog).findByRole("button", { name: "Take" }),
+    );
+    expect(await within(dialog).findByText("Saved.")).toBeTruthy();
+    expect(visitStep).toHaveBeenLastCalledWith("prop-1", "vr-1", "take", {});
+    expect(within(dialog).getByText("Dara took it")).toBeTruthy();
+    expect(
+      within(dialog).getByText(/Call: answered · Wants Monday/),
+    ).toBeTruthy();
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "No answer" }));
+    expect(visitStep).toHaveBeenLastCalledWith("prop-1", "vr-1", "call", {
+      answered: false,
+    });
+    expect(await within(dialog).findByText("Saved.")).toBeTruthy();
+    expect(
+      within(dialog).getByText(
+        "The customer gets the confirmation on Telegram, and a reminder at 08:00 the day before.",
+        { exact: false },
+      ),
+    ).toBeTruthy();
+    // A Sunday is refused here; the server checks the day and time again.
+    fireEvent.change(within(dialog).getByLabelText("Day"), {
+      target: { value: "2026-11-08" },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Book visit" }));
+    expect(
+      within(dialog).getByText("Choose a day from today, not a Sunday."),
+    ).toBeTruthy();
+    fireEvent.change(within(dialog).getByLabelText("Day"), {
+      target: { value: "2026-11-09" },
+    });
+    fireEvent.change(within(dialog).getByLabelText("Time"), {
+      target: { value: "14:30" },
+    });
+    fireEvent.change(within(dialog).getByLabelText("Shows the Unit"), {
+      target: { value: "boss-1" },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Book visit" }));
+    await waitFor(() => {
+      expect(visitStep).toHaveBeenLastCalledWith("prop-1", "vr-1", "book", {
+        visit_at: "2026-11-09T14:30",
+        staff_id: "boss-1",
+      });
+    });
+    // Other needs a note.
+    fireEvent.change(within(dialog).getByLabelText("Reason"), {
+      target: { value: "OTHER" },
+    });
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Close request" }),
+    );
+    expect(within(dialog).getByText("Write a note.")).toBeTruthy();
+    fireEvent.change(within(dialog).getByLabelText("Reason"), {
+      target: { value: "PRICE" },
+    });
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Close request" }),
+    );
+    await waitFor(() => {
+      expect(visitStep).toHaveBeenLastCalledWith("prop-1", "vr-1", "close", {
+        reason: "PRICE",
+      });
+    });
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Customer cancelled" }),
+    );
+    await waitFor(() => {
+      expect(visitStep).toHaveBeenLastCalledWith("prop-1", "vr-1", "close", {
+        reason: "CANCELLED",
+      });
+    });
+    cleanup();
+
+    // A Manager: Give to and Mark Spam (with a note); someone else's request is read only for Staff.
+    const bossPage = { ...VISITS, can_manage: true, me: "boss-1" };
+    const bossStep = vi.fn(() =>
+      Promise.resolve({ request: { ...mine, mine: false }, page: bossPage }),
+    );
+    const manager = fakeApi({
+      visitRequests: vi.fn(() => Promise.resolve(bossPage)),
+      visitRequest: vi.fn(() => Promise.resolve({ ...mine, mine: false })),
+      visitStep: bossStep,
+    });
+    render(
+      <VisitRequestsPageView
+        active
+        api={manager}
+        capabilities={new Set(["visit_requests.read"])}
+        language="en"
+        propertyId="prop-1"
+      />,
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Open VR260001" }),
+    );
+    const boss = await screen.findByRole("dialog");
+    expect(await within(boss).findByText("Manager")).toBeTruthy();
+    fireEvent.change(within(boss).getByLabelText("Give to"), {
+      target: { value: "boss-1" },
+    });
+    fireEvent.click(within(boss).getByRole("button", { name: "Give to" }));
+    await waitFor(() => {
+      expect(bossStep).toHaveBeenLastCalledWith("prop-1", "vr-1", "give", {
+        staff_id: "boss-1",
+      });
+    });
+    fireEvent.click(within(boss).getByRole("button", { name: "Mark Spam" }));
+    expect(within(boss).getByText("Write a note.")).toBeTruthy();
+    fireEvent.change(within(boss).getByLabelText("Why Spam"), {
+      target: { value: " Advert " },
+    });
+    fireEvent.click(within(boss).getByRole("button", { name: "Mark Spam" }));
+    await waitFor(() => {
+      expect(bossStep).toHaveBeenLastCalledWith("prop-1", "vr-1", "spam", {
+        note: "Advert",
+      });
+    });
+    cleanup();
+
+    const other = fakeApi({
+      visitRequest: vi.fn(() => Promise.resolve({ ...mine, mine: false })),
+    });
+    render(
+      <VisitRequestsPageView
+        active
+        api={other}
+        capabilities={new Set(["visit_requests.read"])}
+        language="en"
+        propertyId="prop-1"
+      />,
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Open VR260001" }),
+    );
+    expect(
+      await screen.findByText(
+        "Dara has this request. Only Dara or a Manager can work on it.",
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Answered" })).toBeNull();
+  });
+
+  it("TEST-FE-1313 the client reads one Visit request and sends each step to its address with the CSRF token", async () => {
+    const detail = { ...VISITS.requests[0], history: [] };
+    const calls: [string, RequestInit | undefined][] = [];
+    document.cookie = "__Host-prm_csrf=tg-token";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((path: string, init?: RequestInit) => {
+        calls.push([path, init]);
+        const data =
+          init?.method === "POST" ? { request: detail, page: VISITS } : detail;
+        return Promise.resolve(
+          new Response(JSON.stringify({ data, meta: {} }), { status: 200 }),
+        );
+      }),
+    );
+    const { telegramApi } = await import("./telegramClient");
+    expect(await telegramApi.visitRequest("p 1", "vr 1")).toEqual(detail);
+    const done = await telegramApi.visitStep("p 1", "vr 1", "no-show", {
+      note: "Did not come",
+    });
+    expect(done.page).toEqual(VISITS);
+    expect(calls.map(([path]) => path)).toEqual([
+      "/api/v1/properties/p%201/visit-requests/vr%201",
+      "/api/v1/properties/p%201/visit-requests/vr%201/no-show",
+    ]);
+    expect(calls[1]?.[1]?.body).toBe(JSON.stringify({ note: "Did not come" }));
+    expect(
+      (calls[1]?.[1]?.headers as Record<string, string>)["X-CSRF-Token"],
+    ).toBe("tg-token");
+    expect(() =>
+      visitRequestDetailOf({ ...detail, history: [{ kind: "TAKEN" }] }),
+    ).toThrow(TelegramError);
+    expect(() => visitRequestsPageOf({ ...VISITS, can_work: "yes" })).toThrow(
+      TelegramError,
+    );
   });
 });

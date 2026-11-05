@@ -17,8 +17,8 @@ import {
 } from "react";
 
 import { dayText, momentText } from "../shell/format";
-import { Icon } from "../shell/icons";
-import { Chip, Dialog } from "../shell/ui";
+import { Icon, type ShellIcon } from "../shell/icons";
+import { Chip, CountCard, Dialog, type Tone } from "../shell/ui";
 import type { Language } from "../signInText";
 import {
   type ContactMessage,
@@ -34,10 +34,15 @@ import {
   type TelegramApi,
   TelegramError,
   telegramApi as defaultTelegramApi,
+  type VisitAction,
+  type VisitHistoryStep,
   type VisitInquiry,
+  type VisitRequest,
+  type VisitRequestDetail,
   type VisitRequestsPage,
+  type VisitStepBody,
 } from "./telegramClient";
-import { hasText, tt } from "./text";
+import { hasText, type TelegramTextKey, tt } from "./text";
 
 export interface TelegramPageProps {
   language: Language;
@@ -1596,6 +1601,67 @@ function statusName(language: Language, status: string): string {
   return hasText(key) ? tt(language, key) : status;
 }
 
+/** The status a person sees: Late, Cancelled (closed by the customer) or the status. */
+function shownStatus(request: VisitRequest): string {
+  if (request.late) return "LATE";
+  if (request.status === "CLOSED" && request.reason === "CANCELLED")
+    return "CANCELLED";
+  return request.status;
+}
+
+function statusTone(status: string): Tone {
+  if (status === "LATE") return "err";
+  if (status === "NEW") return "info";
+  if (status === "VISITED") return "ok";
+  if (["CLOSED", "CANCELLED", "SPAM", "NO_SHOW"].includes(status))
+    return "neutral";
+  return "warn";
+}
+
+function textOf(language: Language, prefix: string, code: string): string {
+  const key = `${prefix}${code}`;
+  return hasText(key) ? tt(language, key) : code;
+}
+
+function waited(language: Language, request: VisitRequest): string {
+  if (request.status !== "NEW") return tt(language, "vr_answered");
+  const minutes = request.waiting_minutes;
+  return tt(language, "vr_wait_hm", Math.floor(minutes / 60), minutes % 60);
+}
+
+/** "Saturday 07/11/2026" in the language given, from "YYYY-MM-DD". */
+function visitDay(language: Language, day: string): string {
+  const [year = 0, month = 1, date = 1] = day.split("-").map(Number);
+  const weekday = new Date(Date.UTC(year, month - 1, date)).getUTCDay();
+  const name = textOf(language, "wd_", String(weekday === 0 ? 7 : weekday));
+  return `${name} ${dayText(day)}`;
+}
+
+function visitText(language: Language, local: string): string {
+  const [day = "", time = ""] = local.split("T");
+  return `${visitDay(language, day)} ${time}`;
+}
+
+/** The words to send by hand, in the customer's language. */
+function handWords(
+  request: VisitRequest,
+  what: string,
+  address: string,
+): string {
+  const language: Language = request.language === "km" ? "km" : "en";
+  const [day = "", time = ""] = (request.visit_local ?? "").split("T");
+  return what === "REMINDER"
+    ? tt(language, "msg_rem", visitDay(language, day), time)
+    : tt(
+        language,
+        "msg_conf",
+        visitDay(language, day),
+        time,
+        address,
+        request.visit_staff ?? "",
+      );
+}
+
 function InquiryCells({
   language,
   inquiry,
@@ -1629,6 +1695,111 @@ function InquiryCells({
   );
 }
 
+type VisitCard = "all" | "waiting" | "late" | "booked" | "mine";
+
+const VISIT_CARDS: readonly [
+  Exclude<VisitCard, "all">,
+  ShellIcon,
+  Tone,
+  TelegramTextKey,
+][] = [
+  ["waiting", "clock", "info", "vr_c_waiting"],
+  ["late", "alert", "err", "vr_c_late"],
+  ["booked", "door", "warn", "vr_c_booked"],
+  ["mine", "userplus", "ok", "vr_c_mine"],
+];
+
+function isOpen(request: VisitRequest): boolean {
+  return request.status !== "CLOSED" && request.status !== "SPAM";
+}
+
+function inVisitCard(request: VisitRequest, card: VisitCard): boolean {
+  if (card === "waiting")
+    return request.status === "NEW" && request.staff_id === null;
+  if (card === "late") return request.late;
+  if (card === "booked") return request.status === "VISIT_BOOKED";
+  if (card === "mine") return request.mine && isOpen(request);
+  return request.status !== "SPAM";
+}
+
+function SendByHand({
+  language,
+  page,
+  busy,
+  onSent,
+}: {
+  language: Language;
+  page: VisitRequestsPage;
+  busy: boolean;
+  onSent: (request: VisitRequest, what: "CONFIRMATION" | "REMINDER") => void;
+}) {
+  const [copied, setCopied] = useState<string | null>(null);
+  const items = page.requests.flatMap((request) =>
+    request.to_send.map((what) => ({ request, what })),
+  );
+  if (items.length === 0) return null;
+  return (
+    <section aria-labelledby="vr-hand" className="ui-card">
+      <h2 id="vr-hand">{tt(language, "sbh_title")}</h2>
+      <p className="ui-muted">{tt(language, "sbh_sub")}</p>
+      <ul className="ui-timeline">
+        {items.map(({ request, what }) => {
+          const words = handWords(request, what, page.address);
+          const id = `${request.id}-${what}`;
+          const allowed = page.can_work && (request.mine || page.can_manage);
+          return (
+            <li key={id}>
+              <div>
+                <strong className="ui-num">{request.number}</strong>{" "}
+                {request.name} · {contactBy(language, request)}{" "}
+                <span className="ui-num">{request.email ?? request.phone}</span>
+                <small>{textOf(language, "what_", what)}</small>
+                <p className="ui-sub2" style={{ whiteSpace: "pre-line" }}>
+                  {words}
+                </p>
+                <div className="ui-actions">
+                  <button
+                    className="ui-btn"
+                    onClick={() => {
+                      // A browser without a clipboard here fails quietly; the words stay on screen.
+                      void Promise.resolve()
+                        .then(() => navigator.clipboard.writeText(words))
+                        .then(() => {
+                          setCopied(id);
+                        })
+                        .catch(() => {
+                          setCopied(null);
+                        });
+                    }}
+                    type="button"
+                  >
+                    {tt(language, copied === id ? "sbh_copied" : "sbh_copy")}
+                  </button>
+                  {allowed && (
+                    <button
+                      className="ui-btn primary"
+                      disabled={busy}
+                      onClick={() => {
+                        onSent(
+                          request,
+                          what === "REMINDER" ? "REMINDER" : "CONFIRMATION",
+                        );
+                      }}
+                      type="button"
+                    >
+                      {tt(language, "sbh_sent")}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
 export function VisitRequestsPageView({
   language,
   propertyId,
@@ -1640,6 +1811,10 @@ export function VisitRequestsPageView({
     active,
     api.visitRequests,
   );
+  const [card, setCard] = useState<VisitCard>("all");
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [failure, setFailure] = useState<string | null>(null);
   if (propertyId === "") return <NoProperty language={language} />;
   const head = (
     <div className="ui-head">
@@ -1653,10 +1828,68 @@ export function VisitRequestsPageView({
         <Waiting failed={page.failed} language={language} onRetry={page.load} />
       </>
     );
-  const { requests } = page.data;
+  const data = page.data;
+  const requests = data.requests.filter((request) =>
+    inVisitCard(request, card),
+  );
+  const markSent = (
+    request: VisitRequest,
+    what: "CONFIRMATION" | "REMINDER",
+  ) => {
+    setBusy(true);
+    setFailure(null);
+    api.visitStep(propertyId, request.id, "sent", { what }).then(
+      (done) => {
+        setBusy(false);
+        page.set(done.page);
+      },
+      (error: unknown) => {
+        setBusy(false);
+        const status = error instanceof TelegramError ? error.status : null;
+        setFailure(
+          tt(
+            language,
+            status === 403 ? "e_403" : status === 409 ? "e_vr_stale" : "e_save",
+          ),
+        );
+        page.load();
+      },
+    );
+  };
+  const cardName = VISIT_CARDS.find(([value]) => value === card)?.[3];
   return (
     <>
       {head}
+      <div className="ui-kpis">
+        {VISIT_CARDS.map(([value, icon, tone, key]) => (
+          <CountCard
+            icon={icon}
+            key={value}
+            label={tt(language, key)}
+            note={textOf(language, "", `${key}_s`)}
+            onPress={() => {
+              setCard(card === value ? "all" : value);
+            }}
+            pressed={card === value}
+            tone={tone}
+            value={
+              data.requests.filter((request) => inVisitCard(request, value))
+                .length
+            }
+          />
+        ))}
+      </div>
+      {failure !== null && (
+        <p className="ui-error" role="alert">
+          {failure}
+        </p>
+      )}
+      <SendByHand
+        busy={busy}
+        language={language}
+        onSent={markSent}
+        page={data}
+      />
       <section aria-labelledby="vr-list" className="ui-card pad0">
         <div className="ui-listbar">
           <h2 id="vr-list">
@@ -1665,6 +1898,22 @@ export function VisitRequestsPageView({
               {tt(language, "vr_n", requests.length)}
             </span>
           </h2>
+          {cardName !== undefined && (
+            <>
+              <span className="ui-muted">
+                {tt(language, "vr_showing", tt(language, cardName))}
+              </span>
+              <button
+                className="ui-btn link"
+                onClick={() => {
+                  setCard("all");
+                }}
+                type="button"
+              >
+                {tt(language, "vr_show_all")}
+              </button>
+            </>
+          )}
         </div>
         {requests.length === 0 ? (
           <p className="ui-empty">{tt(language, "vr_none")}</p>
@@ -1674,6 +1923,7 @@ export function VisitRequestsPageView({
               <thead>
                 <tr>
                   <th scope="col">{tt(language, "vr_col_req")}</th>
+                  <th scope="col">{tt(language, "vr_col_wait")}</th>
                   <th scope="col">{tt(language, "vr_col_who")}</th>
                   <th className="ui-wide" scope="col">
                     {tt(language, "vr_col_ch")}
@@ -1684,23 +1934,42 @@ export function VisitRequestsPageView({
                     {tt(language, "vr_col_note")}
                   </th>
                   <th scope="col">{tt(language, "vr_col_status")}</th>
+                  <th scope="col">{tt(language, "vr_col_staff")}</th>
                 </tr>
               </thead>
               <tbody>
                 {requests.map((request) => [
-                  <tr key={request.id}>
+                  <tr
+                    className="ui-row"
+                    key={request.id}
+                    onClick={() => {
+                      setOpenId(request.id);
+                    }}
+                  >
                     <td>
-                      <span className="ui-num">{request.number}</span>
+                      <button
+                        aria-label={tt(language, "vr_open", request.number)}
+                        className="ui-btn link ui-num"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setOpenId(request.id);
+                        }}
+                        type="button"
+                      >
+                        {request.number}
+                      </button>
                       <span className="ui-sub2 ui-num">
                         {momentText(request.received_at)}
                       </span>
                     </td>
+                    <td className="ui-num">{waited(language, request)}</td>
                     <InquiryCells inquiry={request} language={language} />
                     <td>
-                      <Chip tone="info">
-                        {statusName(language, request.status)}
+                      <Chip tone={statusTone(shownStatus(request))}>
+                        {statusName(language, shownStatus(request))}
                       </Chip>
                     </td>
+                    <td>{request.staff ?? tt(language, "vr_nobody")}</td>
                   </tr>,
                   ...request.joined.map((kid) => (
                     <tr className="ui-joined" key={kid.id}>
@@ -1710,10 +1979,12 @@ export function VisitRequestsPageView({
                           {tt(language, "vr_joins", request.number)}
                         </span>
                       </td>
+                      <td />
                       <InquiryCells inquiry={kid} language={language} />
                       <td>
                         <Chip tone="neutral">{tt(language, "vst_JOINED")}</Chip>
                       </td>
+                      <td />
                     </tr>
                   )),
                 ])}
@@ -1723,6 +1994,606 @@ export function VisitRequestsPageView({
         )}
       </section>
       <p className="ui-muted">{tt(language, "vr_how")}</p>
+      {openId !== null && (
+        <VisitRequestDialog
+          api={api}
+          language={language}
+          onClose={() => {
+            setOpenId(null);
+          }}
+          onPage={page.set}
+          page={data}
+          propertyId={propertyId}
+          requestId={openId}
+        />
+      )}
     </>
+  );
+}
+
+const VISIT_TIMES = Array.from({ length: 21 }, (_, index) => {
+  const minutes = 7 * 60 + index * 30;
+  const hour = String(Math.floor(minutes / 60)).padStart(2, "0");
+  return `${hour}:${minutes % 60 === 0 ? "00" : "30"}`;
+});
+
+const CLOSE_REASONS = [
+  "PRICE",
+  "TYPE_NOT_FREE",
+  "LOCATION",
+  "FOUND_OTHER",
+  "MOVE_IN_FAR",
+  "OTHER",
+] as const;
+
+function historyLine(language: Language, step: VisitHistoryStep): string {
+  switch (step.kind) {
+    case "TAKEN":
+      return tt(language, "h_TAKEN", step.staff ?? "");
+    case "GIVEN":
+      return tt(language, "h_GIVEN", step.staff ?? "");
+    case "CALL":
+      return tt(language, step.answered === true ? "h_CALL_yes" : "h_CALL_no");
+    case "VISIT_BOOKED":
+      return tt(
+        language,
+        "h_VISIT_BOOKED",
+        tt(
+          language,
+          "d_shown_by",
+          step.visit_at === null ? "" : momentText(step.visit_at),
+          step.staff ?? "",
+        ),
+      );
+    case "CLOSED":
+      return tt(
+        language,
+        "h_CLOSED",
+        textOf(language, "reason_", step.reason ?? ""),
+      );
+    case "SENT_BY_HAND":
+      return tt(
+        language,
+        "h_SENT_BY_HAND",
+        textOf(language, "what_", step.what ?? ""),
+      );
+    default:
+      return textOf(language, "h_", step.kind);
+  }
+}
+
+function VisitRequestDialog({
+  language,
+  propertyId,
+  requestId,
+  page,
+  api,
+  onClose,
+  onPage,
+}: {
+  language: Language;
+  propertyId: string;
+  requestId: string;
+  page: VisitRequestsPage;
+  api: TelegramApi;
+  onClose: () => void;
+  onPage: (next: VisitRequestsPage) => void;
+}) {
+  const [detail, setDetail] = useState<VisitRequestDetail | null>(null);
+  const [readFailed, setReadFailed] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [failure, setFailure] = useState<string | null>(null);
+  const [done, setDone] = useState<string | null>(null);
+  const [day, setDay] = useState("");
+  const [time, setTime] = useState("10:00");
+  const [shower, setShower] = useState(page.me);
+  const [reason, setReason] = useState<string>("PRICE");
+  const [closeNote, setCloseNote] = useState("");
+  const [reopenNote, setReopenNote] = useState("");
+  const [spamNote, setSpamNote] = useState("");
+  const [giveTo, setGiveTo] = useState(page.workers[0]?.id ?? "");
+  const [shown, setShown] = useState<string | null>(null);
+
+  const read = useCallback(() => {
+    setReadFailed(false);
+    api.visitRequest(propertyId, requestId).then(setDetail, () => {
+      setReadFailed(true);
+    });
+  }, [api, propertyId, requestId]);
+  useEffect(() => {
+    read();
+  }, [read]);
+
+  const step = (action: VisitAction, body: VisitStepBody = {}) => {
+    if (busy) return;
+    setBusy(true);
+    setFailure(null);
+    setDone(null);
+    api.visitStep(propertyId, requestId, action, body).then(
+      (answer) => {
+        setBusy(false);
+        setDetail(answer.request);
+        onPage(answer.page);
+        setShown(null);
+        setDone(tt(language, "vr_saved"));
+      },
+      (error: unknown) => {
+        setBusy(false);
+        const status = error instanceof TelegramError ? error.status : null;
+        if (status === 404 || status === 409) {
+          setFailure(tt(language, "e_vr_stale"));
+          read();
+          return;
+        }
+        setFailure(tt(language, status === 403 ? "e_403" : "e_save"));
+      },
+    );
+  };
+
+  const title = detail === null ? "" : `${detail.number} · ${detail.name}`;
+  if (detail === null)
+    return (
+      <Dialog
+        closeLabel={tt(language, "close_dlg")}
+        onClose={onClose}
+        title={title}
+      >
+        <Waiting failed={readFailed} language={language} onRetry={read} />
+      </Dialog>
+    );
+
+  const open = isOpen(detail);
+  const manager = page.can_manage;
+  const mayWork = page.can_work && (detail.mine || manager);
+  const status = shownStatus(detail);
+  const visitDayNow =
+    detail.visit_local !== null &&
+    detail.visit_local.slice(0, 10) <= page.today;
+  const sunday = day !== "" && new Date(`${day}T12:00:00Z`).getUTCDay() === 0;
+  const badDay = day === "" || day < page.today || sunday;
+  const bookable = ["CONTACTED", "VISIT_BOOKED", "NO_SHOW", "VISITED"].includes(
+    detail.status,
+  );
+  const needs = (value: string) => value.trim() === "";
+
+  return (
+    <Dialog
+      busy={busy}
+      closeLabel={tt(language, "close_dlg")}
+      onClose={onClose}
+      title={title}
+      wide
+    >
+      <p>
+        <Chip tone={statusTone(status)}>{statusName(language, status)}</Chip>
+      </p>
+      <Done text={done} />
+      {failure !== null && (
+        <p className="ui-error" role="alert">
+          {failure}
+        </p>
+      )}
+      <dl className="ui-kv">
+        <dt>{tt(language, "d_phone")}</dt>
+        <dd className="ui-num">{detail.phone}</dd>
+        <dt>{tt(language, "vr_col_ch")}</dt>
+        <dd>
+          {contactBy(language, detail)}
+          {detail.email !== null && ` (${detail.email})`}
+        </dd>
+        <dt>{tt(language, "vr_col_wants")}</dt>
+        <dd>
+          {unitTypeName(language, detail)} ·{" "}
+          {tt(language, "vr_movein", moveIn(language, detail))}
+        </dd>
+        <dt>{tt(language, "vr_col_pref")}</dt>
+        <dd>{prefers(language, detail)}</dd>
+        {detail.note !== null && (
+          <>
+            <dt>{tt(language, "vr_col_note")}</dt>
+            <dd>{detail.note}</dd>
+          </>
+        )}
+        <dt>{tt(language, "d_arrived")}</dt>
+        <dd className="ui-num">{momentText(detail.received_at)}</dd>
+        <dt>{tt(language, "vr_col_staff")}</dt>
+        <dd>{detail.staff ?? tt(language, "vr_nobody")}</dd>
+        {detail.visit_local !== null && (
+          <>
+            <dt>{tt(language, "d_visit")}</dt>
+            <dd>
+              {tt(
+                language,
+                "d_shown_by",
+                visitText(language, detail.visit_local),
+                detail.visit_staff ?? "",
+              )}
+            </dd>
+          </>
+        )}
+        <dt>{tt(language, "d_calls")}</dt>
+        <dd className="ui-num">{detail.calls}</dd>
+        {detail.reason !== null && (
+          <>
+            <dt>{tt(language, "d_reason")}</dt>
+            <dd>
+              {textOf(language, "reason_", detail.reason)}
+              {detail.close_note !== null && ` · ${detail.close_note}`}
+            </dd>
+          </>
+        )}
+      </dl>
+
+      {open && page.can_work && detail.staff_id === null && (
+        <div className="ui-actions">
+          <button
+            className="ui-btn primary"
+            disabled={busy}
+            onClick={() => {
+              step("take");
+            }}
+            type="button"
+          >
+            {tt(language, "d_take")}
+          </button>
+        </div>
+      )}
+      {open && detail.staff_id !== null && !mayWork && (
+        <div className="ui-notice info" role="status">
+          <Icon name="info" />
+          <p>{tt(language, "d_has", detail.staff ?? "")}</p>
+        </div>
+      )}
+
+      {open && detail.staff_id !== null && mayWork && (
+        <>
+          <fieldset className="ui-card">
+            <legend>{tt(language, "d_call")}</legend>
+            <div className="ui-actions">
+              <button
+                className="ui-btn"
+                disabled={busy}
+                onClick={() => {
+                  step("call", { answered: true });
+                }}
+                type="button"
+              >
+                {tt(language, "d_answered")}
+              </button>
+              <button
+                className="ui-btn"
+                disabled={busy}
+                onClick={() => {
+                  step("call", { answered: false });
+                }}
+                type="button"
+              >
+                {tt(language, "d_no_answer")}
+              </button>
+              <span className="ui-muted">
+                {tt(language, "d_no_days", detail.no_answer_days)}
+              </span>
+              {detail.no_answer_days >= 3 && (
+                <button
+                  className="ui-btn danger"
+                  disabled={busy}
+                  onClick={() => {
+                    step("close", { reason: "NO_REACH" });
+                  }}
+                  type="button"
+                >
+                  {tt(language, "d_no_reach")}
+                </button>
+              )}
+            </div>
+          </fieldset>
+
+          {bookable && (
+            <fieldset className="ui-card">
+              <legend>
+                {tt(
+                  language,
+                  detail.visit_local === null ? "d_book" : "d_move",
+                )}
+              </legend>
+              <div className="ui-hrow">
+                <div className="ui-field">
+                  <label htmlFor="vr-day">{tt(language, "d_day")}</label>
+                  <input
+                    aria-invalid={shown === "book" && badDay}
+                    disabled={busy}
+                    id="vr-day"
+                    min={page.today}
+                    onChange={(event) => {
+                      setDay(event.currentTarget.value);
+                    }}
+                    type="date"
+                    value={day}
+                  />
+                </div>
+                <div className="ui-field">
+                  <label htmlFor="vr-time">{tt(language, "d_time")}</label>
+                  <select
+                    disabled={busy}
+                    id="vr-time"
+                    onChange={(event) => {
+                      setTime(event.currentTarget.value);
+                    }}
+                    value={time}
+                  >
+                    {VISIT_TIMES.map((value) => (
+                      <option key={value} value={value}>
+                        {value}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="ui-field">
+                  <label htmlFor="vr-shower">{tt(language, "d_shows")}</label>
+                  <select
+                    disabled={busy}
+                    id="vr-shower"
+                    onChange={(event) => {
+                      setShower(event.currentTarget.value);
+                    }}
+                    value={shower}
+                  >
+                    {page.workers.map((worker) => (
+                      <option key={worker.id} value={worker.id}>
+                        {worker.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <p className="help">
+                {tt(language, "d_book_help")}{" "}
+                {tt(
+                  language,
+                  detail.contact_by === "TELEGRAM"
+                    ? "d_bot_sends"
+                    : "d_hand_sends",
+                )}
+              </p>
+              {shown === "book" && badDay && (
+                <p className="ui-error">{tt(language, "e_day")}</p>
+              )}
+              <button
+                className="ui-btn primary"
+                disabled={busy}
+                onClick={() => {
+                  setShown("book");
+                  if (badDay) return;
+                  step("book", {
+                    visit_at: `${day}T${time}`,
+                    staff_id: shower,
+                  });
+                }}
+                type="button"
+              >
+                {tt(
+                  language,
+                  detail.visit_local === null ? "d_book_btn" : "d_move_btn",
+                )}
+              </button>
+            </fieldset>
+          )}
+
+          {detail.status === "VISIT_BOOKED" && visitDayNow && (
+            <div className="ui-actions">
+              <button
+                className="ui-btn primary"
+                disabled={busy}
+                onClick={() => {
+                  step("visited");
+                }}
+                type="button"
+              >
+                {tt(language, "d_visited")}
+              </button>
+              <button
+                className="ui-btn"
+                disabled={busy}
+                onClick={() => {
+                  step("no-show");
+                }}
+                type="button"
+              >
+                {tt(language, "d_no_show")}
+              </button>
+            </div>
+          )}
+
+          <fieldset className="ui-card">
+            <legend>{tt(language, "d_close")}</legend>
+            <div className="ui-hrow">
+              <div className="ui-field">
+                <label htmlFor="vr-reason">{tt(language, "d_reason_l")}</label>
+                <select
+                  disabled={busy}
+                  id="vr-reason"
+                  onChange={(event) => {
+                    setReason(event.currentTarget.value);
+                  }}
+                  value={reason}
+                >
+                  {CLOSE_REASONS.map((value) => (
+                    <option key={value} value={value}>
+                      {textOf(language, "reason_", value)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="ui-field">
+                <label htmlFor="vr-close-note">
+                  {tt(language, "d_note_l")}
+                </label>
+                <input
+                  aria-invalid={shown === "close" && needs(closeNote)}
+                  disabled={busy}
+                  id="vr-close-note"
+                  maxLength={300}
+                  onChange={(event) => {
+                    setCloseNote(event.currentTarget.value);
+                  }}
+                  value={closeNote}
+                />
+              </div>
+            </div>
+            {shown === "close" && reason === "OTHER" && needs(closeNote) && (
+              <p className="ui-error">{tt(language, "e_note")}</p>
+            )}
+            <div className="ui-actions">
+              <button
+                className="ui-btn danger"
+                disabled={busy}
+                onClick={() => {
+                  setShown("close");
+                  if (reason === "OTHER" && needs(closeNote)) return;
+                  step("close", {
+                    reason,
+                    ...(needs(closeNote) ? {} : { note: closeNote.trim() }),
+                  });
+                }}
+                type="button"
+              >
+                {tt(language, "d_close_btn")}
+              </button>
+              <button
+                className="ui-btn"
+                disabled={busy}
+                onClick={() => {
+                  step("close", { reason: "CANCELLED" });
+                }}
+                type="button"
+              >
+                {tt(language, "d_cancelled")}
+              </button>
+            </div>
+          </fieldset>
+        </>
+      )}
+
+      {open && manager && (
+        <fieldset className="ui-card">
+          <legend>{tt(language, "d_manager")}</legend>
+          <div className="ui-hrow">
+            <div className="ui-field">
+              <label htmlFor="vr-give">{tt(language, "d_give")}</label>
+              <select
+                disabled={busy}
+                id="vr-give"
+                onChange={(event) => {
+                  setGiveTo(event.currentTarget.value);
+                }}
+                value={giveTo}
+              >
+                {page.workers.map((worker) => (
+                  <option key={worker.id} value={worker.id}>
+                    {worker.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button
+              className="ui-btn"
+              disabled={busy || giveTo === ""}
+              onClick={() => {
+                step("give", { staff_id: giveTo });
+              }}
+              type="button"
+            >
+              {tt(language, "d_give")}
+            </button>
+          </div>
+          {detail.status !== "VISIT_BOOKED" && (
+            <div className="ui-hrow">
+              <div className="ui-field">
+                <label htmlFor="vr-spam">{tt(language, "d_spam_l")}</label>
+                <input
+                  aria-invalid={shown === "spam" && needs(spamNote)}
+                  disabled={busy}
+                  id="vr-spam"
+                  maxLength={300}
+                  onChange={(event) => {
+                    setSpamNote(event.currentTarget.value);
+                  }}
+                  value={spamNote}
+                />
+              </div>
+              <button
+                className="ui-btn danger"
+                disabled={busy}
+                onClick={() => {
+                  setShown("spam");
+                  if (needs(spamNote)) return;
+                  step("spam", { note: spamNote.trim() });
+                }}
+                type="button"
+              >
+                {tt(language, "d_spam")}
+              </button>
+            </div>
+          )}
+          {shown === "spam" && needs(spamNote) && (
+            <p className="ui-error">{tt(language, "e_note")}</p>
+          )}
+        </fieldset>
+      )}
+
+      {!open &&
+        page.can_work &&
+        (manager || (detail.status === "CLOSED" && detail.mine)) && (
+          <fieldset className="ui-card">
+            <legend>{tt(language, "d_reopen")}</legend>
+            <div className="ui-hrow">
+              <div className="ui-field">
+                <label htmlFor="vr-reopen">{tt(language, "d_reopen_l")}</label>
+                <input
+                  aria-invalid={shown === "reopen" && needs(reopenNote)}
+                  disabled={busy}
+                  id="vr-reopen"
+                  maxLength={300}
+                  onChange={(event) => {
+                    setReopenNote(event.currentTarget.value);
+                  }}
+                  value={reopenNote}
+                />
+              </div>
+              <button
+                className="ui-btn"
+                disabled={busy}
+                onClick={() => {
+                  setShown("reopen");
+                  if (needs(reopenNote)) return;
+                  step("reopen", { note: reopenNote.trim() });
+                }}
+                type="button"
+              >
+                {tt(language, "d_reopen")}
+              </button>
+            </div>
+            {shown === "reopen" && needs(reopenNote) && (
+              <p className="ui-error">{tt(language, "e_note")}</p>
+            )}
+          </fieldset>
+        )}
+
+      <h3>{tt(language, "d_hist")}</h3>
+      <ul className="ui-timeline">
+        {detail.history.map((item, index) => (
+          <li key={`${item.at}-${String(index)}`}>
+            <div>
+              {historyLine(language, item)}
+              {item.note !== null && ` · ${item.note}`}
+              <small>
+                {momentText(item.at)} · {tt(language, "h_by", item.by ?? "")}
+                {item.sent_by_bot && ` · ${tt(language, "h_bot")}`}
+              </small>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </Dialog>
   );
 }

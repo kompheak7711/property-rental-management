@@ -48,6 +48,8 @@ class TelegramStore(Protocol):
 
     def remove_old_link_attempts(self) -> int: ...
 
+    def visit_reminders(self) -> int: ...
+
     def tenant_form_data(self) -> dict[str, Any]: ...
 
     def tenant_problem_report(
@@ -221,6 +223,11 @@ class PostgresTelegramStore:
                 self._property,
                 self._actor,
             )
+        )
+
+    def visit_reminders(self) -> int:
+        return int(
+            self._one("SELECT app.visit_request_reminders(%s, %s)", self._property, self._actor)
         )
 
     def tenant_form_data(self) -> dict[str, Any]:

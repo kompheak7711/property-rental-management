@@ -122,6 +122,7 @@ class FakeStore:
         self.choices: dict[str, Any] = {"today": "2026-11-05", "unit_types": [], "phone": None}
         self.inquiries: list[tuple[str, int, int, str, dict[str, Any]]] = []
         self.inquiry_answers: list[dict[str, Any]] = []
+        self.reminder_runs = 0
 
     def record_item(self, item: dict[str, Any]) -> dict[str, Any]:
         if item["relay_item_id"] in self.items:
@@ -190,6 +191,10 @@ class FakeStore:
         return 0
 
     def remove_old_link_attempts(self) -> int:
+        return 0
+
+    def visit_reminders(self) -> int:
+        self.reminder_runs += 1
         return 0
 
     def tenant_form_data(self) -> dict[str, Any]:

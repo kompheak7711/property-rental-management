@@ -231,3 +231,19 @@ def test_the_faq_shows_the_customer_questions() -> None:
         [{"text": "Skip"}],
         [{"text": "Back to menu"}],
     ]
+
+
+def test_the_visit_messages_from_the_app_have_their_words() -> None:
+    details = {
+        "day": "Saturday 07/11/2026",
+        "time": "09:00",
+        "staff": "Dara",
+        "address": "Near Camko Roundabout",
+    }
+    booked = render("customer.visit_booked", "en", details)
+    assert "Date: Saturday 07/11/2026 at 09:00" in booked and "Staff: Dara" in booked
+    assert "Address: Near Camko Roundabout" in render("customer.visit_moved", "en", details)
+    reminder = render(
+        "customer.visit_reminder", "km", {"day": "ថ្ងៃសៅរ៍ 07/11/2026", "time": "09:00"}
+    )
+    assert reminder.startswith("រំលឹក៖") and "09:00" in reminder

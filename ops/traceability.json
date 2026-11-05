@@ -63289,6 +63289,91 @@
       "test_path": "frontend/src/telegram/TelegramPages.test.tsx",
       "status": "implemented",
       "notes": "Telegram bots step 3a: The client reads Visit requests from the Bookings address and refuses a wrong shape."
+    },
+    {
+      "test_id": "test_take_call_book_visit_and_close",
+      "upstream_ids": [
+        "DL-172",
+        "DB-TG-008"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_visit_request_work_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 3b: Take, Give to, calls, book and move a visit with the bot messages, Visited, Close with a reason, a closed request takes no new inquiry, Reopen and the history."
+    },
+    {
+      "test_id": "test_send_by_hand_reminders_spam_and_could_not_reach",
+      "upstream_ids": [
+        "DL-172",
+        "DB-TG-008"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_visit_request_work_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 3b: Send by hand for non-Telegram customers, the 08:00 reminder once, Customer cancelled, Spam by a Manager with a note, and Could not reach after 3 no-answer days."
+    },
+    {
+      "test_id": "test_working_minutes_and_late",
+      "upstream_ids": [
+        "DL-172",
+        "DB-TG-008"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_visit_request_work_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 3b: Working minutes count Monday to Saturday 07:00 to 17:00; a request nobody took for over 2 working hours is Late."
+    },
+    {
+      "test_id": "test_a_visit_request_step_needs_work_and_a_manager_gives_or_marks_spam",
+      "upstream_ids": [
+        "DL-172",
+        "API-TG-004"
+      ],
+      "test_level": "API",
+      "test_path": "backend/tests/test_telegram_api.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 3b: A request step needs visit_requests.work, Give to and Spam need visit_requests.manage, and a wrong body is refused."
+    },
+    {
+      "test_id": "test_the_visit_messages_from_the_app_have_their_words",
+      "upstream_ids": [
+        "DL-172"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_customer_bot.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 3b: The visit booked, moved and reminder messages show the day, time, address and staff."
+    },
+    {
+      "test_id": "TEST-FE-1311",
+      "upstream_ids": [
+        "DL-172"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/telegram/TelegramPages.test.tsx",
+      "status": "implemented",
+      "notes": "Telegram bots step 3b: Visit requests shows the Waiting, Late, Visits booked and Mine cards, and Send by hand today gives the words in the customer's language with Mark sent."
+    },
+    {
+      "test_id": "TEST-FE-1312",
+      "upstream_ids": [
+        "DL-172"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/telegram/TelegramPages.test.tsx",
+      "status": "implemented",
+      "notes": "Telegram bots step 3b: A request opens with Take; the holder records calls, books a visit Monday to Saturday and closes it; a Manager gives it and marks Spam; others only read it."
+    },
+    {
+      "test_id": "TEST-FE-1313",
+      "upstream_ids": [
+        "DL-172",
+        "API-TG-004"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/telegram/TelegramPages.test.tsx",
+      "status": "implemented",
+      "notes": "Telegram bots step 3b: The client reads one request and sends each step to its address with the browser token, and refuses a wrong shape."
     }
   ]
 }
