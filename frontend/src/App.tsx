@@ -163,7 +163,7 @@ import { QuotationsPage } from "./quotations/QuotationsPage";
 import { ProblemReportsPage } from "./problems/ProblemReportsPage";
 import { AttendancePage } from "./hr/AttendancePage";
 import { EmployeesPage } from "./hr/EmployeesPage";
-import type { HrApi } from "./hr/hrClient";
+import { type HrApi, hrApi as defaultHrApi } from "./hr/hrClient";
 import { LoansPage } from "./hr/LoansPage";
 import { PayrollPage } from "./hr/PayrollPage";
 import type { ProblemsApi } from "./problems/problemsClient";
@@ -3095,6 +3095,7 @@ export function App({
           myUserId={session.actor_id}
           reauthenticate={reauthenticateForSettings}
           usersApi={administrationApi}
+          staff={(hrApi ?? defaultHrApi).employees}
           rolesApi={rolesApi}
           businessApi={businessApi}
           ratesApi={effectiveConfigApi}
