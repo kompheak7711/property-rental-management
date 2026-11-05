@@ -1,4 +1,4 @@
-"""The database calls of the Telegram jobs (migrations 20270430_281 to 20270521_283). Each call
+"""The database calls of the Telegram jobs (migrations 20270430_281 to 20270524_286). Each call
 is one SQL function that checks the job's account holds the right on the Property."""
 
 from __future__ import annotations
@@ -57,6 +57,19 @@ class TelegramStore(Protocol):
     def tenant_report_check(self, user: int, fixed: bool) -> dict[str, Any]: ...
 
     def tenant_my_reports(self, user: int) -> dict[str, Any]: ...
+
+    def contact_add(
+        self,
+        bot: str,
+        inbound_id: str,
+        user: int,
+        chat: int,
+        language: str,
+        name: str | None,
+        message: str,
+    ) -> dict[str, Any]: ...
+
+    def faq_for_bot(self, bot: str) -> list[dict[str, Any]]: ...
 
 
 class PostgresTelegramStore:
@@ -245,3 +258,35 @@ class PostgresTelegramStore:
         )
         assert isinstance(result, dict)
         return result
+
+    def contact_add(
+        self,
+        bot: str,
+        inbound_id: str,
+        user: int,
+        chat: int,
+        language: str,
+        name: str | None,
+        message: str,
+    ) -> dict[str, Any]:
+        result = self._one(
+            "SELECT app.telegram_contact_add(%s, %s, %s, %s, %s, %s, %s, %s, %s)",
+            self._property,
+            inbound_id,
+            bot,
+            user,
+            chat,
+            language,
+            name,
+            message,
+            self._actor,
+        )
+        assert isinstance(result, dict)
+        return result
+
+    def faq_for_bot(self, bot: str) -> list[dict[str, Any]]:
+        result = self._one(
+            "SELECT app.telegram_faq_for_bot(%s, %s, %s)", self._property, bot, self._actor
+        )
+        assert isinstance(result, list)
+        return [entry for entry in result if isinstance(entry, dict)]

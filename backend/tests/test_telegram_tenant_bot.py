@@ -1,5 +1,6 @@
 """The Tenant bot conversation: Start, language and linking (DL-126, step 2a), the Problem
-report form (DL-127, step 2b), and Fixed / Not fixed and My requests (DL-129, step 2d)."""
+report form (DL-127, step 2b), Fixed / Not fixed and My requests (DL-129, step 2d), and
+Contact office and FAQ (DL-170, step 2d part 2)."""
 
 from __future__ import annotations
 
@@ -23,14 +24,14 @@ USER = 777
 def say(store: FakeStore, text: str | None = None, **message: Any) -> list[dict[str, Any]]:
     before = len(store.replies)
     body: dict[str, Any] = {
-        "from": {"id": USER},
+        "from": {"id": USER, "first_name": "Dara", "last_name": "Kim"},
         "chat": {"id": USER, "type": message.pop("chat_type", "private")},
         **message,
     }
     if text is not None:
         body["text"] = text
     plain = {"telegram_user_id": USER, "chat_id": USER, "payload": {"message": body}}
-    handle_tenant_update("TENANT", plain, {"saved": True}, store)
+    handle_tenant_update("TENANT", plain, {"saved": True, "inbound_id": "in-1"}, store)
     return store.replies[before:]
 
 
@@ -77,7 +78,7 @@ def test_linking_asks_for_the_own_phone_then_name_then_unit() -> None:
     assert codes(linked) == [("tenant.linked", "tenant.menu")]
     assert linked[0]["details"] == {"name": "Dara Kim", "unit": "305"}
     assert codes(say(store, "Problem report")) == [("tenant.report_kind", "tenant.report_kind")]
-    assert codes(say(store, "FAQ")) == [("tenant.soon", "tenant.menu")]
+    assert codes(say(store, "FAQ")) == [("tenant.faq_none", "tenant.menu")]
     assert codes(say(store, "anything")) == [("tenant.menu", "tenant.menu")]
 
 
@@ -329,3 +330,92 @@ def test_my_requests_lists_each_report_with_its_state_and_visit() -> None:
     assert khmer[0]["details"]["list"].startswith("UP260009 · ទឹក៖ បានរៀបចំការមកពិនិត្យ")
     store.my_reports = {"result": "OK", "unit_number": "305", "reports": []}
     assert codes(say(store, "My requests")) == [("tenant.my_none", "tenant.menu")]
+
+
+def test_contact_office_takes_one_written_message_for_the_office() -> None:
+    store = linked_store()
+    assert codes(say(store, "Contact office")) == [("tenant.contact_ask", "tenant.back")]
+    # A photo or a voice note is not a message here: the person is asked to write.
+    assert codes(say(store, photo=[{"file_id": "x"}])) == [
+        ("tenant.contact_text_only", "tenant.back")
+    ]
+    assert store.contacts == []
+    saved = say(store, "  The light in my bathroom is weak. Can someone call me?  ")
+    assert codes(saved) == [("tenant.contact_saved", "tenant.menu")]
+    assert store.contacts == [
+        (
+            "TENANT",
+            "in-1",
+            USER,
+            USER,
+            "en",
+            "Dara Kim",
+            "The light in my bathroom is weak. Can someone call me?",
+        )
+    ]
+    # The next text is not another message: the person is back at the menu.
+    assert codes(say(store, "hello")) == [("tenant.menu", "tenant.menu")]
+    assert len(store.contacts) == 1
+    # Back to menu leaves without writing.
+    say(store, "Contact office")
+    assert codes(say(store, "Back to menu")) == [("tenant.menu", "tenant.menu")]
+    assert len(store.contacts) == 1
+
+
+def test_a_person_who_is_not_linked_can_still_contact_the_office() -> None:
+    store = FakeStore()
+    store.languages[USER] = "km"
+    assert codes(say(store, "ទាក់ទងការិយាល័យ")) == [("tenant.contact_ask", "tenant.back")]
+    answer = say(store, "ខ្ញុំមិនអាចភ្ជាប់បានទេ")
+    assert codes(answer) == [("tenant.contact_saved", "tenant.start")]
+    assert answer[0]["language"] == "km"
+    assert store.contacts[0][4:] == ("km", "Dara Kim", "ខ្ញុំមិនអាចភ្ជាប់បានទេ")
+    # The FAQ is for linked tenants.
+    assert codes(say(store, "សំណួរញឹកញាប់")) == [("tenant.link_first", "tenant.start")]
+
+
+def test_faq_shows_the_approved_questions_as_buttons_and_answers_the_one_tapped() -> None:
+    store = linked_store()
+    store.faq = [
+        {
+            "number": 2,
+            "question_en": "What are your office hours?",
+            "answer_en": "Monday to Saturday, 07:00 to 17:00.",
+            "question_km": "ការិយាល័យបើកម៉ោងប៉ុន្មាន?",
+            "answer_km": "ពីថ្ងៃច័ន្ទ ដល់ថ្ងៃសៅរ៍ ម៉ោង ០៧:០០ ដល់ ១៧:០០។",
+        },
+        {
+            "number": 5,
+            "question_en": "How can I pay my rent?",
+            "answer_en": "In cash at the office, by ABA or by KHQR.",
+            "question_km": "តើអាចបង់ថ្លៃជួលតាមរបៀបណាខ្លះ?",
+            "answer_km": "ជាសាច់ប្រាក់ ABA ឬ KHQR។",
+        },
+    ]
+    listed = say(store, "FAQ")
+    assert codes(listed) == [("tenant.faq_list", "tenant.faq")]
+    choices = ["2. What are your office hours?", "5. How can I pay my rent?"]
+    assert listed[0]["details"] == {"choices": choices}
+    answer = say(store, "5. How can I pay my rent?")
+    assert codes(answer) == [("tenant.faq_answer", "tenant.faq")]
+    assert answer[0]["details"]["answer"] == "In cash at the office, by ABA or by KHQR."
+    # Typing just the number works too; an unknown number shows the list again.
+    assert say(store, "2")[0]["details"]["question"] == "What are your office hours?"
+    assert codes(say(store, "9. Something else")) == [("tenant.faq_list", "tenant.faq")]
+    assert codes(say(store, "Back to menu")) == [("tenant.menu", "tenant.menu")]
+    store.languages[USER] = "km"
+    khmer = say(store, "សំណួរញឹកញាប់")
+    assert khmer[0]["details"]["choices"][0] == "2. ការិយាល័យបើកម៉ោងប៉ុន្មាន?"
+    markup = keyboard_markup("tenant.faq", "km", None, khmer[0]["details"])
+    assert markup == {
+        "keyboard": [
+            [{"text": "2. ការិយាល័យបើកម៉ោងប៉ុន្មាន?"}],
+            [{"text": "5. តើអាចបង់ថ្លៃជួលតាមរបៀបណាខ្លះ?"}],
+            [{"text": "ត្រឡប់ទៅម៉ឺនុយ"}],
+        ],
+        "resize_keyboard": True,
+    }
+    with pytest.raises(TextError):
+        keyboard_markup("tenant.faq", "en", None, {})
+    reply = render("contact.reply", "en", {"text": "We will call you at 10:00."})
+    assert reply == "Reply from the office:\n\nWe will call you at 10:00."

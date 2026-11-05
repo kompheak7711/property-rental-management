@@ -115,6 +115,9 @@ class FakeStore:
         self.check_answers: list[dict[str, Any]] = []
         self.checks: list[tuple[int, bool]] = []
         self.my_reports: dict[str, Any] = {"result": "OK", "unit_number": "", "reports": []}
+        # Contact office and FAQ (migration 20270524_286).
+        self.contacts: list[tuple[str, str, int, int, str, str | None, str]] = []
+        self.faq: list[dict[str, Any]] = []
 
     def record_item(self, item: dict[str, Any]) -> dict[str, Any]:
         if item["relay_item_id"] in self.items:
@@ -200,6 +203,22 @@ class FakeStore:
 
     def tenant_my_reports(self, user: int) -> dict[str, Any]:
         return self.my_reports
+
+    def contact_add(
+        self,
+        bot: str,
+        inbound_id: str,
+        user: int,
+        chat: int,
+        language: str,
+        name: str | None,
+        message: str,
+    ) -> dict[str, Any]:
+        self.contacts.append((bot, inbound_id, user, chat, language, name, message))
+        return {"result": "SAVED", "id": "c1"}
+
+    def faq_for_bot(self, bot: str) -> list[dict[str, Any]]:
+        return self.faq
 
 
 def _client(relay: FakeRelay) -> RelayClient:

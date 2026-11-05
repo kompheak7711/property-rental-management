@@ -163,6 +163,8 @@ import { QuotationsPage } from "./quotations/QuotationsPage";
 import { ProblemReportsPage } from "./problems/ProblemReportsPage";
 import type { ProblemsApi } from "./problems/problemsClient";
 import {
+  ContactOfficePage,
+  FaqPageView,
   LinkedTenantsPage,
   TelegramHealthPage,
 } from "./telegram/TelegramPages";
@@ -2014,6 +2016,28 @@ export function App({
       >
         <LinkedTenantsPage
           active={shown("tglinks")}
+          api={telegramApi}
+          capabilities={capabilities}
+          language={language}
+          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
+        />
+      </div>
+      <div
+        className="shell-page"
+        data-page="tgcontact"
+        hidden={!shown("tgcontact")}
+      >
+        <ContactOfficePage
+          active={shown("tgcontact")}
+          api={telegramApi}
+          capabilities={capabilities}
+          language={language}
+          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
+        />
+      </div>
+      <div className="shell-page" data-page="tgfaq" hidden={!shown("tgfaq")}>
+        <FaqPageView
+          active={shown("tgfaq")}
           api={telegramApi}
           capabilities={capabilities}
           language={language}

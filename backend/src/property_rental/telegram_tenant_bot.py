@@ -9,7 +9,9 @@ requests, FAQ and Contact office. Problem report opens the Unit Problem or Build
 form (a Mini App on the relay); the database saves the report (migration 20270521_283) and the
 bot answers with its number. Step 2d (DL-129): the tenant hears each step of a report (the
 database queues those messages), taps Fixed or Not fixed when the repair is done, and sees My
-requests. FAQ and Contact office come later.
+requests. Step 2d part 2 (DL-170): Contact office takes one written message for the office
+(also for a person who is not linked yet); FAQ shows the questions the Owner approved, each as a
+button, and answers the one tapped.
 
 Each answer is one database call that saves the person's next step and queues the messages
 together, so a reply is never sent for a step that was not saved.
@@ -17,6 +19,7 @@ together, so a reply is never sent for a step that was not saved.
 
 from __future__ import annotations
 
+import re
 from typing import Any, Final
 
 from property_rental.telegram_store import TelegramStore
@@ -27,10 +30,15 @@ MAX_NAME: Final = 120
 MAX_UNIT: Final = 20
 LANGUAGE_BUTTONS: Final = {"button.khmer": "km", "button.english": "en"}
 # The chat steps this bot saves (telegram_chat_steps.step).
-TENANT_STEPS: Final = frozenset({"language", "menu", "link.phone", "link.name", "link.unit"})
-LATER_PARTS: Final = frozenset({"button.faq", "button.contact"})
+TENANT_STEPS: Final = frozenset(
+    {"language", "menu", "link.phone", "link.name", "link.unit", "contact", "faq"}
+)
 CHECK_BUTTONS: Final = {"button.fixed": True, "button.not_fixed": False}
 MY_REQUESTS_SHOWN: Final = 10
+MAX_CONTACT: Final = 1000
+MAX_SENDER_NAME: Final = 120
+# A FAQ button reads "3. Question...": the number before the dot names the question.
+FAQ_NUMBER: Final = re.compile(r"^\s*(\d{1,3})(?:[.)]|\s*$)")
 
 
 def _message(plain: dict[str, Any]) -> dict[str, Any] | None:
@@ -120,8 +128,29 @@ def handle_tenant_update(
             return
         reply("menu", *_link_answer(store.tenant_link(user, name, typed[:MAX_UNIT])))
         return
+    home = "tenant.menu" if link is not None else "tenant.start"
+    if tapped == "button.contact":
+        reply("contact", _say("tenant.contact_ask", "tenant.back"))
+        return
+    if step == "contact" and tapped is None:
+        inbound = saved.get("inbound_id")
+        if not typed or not isinstance(inbound, str):
+            reply("contact", _say("tenant.contact_text_only", "tenant.back"))
+            return
+        store.contact_add(
+            BOT, inbound, user, chat, language or "km", _sender_name(message), typed[:MAX_CONTACT]
+        )
+        reply("menu", _say("tenant.contact_saved", home))
+        return
     if link is None:
         reply("menu", _say("tenant.link_first", "tenant.start"))
+        return
+    if tapped == "button.back_menu":
+        reply("menu", _say("tenant.menu", "tenant.menu"))
+        return
+    if tapped == "button.faq" or (step == "faq" and tapped is None and typed):
+        entries = store.faq_for_bot(BOT)
+        reply("faq" if entries else "menu", _faq_answer(entries, language or "km", typed, tapped))
         return
     if tapped == "button.problem":
         reply("menu", _say("tenant.report_kind", "tenant.report_kind"))
@@ -132,10 +161,42 @@ def handle_tenant_update(
     if tapped == "button.my_requests":
         reply("menu", _my_requests(store.tenant_my_reports(user), language or "km"))
         return
-    if tapped in LATER_PARTS:
-        reply("menu", _say("tenant.soon", "tenant.menu"))
-        return
     reply("menu", _say("tenant.menu", "tenant.menu"))
+
+
+def _sender_name(message: dict[str, Any]) -> str | None:
+    """The person's Telegram name, for the office to see who wrote."""
+    sender = message.get("from")
+    if not isinstance(sender, dict):
+        return None
+    parts = [sender.get("first_name"), sender.get("last_name")]
+    name = " ".join(part.strip() for part in parts if isinstance(part, str) and part.strip())
+    return name[:MAX_SENDER_NAME] or None
+
+
+def _faq_answer(
+    entries: list[dict[str, Any]], language: str, typed: str, tapped: str | None
+) -> dict[str, Any]:
+    """The list of questions as buttons, or the answer to the one the person tapped."""
+    if not entries:
+        return _say("tenant.faq_none", "tenant.menu")
+    suffix = "km" if language == "km" else "en"
+    choices = [
+        f"{entry.get('number')}. {entry.get('question_' + suffix) or ''}" for entry in entries
+    ]
+    found = FAQ_NUMBER.match(typed) if tapped is None else None
+    if found is not None:
+        number = int(found.group(1))
+        for entry in entries:
+            if entry.get("number") == number:
+                return _say(
+                    "tenant.faq_answer",
+                    "tenant.faq",
+                    question=str(entry.get("question_" + suffix) or ""),
+                    answer=str(entry.get("answer_" + suffix) or ""),
+                    choices=choices,
+                )
+    return _say("tenant.faq_list", "tenant.faq", choices=choices)
 
 
 def _hello(state: dict[str, Any]) -> dict[str, Any]:

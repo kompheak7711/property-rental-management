@@ -5788,3 +5788,12 @@ Added by DL-129 (migration `20270523_285`, forward-only). No new table.
 - Trigger `problem_report_events_tenant_notice` (after each new report step): queues the Tenant bot message for each person `app.tenant_report_people` names (reports with source PHONE, WALKIN or TENANT_BOT only). A step the tenant took in the bot (`details.via = TELEGRAM`) queues nothing.
 - Functions (`telegram.operate`): `app.telegram_tenant_report_check` (Fixed closes, Not fixed opens again the newest done Unit Problem on the person's Lease; the step is saved as FIXED or NOT_FIXED with `via` TELEGRAM) and `app.telegram_tenant_my_reports` (open reports and those closed in the last 30 days, at most 10).
 
+## DB-TG-006 — Contact office and the FAQ (bots step 2d part 2)
+
+Added by DL-170 (migration `20270524_286`, forward-only).
+
+- `app.telegram_contact_messages` (Property, the pulled update in `telegram_inbound_events` (once), bot CUSTOMER or TENANT, Telegram account and chat, language, Telegram name, the tenant link if any, message 1 to 1000 letters, received). `app.telegram_contact_answers` (one per message: TELEGRAM with its outbox message, or PHONE; answer 1 to 600 letters; by whom, when). Append-only.
+- `app.telegram_faq_questions` (Property, number), `app.telegram_faq_versions` (who sees it BOTH, CUSTOMER, TENANT or HIDDEN; English and Khmer question (1 to 160) and answer (1 to 800); proposed by, when), `app.telegram_faq_approvals` (one per version, version number per question, approved by, when). Append-only. The newest approved version is shown; the newest version without an approval is the one waiting.
+- Rights (group Administration): `telegram.contact` "Answer Contact office" (Owner, Manager and Staff bundles) and `telegram.faq` "Edit the FAQ" (Owner and Manager). New Properties seed the same.
+- The runtime login cannot read the tables. Functions: `app.telegram_contact_add` and `app.telegram_faq_for_bot` (`telegram.operate`); `app.telegram_contact_page` and `app.telegram_contact_answer` (`telegram.contact`); `app.telegram_faq_page` (`telegram.faq` or `telegram.contact`); `app.telegram_faq_save` (`telegram.faq`; the Owner's save is approved at once); `app.telegram_faq_approve` (`telegram.faq` and the Owner account only).
+

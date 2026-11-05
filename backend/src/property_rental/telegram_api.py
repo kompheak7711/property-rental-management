@@ -8,20 +8,33 @@ sent with their last error and each bot's last message in and out (`telegram.rea
 `POST .../telegram/outbox/{message_id}/retry` sends again, once, a message the app gave up on
 (`telegram.operate`). No bot key is ever read or shown here.
 
+Step 2d part 2 (DL-170): `GET .../telegram/contact` answers the Contact office page (Waiting and
+Answered) and `POST .../telegram/contact/{message_id}/answer` answers one message once, by Reply
+(the bot sends it) or Answered by phone (`telegram.contact`). `GET .../telegram/faq` answers the
+FAQ page (`telegram.faq`, or `telegram.contact` to read only); `POST .../telegram/faq` saves a
+question (a new version; the Owner's is used at once) and
+`POST .../telegram/faq/versions/{version_id}/approve` is the Owner's approval (`telegram.faq`).
+
 The database functions check the rights again.
 """
 
 from __future__ import annotations
 
-from typing import Annotated, Protocol
+import json
+from typing import Annotated, Literal, Protocol
 from uuid import UUID
 
 import psycopg
-from fastapi import APIRouter, Request, Response, status
+from fastapi import APIRouter, HTTPException, Request, Response, status
 from pydantic import BaseModel, ConfigDict, StringConstraints
 
 from property_rental.browser_security import require_browser_mutation
-from property_rental.identity import ActorResolver
+from property_rental.identity import (
+    ActorResolver,
+    AuthenticatedActor,
+    AuthorizationRequirement,
+    is_authorized,
+)
 from property_rental.products_api import (
     REFUSED,
     Json,
@@ -34,7 +47,12 @@ from property_rental.settings import Settings
 
 TELEGRAM_READ = "telegram.read"
 TELEGRAM_OPERATE = "telegram.operate"
+TELEGRAM_CONTACT = "telegram.contact"
+TELEGRAM_FAQ = "telegram.faq"
 Reason = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=300)]
+AnswerText = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=600)]
+Question = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=160)]
+FaqAnswer = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=800)]
 
 
 class TelegramPageFlow(Protocol):
@@ -48,6 +66,18 @@ class TelegramPageFlow(Protocol):
 
     def retry(self, property_id: UUID, message_id: UUID, *, actor_id: str) -> UUID: ...
 
+    def contact(self, property_id: UUID, *, actor_id: str) -> Json: ...
+
+    def answer(
+        self, property_id: UUID, message_id: UUID, how: str, text: str, *, actor_id: str
+    ) -> None: ...
+
+    def faq(self, property_id: UUID, *, actor_id: str) -> Json: ...
+
+    def save_faq(self, property_id: UUID, version: Json, *, actor_id: str) -> Json: ...
+
+    def approve_faq(self, property_id: UUID, version_id: UUID, *, actor_id: str) -> Json: ...
+
 
 class UnavailableTelegramPageFlow:
     def links(self, property_id: UUID, **_: object) -> Json:
@@ -60,6 +90,21 @@ class UnavailableTelegramPageFlow:
         raise ProductUnavailable
 
     def retry(self, property_id: UUID, message_id: UUID, **_: object) -> UUID:
+        raise ProductUnavailable
+
+    def contact(self, property_id: UUID, **_: object) -> Json:
+        raise ProductUnavailable
+
+    def answer(self, property_id: UUID, message_id: UUID, how: str, text: str, **_: object) -> None:
+        raise ProductUnavailable
+
+    def faq(self, property_id: UUID, **_: object) -> Json:
+        raise ProductUnavailable
+
+    def save_faq(self, property_id: UUID, version: Json, **_: object) -> Json:
+        raise ProductUnavailable
+
+    def approve_faq(self, property_id: UUID, version_id: UUID, **_: object) -> Json:
         raise ProductUnavailable
 
 
@@ -104,11 +149,84 @@ class PostgresTelegramPageFlow:
         )
         return UUID(str(made))
 
+    def contact(self, property_id: UUID, *, actor_id: str) -> Json:
+        return _json(
+            self._one("SELECT app.telegram_contact_page(%s, %s)", (property_id, UUID(actor_id)))
+        )
+
+    def answer(
+        self, property_id: UUID, message_id: UUID, how: str, text: str, *, actor_id: str
+    ) -> None:
+        self._one(
+            "SELECT app.telegram_contact_answer(%s, %s, %s, %s, %s)::text",
+            (property_id, message_id, how, text, UUID(actor_id)),
+        )
+
+    def faq(self, property_id: UUID, *, actor_id: str) -> Json:
+        return _json(
+            self._one("SELECT app.telegram_faq_page(%s, %s)", (property_id, UUID(actor_id)))
+        )
+
+    def save_faq(self, property_id: UUID, version: Json, *, actor_id: str) -> Json:
+        question = version.get("question_id")
+        body = {key: value for key, value in version.items() if key != "question_id"}
+        return _json(
+            self._one(
+                "SELECT app.telegram_faq_save(%s, %s, %s::jsonb, %s)",
+                (
+                    property_id,
+                    None if question is None else UUID(str(question)),
+                    json.dumps(body),
+                    UUID(actor_id),
+                ),
+            )
+        )
+
+    def approve_faq(self, property_id: UUID, version_id: UUID, *, actor_id: str) -> Json:
+        return _json(
+            self._one(
+                "SELECT app.telegram_faq_approve(%s, %s, %s)",
+                (property_id, version_id, UUID(actor_id)),
+            )
+        )
+
 
 class RemoveLink(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
 
     reason: Reason
+
+
+class ContactAnswer(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    how: Literal["TELEGRAM", "PHONE"]
+    answer: AnswerText
+
+
+class FaqVersion(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    question_id: UUID | None = None
+    for_bots: Literal["BOTH", "CUSTOMER", "TENANT", "HIDDEN"]
+    question_en: Question
+    answer_en: FaqAnswer
+    question_km: Question
+    answer_km: FaqAnswer
+
+
+def _require_any(
+    request: Request, resolver: ActorResolver, capabilities: tuple[str, ...], property_id: UUID
+) -> AuthenticatedActor:
+    actor = resolver(request)
+    if actor is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+    for capability in capabilities:
+        if is_authorized(
+            actor, AuthorizationRequirement(capability=capability, property_id=str(property_id))
+        ):
+            return actor
+    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
 
 def create_telegram_router(
@@ -161,6 +279,69 @@ def create_telegram_router(
                     "message_id": str(made),
                     "health": flow.health(property_id, actor_id=actor.actor_id),
                 },
+            )
+        except REFUSED as exc:
+            raise _http(exc) from exc
+
+    @router.get("/contact")
+    def telegram_contact(property_id: UUID, request: Request, response: Response) -> Json:
+        actor = _require(request, resolver, TELEGRAM_CONTACT, property_id)
+        response.headers["Cache-Control"] = "private, no-store"
+        try:
+            return envelope(request, flow.contact(property_id, actor_id=actor.actor_id))
+        except REFUSED as exc:
+            raise _http(exc) from exc
+
+    @router.post("/contact/{message_id}/answer")
+    def answer_telegram_contact(
+        property_id: UUID, message_id: UUID, body: ContactAnswer, request: Request
+    ) -> Json:
+        actor = _require(request, resolver, TELEGRAM_CONTACT, property_id)
+        require_browser_mutation(request, settings)
+        try:
+            flow.answer(property_id, message_id, body.how, body.answer, actor_id=actor.actor_id)
+            return envelope(request, flow.contact(property_id, actor_id=actor.actor_id))
+        except REFUSED as exc:
+            raise _http(exc) from exc
+
+    @router.get("/faq")
+    def telegram_faq(property_id: UUID, request: Request, response: Response) -> Json:
+        actor = _require_any(request, resolver, (TELEGRAM_FAQ, TELEGRAM_CONTACT), property_id)
+        response.headers["Cache-Control"] = "private, no-store"
+        try:
+            return envelope(request, flow.faq(property_id, actor_id=actor.actor_id))
+        except REFUSED as exc:
+            raise _http(exc) from exc
+
+    @router.post("/faq")
+    def save_telegram_faq(property_id: UUID, body: FaqVersion, request: Request) -> Json:
+        actor = _require(request, resolver, TELEGRAM_FAQ, property_id)
+        require_browser_mutation(request, settings)
+        version: Json = {
+            "question_id": None if body.question_id is None else str(body.question_id),
+            "for_bots": body.for_bots,
+            "question_en": body.question_en,
+            "answer_en": body.answer_en,
+            "question_km": body.question_km,
+            "answer_km": body.answer_km,
+        }
+        try:
+            saved = flow.save_faq(property_id, version, actor_id=actor.actor_id)
+            return envelope(
+                request, {"saved": saved, "faq": flow.faq(property_id, actor_id=actor.actor_id)}
+            )
+        except REFUSED as exc:
+            raise _http(exc) from exc
+
+    @router.post("/faq/versions/{version_id}/approve")
+    def approve_telegram_faq(property_id: UUID, version_id: UUID, request: Request) -> Json:
+        actor = _require(request, resolver, TELEGRAM_FAQ, property_id)
+        require_browser_mutation(request, settings)
+        try:
+            approved = flow.approve_faq(property_id, version_id, actor_id=actor.actor_id)
+            return envelope(
+                request,
+                {"approved": approved, "faq": flow.faq(property_id, actor_id=actor.actor_id)},
             )
         except REFUSED as exc:
             raise _http(exc) from exc

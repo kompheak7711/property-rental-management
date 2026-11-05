@@ -35,6 +35,8 @@ export type PageId =
   | "bankcash"
   | "lclose"
   | "tglinks"
+  | "tgcontact"
+  | "tgfaq"
   | "tghealth"
   | "account";
 
@@ -145,13 +147,13 @@ export const MENU: readonly MenuGroup[] = [
           "lclose",
         ],
       },
-      // Telegram bots step 2c (DL-128, mock-up round 29): Office › Telegram. Contact office and
-      // FAQ come in a later step.
+      // Telegram bots step 2c (DL-128, mock-up round 29): Office › Telegram, with Contact office
+      // and FAQ from step 2d part 2 (DL-170), in the mock-up's tab order.
       {
         page: "tglinks",
         icon: "send",
         label: ["Telegram", "តេឡេក្រាម"],
-        tabs: ["tglinks", "tghealth"],
+        tabs: ["tglinks", "tgcontact", "tgfaq", "tghealth"],
       },
       { page: "reports", icon: "reports" },
       { page: "history", icon: "history" },
@@ -197,6 +199,8 @@ const PAGE_NAMES: Record<PageId, readonly [string, string]> = {
   bankcash: ["Bank and cash", "ធនាគារ និងសាច់ប្រាក់"],
   lclose: ["Month-end close", "ការបិទចុងខែ"],
   tglinks: ["Linked tenants", "អ្នកជួលដែលបានភ្ជាប់"],
+  tgcontact: ["Contact office", "ទាក់ទងការិយាល័យ"],
+  tgfaq: ["FAQ", "សំណួរញឹកញាប់"],
   tghealth: ["Telegram health", "ស្ថានភាពតេឡេក្រាម"],
   // new
   account: ["My account", "គណនីរបស់ខ្ញុំ"],
@@ -256,6 +260,8 @@ const PAGE_NEEDS: Record<PageId, readonly string[] | null> = {
   lclose: ["ledger.read"],
   // Telegram bots step 2c (DL-128): Owner and Manager for now.
   tglinks: ["telegram.read"],
+  tgcontact: ["telegram.contact"],
+  tgfaq: ["telegram.faq", "telegram.contact"],
   tghealth: ["telegram.read"],
   account: null,
 };

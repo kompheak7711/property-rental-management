@@ -98,8 +98,11 @@ def run_send(
             result.skipped += 1
             continue
         try:
-            text = render(message["text_code"], message["language"], message.get("details") or {})
-            markup = keyboard_markup(message.get("keyboard"), message["language"], app_host)
+            details = message.get("details") or {}
+            text = render(message["text_code"], message["language"], details)
+            markup = keyboard_markup(
+                message.get("keyboard"), message["language"], app_host, details
+            )
         except TextError:
             outcome = store.record_attempt(message["id"], "FAILED", "text_unknown", None)
             result.gave_up += outcome == "GAVE_UP"

@@ -12,7 +12,10 @@ from typing import Final
 
 MAX_FIELD_CHARACTERS: Final = 300
 # A field the bot builds itself from fixed texts (My requests) may be longer.
-LONG_FIELDS: Final = {"list": 3000}
+LONG_FIELDS: Final = {"list": 3000, "text": 600, "answer": 800}
+# A keyboard whose buttons the bot builds (the FAQ questions): at most this many, each this long.
+MAX_CHOICES: Final = 30
+MAX_CHOICE_CHARACTERS: Final = 60
 MAX_MESSAGE_CHARACTERS: Final = 4000
 
 TEXTS: Final[dict[str, dict[str, str]]] = {
@@ -102,9 +105,40 @@ TEXTS: Final[dict[str, dict[str, str]]] = {
         "km": "តើយើងអាចជួយអ្វីលោកអ្នកបាន?",
         "en": "How can we help you?",
     },
-    "tenant.soon": {
-        "km": "ផ្នែកនេះនឹងបើកឆាប់ៗនេះ។ បើមានរឿងបន្ទាន់ សូមទូរស័ព្ទមកការិយាល័យ។",
-        "en": "This part opens soon. For anything urgent, please call the office.",
+    # Step 2d part 2 (DL-170): Contact office and FAQ (tenant mock-up v15; app screens round 29).
+    "tenant.contact_ask": {
+        "km": ("សូមសរសេរសាររបស់លោកអ្នក។ ក្រុមការងាររបស់យើងឆ្លើយតបពីថ្ងៃច័ន្ទ ដល់ថ្ងៃសៅរ៍ ម៉ោង ០៧:០០ ដល់ ១៧:០០។"),
+        "en": ("Please write your message. Our team replies Monday to Saturday, 07:00 to 17:00."),
+    },
+    "tenant.contact_text_only": {
+        "km": "សូមសរសេរសាររបស់លោកអ្នកជាអក្សរ។",
+        "en": "Please write your message as text.",
+    },
+    "tenant.contact_saved": {
+        "km": (
+            "សូមអរគុណ។ យើងបានទទួលសាររបស់លោកអ្នក ហើយក្រុមការងារនឹងឆ្លើយតបនៅទីនេះ "
+            "ពីថ្ងៃច័ន្ទ ដល់ថ្ងៃសៅរ៍ ម៉ោង ០៧:០០ ដល់ ១៧:០០។"
+        ),
+        "en": (
+            "Thank you. We got your message. Our team will reply here, Monday to Saturday, "
+            "07:00 to 17:00."
+        ),
+    },
+    "contact.reply": {
+        "km": "ការឆ្លើយតបពីការិយាល័យ៖\n\n{text}",
+        "en": "Reply from the office:\n\n{text}",
+    },
+    "tenant.faq_list": {
+        "km": "សំណួរដែលសួរញឹកញាប់។ សូមចុចលើសំណួរមួយ។",
+        "en": "Frequently asked questions. Tap a question.",
+    },
+    "tenant.faq_answer": {
+        "km": "{question}\n\n{answer}\n\nមានសំណួរផ្សេងទៀតទេ?",
+        "en": "{question}\n\n{answer}\n\nAny other question?",
+    },
+    "tenant.faq_none": {
+        "km": "មិនទាន់មានសំណួរនៅឡើយទេ។ សូមចុច «ទាក់ទងការិយាល័យ» ដើម្បីសួរយើង។",
+        "en": "There are no questions here yet. Please tap Contact office to ask us.",
     },
     # Step 2b: Problem report (owner rules of 3 Nov 2026, Problem report Part B; tenant
     # mock-up v15). The form itself is the Mini App page in relay/src/tenant_app.ts.
@@ -303,6 +337,7 @@ TEXTS: Final[dict[str, dict[str, str]]] = {
     "button.contact": {"km": "ទាក់ទងការិយាល័យ", "en": "Contact office"},
     "button.unit_problem": {"km": "បញ្ហាក្នុងបន្ទប់", "en": "Unit Problem"},
     "button.building_problem": {"km": "បញ្ហាអគារ", "en": "Building problem"},
+    "button.back_menu": {"km": "ត្រឡប់ទៅម៉ឺនុយ", "en": "Back to menu"},
     "button.fixed": {"km": "ជួសជុលរួច", "en": "Fixed"},
     "button.not_fixed": {"km": "មិនទាន់រួច", "en": "Not fixed"},
     "button.khmer": {"km": "ភាសាខ្មែរ", "en": "ភាសាខ្មែរ"},
@@ -318,6 +353,12 @@ KEYBOARDS: Final[dict[str, list[list[str]]]] = {
     "tenant.menu": [["button.problem", "button.my_requests"], ["button.faq", "button.contact"]],
     "tenant.reject": [["button.link", "button.contact"]],
     "tenant.check": [["button.fixed", "button.not_fixed"], ["button.my_requests"]],
+    "tenant.back": [["button.back_menu"]],
+}
+# Keyboards whose first buttons the bot builds (details[field], one button a row), followed by
+# fixed rows.
+CHOICE_KEYBOARDS: Final[dict[str, tuple[str, list[list[str]]]]] = {
+    "tenant.faq": ("choices", [["button.back_menu"]]),
 }
 CONTACT_BUTTONS: Final = frozenset({"button.share_phone"})
 # Buttons on the message itself that open a Mini App form on the relay
@@ -356,13 +397,28 @@ def render(code: str, language: str, details: Mapping[str, object]) -> str:
 
 
 def keyboard_markup(
-    code: str | None, language: str, app_host: str | None = None
+    code: str | None,
+    language: str,
+    app_host: str | None = None,
+    details: Mapping[str, object] | None = None,
 ) -> dict[str, object] | None:
     """Telegram's reply_markup for a keyboard code, or None when the message has none."""
     if code is None:
         return None
     if code == REMOVE_KEYBOARD:
         return {"remove_keyboard": True}
+    if code in CHOICE_KEYBOARDS:
+        field, fixed_rows = CHOICE_KEYBOARDS[code]
+        choices = (details or {}).get(field)
+        if not isinstance(choices, list) or not all(isinstance(item, str) for item in choices):
+            raise TextError(f"keyboard.{code}.{field}")
+        built: list[list[dict[str, object]]] = [
+            [{"text": choice[:MAX_CHOICE_CHARACTERS]}]
+            for choice in choices[:MAX_CHOICES]
+            if choice.strip()
+        ]
+        built += [[{"text": render(label, language, {})} for label in row] for row in fixed_rows]
+        return {"keyboard": built, "resize_keyboard": True}
     if code in APP_KEYBOARDS:
         if not app_host:
             raise TextError(f"keyboard.{code}.no_app_host")

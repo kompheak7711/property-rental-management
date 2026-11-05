@@ -1,6 +1,6 @@
 // Telegram bots step 2c (DL-128, API-TG-001): Office › Telegram, the tabs Linked tenants and
-// Telegram health. The server checks every right again; this client only reads and sends.
-// No bot key is ever read or shown.
+// Telegram health; step 2d part 2 (DL-170): the tabs Contact office and FAQ. The server checks
+// every right again; this client only reads and sends. No bot key is ever read or shown.
 
 export class TelegramError extends Error {
   /** The HTTP status, or null when the server could not be reached or answered badly:
@@ -92,6 +92,80 @@ export interface HealthPage {
   pulls: PullRun[];
 }
 
+export interface ContactAnswer {
+  how: "TELEGRAM" | "PHONE";
+  text: string;
+  at: string;
+  by: string | null;
+}
+
+export interface ContactMessage {
+  id: string;
+  /** TENANT or CUSTOMER. */
+  bot: string;
+  /** The linked tenant's name, else the person's Telegram name. */
+  name: string | null;
+  unit_number: string | null;
+  phone: string | null;
+  message: string;
+  received_at: string;
+  answer: ContactAnswer | null;
+}
+
+export interface ContactPage {
+  waiting: ContactMessage[];
+  answered: ContactMessage[];
+}
+
+export type FaqBots = "BOTH" | "CUSTOMER" | "TENANT" | "HIDDEN";
+export const FAQ_BOTS: readonly FaqBots[] = [
+  "BOTH",
+  "TENANT",
+  "CUSTOMER",
+  "HIDDEN",
+];
+
+export interface FaqWords {
+  for_bots: FaqBots;
+  question_en: string;
+  answer_en: string;
+  question_km: string;
+  answer_km: string;
+}
+
+export interface FaqApproved extends FaqWords {
+  version_id: string;
+  version_number: number;
+  approved_by: string | null;
+  approved_at: string;
+}
+
+export interface FaqWaiting extends FaqWords {
+  version_id: string;
+  proposed_by: string | null;
+  proposed_at: string;
+}
+
+export interface FaqQuestion {
+  id: string;
+  number: number;
+  current: FaqApproved | null;
+  pending: FaqWaiting | null;
+}
+
+export interface FaqPage {
+  questions: FaqQuestion[];
+  /** The person is the Owner: a save is used at once and Approve shows. */
+  owner: boolean;
+  can_edit: boolean;
+}
+
+export interface FaqSaved {
+  number: number;
+  approved: boolean;
+  page: FaqPage;
+}
+
 export interface TelegramApi {
   links: (propertyId: string) => Promise<LinksPage>;
   /** Removes a link with a reason and answers the page again. */
@@ -103,6 +177,23 @@ export interface TelegramApi {
   health: (propertyId: string) => Promise<HealthPage>;
   /** Sends a message the app gave up on once more and answers the page again. */
   retry: (propertyId: string, messageId: string) => Promise<HealthPage>;
+  contact: (propertyId: string) => Promise<ContactPage>;
+  /** Answers one message, once, and answers the page again. */
+  answer: (
+    propertyId: string,
+    messageId: string,
+    how: "TELEGRAM" | "PHONE",
+    text: string,
+  ) => Promise<ContactPage>;
+  faq: (propertyId: string) => Promise<FaqPage>;
+  /** Saves a new version of a question (a new question when questionId is null). */
+  saveFaq: (
+    propertyId: string,
+    questionId: string | null,
+    words: FaqWords,
+  ) => Promise<FaqSaved>;
+  /** The Owner approves the version waiting and answers the page again. */
+  approveFaq: (propertyId: string, versionId: string) => Promise<FaqPage>;
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -286,6 +377,96 @@ export function healthPageOf(value: unknown): HealthPage {
   };
 }
 
+function contactMessageOf(value: unknown): ContactMessage {
+  const row = record(value);
+  const answer =
+    row.answer === null || row.answer === undefined ? null : record(row.answer);
+  return {
+    id: text(row.id),
+    bot: text(row.bot),
+    name: maybeText(row.name),
+    unit_number: maybeText(row.unit_number),
+    phone: maybeText(row.phone),
+    message: text(row.message),
+    received_at: text(row.received_at),
+    answer:
+      answer === null
+        ? null
+        : {
+            how: answer.how === "PHONE" ? "PHONE" : "TELEGRAM",
+            text: text(answer.text),
+            at: text(answer.at),
+            by: maybeText(answer.by),
+          },
+  };
+}
+
+export function contactPageOf(value: unknown): ContactPage {
+  const page = record(value);
+  return {
+    waiting: list(page.waiting).map(contactMessageOf),
+    answered: list(page.answered).map(contactMessageOf),
+  };
+}
+
+function bots(value: unknown): FaqBots {
+  const found = FAQ_BOTS.find((code) => code === value);
+  if (found === undefined) throw new TelegramError();
+  return found;
+}
+
+function wordsOf(row: Record<string, unknown>): FaqWords {
+  return {
+    for_bots: bots(row.for_bots),
+    question_en: text(row.question_en),
+    answer_en: text(row.answer_en),
+    question_km: text(row.question_km),
+    answer_km: text(row.answer_km),
+  };
+}
+
+export function faqPageOf(value: unknown): FaqPage {
+  const page = record(value);
+  return {
+    owner: page.owner === true,
+    can_edit: page.can_edit === true,
+    questions: list(page.questions).map((item) => {
+      const row = record(item);
+      const current =
+        row.current === null || row.current === undefined
+          ? null
+          : record(row.current);
+      const pending =
+        row.pending === null || row.pending === undefined
+          ? null
+          : record(row.pending);
+      return {
+        id: text(row.id),
+        number: whole(row.number),
+        current:
+          current === null
+            ? null
+            : {
+                ...wordsOf(current),
+                version_id: text(current.version_id),
+                version_number: whole(current.version_number),
+                approved_by: maybeText(current.approved_by),
+                approved_at: text(current.approved_at),
+              },
+        pending:
+          pending === null
+            ? null
+            : {
+                ...wordsOf(pending),
+                version_id: text(pending.version_id),
+                proposed_by: maybeText(pending.proposed_by),
+                proposed_at: text(pending.proposed_at),
+              },
+      };
+    }),
+  };
+}
+
 export const telegramApi: TelegramApi = {
   async links(propertyId) {
     return linksPageOf(await request(`${root(propertyId)}/links`));
@@ -309,5 +490,42 @@ export const telegramApi: TelegramApi = {
       ),
     );
     return healthPageOf(answer.health);
+  },
+  async contact(propertyId) {
+    return contactPageOf(await request(`${root(propertyId)}/contact`));
+  },
+  async answer(propertyId, messageId, how, words) {
+    return contactPageOf(
+      await request(
+        `${root(propertyId)}/contact/${encodeURIComponent(messageId)}/answer`,
+        post({ how, answer: words }),
+      ),
+    );
+  },
+  async faq(propertyId) {
+    return faqPageOf(await request(`${root(propertyId)}/faq`));
+  },
+  async saveFaq(propertyId, questionId, words) {
+    const answer = record(
+      await request(
+        `${root(propertyId)}/faq`,
+        post({ question_id: questionId, ...words }),
+      ),
+    );
+    const saved = record(answer.saved);
+    return {
+      number: whole(saved.number),
+      approved: saved.approved === true,
+      page: faqPageOf(answer.faq),
+    };
+  },
+  async approveFaq(propertyId, versionId) {
+    const answer = record(
+      await request(
+        `${root(propertyId)}/faq/versions/${encodeURIComponent(versionId)}/approve`,
+        post(),
+      ),
+    );
+    return faqPageOf(answer.faq);
   },
 };

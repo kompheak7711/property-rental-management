@@ -31,7 +31,7 @@ from property_rental.access_control import (
 )
 from property_rental.identity import CapabilityGrant
 from property_rental.telegram_tenant_bot import TENANT_STEPS
-from property_rental.telegram_texts import KEYBOARDS, TEXTS
+from property_rental.telegram_texts import CHOICE_KEYBOARDS, KEYBOARDS, TEXTS
 
 SOURCE = Path(__file__).parents[1] / "src" / "property_rental"
 DOTTED = re.compile(r"^[a-z][a-z_]*(\.[a-z][a-z_]*)+$")
@@ -138,7 +138,7 @@ def application_constants() -> set[str]:
         if path.name != "access_control.py":
             found |= dotted_constants(path)
     # The Telegram bots' fixed text codes, keyboards and chat steps are names of their own.
-    return found - set(TEXTS) - set(KEYBOARDS) - TENANT_STEPS
+    return found - set(TEXTS) - set(KEYBOARDS) - set(CHOICE_KEYBOARDS) - TENANT_STEPS
 
 
 def test_the_capability_catalog_names_every_capability_the_code_checks() -> None:
@@ -159,14 +159,15 @@ def test_the_capability_catalog_names_every_capability_the_code_checks() -> None
     # and `ledger.write_off` of part 3, and the 6 product and stock rights (V1.1 part 4, DL-121),
     # and `quotations.read` and `quotations.make` (V1.1 part 6, DL-123; the database alone checks
     # `quotations.lower_price`), and the 4 Problem report rights (V1.1 part 7, DL-124), and
-    # `telegram.read` and `telegram.operate` of the Telegram app pages (bots step 2c, DL-128).
-    assert len(found - NON_CAPABILITY_LABELS) == 105
+    # `telegram.read` and `telegram.operate` of the Telegram app pages (bots step 2c, DL-128),
+    # and `telegram.contact` and `telegram.faq` of Contact office and FAQ (step 2d, DL-170).
+    assert len(found - NON_CAPABILITY_LABELS) == 107
     # Review round 1: a capability constant added to the catalog module itself is a catalog name.
     assert dotted_constants(SOURCE / "access_control.py") - set(CAPABILITY_CATALOG) == set()
 
 
 def test_the_catalog_holds_the_approved_new_names() -> None:
-    assert len(CAPABILITY_CATALOG) == 116
+    assert len(CAPABILITY_CATALOG) == 118
     assert list(CAPABILITY_CATALOG) == sorted(CAPABILITY_CATALOG)
     assert all(DOTTED.fullmatch(name) and len(name) <= 128 for name in CAPABILITY_CATALOG)
     assert all(description.strip() for description in CAPABILITY_CATALOG.values())
@@ -202,7 +203,7 @@ def test_each_capability_has_one_grant_path() -> None:
     assert paths["rent_nonpayment.evaluate"] == "service_principal"
     assert paths["billing.generate"] == "bundle"
     assert BUNDLE_CAPABILITIES == {c for c, path in paths.items() if path == "bundle"}
-    assert len(BUNDLE_CAPABILITIES) == 113
+    assert len(BUNDLE_CAPABILITIES) == 115
     with pytest.raises(KeyError):
         capability_grant_path("reports.export")
 
@@ -310,6 +311,8 @@ STAFF_APPROVED = frozenset(
         # V1.1 part 7 (DL-124): Staff see and add Problem reports.
         "problem_reports.read",
         "problem_reports.add",
+        # Telegram bots step 2d part 2 (DL-170): Staff answer Contact office.
+        "telegram.contact",
     }
 )
 # What Staff never get (DL-081, Q-150 (a) with the owner's note, DL-080 item 2, Q-161 (a)); the
@@ -327,6 +330,8 @@ STAFF_NEVER = frozenset(
         # Telegram bots step 1: the bot jobs and their health are for the Owner and Manager.
         "telegram.operate",
         "telegram.read",
+        # Step 2d part 2: the FAQ is edited by the Owner and the Manager only (round 29).
+        "telegram.faq",
         "leases.warn",
         "utility_readings.correct",
         "utility_meters.manage",
@@ -415,7 +420,7 @@ RATE_CAPABILITIES = frozenset({"service_rates.manage", "utility_rates.manage"})
 
 def test_the_default_staff_bundle_holds_exactly_the_approved_daily_work() -> None:
     assert STAFF_DEFAULT_BUNDLE_CAPABILITIES == STAFF_APPROVED
-    assert len(STAFF_APPROVED) == 40
+    assert len(STAFF_APPROVED) == 41
     assert STAFF_APPROVED <= BUNDLE_CAPABILITIES
     groups = (STAFF_APPROVED, STAFF_NEVER, STAFF_NOT_NAMED, STAFF_NOT_LEDGER, RATE_CAPABILITIES)
     # Every bundle capability is in exactly one group, so a new bundle capability must be

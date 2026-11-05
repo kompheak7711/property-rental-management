@@ -1,6 +1,7 @@
 // Telegram bots step 2c (DL-128): the words of Office › Telegram, Linked tenants and Telegram
-// health, in English and Khmer, from the mock-up round 29 (i18n34.js, keys tg_*). Khmer marked
-// "new" is not in the mock-up and needs the native check.
+// health, and step 2d part 2 (DL-170): Contact office and FAQ, in English and Khmer, from the
+// mock-up round 29 (i18n34.js, keys tg_*). Khmer marked "new" is not in the mock-up and needs
+// the native check.
 
 import type { Language } from "../signInText";
 
@@ -261,6 +262,131 @@ const TEXT = {
     "The app has not pulled from the relay yet.",
     // new
     "កម្មវិធីមិនទាន់បានទាញពីរ៉េឡេនៅឡើយទេ។",
+  ],
+  // Contact office (mock-up tg_inbox_*, tg_reply, tg_called)
+  contact_sub: [
+    "Messages from the Customer bot and the Tenant bot. Oldest first.",
+    "សារពីបូតអតិថិជន និងបូតអ្នកជួល។ ចាស់មុន។",
+  ],
+  contact_n: [
+    "Customer service replies Monday to Saturday, 07:00 to 17:00. A reply goes out through the same bot.",
+    "ផ្នែកបម្រើអតិថិជនឆ្លើយពីថ្ងៃច័ន្ទ ដល់ថ្ងៃសៅរ៍ ម៉ោង ០៧:០០ ដល់ ១៧:០០។ ការឆ្លើយតបផ្ញើតាមបូតដដែល។",
+  ],
+  ib_NEW: ["Waiting", "កំពុងរង់ចាំ"],
+  ib_DONE: ["Answered", "បានឆ្លើយ"],
+  c_from: ["From", "ពី"],
+  c_msg: ["Message", "សារ"],
+  reply: ["Reply", "ឆ្លើយតប"],
+  called: ["Answered by phone", "បានឆ្លើយតាមទូរស័ព្ទ"],
+  send: ["Send", "ផ្ញើ"],
+  save: [
+    "Save",
+    // new
+    "រក្សាទុក",
+  ],
+  rep_l: ["Your reply", "ការឆ្លើយតបរបស់អ្នក"],
+  call_l: ["What you said on the phone", "អ្វីដែលអ្នកបាននិយាយតាមទូរស័ព្ទ"],
+  rep_n: [
+    "Sent by the {0}. Kept in the history.",
+    "ផ្ញើដោយ{0}។ រក្សាទុកក្នុងប្រវត្តិ។",
+  ],
+  call_n: [
+    "Nothing is sent. The note is kept in the history.",
+    "មិនផ្ញើអ្វីទេ។ កំណត់ចំណាំរក្សាទុកក្នុងប្រវត្តិ។",
+  ],
+  rep_done: ["Reply sent to {0}.", "បានផ្ញើការឆ្លើយតបទៅ {0}។"],
+  call_done: ["{0}: saved.", "{0}៖ បានរក្សាទុក។"],
+  ans_TELEGRAM: ["Replied by {0}, {1}", "ឆ្លើយដោយ {0}, {1}"],
+  ans_PHONE: ["Phoned by {0}, {1}", "ទូរស័ព្ទដោយ {0}, {1}"],
+  e_text: ["Please write this.", "សូមសរសេរ។"],
+  none_waiting: [
+    "No message is waiting.",
+    // new
+    "គ្មានសាររង់ចាំទេ។",
+  ],
+  none_answered: [
+    "No message was answered in the last 90 days.",
+    // new
+    "គ្មានសារដែលបានឆ្លើយក្នុងរយៈពេល ៩០ ថ្ងៃចុងក្រោយទេ។",
+  ],
+  e_answered: [
+    "Someone already answered this message. The list was read again.",
+    // new
+    "មានគេបានឆ្លើយសារនេះរួចហើយ។ បញ្ជីត្រូវបានអានម្ដងទៀត។",
+  ],
+  // FAQ (mock-up tg_faq_*)
+  faq_sub: [
+    "Questions and answers the bots show, in Khmer and English.",
+    "សំណួរ និងចម្លើយដែលបូតបង្ហាញ ជាភាសាខ្មែរ និងអង់គ្លេស។",
+  ],
+  faq_new: ["New question", "សំណួរថ្មី"],
+  faq_pend: [
+    "New version from {0} waits for the Owner",
+    "កំណែថ្មីពី {0} រង់ចាំម្ចាស់",
+  ],
+  faq_ok: ["Approve", "អនុម័ត"],
+  faq_see: ["See the new version", "មើលកំណែថ្មី"],
+  faq_n: [
+    "The bots show only the version the Owner approved. Each change is a new version.",
+    "បូតបង្ហាញតែកំណែដែលម្ចាស់អនុម័ត។ ការប្ដូរនីមួយៗជាកំណែថ្មី។",
+  ],
+  faq_ed: ["Edit question {0}", "កែសំណួរ {0}"],
+  q_en: ["Question in English", "សំណួរជាភាសាអង់គ្លេស"],
+  a_en: ["Answer in English", "ចម្លើយជាភាសាអង់គ្លេស"],
+  q_km: ["Question in Khmer", "សំណួរជាភាសាខ្មែរ"],
+  a_km: ["Answer in Khmer", "ចម្លើយជាភាសាខ្មែរ"],
+  faq_own_n: [
+    "You are the Owner: the bots use this version as soon as you save.",
+    "អ្នកជាម្ចាស់៖ បូតប្រើកំណែនេះភ្លាមពេលអ្នករក្សាទុក។",
+  ],
+  faq_mgr_n: [
+    "The bots keep the old version until the Owner approves this one.",
+    "បូតរក្សាកំណែចាស់ រហូតដល់ម្ចាស់អនុម័តកំណែនេះ។",
+  ],
+  faq_save_ok: ["Save and use", "រក្សាទុក និងប្រើ"],
+  faq_save: ["Send to the Owner", "ផ្ញើទៅម្ចាស់"],
+  faq_done_ok: [
+    "Question {0}: the bots use the new version.",
+    "សំណួរ {0}៖ បូតប្រើកំណែថ្មី។",
+  ],
+  faq_done: [
+    "Question {0}: sent to the Owner to approve.",
+    "សំណួរ {0}៖ បានផ្ញើទៅម្ចាស់ដើម្បីអនុម័ត។",
+  ],
+  c_no: ["No.", "ល.រ"],
+  c_q: ["Question", "សំណួរ"],
+  c_who: ["Who sees it", "អ្នកឃើញ"],
+  c_ver: ["Version", "កំណែ"],
+  ver: ["Version {0}", "កំណែ {0}"],
+  ok_by: ["Approved by {0}, {1}", "អនុម័តដោយ {0}, {1}"],
+  who_BOTH: ["Customers and tenants", "អតិថិជន និងអ្នកជួល"],
+  who_CUSTOMER: ["Customers", "អតិថិជន"],
+  who_TENANT: ["Tenants", "អ្នកជួល"],
+  who_HIDDEN: [
+    "Hidden: no bot shows it",
+    // new
+    "លាក់៖ គ្មានបូតណាបង្ហាញទេ",
+  ],
+  not_yet: [
+    "Not approved yet",
+    // new
+    "មិនទាន់អនុម័ត",
+  ],
+  edit: ["Edit", "កែ"],
+  none_faq: [
+    "No questions yet. The bots say there are no questions and offer Contact office.",
+    // new
+    "មិនទាន់មានសំណួរទេ។ បូតប្រាប់ថាមិនទាន់មានសំណួរ ហើយណែនាំឱ្យទាក់ទងការិយាល័យ។",
+  ],
+  faq_read_only: [
+    "Only the Owner and the Manager change the FAQ.",
+    // new
+    "មានតែម្ចាស់ និងអ្នកគ្រប់គ្រងទេដែលកែសំណួរញឹកញាប់។",
+  ],
+  e_faq_stale: [
+    "This question changed meanwhile. The list was read again.",
+    // new
+    "សំណួរនេះបានប្ដូររួចហើយ។ បញ្ជីត្រូវបានអានម្ដងទៀត។",
   ],
 } as const satisfies Record<string, readonly [string, string]>;
 

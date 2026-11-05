@@ -63058,6 +63058,121 @@
       "test_path": "backend/tests/test_telegram_tenant_bot.py",
       "status": "implemented",
       "notes": "Telegram bots step 2d part 1: My requests shows each report with its state, the planned visit and joined reports, in Khmer or English."
+    },
+    {
+      "test_id": "test_contact_office_messages_are_answered_once_by_reply_or_by_phone",
+      "upstream_ids": [
+        "DL-170",
+        "DB-TG-006"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_contact_faq_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 2d part 2: A bot saves a Contact office message once; Staff see Waiting and Answered and answer each once by Reply (sent by the bot) or by phone."
+    },
+    {
+      "test_id": "test_a_managers_faq_change_waits_for_the_owner_and_the_bots_show_only_approved",
+      "upstream_ids": [
+        "DL-170",
+        "DB-TG-006"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_contact_faq_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 2d part 2: A Manager's FAQ save waits for the Owner, the Owner's save is used at once, Hidden questions are shown by no bot, Staff only read."
+    },
+    {
+      "test_id": "test_contact_office_takes_one_written_message_for_the_office",
+      "upstream_ids": [
+        "DL-170"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_tenant_bot.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 2d part 2: Contact office takes one written message, asks for text for a photo, and Back to menu leaves."
+    },
+    {
+      "test_id": "test_a_person_who_is_not_linked_can_still_contact_the_office",
+      "upstream_ids": [
+        "DL-170"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_tenant_bot.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 2d part 2: A person who is not linked can write to the office; the FAQ is for linked tenants."
+    },
+    {
+      "test_id": "test_faq_shows_the_approved_questions_as_buttons_and_answers_the_one_tapped",
+      "upstream_ids": [
+        "DL-170"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_tenant_bot.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 2d part 2: FAQ lists the approved questions as buttons in the person's language and answers the one tapped."
+    },
+    {
+      "test_id": "test_contact_office_needs_its_right_and_answers_once",
+      "upstream_ids": [
+        "DL-170",
+        "API-TG-002"
+      ],
+      "test_level": "API",
+      "test_path": "backend/tests/test_telegram_api.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 2d part 2: Contact office needs telegram.contact and the browser checks; an answer is sent once."
+    },
+    {
+      "test_id": "test_the_faq_is_read_by_contact_staff_and_changed_with_its_right",
+      "upstream_ids": [
+        "DL-170",
+        "API-TG-002"
+      ],
+      "test_level": "API",
+      "test_path": "backend/tests/test_telegram_api.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 2d part 2: The FAQ is read with telegram.contact, changed with telegram.faq, approved by the Owner only."
+    },
+    {
+      "test_id": "TEST-FE-1305",
+      "upstream_ids": [
+        "DL-170"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/telegram/TelegramPages.test.tsx",
+      "status": "implemented",
+      "notes": "Telegram bots step 2d part 2: Contact office lists Waiting and Answered; Reply needs words and sends them; an answered message reads the list again."
+    },
+    {
+      "test_id": "TEST-FE-1306",
+      "upstream_ids": [
+        "DL-170"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/telegram/TelegramPages.test.tsx",
+      "status": "implemented",
+      "notes": "Telegram bots step 2d part 2: The FAQ shows both languages, who sees it, the approved and the waiting version; a Manager's save goes to the Owner."
+    },
+    {
+      "test_id": "TEST-FE-1307",
+      "upstream_ids": [
+        "DL-170"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/telegram/TelegramPages.test.tsx",
+      "status": "implemented",
+      "notes": "Telegram bots step 2d part 2: The Owner approves and saves at once; Staff read the FAQ only."
+    },
+    {
+      "test_id": "TEST-FE-1308",
+      "upstream_ids": [
+        "DL-170",
+        "API-TG-002"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/telegram/TelegramPages.test.tsx",
+      "status": "implemented",
+      "notes": "Telegram bots step 2d part 2: The client reads and sends Contact office and FAQ with the browser token and refuses a wrong answer shape."
     }
   ]
 }

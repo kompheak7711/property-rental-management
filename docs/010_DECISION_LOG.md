@@ -2670,3 +2670,18 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **Built:** migration `20270512_292` (DB-PR-004), API-PR-004, the Move-out finding links and the New Problem report from a finding.
 - **Links:** DL-124, BR-MOVEOUT-006.
 - **Decision date:** 2026-11-04.
+
+## DL-170 — Telegram bots: Contact office and the FAQ (bots step 2d part 2)
+
+- **Type:** `TECHNICAL DECISION`
+- **Status:** `STEP 2D PART 2 BUILT ON BRANCH claude/telegram-bots; WAITS FOR THE OWNER'S TEST`
+- **Source:** mock-up round 29 (Office > Telegram: 6 Contact office, 7 FAQ; rights group "Tenant requests and Telegram": Owner and Manager have all, Staff have Contact office), approved with the Telegram bots app screens (3 Nov 2026 10:45), and the tenant mock-up v15 (Contact office: "Please write your message. Our team replies Monday to Saturday, 07:00 to 17:00."). Technical choices by Claude under the owner's 2026-10-23 22:30 rule; no new business rule.
+- **(A) Contact office in the bot.** A person taps Contact office, writes one message (text, at most 1000 letters) and gets a thank-you with the office hours. Back to menu leaves without writing. A photo or voice note asks for text. A person who is not linked can also write (the Link my Lease reject keyboard has Contact office), so a blocked person can reach the office.
+- **(B) Contact office in the app.** Office > Telegram > Contact office (`telegram.contact`: Owner, Manager and Staff). Waiting (oldest first) and Answered (the last 90 days). Each message shows the linked tenant's name and Unit (else the person's Telegram name), the shared phone and the bot. Each message is answered once: Reply (at most 600 letters; the same bot sends "Reply from the office" in the person's language) or Answered by phone (a note; nothing is sent). A message someone already answered is refused (409) and the list is read again. Messages and answers are append-only.
+- **(C) The FAQ.** Office > Telegram > FAQ. Each question has an English and a Khmer question (at most 160 letters) and answer (at most 800), and who sees it: Customers and tenants, Tenants, Customers, or Hidden (a question is never deleted; Hidden keeps it out of every bot). Each save is a new version. Edit the FAQ (`telegram.faq`) is for the Owner and the Manager. A Manager's save waits for the Owner; the Owner's save is used at once, and the Owner approves the version waiting (only the newest one; an older one is refused). Staff with Contact office read the FAQ but do not change it. The bots show only the newest approved version.
+- **(D) The FAQ in the Tenant bot.** FAQ shows the approved questions for tenants as buttons ("3. Question"); a tap answers with the question and answer in the person's language and keeps the buttons; Back to menu leaves. With no questions, the bot says so and offers Contact office.
+- **Open:** the Customer bot uses the same Contact office and FAQ in step 3. The FAQ starts empty: the 15 questions of the FAQ doc can be loaded as versions waiting for the Owner if the owner wants. The Khmer texts marked new need a native-speaker check.
+- **Built:** migration `20270524_286` (DB-TG-006), API-TG-002, `frontend/src/telegram/`, TEST-FE-1305 to 1308.
+- **Links:** DL-126, DL-128, DL-129.
+- **Decision date:** 2026-11-05.
+

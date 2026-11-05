@@ -129,6 +129,8 @@ CAPABILITY_CATALOG: Final[dict[str, str]] = {
     "stock.transfer": "Move stock between places",
     "supplier_bills.manage": "Add Suppliers and record Supplier bills",
     "supplier_bills.pay": "Pay a Supplier bill and reverse a bill payment",
+    "telegram.contact": "See and answer Contact office messages from the bots",
+    "telegram.faq": "Edit the questions and answers the bots show",
     "telegram.operate": "Run the Telegram pull and send jobs",
     "telegram.read": "See the Telegram bots health",
     "units.read": "Read Units and their history",
@@ -242,6 +244,9 @@ STAFF_QUOTATION_CAPABILITIES: Final = frozenset({"quotations.read"})
 STAFF_PROBLEM_REPORT_CAPABILITIES: Final = frozenset(
     {"problem_reports.read", "problem_reports.add"}
 )
+# Telegram bots step 2d part 2 (migration `20270524_286`, DL-170, round 29 rights): Staff answer
+# Contact office; the Owner and the Manager edit the FAQ (the Owner alone approves it).
+STAFF_TELEGRAM_CAPABILITIES: Final = frozenset({"telegram.contact"})
 STAFF_DEFAULT_BUNDLE_CAPABILITIES: Final = (
     STAFF_L1C_BUNDLE_CAPABILITIES
     | STAFF_RENT_LETTER_CAPABILITIES
@@ -249,6 +254,7 @@ STAFF_DEFAULT_BUNDLE_CAPABILITIES: Final = (
     | STAFF_PRODUCT_CAPABILITIES
     | STAFF_QUOTATION_CAPABILITIES
     | STAFF_PROBLEM_REPORT_CAPABILITIES
+    | STAFF_TELEGRAM_CAPABILITIES
 )
 # The default Manager bundle: every bundle capability except the Owner-only rights.
 MANAGER_DEFAULT_BUNDLE_CAPABILITIES: Final = (
