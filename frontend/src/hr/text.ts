@@ -810,6 +810,11 @@ const TEXT = {
     "Overtime {0} sent for approval.",
     "បានផ្ញើម៉ោងបន្ថែម {0} សុំអនុម័ត។",
   ],
+  ot_sent_for: [
+    "Overtime for {0} sent for approval.",
+    // new
+    "បានផ្ញើម៉ោងបន្ថែមសម្រាប់ {0} សុំអនុម័ត។",
+  ],
   ot_from: ["From", "ពី"],
   ot_to: ["To", "ដល់"],
   ot_when: ["When", "ពេល"],
