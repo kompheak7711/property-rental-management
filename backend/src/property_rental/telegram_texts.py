@@ -11,6 +11,8 @@ from collections.abc import Mapping
 from typing import Final
 
 MAX_FIELD_CHARACTERS: Final = 300
+# A field the bot builds itself from fixed texts (My requests) may be longer.
+LONG_FIELDS: Final = {"list": 3000}
 MAX_MESSAGE_CHARACTERS: Final = 4000
 
 TEXTS: Final[dict[str, dict[str, str]]] = {
@@ -170,6 +172,128 @@ TEXTS: Final[dict[str, dict[str, str]]] = {
         "km": "យើងមិនអាចរក្សាទុករបាយការណ៍នេះបានទេ។ សូមបើកទម្រង់ម្ដងទៀត ហើយព្យាយាមម្ដងទៀត។",
         "en": "We could not save this report. Please open the form and try again.",
     },
+    # Step 2d part 1 (DL-129): the tenant hears each step of a report and checks the repair
+    # (tenant mock-up v15). The Khmer waits for the native-speaker check.
+    "tenant.step_received": {
+        "km": "យើងបានទទួលរបាយការណ៍ {number} របស់លោកអ្នក។ ស្ថានភាព៖ បានទទួល។",
+        "en": "We got your report {number}. Status: Received.",
+    },
+    "tenant.step_on_way": {
+        "km": "{number}៖ ក្រុមការងាររបស់យើងកំពុងធ្វើដំណើរមក។",
+        "en": "{number}: our team is on the way.",
+    },
+    "tenant.step_planned": {
+        "km": "{number}៖ {technician} នឹងមកពិនិត្យនៅថ្ងៃ {day} ម៉ោង {time}។",
+        "en": "{number}: {technician} will come to check on {day} at {time}.",
+    },
+    "tenant.step_checked": {
+        "km": "{number}៖ អ្នកបច្ចេកទេសរបស់យើងបានពិនិត្យរកមូលហេតុ។ យើងនឹងប្រាប់លោកអ្នកពីជំហានបន្ទាប់ឆាប់ៗនេះ។",
+        "en": "{number}: our technician checked the cause. We will tell you the next step soon.",
+    },
+    "tenant.step_checked_fixed": {
+        "km": "{number}៖ អ្នកបច្ចេកទេសរបស់យើងបានជួសជុលបញ្ហាបន្ទាន់ ហើយបានពិនិត្យរកមូលហេតុ។ "
+        "យើងនឹងប្រាប់លោកអ្នកពីជំហានបន្ទាប់ឆាប់ៗនេះ។",
+        "en": "{number}: our technician fixed the urgent problem and checked the cause. "
+        "We will tell you the next step soon.",
+    },
+    "tenant.step_owner_pays": {
+        "km": "{number}៖ អ្នកបច្ចេកទេសរបស់យើងបានពិនិត្យហើយ។ យើងនឹងជួសជុលដោយមិនគិតថ្លៃលោកអ្នកទេ។ "
+        "{technician} នឹងធ្វើការជួសជុល។",
+        "en": "{number}: our technician checked. We will fix it at no cost to you. "
+        "{technician} will do the repair.",
+    },
+    "tenant.step_parts": {
+        "km": "{number}៖ យើងកំពុងរង់ចាំគ្រឿងបន្លាស់។ យើងនឹងប្រាប់លោកអ្នកបន្ត។",
+        "en": "{number}: we are waiting for parts. We will update you.",
+    },
+    "tenant.step_parts_arrived": {
+        "km": "{number}៖ គ្រឿងបន្លាស់បានមកដល់ហើយ។ {technician} នឹងធ្វើការជួសជុល។",
+        "en": "{number}: the parts arrived. {technician} will do the repair.",
+    },
+    "tenant.step_done_check": {
+        "km": "{number}៖ ជួសជុលរួចរាល់ហើយ។ សូមពិនិត្យ ហើយចុច «ជួសជុលរួច» ឬ «មិនទាន់រួច»។ "
+        "បើគ្មានការឆ្លើយតបក្នុងរយៈពេល {days} ថ្ងៃ វានឹងបិទដោយខ្លួនឯង។",
+        "en": "{number}: done. Please check and tap Fixed or Not fixed. "
+        "If there is no reply in {days} days, it closes by itself.",
+    },
+    "tenant.step_done": {
+        "km": "{number}៖ ការជួសជុលបានរួចរាល់។ សូមអរគុណ។",
+        "en": "{number}: the repair is done. Thank you.",
+    },
+    "tenant.step_repair_job": {
+        "km": "{number}៖ សូមអរគុណ។ យើងបានរៀបចំការជួសជុល។",
+        "en": "{number}: thank you. We have planned a repair.",
+    },
+    "tenant.step_cleaning": {
+        "km": "{number}៖ សូមអរគុណ។ ក្រុមសម្អាតរបស់យើងបានដោះស្រាយរួចហើយ។",
+        "en": "{number}: thank you. Our cleaning team has handled it.",
+    },
+    "tenant.step_handled": {
+        "km": "{number}៖ សូមអរគុណ។ អ្នកគ្រប់គ្រងបានដោះស្រាយរួចហើយ។",
+        "en": "{number}: thank you. The Manager has handled it.",
+    },
+    "tenant.step_not_accepted": {
+        "km": "{number}៖ យើងបានបិទរបាយការណ៍នេះ ព្រោះវាមិនមែនជាការជួសជុលទេ។ បើមានសំណួរ សូមទាក់ទងការិយាល័យ។",
+        "en": "{number}: we closed this report because it is not a repair. "
+        "Please contact the office if you have a question.",
+    },
+    "tenant.step_closed": {
+        "km": "{number} បានបិទហើយ។ សូមអរគុណ។",
+        "en": "{number} is closed. Thank you.",
+    },
+    "tenant.step_reopened": {
+        "km": "{number} បានបើកម្ដងទៀត។ អ្នកបច្ចេកទេសរបស់យើងនឹងមកម្ដងទៀត។",
+        "en": "{number} is open again. Our technician will come back.",
+    },
+    "tenant.step_joined": {
+        "km": "របាយការណ៍ {number} របស់លោកអ្នកត្រូវបានភ្ជាប់ទៅ {main} ដែលជាបញ្ហាដូចគ្នា។ "
+        "លោកអ្នកនឹងទទួលបានព័ត៌មានថ្មីៗរបស់វា។",
+        "en": "Your report {number} is joined to {main}, the same problem. "
+        "You will get its updates.",
+    },
+    "tenant.check_fixed": {
+        "km": "សូមអរគុណ។ {number} បានបិទហើយ។",
+        "en": "Thank you. {number} is closed.",
+    },
+    "tenant.check_not_fixed": {
+        "km": "សូមទោស។ {number} បានបើកម្ដងទៀត។ អ្នកបច្ចេកទេសរបស់យើងនឹងមកម្ដងទៀត។",
+        "en": "Sorry. {number} is open again. Our technician will come back.",
+    },
+    "tenant.check_nothing": {
+        "km": "ឥឡូវនេះ គ្មានការជួសជុលណាមួយរង់ចាំការពិនិត្យរបស់លោកអ្នកទេ។",
+        "en": "No repair is waiting for your check now.",
+    },
+    "tenant.my_requests": {
+        "km": "សំណើរបស់លោកអ្នក (បន្ទប់ {unit})៖\n\n{list}",
+        "en": "Your requests (Unit {unit}):\n\n{list}",
+    },
+    "tenant.my_none": {
+        "km": "លោកអ្នកមិនមានសំណើដែលកំពុងបើកទេឥឡូវនេះ។",
+        "en": "You have no open requests now.",
+    },
+    "tenant.my_line": {
+        "km": "{number} · {type}៖ {status}",
+        "en": "{number} · {type}: {status}",
+    },
+    "tenant.my_visit": {
+        "km": "   មកពិនិត្យ៖ {day} ម៉ោង {time}, {technician}",
+        "en": "   Visit: {day} at {time}, {technician}",
+    },
+    "tenant.my_joined": {
+        "km": "{number} · {type}៖ ភ្ជាប់ទៅ {main}",
+        "en": "{number} · {type}: joined to {main}",
+    },
+    # Report states as the tenant sees them (the app's words, Building > Problem reports).
+    "status.RECEIVED": {"km": "បានទទួល", "en": "Received"},
+    "status.PLANNED": {"km": "បានរៀបចំការមកពិនិត្យ", "en": "Visit planned"},
+    "status.CHECKED": {"km": "បានពិនិត្យ", "en": "Checked"},
+    "status.WAITING_TENANT": {"km": "រង់ចាំចម្លើយរបស់លោកអ្នក", "en": "Waiting for your answer"},
+    "status.REPAIR_PLANNED": {"km": "បានរៀបចំការជួសជុល", "en": "Repair planned"},
+    "status.WAITING_PARTS": {"km": "រង់ចាំគ្រឿងបន្លាស់", "en": "Waiting for parts"},
+    "status.DONE": {"km": "រួចរាល់ សូមពិនិត្យ", "en": "Done, please check"},
+    "status.CLOSED": {"km": "បានបិទ", "en": "Closed"},
+    "status.NOT_ACCEPTED": {"km": "មិនមែនជាការជួសជុល", "en": "Not a repair"},
+    "status.JOINED": {"km": "បានភ្ជាប់", "en": "Joined"},
     # Button labels (no fields). The bot reads a tap as the label's text in either language.
     "button.link": {"km": "ភ្ជាប់កិច្ចសន្យាជួល", "en": "Link my Lease"},
     "button.share_phone": {"km": "ចែករំលែកលេខទូរស័ព្ទ", "en": "Share my phone number"},
@@ -179,6 +303,8 @@ TEXTS: Final[dict[str, dict[str, str]]] = {
     "button.contact": {"km": "ទាក់ទងការិយាល័យ", "en": "Contact office"},
     "button.unit_problem": {"km": "បញ្ហាក្នុងបន្ទប់", "en": "Unit Problem"},
     "button.building_problem": {"km": "បញ្ហាអគារ", "en": "Building problem"},
+    "button.fixed": {"km": "ជួសជុលរួច", "en": "Fixed"},
+    "button.not_fixed": {"km": "មិនទាន់រួច", "en": "Not fixed"},
     "button.khmer": {"km": "ភាសាខ្មែរ", "en": "ភាសាខ្មែរ"},
     "button.english": {"km": "English", "en": "English"},
 }
@@ -191,6 +317,7 @@ KEYBOARDS: Final[dict[str, list[list[str]]]] = {
     "tenant.share_phone": [["button.share_phone"]],
     "tenant.menu": [["button.problem", "button.my_requests"], ["button.faq", "button.contact"]],
     "tenant.reject": [["button.link", "button.contact"]],
+    "tenant.check": [["button.fixed", "button.not_fixed"], ["button.my_requests"]],
 }
 CONTACT_BUTTONS: Final = frozenset({"button.share_phone"})
 # Buttons on the message itself that open a Mini App form on the relay
@@ -224,7 +351,7 @@ def render(code: str, language: str, details: Mapping[str, object]) -> str:
         value = details.get(name)
         if value is None or isinstance(value, dict | list):
             raise TextError(f"{code}.{name}")
-        values[name] = str(value)[:MAX_FIELD_CHARACTERS]
+        values[name] = str(value)[: LONG_FIELDS.get(name, MAX_FIELD_CHARACTERS)]
     return template.format_map(values)[:MAX_MESSAGE_CHARACTERS]
 
 

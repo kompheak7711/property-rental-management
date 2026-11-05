@@ -1,5 +1,5 @@
-"""The Tenant bot conversation: Start, language and linking (DL-126, step 2a) and the Problem
-report form (DL-127, step 2b)."""
+"""The Tenant bot conversation: Start, language and linking (DL-126, step 2a), the Problem
+report form (DL-127, step 2b), and Fixed / Not fixed and My requests (DL-129, step 2d)."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from property_rental.telegram_pull_job import push_form_data
 from property_rental.telegram_relay_client import RelayClient
 from property_rental.telegram_send_job import run_send
 from property_rental.telegram_tenant_bot import handle_tenant_form, handle_tenant_update
-from property_rental.telegram_texts import TextError, keyboard_markup
+from property_rental.telegram_texts import TextError, keyboard_markup, render
 from test_telegram_jobs import NOW, PULL_KEY, FakeRelay, FakeStore, _client
 from test_telegram_jobs import office_key as office_key
 
@@ -77,7 +77,7 @@ def test_linking_asks_for_the_own_phone_then_name_then_unit() -> None:
     assert codes(linked) == [("tenant.linked", "tenant.menu")]
     assert linked[0]["details"] == {"name": "Dara Kim", "unit": "305"}
     assert codes(say(store, "Problem report")) == [("tenant.report_kind", "tenant.report_kind")]
-    assert codes(say(store, "My requests")) == [("tenant.soon", "tenant.menu")]
+    assert codes(say(store, "FAQ")) == [("tenant.soon", "tenant.menu")]
     assert codes(say(store, "anything")) == [("tenant.menu", "tenant.menu")]
 
 
@@ -252,3 +252,80 @@ def test_the_access_list_and_choices_go_to_the_relay_only_when_they_change(
     )
     assert lines == ["telegram_pull:form_data_not_sent:relay_http_503"]
     assert push_form_data(client=client, store=store, status_directory=tmp_path) is True
+
+
+def linked_store(language: str = "en") -> FakeStore:
+    store = FakeStore()
+    store.languages[USER] = language
+    store.links[USER] = {"name": "Dara Kim", "unit_number": "305"}
+    return store
+
+
+def test_fixed_and_not_fixed_answer_the_tenants_check_of_the_repair() -> None:
+    store = linked_store()
+    store.check_answers.append({"result": "CLOSED", "report_number": "UP260007"})
+    fixed = say(store, "Fixed")
+    assert codes(fixed) == [("tenant.check_fixed", "tenant.menu")]
+    assert fixed[0]["details"] == {"number": "UP260007"}
+    store.check_answers.append({"result": "REOPENED", "report_number": "UP260007"})
+    assert codes(say(store, "មិនទាន់រួច")) == [("tenant.check_not_fixed", "tenant.menu")]
+    store.check_answers.append({"result": "NOTHING"})
+    assert codes(say(store, "Fixed")) == [("tenant.check_nothing", "tenant.menu")]
+    assert store.checks == [(USER, True), (USER, False), (USER, True)]
+    # The Done message shows the two buttons and My requests, in the person's language.
+    markup = keyboard_markup("tenant.check", "km")
+    assert markup is not None
+    assert markup["keyboard"] == [
+        [{"text": "ជួសជុលរួច"}, {"text": "មិនទាន់រួច"}],
+        [{"text": "សំណើរបស់ខ្ញុំ"}],
+    ]
+    # Someone not linked is asked to link first and nothing is checked.
+    stranger = FakeStore()
+    stranger.languages[USER] = "en"
+    assert codes(say(stranger, "Fixed")) == [("tenant.link_first", "tenant.start")]
+    assert stranger.checks == []
+
+
+def test_my_requests_lists_each_report_with_its_state_and_visit() -> None:
+    store = linked_store()
+    store.my_reports = {
+        "result": "OK",
+        "unit_number": "305",
+        "reports": [
+            {
+                "report_number": "UP260009",
+                "state": "PLANNED",
+                "type_en": "Water",
+                "type_kh": "ទឹក",
+                "technician": "Sok Khen",
+                "visit_on": "06/11/2026",
+                "visit_at": "09:00",
+            },
+            {
+                "report_number": "BP260003",
+                "state": "JOINED",
+                "type_en": "Electricity",
+                "type_kh": "អគ្គិសនី",
+                "main_number": "BP260001",
+            },
+            {"report_number": "UP260002", "state": "CLOSED", "type_en": "Door", "type_kh": "ទ្វារ"},
+        ],
+    }
+    answer = say(store, "My requests")
+    assert codes(answer) == [("tenant.my_requests", "tenant.menu")]
+    details = answer[0]["details"]
+    assert details["unit"] == "305"
+    assert details["list"] == (
+        "UP260009 · Water: Visit planned\n"
+        "   Visit: 06/11/2026 at 09:00, Sok Khen\n"
+        "BP260003 · Electricity: joined to BP260001\n"
+        "UP260002 · Door: Closed"
+    )
+    text = render("tenant.my_requests", "en", details)
+    assert text.startswith("Your requests (Unit 305):\n\nUP260009")
+    in_khmer = linked_store("km")
+    in_khmer.my_reports = store.my_reports
+    khmer = say(in_khmer, "សំណើរបស់ខ្ញុំ")
+    assert khmer[0]["details"]["list"].startswith("UP260009 · ទឹក៖ បានរៀបចំការមកពិនិត្យ")
+    store.my_reports = {"result": "OK", "unit_number": "305", "reports": []}
+    assert codes(say(store, "My requests")) == [("tenant.my_none", "tenant.menu")]

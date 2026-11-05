@@ -2618,6 +2618,20 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **Links:** DL-125, DL-126.
 - **Decision date:** 2026-11-04.
 
+## DL-129 — Telegram bots: the tenant hears each report step, checks the repair and sees My requests (bots step 2d part 1)
+
+- **Type:** `TECHNICAL DECISION`
+- **Status:** `STEP 2D PART 1 BUILT ON BRANCH claude/telegram-bots; WAITS FOR THE OWNER'S TEST`
+- **Source:** the owner-approved tenant mock-up v15 and the Tenant requests design round 29 ("the tenant gets a Telegram message at each step"), with the owner's "T1 - T5: all recommended" (3 Nov 2026 08:36). The message words are the mock-up's; technical choices by Claude under the owner's 2026-10-23 22:30 rule; no new business rule.
+- **(A) Who hears.** Only reports the tenant made (by phone, at the desk, or in the Tenant bot). Each tenant linked now to that Lease hears, and the person who sent a Building problem from the bot while still linked. A report joined to another one follows the main report's steps. Reports staff saw or found at an inspection send nothing.
+- **(B) The messages,** in the person's language: received (a phone or desk report only; the bot already answers its own form), our team is on the way (contacted by visit), visit planned with the technician, day and time, checked, fixed at no cost to you, waiting for parts, parts arrived, done, a Building problem's repair planned, handled by cleaning or by the Manager, not a repair, closed, open again, and joined to another report.
+- **(C) Fixed or Not fixed.** A done Unit Problem shows the buttons Fixed and Not fixed. Fixed closes the newest done report on the person's Lease; Not fixed opens it again with the same number. With no answer it still closes by itself after TR_AUTO_CLOSE_DAYS (3 days).
+- **(D) My requests** lists the person's open reports and those closed in the last 30 days (at most 10), with the state, and the visit day, time and technician when a visit is planned.
+- **Open:** the tenant's Agree when the tenant pays (the office still records the answer), the urgent alert to the caretaker on shift (needs the Staff bot), short videos in the form, FAQ and Contact office. The Khmer texts need a native-speaker check.
+- **Built:** migration `20270523_285` (DB-TG-005); `_check_answer` and `_my_requests` in `telegram_tenant_bot.py`.
+- **Links:** DL-124, DL-126, DL-127.
+- **Decision date:** 2026-11-05.
+
 ## DL-130 — Problem reports: repair cost and its Expense report
 
 - **Type:** `OWNER BUSINESS DECISION`

@@ -7,7 +7,9 @@ Telegram phone number (Telegram's share button), then the full name, then the Un
 decides the match (migration 20270520_282). A linked tenant sees the menu: Problem report, My
 requests, FAQ and Contact office. Problem report opens the Unit Problem or Building problem
 form (a Mini App on the relay); the database saves the report (migration 20270521_283) and the
-bot answers with its number. My requests, FAQ and Contact office come in step 2d.
+bot answers with its number. Step 2d (DL-129): the tenant hears each step of a report (the
+database queues those messages), taps Fixed or Not fixed when the repair is done, and sees My
+requests. FAQ and Contact office come later.
 
 Each answer is one database call that saves the person's next step and queues the messages
 together, so a reply is never sent for a step that was not saved.
@@ -18,7 +20,7 @@ from __future__ import annotations
 from typing import Any, Final
 
 from property_rental.telegram_store import TelegramStore
-from property_rental.telegram_texts import button_tapped
+from property_rental.telegram_texts import TEXTS, button_tapped, render
 
 BOT: Final = "TENANT"
 MAX_NAME: Final = 120
@@ -26,7 +28,9 @@ MAX_UNIT: Final = 20
 LANGUAGE_BUTTONS: Final = {"button.khmer": "km", "button.english": "en"}
 # The chat steps this bot saves (telegram_chat_steps.step).
 TENANT_STEPS: Final = frozenset({"language", "menu", "link.phone", "link.name", "link.unit"})
-LATER_PARTS: Final = frozenset({"button.my_requests", "button.faq", "button.contact"})
+LATER_PARTS: Final = frozenset({"button.faq", "button.contact"})
+CHECK_BUTTONS: Final = {"button.fixed": True, "button.not_fixed": False}
+MY_REQUESTS_SHOWN: Final = 10
 
 
 def _message(plain: dict[str, Any]) -> dict[str, Any] | None:
@@ -122,6 +126,12 @@ def handle_tenant_update(
     if tapped == "button.problem":
         reply("menu", _say("tenant.report_kind", "tenant.report_kind"))
         return
+    if tapped in CHECK_BUTTONS:
+        reply("menu", _check_answer(store.tenant_report_check(user, CHECK_BUTTONS[tapped])))
+        return
+    if tapped == "button.my_requests":
+        reply("menu", _my_requests(store.tenant_my_reports(user), language or "km"))
+        return
     if tapped in LATER_PARTS:
         reply("menu", _say("tenant.soon", "tenant.menu"))
         return
@@ -198,3 +208,63 @@ def _report_answer(result: dict[str, Any]) -> dict[str, Any]:
     days = int(result.get("plan_workdays") or 1)
     code = "tenant.report_received" if days == 1 else "tenant.report_received_days"
     return _say(code, "tenant.menu", number=number, days=days)
+
+
+def _check_answer(result: dict[str, Any]) -> dict[str, Any]:
+    outcome = result.get("result")
+    if outcome == "NOT_LINKED":
+        return _say("tenant.link_first", "tenant.start")
+    number = str(result.get("report_number") or "")
+    if outcome == "CLOSED":
+        return _say("tenant.check_fixed", "tenant.menu", number=number)
+    if outcome == "REOPENED":
+        return _say("tenant.check_not_fixed", "tenant.menu", number=number)
+    return _say("tenant.check_nothing", "tenant.menu")
+
+
+def _my_requests(result: dict[str, Any], language: str) -> dict[str, Any]:
+    """My requests as one message: a fixed line for each report, in the person's language."""
+    if result.get("result") != "OK":
+        return _say("tenant.link_first", "tenant.start")
+    reports = result.get("reports")
+    if not isinstance(reports, list) or not reports:
+        return _say("tenant.my_none", "tenant.menu")
+    lines: list[str] = []
+    for report in reports[:MY_REQUESTS_SHOWN]:
+        if not isinstance(report, dict):
+            continue
+        number = str(report.get("report_number") or "")
+        name = report.get("type_kh") if language == "km" else report.get("type_en")
+        kind = str(name or report.get("type_en") or "")
+        state = str(report.get("state") or "")
+        if state == "JOINED" and report.get("main_number"):
+            lines.append(
+                render(
+                    "tenant.my_joined",
+                    language,
+                    {"number": number, "type": kind, "main": report["main_number"]},
+                )
+            )
+            continue
+        status = render(f"status.{state}", language, {}) if f"status.{state}" in TEXTS else state
+        lines.append(
+            render("tenant.my_line", language, {"number": number, "type": kind, "status": status})
+        )
+        if report.get("visit_on") and report.get("visit_at"):
+            lines.append(
+                render(
+                    "tenant.my_visit",
+                    language,
+                    {
+                        "day": report["visit_on"],
+                        "time": report["visit_at"],
+                        "technician": report.get("technician") or "",
+                    },
+                )
+            )
+    return _say(
+        "tenant.my_requests",
+        "tenant.menu",
+        unit=str(result.get("unit_number") or ""),
+        list="\n".join(lines),
+    )

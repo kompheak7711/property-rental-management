@@ -54,6 +54,10 @@ class TelegramStore(Protocol):
         self, inbound_id: str, form: dict[str, Any], media_ids: list[str]
     ) -> dict[str, Any]: ...
 
+    def tenant_report_check(self, user: int, fixed: bool) -> dict[str, Any]: ...
+
+    def tenant_my_reports(self, user: int) -> dict[str, Any]: ...
+
 
 class PostgresTelegramStore:
     def __init__(self, database_url: str, *, property_id: UUID, actor_id: UUID) -> None:
@@ -216,6 +220,27 @@ class PostgresTelegramStore:
             inbound_id,
             json.dumps(form),
             json.dumps(media_ids),
+            self._actor,
+        )
+        assert isinstance(result, dict)
+        return result
+
+    def tenant_report_check(self, user: int, fixed: bool) -> dict[str, Any]:
+        result = self._one(
+            "SELECT app.telegram_tenant_report_check(%s, %s, %s, %s)",
+            self._property,
+            user,
+            fixed,
+            self._actor,
+        )
+        assert isinstance(result, dict)
+        return result
+
+    def tenant_my_reports(self, user: int) -> dict[str, Any]:
+        result = self._one(
+            "SELECT app.telegram_tenant_my_reports(%s, %s, %s)",
+            self._property,
+            user,
             self._actor,
         )
         assert isinstance(result, dict)

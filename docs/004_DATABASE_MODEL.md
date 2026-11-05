@@ -5780,3 +5780,11 @@ Added by DL-128 (migration `20270522_284`, forward-only).
 - `app.telegram_outbox_retries` (the given-up message, its one copy in the outbox, when, by whom). Append-only; one Retry per message.
 - `app.telegram_tenant_link_remove` now says "the link does not exist" (22023) and "The link has already ended" (55000).
 - The runtime login cannot read the table. Functions: `app.telegram_links_page` and `app.telegram_health_page` (`telegram.read`), `app.telegram_outbox_retry` (`telegram.operate`; only a GAVE_UP message, only once). No bot key is stored or answered.
+
+## DB-TG-005 — Tenant report updates (bots step 2d part 1)
+
+Added by DL-129 (migration `20270523_285`, forward-only). No new table.
+
+- Trigger `problem_report_events_tenant_notice` (after each new report step): queues the Tenant bot message for each person `app.tenant_report_people` names (reports with source PHONE, WALKIN or TENANT_BOT only). A step the tenant took in the bot (`details.via = TELEGRAM`) queues nothing.
+- Functions (`telegram.operate`): `app.telegram_tenant_report_check` (Fixed closes, Not fixed opens again the newest done Unit Problem on the person's Lease; the step is saved as FIXED or NOT_FIXED with `via` TELEGRAM) and `app.telegram_tenant_my_reports` (open reports and those closed in the last 30 days, at most 10).
+

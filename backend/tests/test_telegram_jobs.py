@@ -111,6 +111,10 @@ class FakeStore:
         self.form_data: dict[str, Any] = {"choices": {"types": []}, "users": []}
         self.report_answers: list[dict[str, Any]] = []
         self.reports: list[tuple[str, dict[str, Any], list[str]]] = []
+        # The tenant's check and My requests (migration 20270523_285).
+        self.check_answers: list[dict[str, Any]] = []
+        self.checks: list[tuple[int, bool]] = []
+        self.my_reports: dict[str, Any] = {"result": "OK", "unit_number": "", "reports": []}
 
     def record_item(self, item: dict[str, Any]) -> dict[str, Any]:
         if item["relay_item_id"] in self.items:
@@ -189,6 +193,13 @@ class FakeStore:
     ) -> dict[str, Any]:
         self.reports.append((inbound_id, form, media_ids))
         return self.report_answers.pop(0)
+
+    def tenant_report_check(self, user: int, fixed: bool) -> dict[str, Any]:
+        self.checks.append((user, fixed))
+        return self.check_answers.pop(0)
+
+    def tenant_my_reports(self, user: int) -> dict[str, Any]:
+        return self.my_reports
 
 
 def _client(relay: FakeRelay) -> RelayClient:

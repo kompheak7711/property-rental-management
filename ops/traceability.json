@@ -63016,6 +63016,48 @@
       "test_path": "frontend/src/telegram/TelegramPages.test.tsx",
       "status": "implemented",
       "notes": "Telegram bots step 2c: The pages show in Khmer and ask for a Property first when none is chosen."
+    },
+    {
+      "test_id": "test_each_step_of_a_tenant_report_sends_the_tenant_a_message_and_fixed_closes_it",
+      "upstream_ids": [
+        "DL-129",
+        "DB-TG-005"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_tenant_report_updates_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 2d part 1: Each office step of a tenant's report queues the tenant's message in their language; Not fixed opens it again and Fixed closes it; My requests lists it."
+    },
+    {
+      "test_id": "test_a_phone_report_tells_the_linked_tenant_and_a_joined_report_follows_its_main",
+      "upstream_ids": [
+        "DL-129",
+        "DB-TG-005"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_tenant_report_updates_migration.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 2d part 1: A phone report tells the linked tenant it was received; a joined report's person hears the main report's steps; Staff are refused."
+    },
+    {
+      "test_id": "test_fixed_and_not_fixed_answer_the_tenants_check_of_the_repair",
+      "upstream_ids": [
+        "DL-129"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_tenant_bot.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 2d part 1: Fixed and Not fixed call the check and answer with the report number; the Done keyboard is in the person's language."
+    },
+    {
+      "test_id": "test_my_requests_lists_each_report_with_its_state_and_visit",
+      "upstream_ids": [
+        "DL-129"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_tenant_bot.py",
+      "status": "implemented",
+      "notes": "Telegram bots step 2d part 1: My requests shows each report with its state, the planned visit and joined reports, in Khmer or English."
     }
   ]
 }
