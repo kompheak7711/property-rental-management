@@ -66,6 +66,14 @@ PROBLEM_REPORT_RIGHTS = frozenset(
     }
 )
 TELEGRAM_RIGHTS = frozenset({"telegram.operate", "telegram.read"})
+# Later Telegram steps add rights with their own migrations (DL-170 to DL-172).
+TELEGRAM_STEP_RIGHTS = {
+    "telegram.contact": "v1-1-telegram-contact-faq",
+    "telegram.faq": "v1-1-telegram-contact-faq",
+    "visit_requests.read": "v1-1-telegram-customer-bot",
+    "visit_requests.work": "v1-1-telegram-visit-request-work",
+    "visit_requests.manage": "v1-1-telegram-visit-request-work",
+}
 ADD = (
     "INSERT INTO app.capabilities(capability_id,family,description,grant_path,"
     "provenance) VALUES (%s,%s,'A test capability',%s,'login-slice-l1b-test')"
@@ -119,6 +127,8 @@ def test_the_catalog_table_holds_exactly_the_application_catalog(
             if capability in PROBLEM_REPORT_RIGHTS
             else "v1-1-telegram-base"
             if capability in TELEGRAM_RIGHTS
+            else TELEGRAM_STEP_RIGHTS[capability]
+            if capability in TELEGRAM_STEP_RIGHTS
             else "hris-phase-1"
             if capability.startswith("hr.")
             else "login-slice-capability-catalog"
