@@ -303,8 +303,8 @@ const TEXT = {
     "នៅថ្ងៃបញ្ចប់ ការភ្ជាប់ Telegram ត្រូវដកចេញ ហើយប្រាក់ខែចុងក្រោយគិតដល់ថ្ងៃនោះ។",
   ],
   e_end_signin: [
-    "App sign-in {0} turns off on that day.",
-    "គណនីចូលកម្មវិធី {0} បិទនៅថ្ងៃនោះ។",
+    "App sign-in {0} turns off at the end of that day.",
+    "គណនីចូលកម្មវិធី {0} បិទនៅចុងថ្ងៃនោះ។",
   ],
   e_leaves_on: ["{0} leaves on {1}.", "{0} ចាកចេញនៅ {1}។"],
   e_added: ["Employee {0} added.", "បានបន្ថែមបុគ្គលិក {0}។"],
