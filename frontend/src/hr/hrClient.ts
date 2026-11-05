@@ -71,6 +71,7 @@ export interface HistoryLine {
   event_id: string;
   event_type: "HIRED" | "JOB_CHANGE" | "SHIFT_CHANGE" | "LEFT";
   effective_date: string;
+  job_title_id: string | null;
   job_title_en: string | null;
   job_title_km: string | null;
   shift_code: ShiftCode | null;
@@ -94,12 +95,14 @@ export interface EmployeeDocument {
 export interface EmployeeDetail extends Employee {
   can_see_salaries: boolean;
   history: HistoryLine[];
-  pay_history?: (PayTerms & {
-    pay_term_id: string;
-    reason: string | null;
-    at: string;
-    by: string | null;
-  })[];
+  pay_history?:
+    | (PayTerms & {
+        pay_term_id: string;
+        reason: string | null;
+        at: string;
+        by: string | null;
+      })[]
+    | null;
   identity?: {
     id_type: string;
     id_number: string | null;
@@ -166,6 +169,12 @@ export interface Loan extends Named {
   requested_on: string;
   reason: string;
   paid_on: string | null;
+  /** Taken back in approved payrolls, oldest first. */
+  repayments: {
+    run_number: string;
+    salary_month: string;
+    amount_usd_cents: number;
+  }[];
   created_at: string;
   created_by: string | null;
   decision: {
