@@ -15,6 +15,9 @@ import {
 } from "../customerClient";
 import type { InvoiceResource } from "../invoiceClient";
 import { type InvoicesData, payerIds } from "../invoices/invoicesData";
+import { invoiceType, ivt } from "../invoices/text";
+import { lineWords } from "../payments/ReceiptDocument";
+import { pyt } from "../payments/text";
 import { bookingRefusal } from "./NewBooking";
 import { ShortStaysPage } from "./ShortStaysPage";
 import {
@@ -1862,5 +1865,32 @@ describe("Daily and weekly rent: Short stays", () => {
       customerLeases: new Map([["tenant", "lease-1"]]),
     } as unknown as InvoicesData;
     expect(payerIds(data).sort()).toEqual(["guest", "tenant"]);
+  });
+
+  it("TEST-FE-1850 names a stay Invoice Short stay, not Miscellaneous", () => {
+    const stay = {
+      category: "MISCELLANEOUS_CHARGES" as const,
+      short_stay: "SHORT_STAY" as const,
+    };
+    expect(ivt("en", invoiceType(stay))).toBe("Short stay");
+    expect(ivt("km", invoiceType(stay))).toBe("ការស្នាក់នៅខ្លី");
+    expect(
+      ivt(
+        "en",
+        invoiceType({ category: "MISCELLANEOUS_CHARGES", short_stay: null }),
+      ),
+    ).toBe("Miscellaneous");
+    expect(pyt("en", "SHORT_STAY_DAMAGE")).toBe("Short-stay damage");
+    expect(
+      lineWords({
+        kind: "INVOICE",
+        invoiceId: "i-1",
+        invoiceNumber: "INV260011",
+        category: "SHORT_STAY",
+        dueDate: null,
+        depositType: null,
+        amount: 6090,
+      }),
+    ).toEqual(["ថ្លៃស្នាក់នៅ", "Short stay", "INV260011"]);
   });
 });

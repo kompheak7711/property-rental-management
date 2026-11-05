@@ -115,6 +115,16 @@ def test_migration_319_follows_step_5c() -> None:
         revision.module.downgrade()
 
 
+def test_migration_350_names_short_stay_invoices() -> None:
+    config = Config(str(Path(__file__).parents[1] / "alembic.ini"))
+    scripts = ScriptDirectory.from_config(config)
+    revision = scripts.get_revision("20270610_350")
+    assert revision is not None and revision.down_revision == REVISION
+    assert scripts.get_heads() == ["20270610_350"]
+    with pytest.raises(NotImplementedError, match="forward-only"):
+        revision.module.downgrade()
+
+
 def test_short_stay_money_posts_to_rent_damage_cash_and_bank(
     stay_database: BookingDatabase,
 ) -> None:
@@ -214,6 +224,46 @@ def test_short_stay_money_posts_to_rent_damage_cash_and_bank(
             (db.property_id,),
         ).fetchone()
         assert check == (5000, 5000, True)
+
+        # Owner test 05/11: the Invoice, Receive payment and the Receipt name a short stay.
+        def kind(invoice_id: object) -> object:
+            found = connection.execute(
+                "SELECT app.invoice_resource_snapshot(%s) ->> 'short_stay'", (invoice_id,)
+            ).fetchone()
+            assert found is not None
+            return found[0]
+
+        assert kind(invoice["invoice_id"]) == "SHORT_STAY"
+        assert kind(damage_invoice[0]) == "SHORT_STAY_DAMAGE"
+        other = connection.execute(
+            "SELECT id FROM app.invoices WHERE id NOT IN "
+            "(SELECT invoice_id FROM app.short_stay_invoice_accounts) LIMIT 1"
+        ).fetchone()
+        if other is not None:
+            assert kind(other[0]) is None
+        guest = connection.execute(
+            "SELECT customer_id FROM app.invoices WHERE id = %s", (damage_invoice[0],)
+        ).fetchone()
+        assert guest is not None
+        payable = connection.execute(
+            "SELECT app.receive_payment_payable(%s, %s)", (db.property_id, guest[0])
+        ).fetchone()
+        assert payable is not None
+        assert [
+            item["short_stay"] for item in payable[0]["items"] if item["kind"] == "INVOICE"
+        ] == ["SHORT_STAY_DAMAGE"]
+        receipt = connection.execute(
+            "SELECT allocation.payment_id FROM app.payment_allocations AS allocation "
+            "WHERE allocation.invoice_id = %s LIMIT 1",
+            (invoice["invoice_id"],),
+        ).fetchone()
+        assert receipt is not None
+        printed = connection.execute(
+            "SELECT app.payment_receipt_lines(%s, %s, %s)",
+            (db.property_id, db.manager, receipt[0]),
+        ).fetchone()
+        assert printed is not None
+        assert [line.get("short_stay") for line in printed[0]["lines"]] == ["SHORT_STAY"]
         connection.rollback()
 
 
