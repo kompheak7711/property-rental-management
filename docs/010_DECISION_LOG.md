@@ -2681,7 +2681,7 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **(C) The FAQ.** Office > Telegram > FAQ. Each question has an English and a Khmer question (at most 160 letters) and answer (at most 800), and who sees it: Customers and tenants, Tenants, Customers, or Hidden (a question is never deleted; Hidden keeps it out of every bot). Each save is a new version. Edit the FAQ (`telegram.faq`) is for the Owner and the Manager. A Manager's save waits for the Owner; the Owner's save is used at once, and the Owner approves the version waiting (only the newest one; an older one is refused). Staff with Contact office read the FAQ but do not change it. The bots show only the newest approved version.
 - **(D) The FAQ in the Tenant bot.** FAQ shows the approved questions for tenants as buttons ("3. Question"); a tap answers with the question and answer in the person's language and keeps the buttons; Back to menu leaves. With no questions, the bot says so and offers Contact office.
 - **Open:** the Customer bot uses the same Contact office and FAQ in step 3. The FAQ starts empty: the 15 questions of the FAQ doc can be loaded as versions waiting for the Owner if the owner wants. The Khmer texts marked new need a native-speaker check.
-- **Built:** migration `20270524_286` (DB-TG-006), API-TG-002, `frontend/src/telegram/`, TEST-FE-1305 to 1308.
+- **Built:** migration `20270524_286` (DB-TG-006), API-TG-002, `frontend/src/telegram/`, TEST-FE-1506 to 1509.
 - **Links:** DL-126, DL-128, DL-129.
 - **Decision date:** 2026-11-05.
 
@@ -2697,7 +2697,7 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **(D) Contact office and FAQ in the Customer bot.** Contact office asks for the phone first ("so our customer service team can reach you"), then one written message; the office's Reply comes back in the Customer bot with its menu. FAQ shows the approved questions for customers (DL-170).
 - **Next (step 3b):** Take, Record a call (3 no-answer days), Late after 2 working hours, Book and move a visit with the Telegram confirmation and the 08:00 reminder, the "Send by hand today" box, Visited and No-show, Close with a reason, Make Reservation, Spam and Block (Manager), the 12-month removal of name, phone and account, and the dashboard.
 - **Open:** the Khmer texts marked new need a native-speaker check.
-- **Built:** migration `20270525_287` (DB-TG-007), API-TG-003, `backend/src/property_rental/telegram_customer_bot.py`, `frontend/src/telegram/`, TEST-FE-1309 and 1310.
+- **Built:** migration `20270525_287` (DB-TG-007), API-TG-003, `backend/src/property_rental/telegram_customer_bot.py`, `frontend/src/telegram/`, TEST-FE-1510 and 1511.
 - **Links:** DL-115, DL-124, DL-126, DL-170.
 - **Decision date:** 2026-11-05.
 
@@ -2714,7 +2714,7 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **Changed by Claude:** the mock-up's 3-request cap was not built; the join rule of DL-171 covers repeats. The FAQ editor's question number is now read as text, so changing a saved FAQ question works (it was refused before).
 - **Next (step 3c):** Make Reservation from a request, Block a Telegram account, the 12-month removal of name, phone and account, the dashboard (this month, reasons, sources), and Units to show on Book visit.
 - **Open:** the Khmer texts marked new need a native-speaker check; email sending is not built, so email customers are sent by hand.
-- **Built:** migration `20270526_288` (DB-TG-008), API-TG-004, `telegram_texts.py` (customer.visit_booked, visit_moved, visit_reminder), `frontend/src/telegram/`, TEST-FE-1311 to 1313.
+- **Built:** migration `20270526_288` (DB-TG-008), API-TG-004, `telegram_texts.py` (customer.visit_booked, visit_moved, visit_reminder), `frontend/src/telegram/`, TEST-FE-1512 to 1514.
 - **Links:** DL-170, DL-171.
 - **Decision date:** 2026-11-05.
 
@@ -2729,6 +2729,6 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **(D) This month.** Managers and the Owner see, under the list: new requests, asks that joined, visits booked, visited, no-show, became Reservation, closed and Spam this month, why requests closed and where they came from.
 - **Not built:** choosing which Units to show on Book visit (the Units are chosen at the visit); conversation steps the bot keeps for a chat are not part of the removal.
 - **Open:** the Khmer texts marked new need a native-speaker check.
-- **Built:** migration `20270527_289` (DB-TG-009), API-TG-005, `frontend/src/telegram/`, `frontend/src/reservations/`, TEST-FE-1314 and 1315.
+- **Built:** migration `20270527_289` (DB-TG-009), API-TG-005, `frontend/src/telegram/`, `frontend/src/reservations/`, TEST-FE-1515 and 1516.
 - **Links:** DL-112, DL-171, DL-172.
 - **Decision date:** 2026-11-05.

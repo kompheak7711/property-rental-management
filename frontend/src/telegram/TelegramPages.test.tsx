@@ -346,7 +346,7 @@ const MANAGER = new Set(["telegram.read", "telegram.operate"]);
 const READER = new Set(["telegram.read"]);
 
 describe("Office › Telegram", () => {
-  it("TEST-FE-1299 Linked tenants lists the links in force, the link tries that did not match with tries left or blocked until, and the ended links with why", async () => {
+  it("TEST-FE-1500 Linked tenants lists the links in force, the link tries that did not match with tries left or blocked until, and the ended links with why", async () => {
     const api = fakeApi();
     render(
       <LinkedTenantsPage
@@ -379,7 +379,7 @@ describe("Office › Telegram", () => {
     expect(api.links).toHaveBeenCalledWith("prop-1");
   });
 
-  it("TEST-FE-1300 Remove link needs a reason, sends it and shows the list the server answers; an ended link reads the list again; a person without telegram.operate gets no button", async () => {
+  it("TEST-FE-1501 Remove link needs a reason, sends it and shows the list the server answers; an ended link reads the list again; a person without telegram.operate gets no button", async () => {
     const api = fakeApi();
     render(
       <LinkedTenantsPage
@@ -458,7 +458,7 @@ describe("Office › Telegram", () => {
     expect(screen.queryByRole("button", { name: "Remove link" })).toBeNull();
   });
 
-  it("TEST-FE-1301 Telegram health shows the last relay pull, the waiting count, each bot's state and last message in and out, the messages not sent with their last error, and the last pulls; no bot key is shown", async () => {
+  it("TEST-FE-1502 Telegram health shows the last relay pull, the waiting count, each bot's state and last message in and out, the messages not sent with their last error, and the last pulls; no bot key is shown", async () => {
     render(
       <TelegramHealthPage
         active
@@ -502,7 +502,7 @@ describe("Office › Telegram", () => {
     expect(document.body.textContent).not.toMatch(/\d{6,}:[A-Za-z0-9_-]{20,}/);
   });
 
-  it("TEST-FE-1302 Retry shows only on a message the app gave up on, to a person with telegram.operate; it sends once and shows Sent again; a second Retry the server refuses reads the page again", async () => {
+  it("TEST-FE-1503 Retry shows only on a message the app gave up on, to a person with telegram.operate; it sends once and shows Sent again; a second Retry the server refuses reads the page again", async () => {
     const api = fakeApi();
     render(
       <TelegramHealthPage
@@ -560,7 +560,7 @@ describe("Office › Telegram", () => {
     expect(screen.queryByRole("button", { name: "Retry" })).toBeNull();
   });
 
-  it("TEST-FE-1303 the client reads the pages, sends Remove link and Retry with the browser token, and refuses an answer of the wrong shape", async () => {
+  it("TEST-FE-1504 the client reads the pages, sends Remove link and Retry with the browser token, and refuses an answer of the wrong shape", async () => {
     Object.defineProperty(document, "cookie", {
       configurable: true,
       value: "__Host-prm_csrf=tg-token",
@@ -605,7 +605,7 @@ describe("Office › Telegram", () => {
     expect(linksPageOf(LINKS)).toEqual(LINKS);
   });
 
-  it("TEST-FE-1304 the pages show in Khmer and say to choose a Property first when none is chosen", async () => {
+  it("TEST-FE-1505 the pages show in Khmer and say to choose a Property first when none is chosen", async () => {
     render(
       <LinkedTenantsPage
         active
@@ -633,7 +633,7 @@ describe("Office › Telegram", () => {
     expect(api.health).not.toHaveBeenCalled();
   });
 
-  it("TEST-FE-1305 Contact office lists the waiting messages oldest first with who, Unit and phone, and the answered ones with who answered and how; Reply needs words and sends them; a message someone already answered reads the list again", async () => {
+  it("TEST-FE-1506 Contact office lists the waiting messages oldest first with who, Unit and phone, and the answered ones with who answered and how; Reply needs words and sends them; a message someone already answered reads the list again", async () => {
     const api = fakeApi();
     render(
       <ContactOfficePage
@@ -703,7 +703,7 @@ describe("Office › Telegram", () => {
     });
   });
 
-  it("TEST-FE-1306 FAQ shows each question in both languages, who sees it, the approved version and the version waiting for the Owner; a Manager's save is sent to the Owner and needs all four texts", async () => {
+  it("TEST-FE-1507 FAQ shows each question in both languages, who sees it, the approved version and the version waiting for the Owner; a Manager's save is sent to the Owner and needs all four texts", async () => {
     const api = fakeApi();
     render(
       <FaqPageView
@@ -770,7 +770,7 @@ describe("Office › Telegram", () => {
     });
   });
 
-  it("TEST-FE-1307 the Owner approves the version waiting and saves at once; Staff with only telegram.contact read the FAQ and change nothing", async () => {
+  it("TEST-FE-1508 the Owner approves the version waiting and saves at once; Staff with only telegram.contact read the FAQ and change nothing", async () => {
     const api = fakeApi({
       faq: vi.fn(() => Promise.resolve({ ...FAQ, owner: true })),
     });
@@ -816,7 +816,7 @@ describe("Office › Telegram", () => {
     expect(screen.queryByRole("button", { name: "កែ" })).toBeNull();
   });
 
-  it("TEST-FE-1308 the client reads Contact office and the FAQ, sends an answer, a FAQ version and an approval with the browser token, and refuses an answer of the wrong shape", async () => {
+  it("TEST-FE-1509 the client reads Contact office and the FAQ, sends an answer, a FAQ version and an approval with the browser token, and refuses an answer of the wrong shape", async () => {
     Object.defineProperty(document, "cookie", {
       configurable: true,
       value: "__Host-prm_csrf=tg-token",
@@ -882,7 +882,7 @@ describe("Office › Telegram", () => {
     ).toThrow(TelegramError);
   });
 
-  it("TEST-FE-1309 Visit requests lists the Customer bot's requests oldest first with the customer, phone, how to contact, what they want, the day they prefer and the note; a later ask of the same person shows under it as Joined", async () => {
+  it("TEST-FE-1510 Visit requests lists the Customer bot's requests oldest first with the customer, phone, how to contact, what they want, the day they prefer and the note; a later ask of the same person shows under it as Joined", async () => {
     const api = fakeApi();
     render(
       <VisitRequestsPageView
@@ -930,7 +930,7 @@ describe("Office › Telegram", () => {
     ).toBeTruthy();
   });
 
-  it("TEST-FE-1310 the client reads Visit requests from the Bookings address and refuses a list of the wrong shape", async () => {
+  it("TEST-FE-1511 the client reads Visit requests from the Bookings address and refuses a list of the wrong shape", async () => {
     const calls: string[] = [];
     vi.stubGlobal(
       "fetch",
@@ -954,7 +954,7 @@ describe("Office › Telegram", () => {
       }),
     ).toThrow(TelegramError);
   });
-  it("TEST-FE-1311 Visit requests shows the Waiting, Late, Visits booked and Mine cards, and Send by hand today gives the words in the customer's language to copy and Mark sent", async () => {
+  it("TEST-FE-1512 Visit requests shows the Waiting, Late, Visits booked and Mine cards, and Send by hand today gives the words in the customer's language to copy and Mark sent", async () => {
     const booked: VisitRequest = {
       ...FIRST,
       ...WORK,
@@ -1036,7 +1036,7 @@ describe("Office › Telegram", () => {
     expect(screen.queryByText("VR260003")).toBeNull();
   });
 
-  it("TEST-FE-1312 a Visit request opens with Take; the person who has it records calls, books a visit Monday to Saturday and closes it; a Manager gives it and marks Spam with a note; the history is shown", async () => {
+  it("TEST-FE-1513 a Visit request opens with Take; the person who has it records calls, books a visit Monday to Saturday and closes it; a Manager gives it and marks Spam with a note; the history is shown", async () => {
     const fresh: VisitRequestDetail = {
       ...FIRST,
       contact_by: "TELEGRAM",
@@ -1242,7 +1242,7 @@ describe("Office › Telegram", () => {
     expect(screen.queryByRole("button", { name: "Answered" })).toBeNull();
   });
 
-  it("TEST-FE-1313 the client reads one Visit request and sends each step to its address with the CSRF token", async () => {
+  it("TEST-FE-1514 the client reads one Visit request and sends each step to its address with the CSRF token", async () => {
     const detail = { ...VISITS.requests[0], history: [] };
     const calls: [string, RequestInit | undefined][] = [];
     document.cookie = "__Host-prm_csrf=tg-token";
@@ -1278,7 +1278,7 @@ describe("Office › Telegram", () => {
       TelegramError,
     );
   });
-  it("TEST-FE-1315 a Visit request opens Make Reservation, shows the Reservation it became, a Manager blocks the Telegram account with a note, a removed request says so, and Managers see this month", async () => {
+  it("TEST-FE-1516 a Visit request opens Make Reservation, shows the Reservation it became, a Manager blocks the Telegram account with a note, a removed request says so, and Managers see this month", async () => {
     const contacted: VisitRequestDetail = {
       ...FIRST,
       status: "CONTACTED",

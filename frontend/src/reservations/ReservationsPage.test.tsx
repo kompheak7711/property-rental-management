@@ -659,7 +659,7 @@ describe("Make Reservation on the list (V1-060 B7)", () => {
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     });
   });
-  it("TEST-FE-1314 Make Reservation from a Visit request names the request, chooses the Customer with the same phone, or starts New Customer with the name and phone", async () => {
+  it("TEST-FE-1515 Make Reservation from a Visit request names the request, chooses the Customer with the same phone, or starts New Customer with the name and phone", async () => {
     expect(samePhone("012 800 200", "+85512800200")).toBe(true);
     expect(samePhone("+855 12 800 200", "85512800200")).toBe(true);
     expect(samePhone("012 800 201", "+85512800200")).toBe(false);
