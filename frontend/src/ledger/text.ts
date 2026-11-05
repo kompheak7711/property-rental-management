@@ -911,10 +911,18 @@ const TEXT = {
     "No payroll for this month.",
     "គ្មានបញ្ជីប្រាក់ខែសម្រាប់ខែនេះ។",
   ],
-  cl_fx: [
-    "Riel cash valued at month-end rate",
-    "សាច់ប្រាក់រៀលវាយតម្លៃតាមអត្រាចុងខែ",
+  cl_fx: ["Riel valued at month-end rate", "រៀលវាយតម្លៃតាមអត្រាចុងខែ"],
+  // Riel at month end (owner 05/11/2026)
+  cl_rt: ["Riel at month end", "រៀលនៅចុងខែ"],
+  cl_rs: [
+    "Each riel account is valued at the app's rate on the month's last day. The difference goes to 4100.",
+    "គណនីរៀលនីមួយៗត្រូវបានវាយតម្លៃតាមអត្រារបស់កម្មវិធីនៅថ្ងៃចុងខែ។ ភាពខុសគ្នាចូល ៤១០០។",
   ],
+  cl_rheld: ["Riel held", "រៀលដែលមាន"],
+  cl_rrate: ["Rate", "អត្រា"],
+  cl_rbefore: ["Value before", "តម្លៃមុន"],
+  cl_rafter: ["Value after", "តម្លៃក្រោយ"],
+  cl_rgain: ["Gain or loss", "ចំណេញ ឬខាត"],
   cl_fx_0: [
     "No change: the riel value is the same.",
     "គ្មានការប្ដូរ៖ តម្លៃរៀលដូចដើម។",
