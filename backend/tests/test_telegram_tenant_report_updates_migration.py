@@ -49,7 +49,8 @@ def tomorrow(db: TelegramDatabase) -> str:
     with psycopg.connect(db.owner_url) as connection:
         row = connection.execute("SELECT app.gl_today(%s)", (db.property_id,)).fetchone()
     assert row is not None
-    return (row[0] + datetime.timedelta(days=1)).isoformat()
+    today: datetime.date = row[0]
+    return (today + datetime.timedelta(days=1)).isoformat()
 
 
 def unit_form(db: TelegramDatabase, bedroom: uuid.UUID) -> dict[str, Any]:
