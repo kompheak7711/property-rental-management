@@ -270,8 +270,9 @@ def test_manager_adds_employees_without_salaries(hr_database: HrDatabase) -> Non
     assert found["employee_code"].startswith("E-")
     assert found["state"] == "ACTIVE"
     assert found["job_title"]["code"] == "CLEANER"
-    # Only the caretaker works shifts: a cleaner works office hours, whatever the form said.
-    assert (found["shift_code"], found["usual_day_off"]) == ("OFFICE", 7)
+    # Only the caretaker works shifts: a cleaner works office hours, whatever the form said,
+    # and takes 2 days off a month on request instead of a usual day off (owner 06/11 10:24).
+    assert (found["shift_code"], found["usual_day_off"]) == ("OFFICE", None)
     assert found["pay"] is None and found["pay_history"] is None and found["identity"] is None
     assert found["can_see_salaries"] is False
     owner_view = read(db, first)

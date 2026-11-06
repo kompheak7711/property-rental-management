@@ -64969,7 +64969,7 @@
       "test_level": "DB",
       "test_path": "backend/tests/test_hr_office_hours_migration.py",
       "status": "implemented",
-      "notes": "HRIS: only the Property caretaker works shifts and has no usual day off; other jobs work office hours (owner 06/11)."
+      "notes": "HRIS: only the Property caretaker works shifts; other jobs work office hours; caretaker and cleaner have no usual day off (owner 06/11)."
     },
     {
       "test_id": "test_office_late_counts_from_seven",
@@ -64982,14 +64982,14 @@
       "notes": "HRIS: office hours 07:00-11:00 and 13:00-17:00; Late counts from 07:00."
     },
     {
-      "test_id": "test_the_weekly_plan_marks_a_seventh_work_day",
+      "test_id": "test_the_weekly_plan_counts_days_off_a_month",
       "upstream_ids": [
         "PR-HR-052"
       ],
       "test_level": "DB",
       "test_path": "backend/tests/test_hr_office_hours_migration.py",
       "status": "implemented",
-      "notes": "HRIS: the Weekly plan marks a 7th work day in a row (Labour Law Art. 146)."
+      "notes": "HRIS: caretaker and cleaner take 2 days off a month on request; the Weekly plan counts them (owner 06/11)."
     },
     {
       "test_id": "TEST-FE-1400",

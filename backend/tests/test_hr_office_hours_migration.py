@@ -1,9 +1,9 @@
-"""Add employee needs the ID; office hours; the caretaker's rest day (migration 20270504_304).
+"""Add employee needs the ID; office hours; days off per job (migration 20270504_304).
 
-Owner 06/11/2026 09:05: a new employee comes with the ID type and number, the date of birth, the
-home address and a photo of the ID. Only the Property caretaker works shifts; every other job
-works 07:00-11:00 and 13:00-17:00 with a usual day off. The caretaker has no usual day off, and
-the Weekly plan marks a 7th work day in a row (Labour Law Art. 146: at most six days a week).
+Owner 06/11/2026: a new employee comes with the ID type and number, the date of birth, the home
+address and a photo of the ID. Only the Property caretaker works shifts; every other job works
+07:00-11:00 and 13:00-17:00. The caretaker and the cleaner take 2 days off a month on request
+and have no usual day off; every other job, the technician too, has one usual day off a week.
 """
 
 from __future__ import annotations
@@ -103,6 +103,11 @@ def test_only_the_caretaker_works_shifts(hr_database: HrDatabase) -> None:
     assert shifts["MORNING"]["break_starts_at"] is None
     uses = {item["code"]: item["uses_shifts"] for item in choices["job_titles"]}
     assert [code for code, used in uses.items() if used] == ["CARETAKER"]
+    monthly = {item["code"]: item["days_off_per_month"] for item in choices["job_titles"]}
+    assert {code: days for code, days in monthly.items() if days is not None} == {
+        "CARETAKER": 2,
+        "CLEANER": 2,
+    }
 
     # A caretaker needs one of the three shifts and has no usual day off.
     caretaker = {"job_title_id": job_id(db, "CARETAKER"), "usual_day_off": 3}
@@ -119,14 +124,19 @@ def test_only_the_caretaker_works_shifts(hr_database: HrDatabase) -> None:
     )
     guard = add_employee(db, db.manager, shift_code="NIGHT", usual_day_off=3)
     assert (read(db, guard)["shift_code"], read(db, guard)["usual_day_off"]) == ("NIGHT", None)
-    # Any other job works office hours and needs its usual day off.
+    # The technician works office hours and needs a usual day off; the cleaner has none.
     assert "usual day off" in refused(
         db.runtime_url,
         "22023",
         ADD,
         db.property_id,
-        form(db, usual_day_off=None, shift_code="MORNING"),
+        form(db, job_title_id=job_id(db, "TECHNICIAN"), usual_day_off=None, shift_code="MORNING"),
         db.manager,
+    )
+    cleaner = add_employee(db, db.manager, job_title_id=job_id(db, "CLEANER"), usual_day_off=7)
+    assert (read(db, cleaner)["shift_code"], read(db, cleaner)["usual_day_off"]) == (
+        "OFFICE",
+        None,
     )
     # Moving the caretaker to the front desk asks for the usual day off.
     with pytest.raises(Exception, match="usual day off"):
@@ -170,38 +180,48 @@ def test_office_late_counts_from_seven(hr_database: HrDatabase) -> None:
     assert (line["shift_code"], line["late_minutes"], line["uses_shifts"]) == ("OFFICE", 25, False)
 
 
-def test_the_weekly_plan_marks_a_seventh_work_day(hr_database: HrDatabase) -> None:
+def test_the_weekly_plan_counts_days_off_a_month(hr_database: HrDatabase) -> None:
     db = hr_database
     caretaker = add_employee(db, db.manager, shift_code="MORNING")
-    cleaner = add_employee(db, db.manager, job_title_id=job_id(db, "CLEANER"), usual_day_off=7)
-    monday = db.today + timedelta(days=14 - db.today.weekday())
-    wednesday = monday + timedelta(days=2)
-    run(
-        db.runtime_url,
-        PLAN,
-        db.property_id,
-        json.dumps({"employee_id": str(caretaker), "work_date": str(wednesday), "reason": "Rest"}),
-        db.manager,
+    technician = add_employee(
+        db, db.manager, job_title_id=job_id(db, "TECHNICIAN"), usual_day_off=7
     )
+    # A week fully inside one month, two weeks or more ahead.
+    monday = db.today + timedelta(days=14 - db.today.weekday())
+    while (monday + timedelta(days=6)).month != monday.month:
+        monday += timedelta(days=7)
+    for offset in (1, 3, 4):
+        run(
+            db.runtime_url,
+            PLAN,
+            db.property_id,
+            json.dumps(
+                {
+                    "employee_id": str(caretaker),
+                    "work_date": str(monday + timedelta(days=offset)),
+                    "reason": "Asked for a day off",
+                }
+            ),
+            db.manager,
+        )
 
     def week_of(person: object) -> dict[str, Any]:
         week = run(db.runtime_url, WEEK, db.property_id, monday, db.manager)
         return next(item for item in week["people"] if item["employee_id"] == str(person))
 
     planned = week_of(caretaker)
-    assert planned["uses_shifts"] is True
-    # Monday and Tuesday follow six work days; after the Wednesday rest no day is the 7th.
-    assert [day["seventh_day"] for day in planned["days"]] == [
+    assert (planned["uses_shifts"], planned["days_off_per_month"]) == (True, 2)
+    # Three days off asked in a month of 2: the screen shows 3 of 2.
+    assert planned["month_days_off"] == [{"month": str(monday.replace(day=1)), "planned": 3}]
+    assert [day["day_off"] for day in planned["days"]] == [
+        False,
+        True,
+        False,
         True,
         True,
-        False,
-        False,
-        False,
         False,
         False,
     ]
-    assert [day["day_off"] for day in planned["days"]][:3] == [False, False, True]
-    office = week_of(cleaner)
-    assert office["uses_shifts"] is False
-    assert not any(day["seventh_day"] for day in office["days"])
-    assert [day["shift_code"] for day in office["days"]][-2:] == ["OFFICE", None]
+    weekly = week_of(technician)
+    assert (weekly["uses_shifts"], weekly["days_off_per_month"]) == (False, None)
+    assert [day["shift_code"] for day in weekly["days"]][-2:] == ["OFFICE", None]

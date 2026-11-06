@@ -46,6 +46,7 @@ const CARETAKER = {
   name_en: "Property Caretaker",
   name_km: "អ្នកថែរក្សាអគារ",
   uses_shifts: true,
+  days_off_per_month: 2,
 };
 
 const DARA: Employee = {
@@ -814,7 +815,7 @@ describe("HRIS phase 6 screens", () => {
       target: { value: "job-2" },
     });
     expect(within(box).queryByLabelText(/Usual day off/)).toBeNull();
-    expect(within(box).getByText(/has no usual day off/)).toBeVisible();
+    expect(within(box).getByText(/2 days off a month/)).toBeVisible();
     fireEvent.change(within(box).getByLabelText(/Usual shift/), {
       target: { value: "NIGHT" },
     });
@@ -835,7 +836,7 @@ describe("HRIS phase 6 screens", () => {
     });
   });
 
-  it("TEST-FE-1401 the weekly plan gives the caretaker no day-off warning; office staff plan office hours only", async () => {
+  it("TEST-FE-1401 the weekly plan counts the caretaker's days off a month; office staff plan office hours only", async () => {
     const [first] = WEEK.people;
     if (first === undefined) throw new Error("The sample week has a person");
     const week: AttendanceWeek = {
@@ -848,6 +849,8 @@ describe("HRIS phase 6 screens", () => {
           name_en: "Sample Caretaker",
           name_km: "គំរូ អ្នកថែរក្សា",
           uses_shifts: true,
+          days_off_per_month: 2,
+          month_days_off: [{ month: "2026-11-01", planned: 3 }],
         },
         {
           ...first,
@@ -869,10 +872,12 @@ describe("HRIS phase 6 screens", () => {
     );
     await screen.findByText("Late 20 min");
     fireEvent.click(screen.getByRole("button", { name: "Weekly plan" }));
-    // Owner 06/11/2026: the caretaker works without a rest day; only office staff are warned.
+    // Owner 06/11/2026: the caretaker takes 2 days off a month on request, with no weekly
+    // warning; the screen shows each month's count against the 2.
     expect(await screen.findAllByText("Fewer than 1 day off")).toHaveLength(1);
     const caretakerRow = screen.getByRole("row", { name: /Sample Caretaker/ });
     expect(within(caretakerRow).queryByText("Fewer than 1 day off")).toBeNull();
+    expect(within(caretakerRow).getByText(/3 of 2 days off/)).toBeVisible();
     fireEvent.click(
       screen.getByRole("button", { name: "Plan · Lim Sokha · 08/11/2026" }),
     );

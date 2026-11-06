@@ -1,17 +1,20 @@
 # ruff: noqa: E501
-"""HRIS: ID details at hiring, office hours, and the caretaker's rest day (owner 2026-11-06 09:05).
+"""HRIS: ID details at hiring, office hours, and days off per job (owner 2026-11-06).
 
 1. Add employee needs the ID type (ID card or passport), the ID number, the date of birth, the
-   home address and a photo or scan of the ID card or passport. The API saves the file first and
-   the employee, the ID details and the ID document are written in one transaction. Whoever may
-   add an employee (hr.employees.manage) enters them; seeing them later and changing them stays
-   with the salary right. An employee is at least 15 years old on the start date (Labour Law
-   Art. 177).
+   home address and a photo or scan of the ID card or passport (owner 09:05). The API saves the
+   file first and the employee, the ID details and the ID document are written in one
+   transaction. Whoever may add an employee (hr.employees.manage) enters them; seeing them later
+   and changing them stays with the salary right. An employee is at least 15 years old on the
+   start date (Labour Law Art. 177).
 2. Only the Property caretaker works shifts (app.shift_job_titles). Every other job works the
-   new OFFICE hours, 07:00-11:00 and 13:00-17:00 (Late counts from 07:00), with a usual day off.
-3. The Property caretaker has no usual day off: the Weekly plan sets the rest day each week. The
-   law allows at most six working days a week (Art. 146), so the Weekly plan marks a day as the
-   7th work day in a row (seventh_day) as soon as it is planned.
+   new OFFICE hours, 07:00-11:00 and 13:00-17:00 (Late counts from 07:00).
+3. Days off (owner 10:24): the Property caretaker and the cleaner have no usual day off; they
+   take 2 days off a month when they ask, marked on the Weekly plan
+   (app.monthly_day_off_job_titles). Every other job, the technician too, keeps one usual day
+   off a week. The owner chose no warning for a week without a rest day (decision 10:13) and
+   gets the Labour Ministry's written OK himself; the Weekly plan shows how many days off each
+   month has, against the 2.
 
 Technical choices by Claude under the owner's 2026-10-23 22:30 rule.
 """
@@ -79,7 +82,31 @@ TABLES = """
     $$;
     REVOKE ALL ON FUNCTION app.hr_uses_shifts(uuid) FROM PUBLIC;
 
-    -- A job that works shifts has no usual day off; the Weekly plan sets the rest day.
+    -- These jobs have no usual day off: they take this many days off a month on request.
+    CREATE TABLE app.monthly_day_off_job_titles (
+        job_title_id uuid PRIMARY KEY REFERENCES app.job_titles (id) ON DELETE RESTRICT,
+        days_off_per_month smallint NOT NULL CHECK (days_off_per_month BETWEEN 1 AND 15),
+        created_at timestamptz NOT NULL DEFAULT statement_timestamp()
+    );
+    INSERT INTO app.monthly_day_off_job_titles (job_title_id, days_off_per_month)
+    SELECT title.id, 2 FROM app.job_titles AS title WHERE title.code IN ('CARETAKER', 'CLEANER');
+    CREATE TRIGGER monthly_day_off_job_titles_append_only
+        BEFORE UPDATE OR DELETE ON app.monthly_day_off_job_titles
+        FOR EACH ROW EXECUTE FUNCTION app.reject_hr_change();
+    CREATE TRIGGER monthly_day_off_job_titles_no_truncate
+        BEFORE TRUNCATE ON app.monthly_day_off_job_titles
+        FOR EACH STATEMENT EXECUTE FUNCTION app.reject_hr_change();
+    REVOKE ALL ON TABLE app.monthly_day_off_job_titles FROM PUBLIC;
+    GRANT SELECT ON TABLE app.monthly_day_off_job_titles TO prm_runtime;
+
+    CREATE FUNCTION app.hr_monthly_days_off(p_title uuid) RETURNS smallint
+    LANGUAGE sql STABLE SET search_path = pg_catalog AS $$
+        SELECT rule.days_off_per_month FROM app.monthly_day_off_job_titles AS rule
+        WHERE rule.job_title_id = p_title
+    $$;
+    REVOKE ALL ON FUNCTION app.hr_monthly_days_off(uuid) FROM PUBLIC;
+
+    -- A job with days off a month on request has no usual day off.
     ALTER TABLE app.employment_events DROP CONSTRAINT employment_events_shape;
     ALTER TABLE app.employment_events ADD CONSTRAINT employment_events_shape CHECK (
         (event_type = 'LEFT' AND job_title_id IS NULL AND shift_code IS NULL
@@ -89,8 +116,8 @@ TABLES = """
 
 FUNCTIONS = """
     -- Job, shift and day off from a form; the old values fill what the form leaves out. A job
-    -- that works shifts takes one of the three shifts and no usual day off; any other job works
-    -- OFFICE hours with a usual day off.
+    -- that works shifts takes one of the three shifts, any other job works OFFICE hours; a job
+    -- with days off a month on request has no usual day off, any other job needs one.
     CREATE OR REPLACE FUNCTION app.hr_job_from(p_body jsonb, p_old_title uuid, p_old_shift text,
         p_old_day smallint) RETURNS TABLE (job_title_id uuid, shift_code text, usual_day_off smallint)
     LANGUAGE plpgsql STABLE SET search_path = pg_catalog AS $$
@@ -98,6 +125,7 @@ FUNCTIONS = """
         v_title uuid := coalesce(app.hr_uuid(p_body, 'job_title_id', 'Choose the job'), p_old_title);
         v_shift text := app.problem_text(p_body, 'shift_code', 20, 'Choose the shift');
         v_shifts boolean;
+        v_monthly smallint;
         v_day smallint;
     BEGIN
         BEGIN
@@ -110,10 +138,13 @@ FUNCTIONS = """
         IF v_title IS NULL OR v_shifts IS NULL THEN
             RAISE EXCEPTION 'Choose the job' USING ERRCODE = '22023';
         END IF;
+        v_monthly := app.hr_monthly_days_off(v_title);
+        IF v_monthly IS NOT NULL THEN
+            v_day := NULL;
+        ELSIF v_day IS NULL OR v_day NOT BETWEEN 1 AND 7 THEN
+            RAISE EXCEPTION 'Choose the usual day off' USING ERRCODE = '22023';
+        END IF;
         IF NOT v_shifts THEN
-            IF v_day IS NULL OR v_day NOT BETWEEN 1 AND 7 THEN
-                RAISE EXCEPTION 'Choose the usual day off' USING ERRCODE = '22023';
-            END IF;
             RETURN QUERY SELECT v_title, 'OFFICE'::text, v_day;
             RETURN;
         END IF;
@@ -121,7 +152,7 @@ FUNCTIONS = """
         IF v_shift IS NULL OR v_shift NOT IN ('MORNING', 'AFTERNOON', 'NIGHT') THEN
             RAISE EXCEPTION 'Choose the shift' USING ERRCODE = '22023';
         END IF;
-        RETURN QUERY SELECT v_title, v_shift, NULL::smallint;
+        RETURN QUERY SELECT v_title, v_shift, v_day;
     END $$;
 
     -- The planned shift of a day: the weekly plan, else the usual shift and usual day off (a
@@ -142,17 +173,17 @@ FUNCTIONS = """
             ORDER BY entry.created_at DESC LIMIT 1) AS plan ON true
     $$;
 
-    -- Labour Law Art. 146: at most six working days a week. True when the day is planned as
-    -- work and so are the six days before it.
-    CREATE FUNCTION app.hr_seventh_day(p_employee uuid, p_day date) RETURNS boolean
+    -- The planned days off of one person in the month of p_month, while employed.
+    CREATE FUNCTION app.hr_month_days_off(p_employee uuid, p_month date) RETURNS integer
     LANGUAGE sql STABLE SET search_path = pg_catalog AS $$
-        SELECT count(*) = 7
-        FROM generate_series(p_day - 6, p_day, interval '1 day') AS day
+        SELECT count(*)::integer
+        FROM generate_series(date_trunc('month', p_month)::date,
+            (date_trunc('month', p_month) + interval '1 month - 1 day')::date,
+            interval '1 day') AS day
         CROSS JOIN LATERAL app.hr_shift_on(p_employee, day::date) AS plan
-        WHERE plan.shift_code IS NOT NULL AND NOT coalesce(plan.is_day_off, false)
-          AND app.hr_works_on(p_employee, day::date)
+        WHERE plan.is_day_off AND app.hr_works_on(p_employee, day::date)
     $$;
-    REVOKE ALL ON FUNCTION app.hr_seventh_day(uuid, date) FROM PUBLIC;
+    REVOKE ALL ON FUNCTION app.hr_month_days_off(uuid, date) FROM PUBLIC;
 """
 
 SHIFT_LIST_BEFORE = "'name_en', shift.name_en, 'name_km', shift.name_km) ORDER BY shift.sort_order)"
@@ -240,7 +271,8 @@ CHOICES_PATCHES = (
     (
         "'code', title.code, 'name_en', title.name_en, 'name_km', title.name_km)",
         "'code', title.code, 'name_en', title.name_en, 'name_km', title.name_km,\n"
-        "                    'uses_shifts', app.hr_uses_shifts(title.id))",
+        "                    'uses_shifts', app.hr_uses_shifts(title.id),\n"
+        "                    'days_off_per_month', app.hr_monthly_days_off(title.id))",
     ),
     (SHIFT_LIST_BEFORE, SHIFT_LIST_AFTER),
 )
@@ -263,13 +295,13 @@ WEEK_PATCHES = (
         "'name_en', employee.name_en, 'name_km', employee.name_km,\n"
         "                    'uses_shifts', coalesce((SELECT app.hr_uses_shifts(job.job_title_id)\n"
         "                        FROM app.hr_job_on(employee.id, v_monday + 6) AS job), false),\n"
+        "                    'days_off_per_month', (SELECT app.hr_monthly_days_off(job.job_title_id)\n"
+        "                        FROM app.hr_job_on(employee.id, v_monday + 6) AS job),\n"
+        "                    'month_days_off', (SELECT jsonb_agg(jsonb_build_object('month', month,\n"
+        "                            'planned', app.hr_month_days_off(employee.id, month)) ORDER BY month)\n"
+        "                        FROM (SELECT DISTINCT date_trunc('month', v_monday + offset_days)::date\n"
+        "                            AS month FROM generate_series(0, 6) AS offset_days) AS months),\n"
         "                    'days', (SELECT",
-    ),
-    (
-        "'planned', plan.planned) ORDER BY day)",
-        "'planned', plan.planned,\n"
-        "                            'seventh_day', app.hr_seventh_day(employee.id, day::date))\n"
-        "                            ORDER BY day)",
     ),
 )
 

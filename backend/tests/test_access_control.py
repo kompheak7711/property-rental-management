@@ -167,7 +167,8 @@ def test_the_capability_catalog_names_every_capability_the_code_checks() -> None
     # `telegram.read` and `telegram.operate` of the Telegram app pages (bots step 2c, DL-128),
     # and `telegram.contact` and `telegram.faq` of Contact office and FAQ (step 2d, DL-170),
     # and `visit_requests.read` of the Visit requests list (step 3a, DL-171), and
-    # `visit_requests.work` and `visit_requests.manage` of the request steps (step 3b, DL-172), and the 12 HR rights the HR routes check (HRIS phase 6).
+    # `visit_requests.work` and `visit_requests.manage` of the request steps (step 3b, DL-172),
+    # and the 12 HR rights the HR routes check (HRIS phase 6).
     assert len(found - NON_CAPABILITY_LABELS) == 127
     # Review round 1: a capability constant added to the catalog module itself is a catalog name.
     assert dotted_constants(SOURCE / "access_control.py") - set(CAPABILITY_CATALOG) == set()
