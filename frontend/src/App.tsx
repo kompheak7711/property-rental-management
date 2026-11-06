@@ -167,6 +167,8 @@ import { type HrApi, hrApi as defaultHrApi } from "./hr/hrClient";
 import { LoansPage } from "./hr/LoansPage";
 import { PayrollPage } from "./hr/PayrollPage";
 import type { ProblemsApi } from "./problems/problemsClient";
+import { ShortStaysPage } from "./shortstays/ShortStaysPage";
+import type { ShortStaysApi } from "./shortstays/shortStaysClient";
 import type { QuotationsApi } from "./quotations/quotationsClient";
 import type { ProductsApi } from "./products/productsClient";
 import { type ActorAccessApi, actorAccessApi } from "./shell/accessClient";
@@ -197,6 +199,8 @@ export interface AppProps {
   problemsApi?: ProblemsApi;
   /** HRIS phase 6: Office › Employees and payroll; the real server when not given. */
   hrApi?: HrApi;
+  /** Daily and weekly rent: Tenants › Short stays; the real server when not given. */
+  shortStaysApi?: ShortStaysApi;
   propertyApi?: PropertyConfigurationApi;
   unitApi?: UnitApi;
   businessSettingsApi?: BusinessSettingsApi;
@@ -683,6 +687,7 @@ export function App({
   quotationsApi,
   problemsApi,
   hrApi,
+  shortStaysApi,
   propertyApi = propertyConfigurationApi,
   unitApi,
   customerApi,
@@ -2048,6 +2053,20 @@ export function App({
           active={shown("problems")}
           api={problemsApi}
           capabilities={capabilities}
+          language={language}
+          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
+        />
+      </div>
+      <div
+        className="shell-page"
+        data-page="shortstays"
+        hidden={!shown("shortstays")}
+      >
+        <ShortStaysPage
+          active={shown("shortstays")}
+          api={shortStaysApi}
+          capabilities={capabilities}
+          customerApi={customerApi ?? defaultCustomerApi}
           language={language}
           propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
         />

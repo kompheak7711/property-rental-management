@@ -61,6 +61,7 @@ describe("V1-058 R1 app shell", () => {
       "Utilities",
       "Waiting for approval",
       "Bookings",
+      "Short stays",
       "Leases",
       "Customers",
       "Units",
