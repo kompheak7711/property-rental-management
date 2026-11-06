@@ -177,13 +177,17 @@ def id_document() -> dict[str, Any]:
 
 
 def add_employee(db: HrDatabase, actor: uuid.UUID | None = None, **body: Any) -> uuid.UUID:
+    identity = dict(body.pop("identity", IDENTITY))
+    if identity.get("id_number") == IDENTITY["id_number"]:
+        # One ID number is one person (migration 305): each sample person gets their own.
+        identity["id_number"] = f"T{uuid.uuid4().hex[:12].upper()}"
     form = {
         "name_en": "Chan Dara",
         "name_km": "ចាន់ ដារ៉ា",
         "job_title_id": job_id(db, "CARETAKER"),
         "shift_code": "MORNING",
         "start_date": str(db.today - timedelta(days=60)),
-        "identity": IDENTITY,
+        "identity": identity,
         "id_document": id_document(),
     } | body
     made = run(db.runtime_url, ADD, db.property_id, json.dumps(form), actor or db.owner)

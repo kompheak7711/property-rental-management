@@ -225,6 +225,11 @@ const TEXT = {
     // new
     "ថ្ងៃខែឆ្នាំកំណើត",
   ],
+  e_hire_again: [
+    "Hire again: this person worked here before",
+    // new
+    "ជួលម្តងទៀត៖ បុគ្គលនេះធ្លាប់ធ្វើការនៅទីនេះ",
+  ],
   e_birth_place: [
     "Place of birth",
     // new

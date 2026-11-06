@@ -408,6 +408,7 @@ function AddEmployeeDialog({
   const [birthPlace, setBirthPlace] = useState("");
   const [address, setAddress] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
+  const [hireAgain, setHireAgain] = useState(false);
   const [user, setUser] = useState("");
   const [salary, setSalary] = useState("");
   const [method, setMethod] = useState<PayMethod>("CASH_USD");
@@ -458,6 +459,7 @@ function AddEmployeeDialog({
         home_address: address.trim(),
       },
     };
+    if (hireAgain) body.hire_again = true;
     if (phone.trim() !== "") body.phone = phone.trim();
     if (user !== "") body.user_actor_id = user;
     if (choices.can_change_salaries && salary.trim() !== "") {
@@ -595,6 +597,7 @@ function AddEmployeeDialog({
           maxLength={40}
           onChange={(event) => {
             setIdNumber(event.target.value);
+            setHireAgain(false);
           }}
           value={idNumber}
         />
@@ -696,6 +699,19 @@ function AddEmployeeDialog({
         </>
       ) : (
         <p className="ui-muted ui-small">{ht(language, "e_pay_later")}</p>
+      )}
+      {(hireAgain || (failure ?? "").includes("Hire again?")) && (
+        <label className="ui-chk">
+          <input
+            checked={hireAgain}
+            id="hr-ae-again"
+            onChange={(event) => {
+              setHireAgain(event.target.checked);
+            }}
+            type="checkbox"
+          />
+          {ht(language, "e_hire_again")}
+        </label>
       )}
       <Failure text={error ?? failure} />
     </Dialog>

@@ -273,6 +273,8 @@ class NewEmployee(_Body):
     pay: PayTerms | None = None
     identity: NewIdentity
     id_photo: IdPhoto
+    # The ID number belonged to someone who has left: save only after "Hire again?".
+    hire_again: bool | None = None
 
 
 class EmployeeStep(_Body):
