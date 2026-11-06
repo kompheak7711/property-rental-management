@@ -156,14 +156,34 @@ def job_id(db: HrDatabase, code: str) -> str:
     return str(run(db.owner_url, "SELECT id FROM app.job_titles WHERE code = %s", code))
 
 
+IDENTITY = {
+    "id_type": "NATIONAL_ID",
+    "id_number": "010101010",
+    "date_of_birth": "1995-04-14",
+    "home_address": "Sample street, Phnom Penh",
+}
+
+
+def id_document() -> dict[str, Any]:
+    """What the API keeps for the ID photo it saved first (a new storage key each time)."""
+    return {
+        "original_name": "id-card.jpg",
+        "media_type": "image/jpeg",
+        "byte_size": 1234,
+        "sha256": "a" * 64,
+        "storage_key": f"hr/documents/new/{uuid.uuid4()}.jpg",
+    }
+
+
 def add_employee(db: HrDatabase, actor: uuid.UUID | None = None, **body: Any) -> uuid.UUID:
     form = {
         "name_en": "Chan Dara",
         "name_km": "ចាន់ ដារ៉ា",
-        "job_title_id": job_id(db, "CLEANER"),
+        "job_title_id": job_id(db, "CARETAKER"),
         "shift_code": "MORNING",
-        "usual_day_off": 7,
         "start_date": str(db.today - timedelta(days=60)),
+        "identity": IDENTITY,
+        "id_document": id_document(),
     } | body
     made = run(db.runtime_url, ADD, db.property_id, json.dumps(form), actor or db.owner)
     return uuid.UUID(str(made))
@@ -236,13 +256,28 @@ def test_rights_follow_the_plan(hr_database: HrDatabase) -> None:
 
 def test_manager_adds_employees_without_salaries(hr_database: HrDatabase) -> None:
     db = hr_database
-    first = add_employee(db, db.manager, name_en="Sok Lina", name_km="សុខ លីណា")
+    # The Manager enters the ID details and the ID photo with a new employee, but does not
+    # see them afterwards (owner 06/11/2026 09:05).
+    first = add_employee(
+        db,
+        db.manager,
+        name_en="Sok Lina",
+        name_km="សុខ លីណា",
+        job_title_id=job_id(db, "CLEANER"),
+        usual_day_off=7,
+    )
     found = read(db, first, db.manager)
     assert found["employee_code"].startswith("E-")
     assert found["state"] == "ACTIVE"
     assert found["job_title"]["code"] == "CLEANER"
+    # Only the caretaker works shifts: a cleaner works office hours, whatever the form said,
+    # and takes 2 days off a month on request instead of a usual day off (owner 06/11 10:24).
+    assert (found["shift_code"], found["usual_day_off"]) == ("OFFICE", None)
     assert found["pay"] is None and found["pay_history"] is None and found["identity"] is None
     assert found["can_see_salaries"] is False
+    owner_view = read(db, first)
+    assert owner_view["identity"]["home_address"] == "Sample street, Phnom Penh"
+    assert [item["kind"] for item in owner_view["documents"]] == ["ID_CARD"]
     refused(
         db.runtime_url,
         "42501",
@@ -294,18 +329,21 @@ def test_owner_adds_salary_and_history_is_kept(hr_database: HrDatabase) -> None:
             "aba_account_name": "VANN SREYPOV",
             "aba_account_number": "000 111 222",
         },
-        identity={"id_type": "NATIONAL_ID", "id_number": "010101010"},
+        job_title_id=job_id(db, "FRONT_DESK"),
+        usual_day_off=7,
+        identity=IDENTITY | {"id_number": "020202020"},
     )
     found = read(db, person)
     assert found["pay"]["payment_method"] == "ABA"
-    assert found["identity"]["id_number"] == "010101010"
+    assert found["identity"]["id_number"] == "020202020"
     step(
         db,
         person,
         "JOB",
         effective_date=str(db.today),
-        job_title_id=job_id(db, "FRONT_DESK"),
-        reason="Moved to the front desk",
+        job_title_id=job_id(db, "CARETAKER"),
+        shift_code="AFTERNOON",
+        reason="Now the caretaker",
     )
     step(db, person, "JOB", effective_date=str(db.today), shift_code="NIGHT", reason="Nights")
     step(
@@ -323,7 +361,9 @@ def test_owner_adds_salary_and_history_is_kept(hr_database: HrDatabase) -> None:
         "JOB_CHANGE",
         "HIRED",
     ]
-    assert found["shift_code"] == "NIGHT" and found["job_title"]["code"] == "FRONT_DESK"
+    assert found["shift_code"] == "NIGHT" and found["job_title"]["code"] == "CARETAKER"
+    # The caretaker has no usual day off; the Weekly plan sets the rest day.
+    assert found["usual_day_off"] is None
     assert found["pay"]["monthly_salary_usd_cents"] == 32000
     assert len(found["pay_history"]) == 2
     with psycopg.connect(db.owner_url) as connection:
@@ -463,11 +503,16 @@ def test_documents_keep_the_file_and_hide_id_cards(hr_database: HrDatabase) -> N
     contract = run(db.runtime_url, add_doc, db.property_id, person, body("CONTRACT"), db.manager)
     card = run(db.runtime_url, add_doc, db.property_id, person, body("ID_CARD"), db.owner)
     assert [item["kind"] for item in read(db, person, db.manager)["documents"]] == ["CONTRACT"]
-    assert {item["kind"] for item in read(db, person)["documents"]} == {"CONTRACT", "ID_CARD"}
+    # The ID photo from Add employee and the one added later.
+    assert sorted(item["kind"] for item in read(db, person)["documents"]) == [
+        "CONTRACT",
+        "ID_CARD",
+        "ID_CARD",
+    ]
     where = "SELECT app.hr_employee_document_file(%s, %s, %s, NULL)"
     refused(db.runtime_url, "42501", where, db.property_id, card, db.manager)
     assert run(db.runtime_url, where, db.property_id, contract, db.manager)["media_type"] == (
         "application/pdf"
     )
     step(db, person, "DOCUMENT_REMOVE", db.manager, document_id=str(contract), reason="Old")
-    assert [item["kind"] for item in read(db, person)["documents"]] == ["ID_CARD"]
+    assert [item["kind"] for item in read(db, person)["documents"]] == ["ID_CARD", "ID_CARD"]

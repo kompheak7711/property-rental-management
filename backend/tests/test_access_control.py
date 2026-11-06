@@ -167,20 +167,23 @@ def test_the_capability_catalog_names_every_capability_the_code_checks() -> None
     # part 2 routes (`ledger.fixed_assets`, `.reconcile`, `.budgets.prepare`, `.budgets.approve`),
     # and `ledger.write_off` of part 3, and the 6 product and stock rights (V1.1 part 4, DL-121),
     # and `quotations.read` and `quotations.make` (V1.1 part 6, DL-123; the database alone checks
-    # `quotations.lower_price`), and the 4 Problem report rights (V1.1 part 7, DL-124), and
+    # `quotations.lower_price`), and the 4 Problem report rights (V1.1 part 7, DL-124), and the
+    # 5 short-stay rights (`short_stays.read`, `.desk`, `.housekeeping`, `.approve`, `.credit`),
+    # and `problem_reports.costs` (DL-130), and
     # `telegram.read` and `telegram.operate` of the Telegram app pages (bots step 2c, DL-128),
     # and `telegram.contact` and `telegram.faq` of Contact office and FAQ (step 2d, DL-170),
     # and `visit_requests.read` of the Visit requests list (step 3a, DL-171), and
     # `visit_requests.work` and `visit_requests.manage` of the request steps (step 3b, DL-172),
     # and the 12 HR rights the HR routes check (HRIS phase 6).
-    assert len(found - NON_CAPABILITY_LABELS) == 122
+    assert len(found - NON_CAPABILITY_LABELS) == 127
     # Review round 1: a capability constant added to the catalog module itself is a catalog name.
     assert dotted_constants(SOURCE / "access_control.py") - set(CAPABILITY_CATALOG) == set()
 
 
 def test_the_catalog_holds_the_approved_new_names() -> None:
-    # HRIS phase 1 (migration 20270430_300): 12 HR rights.
-    assert len(CAPABILITY_CATALOG) == 133
+    # HRIS phase 1 (migration 20270430_300): 12 HR rights; daily and weekly rent: 5 rights;
+    # Telegram bots: 7 rights.
+    assert len(CAPABILITY_CATALOG) == 138
     assert list(CAPABILITY_CATALOG) == sorted(CAPABILITY_CATALOG)
     assert all(DOTTED.fullmatch(name) and len(name) <= 128 for name in CAPABILITY_CATALOG)
     assert all(description.strip() for description in CAPABILITY_CATALOG.values())
@@ -216,7 +219,7 @@ def test_each_capability_has_one_grant_path() -> None:
     assert paths["rent_nonpayment.evaluate"] == "service_principal"
     assert paths["billing.generate"] == "bundle"
     assert BUNDLE_CAPABILITIES == {c for c, path in paths.items() if path == "bundle"}
-    assert len(BUNDLE_CAPABILITIES) == 130
+    assert len(BUNDLE_CAPABILITIES) == 135
     with pytest.raises(KeyError):
         capability_grant_path("reports.export")
 
@@ -329,6 +332,10 @@ STAFF_APPROVED = frozenset(
         # Telegram bots step 3a (DL-171): Staff see Visit requests; 3b (DL-172): they work them.
         "visit_requests.read",
         "visit_requests.work",
+        # Daily and weekly rent (migration 20270531_310): see, front desk and housekeeping.
+        "short_stays.read",
+        "short_stays.desk",
+        "short_stays.housekeeping",
     }
 )
 # What Staff never get (DL-081, Q-150 (a) with the owner's note, DL-080 item 2, Q-161 (a)); the
@@ -387,6 +394,10 @@ STAFF_NEVER = frozenset(
         # reports and records the tenant's answer.
         "problem_reports.plan",
         "problem_reports.join",
+        # Daily and weekly rent (owner 2026-11-03, U1/U2): a Manager approves damage charges and
+        # extra discounts; only the Owner or a Manager turns late-cancel money into Credit.
+        "short_stays.approve",
+        "short_stays.credit",
         # DL-130: only a Manager or the Owner checks repair costs.
         "problem_reports.costs",
         # HRIS phase 1 (migration 20270430_300): Staff hold no HR right.
@@ -451,7 +462,7 @@ RATE_CAPABILITIES = frozenset({"service_rates.manage", "utility_rates.manage"})
 
 def test_the_default_staff_bundle_holds_exactly_the_approved_daily_work() -> None:
     assert STAFF_DEFAULT_BUNDLE_CAPABILITIES == STAFF_APPROVED
-    assert len(STAFF_APPROVED) == 43
+    assert len(STAFF_APPROVED) == 46
     assert STAFF_APPROVED <= BUNDLE_CAPABILITIES
     groups = (STAFF_APPROVED, STAFF_NEVER, STAFF_NOT_NAMED, STAFF_NOT_LEDGER, RATE_CAPABILITIES)
     # Every bundle capability is in exactly one group, so a new bundle capability must be

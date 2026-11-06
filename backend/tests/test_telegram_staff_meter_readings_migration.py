@@ -135,7 +135,11 @@ def runs(db: HrDatabase) -> int:
 def setup(meters_database: HrDatabase) -> dict[str, str]:
     db = meters_database
     reader = add_employee(
-        db, name_en="Son Sokhen", name_km="សន សុខខេន", job_title_id=job_id(db, "TECHNICIAN")
+        db,
+        name_en="Son Sokhen",
+        name_km="សន សុខខេន",
+        job_title_id=job_id(db, "TECHNICIAN"),
+        usual_day_off=db.today.isoweekday() % 7 + 1,
     )
     caretaker = add_employee(
         db, name_en="Pich Pheakdey", name_km="ពេជ ភក្ដី", job_title_id=job_id(db, "CARETAKER")

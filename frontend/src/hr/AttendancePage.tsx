@@ -26,6 +26,7 @@ import {
   NoProperty,
   previousMonth,
   ReasonField,
+  shiftChoices,
   shiftText,
   useHrBusy,
   Waiting,
@@ -60,7 +61,12 @@ export interface AttendancePageProps {
 type View = "day" | "week" | "ot" | "month" | "places";
 
 const VIEWS: readonly View[] = ["day", "week", "ot", "month", "places"];
-const SHIFTS: readonly ShiftCode[] = ["MORNING", "AFTERNOON", "NIGHT"];
+const SHIFTS: readonly ShiftCode[] = [
+  "MORNING",
+  "AFTERNOON",
+  "NIGHT",
+  "OFFICE",
+];
 const STATUSES: readonly DayStatus[] = [
   "WORKED",
   "ABSENT",
@@ -520,9 +526,13 @@ function EditTimesDialog({
   onClose: () => void;
 }) {
   const [status, setStatus] = useState<DayStatus>(line.status ?? "WORKED");
-  const [shift, setShift] = useState<ShiftCode>(
-    line.shift_code ?? line.planned_shift ?? "MORNING",
-  );
+  const choices = shiftChoices(line.uses_shifts);
+  const [shift, setShift] = useState<ShiftCode>(() => {
+    const known = line.shift_code ?? line.planned_shift;
+    return known !== null && choices.includes(known)
+      ? known
+      : (choices[0] ?? "OFFICE");
+  });
   const [checkIn, setCheckIn] = useState(clockText(line.check_in_at));
   const [checkOut, setCheckOut] = useState(clockText(line.check_out_at));
   const [reason, setReason] = useState("");
@@ -594,7 +604,7 @@ function EditTimesDialog({
               }}
               value={shift}
             >
-              {SHIFTS.map((code) => (
+              {choices.map((code) => (
                 <option key={code} value={code}>
                   {shiftText(language, code)}
                 </option>
@@ -791,15 +801,42 @@ function WeekPlan({ language, propertyId, api, active }: PartProps) {
                         );
                       })}
                       <td>
-                        <span className="ui-num">{off}</span>{" "}
-                        {off < week.days_off_per_week && (
-                          <Chip tone="warn">
-                            {ht(
-                              language,
-                              "a_fewer_off",
-                              week.days_off_per_week,
+                        {person.days_off_per_month === undefined ||
+                        person.days_off_per_month === null ? (
+                          <>
+                            <span className="ui-num">{off}</span>{" "}
+                            {off < week.days_off_per_week && (
+                              <Chip tone="warn">
+                                {ht(
+                                  language,
+                                  "a_fewer_off",
+                                  week.days_off_per_week,
+                                )}
+                              </Chip>
                             )}
-                          </Chip>
+                          </>
+                        ) : (
+                          // Owner 06/11/2026: days off a month on request, no weekly day off.
+                          (person.month_days_off ?? []).map((month) => (
+                            <span className="ui-sub2" key={month.month}>
+                              <Chip
+                                tone={
+                                  month.planned >
+                                  (person.days_off_per_month ?? 0)
+                                    ? "warn"
+                                    : "neutral"
+                                }
+                              >
+                                {ht(
+                                  language,
+                                  "a_month_off",
+                                  monthLabel(language, month.month),
+                                  month.planned,
+                                  person.days_off_per_month ?? 0,
+                                )}
+                              </Chip>
+                            </span>
+                          ))
                         )}
                       </td>
                     </tr>
@@ -851,8 +888,13 @@ function PlanDialog({
   onSaved: (text: string) => void;
   onClose: () => void;
 }) {
-  const [shift, setShift] = useState<ShiftCode | "OFF">(
-    day.day_off === true ? "OFF" : (day.shift_code ?? "MORNING"),
+  const choices = shiftChoices(person.uses_shifts);
+  const [shift, setShift] = useState<ShiftCode | "OFF">(() =>
+    day.day_off === true
+      ? "OFF"
+      : day.shift_code !== null && choices.includes(day.shift_code)
+        ? day.shift_code
+        : (choices[0] ?? "OFFICE"),
   );
   const [reason, setReason] = useState("");
   const { busy, failure, run } = useHrBusy(language);
@@ -887,7 +929,7 @@ function PlanDialog({
       <fieldset className="ui-field">
         <legend>{ht(language, "a_shift")}</legend>
         <div className="ui-radios">
-          {([...SHIFTS, "OFF"] as const).map((code) => (
+          {[...choices, "OFF" as const].map((code) => (
             <label className="ui-chk" key={code}>
               <input
                 checked={shift === code}

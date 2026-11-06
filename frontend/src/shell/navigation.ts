@@ -18,6 +18,7 @@ export type PageId =
   | "customers"
   | "reservations"
   | "visitreqs"
+  | "shortstays"
   | "leases"
   | "letters"
   | "moveout"
@@ -35,14 +36,14 @@ export type PageId =
   | "fassets"
   | "bankcash"
   | "lclose"
-  | "tglinks"
-  | "tgcontact"
-  | "tgfaq"
-  | "tghealth"
   | "employees"
   | "loans"
   | "payroll"
   | "attendance"
+  | "tglinks"
+  | "tgcontact"
+  | "tgfaq"
+  | "tghealth"
   | "account";
 
 export type IconName =
@@ -108,6 +109,8 @@ export const MENU: readonly MenuGroup[] = [
         // Telegram bots step 3a (DL-171): Visit requests from the Customer bot.
         tabs: ["reservations", "visitreqs"],
       },
+      // Daily and weekly rent (phase 6 step 2, mock-up round 28): Tenants › Short stays.
+      { page: "shortstays", icon: "calendar" },
       {
         page: "leases",
         icon: "lease",
@@ -154,14 +157,6 @@ export const MENU: readonly MenuGroup[] = [
           "lclose",
         ],
       },
-      // Telegram bots step 2c (DL-128, mock-up round 29): Office › Telegram, with Contact office
-      // and FAQ from step 2d part 2 (DL-170), in the mock-up's tab order.
-      {
-        page: "tglinks",
-        icon: "send",
-        label: ["Telegram", "តេឡេក្រាម"],
-        tabs: ["tglinks", "tgcontact", "tgfaq", "tghealth"],
-      },
       // HRIS phase 6 (mock-up v69, round 23): Employees and payroll with its tabs. Users and
       // access stays in Settings › Users and sign-in for now.
       {
@@ -169,6 +164,14 @@ export const MENU: readonly MenuGroup[] = [
         icon: "staff",
         label: ["Employees and payroll", "បុគ្គលិក និងប្រាក់ខែ"],
         tabs: ["employees", "loans", "payroll", "attendance"],
+      },
+      // Telegram bots step 2c (DL-128, mock-up round 29): Office › Telegram, with Contact office
+      // and FAQ from step 2d part 2 (DL-170), in the mock-up's tab order.
+      {
+        page: "tglinks",
+        icon: "send",
+        label: ["Telegram", "តេឡេក្រាម"],
+        tabs: ["tglinks", "tgcontact", "tgfaq", "tghealth"],
       },
       { page: "reports", icon: "reports" },
       { page: "history", icon: "history" },
@@ -197,6 +200,8 @@ const PAGE_NAMES: Record<PageId, readonly [string, string]> = {
   customers: ["Customers", "អតិថិជន"],
   reservations: ["Reservations", "ការកក់ទុក"],
   visitreqs: ["Visit requests", "សំណើមកមើលបន្ទប់"],
+  // new
+  shortstays: ["Short stays", "ការស្នាក់នៅខ្លី"],
   leases: ["Leases", "កិច្ចសន្យាជួល"],
   letters: ["Letters", "លិខិត"],
   moveout: ["Move-out", "ការចាកចេញ"],
@@ -214,14 +219,14 @@ const PAGE_NAMES: Record<PageId, readonly [string, string]> = {
   fassets: ["Fixed assets", "ទ្រព្យសកម្មរយៈពេលវែង"],
   bankcash: ["Bank and cash", "ធនាគារ និងសាច់ប្រាក់"],
   lclose: ["Month-end close", "ការបិទចុងខែ"],
-  tglinks: ["Linked tenants", "អ្នកជួលដែលបានភ្ជាប់"],
-  tgcontact: ["Contact office", "ទាក់ទងការិយាល័យ"],
-  tgfaq: ["FAQ", "សំណួរញឹកញាប់"],
-  tghealth: ["Telegram health", "ស្ថានភាពតេឡេក្រាម"],
   employees: ["Employees", "បុគ្គលិក"],
   loans: ["Salary loans", "ប្រាក់កម្ចីប្រាក់ខែ"],
   payroll: ["Payroll", "បញ្ជីប្រាក់ខែ"],
   attendance: ["Attendance", "វត្តមាន"],
+  tglinks: ["Linked tenants", "អ្នកជួលដែលបានភ្ជាប់"],
+  tgcontact: ["Contact office", "ទាក់ទងការិយាល័យ"],
+  tgfaq: ["FAQ", "សំណួរញឹកញាប់"],
+  tghealth: ["Telegram health", "ស្ថានភាពតេឡេក្រាម"],
   // new
   account: ["My account", "គណនីរបស់ខ្ញុំ"],
 };
@@ -255,6 +260,8 @@ const PAGE_NEEDS: Record<PageId, readonly string[] | null> = {
   reservations: ["reservations.read"],
   // Telegram bots step 3a (DL-171): the Owner, the Manager and Staff.
   visitreqs: ["visit_requests.read"],
+  // Daily and weekly rent: the calendar and bookings read with short_stays.read.
+  shortstays: ["short_stays.read"],
   leases: ["leases.read"],
   letters: ["rent_nonpayment.read", "leases.warn"],
   moveout: ["deposits.read", "final_settlements.prepare", "leases.move_out"],
@@ -280,16 +287,16 @@ const PAGE_NEEDS: Record<PageId, readonly string[] | null> = {
   fassets: ["ledger.read"],
   bankcash: ["ledger.read"],
   lclose: ["ledger.read"],
-  // Telegram bots step 2c (DL-128): Owner and Manager for now.
-  tglinks: ["telegram.read"],
-  tgcontact: ["telegram.contact"],
-  tgfaq: ["telegram.faq", "telegram.contact"],
-  tghealth: ["telegram.read"],
   // HRIS phase 6 (rights table, DB plan 03/11/2026): each tab needs its read right.
   employees: ["hr.employees.read"],
   loans: ["hr.salaries.read"],
   payroll: ["hr.salaries.read"],
   attendance: ["hr.attendance.read"],
+  // Telegram bots step 2c (DL-128): Owner and Manager for now.
+  tglinks: ["telegram.read"],
+  tgcontact: ["telegram.contact"],
+  tgfaq: ["telegram.faq", "telegram.contact"],
+  tghealth: ["telegram.read"],
   account: null,
 };
 

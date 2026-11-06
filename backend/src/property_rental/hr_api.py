@@ -13,6 +13,8 @@ download answers 503.
 
 from __future__ import annotations
 
+import base64
+import binascii
 import hashlib
 import os
 from collections.abc import Callable
@@ -71,6 +73,9 @@ Day = Annotated[date, Field(strict=False)]
 Cents = Annotated[int, Field(ge=1, le=999_999_999)]
 Version = Annotated[int, Field(ge=1)]
 ReportRole = Literal["CLEANER", "TECHNICIAN", "CARETAKER", "METER_READER", "AUTHORIZER"]
+# Only the Property caretaker picks a shift; the database gives every other job OFFICE hours.
+CaretakerShift = Literal["MORNING", "AFTERNOON", "NIGHT"]
+ShiftCode = Literal["MORNING", "AFTERNOON", "NIGHT", "OFFICE"]
 
 
 class HrFlow(Protocol):
@@ -236,18 +241,36 @@ class Identity(_Body):
     home_address: Text | None = None
 
 
+class NewIdentity(_Body):
+    """Owner 06/11/2026: every new employee comes with these."""
+
+    id_type: Literal["NATIONAL_ID", "PASSPORT"]
+    id_number: Short
+    date_of_birth: Day
+    home_address: Text
+
+
+class IdPhoto(_Body):
+    """The photo or scan of the ID card or passport, sent with the new employee."""
+
+    file_name: Annotated[str, StringConstraints(min_length=1, max_length=200, pattern=r"^[^/\\]+$")]
+    media_type: Literal["image/jpeg", "image/png", "application/pdf"]
+    content_base64: Annotated[str, StringConstraints(min_length=4, max_length=28_000_000)]
+
+
 class NewEmployee(_Body):
     name_en: Name
     name_km: Name
     phone: Short | None = None
     job_title_id: Id
-    shift_code: Literal["MORNING", "AFTERNOON", "NIGHT"]
-    usual_day_off: Annotated[int, Field(ge=1, le=7)]
+    shift_code: CaretakerShift | None = None
+    usual_day_off: Annotated[int, Field(ge=1, le=7)] | None = None
     start_date: Day
     user_actor_id: Id | None = None
     reason: Text | None = None
     pay: PayTerms | None = None
-    identity: Identity | None = None
+    identity: NewIdentity
+    id_photo: IdPhoto
 
 
 class EmployeeStep(_Body):
@@ -268,7 +291,7 @@ class EmployeeStep(_Body):
     phone: Short | None = None
     user_actor_id: Id | None = None
     job_title_id: Id | None = None
-    shift_code: Literal["MORNING", "AFTERNOON", "NIGHT"] | None = None
+    shift_code: CaretakerShift | None = None
     usual_day_off: Annotated[int, Field(ge=1, le=7)] | None = None
     monthly_salary_usd_cents: Cents | None = None
     payment_method: Literal["CASH_USD", "ABA"] | None = None
@@ -343,7 +366,7 @@ class AttendanceEntry(_Body):
     employee_id: Id
     work_date: Day
     status: Literal["WORKED", "ABSENT", "LEAVE_ANNUAL", "LEAVE_SICK", "LEAVE_UNPAID", "DAY_OFF"]
-    shift_code: Literal["MORNING", "AFTERNOON", "NIGHT"] | None = None
+    shift_code: ShiftCode | None = None
     check_in: Clock | None = None
     check_out: Clock | None = None
     reason: Text
@@ -352,7 +375,7 @@ class AttendanceEntry(_Body):
 class PlanDay(_Body):
     employee_id: Id
     work_date: Day
-    shift_code: Literal["MORNING", "AFTERNOON", "NIGHT"] | None = None
+    shift_code: ShiftCode | None = None
     reason: Text | None = None
 
 
@@ -464,9 +487,38 @@ def create_hr_router(resolver: ActorResolver, flow: HrFlow, settings: Settings) 
 
     @router.post("/employees", status_code=status.HTTP_201_CREATED)
     def add_employee(property_id: UUID, form: NewEmployee, request: Request) -> Json:
-        right = SALARIES_MANAGE if form.pay or form.identity else EMPLOYEES_MANAGE
-        actor = writer(right, property_id, request)
-        made = ask("hr_add_employee", property_id, body(form), actor, uuid4())
+        # Whoever adds an employee enters the ID details and photo; the salary needs the
+        # salary right.
+        actor = writer(SALARIES_MANAGE if form.pay else EMPLOYEES_MANAGE, property_id, request)
+        try:
+            content = base64.b64decode(form.id_photo.content_base64, validate=True)
+        except (binascii.Error, ValueError) as exc:
+            raise HTTPException(
+                status.HTTP_422_UNPROCESSABLE_CONTENT, detail="The ID photo could not be read"
+            ) from exc
+        if not content:
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail="The file is empty")
+        if len(content) > MAX_FILE_BYTES:
+            raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE)
+        key = f"hr/documents/new/{uuid4()}.{FILE_TYPES[form.id_photo.media_type]}"
+        try:
+            files.save(key, content)
+        except REFUSED as exc:
+            raise _http(exc) from exc
+        change = body(form)
+        del change["id_photo"]
+        change["id_document"] = {
+            "original_name": form.id_photo.file_name.strip(),
+            "media_type": form.id_photo.media_type,
+            "byte_size": len(content),
+            "sha256": hashlib.sha256(content).hexdigest(),
+            "storage_key": key,
+        }
+        try:
+            made = flow.call("hr_add_employee", (property_id, change, actor, uuid4()))
+        except REFUSED as exc:
+            files.remove(key)
+            raise _http(exc) from exc
         return employee(request, property_id, UUID(str(made)), actor)
 
     @router.post("/employees/{employee_id}/steps")

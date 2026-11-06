@@ -56,6 +56,11 @@ from property_rental.ledger_posting_job import (
     LedgerPostingJob,
     LedgerPostingResult,
 )
+from property_rental.short_stay_calendar_sync import (
+    SiteCalendarPass,
+    SiteCalendarResult,
+    SiteCalendarSync,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -73,6 +78,9 @@ class BillingWorkerResult:
     # The leaver pass (HRIS phase 6 step 4); it runs even when an earlier pass failed.
     leavers: LeaverPassResult | None = None
     leavers_error: str | None = None
+    # Daily and weekly rent step 5a: the booking-site calendars read in this pass.
+    site_calendars: SiteCalendarResult | None = None
+    site_calendars_error: str | None = None
 
 
 class BillingWorker(Protocol):
@@ -108,6 +116,7 @@ class ScheduledBillingWorker:
         late_charges: LateChargePass | None = None,
         ledger_posting: LedgerPass | None = None,
         leavers: LeaverPass | None = None,
+        site_calendars: SiteCalendarPass | None = None,
     ) -> None:
         if not 1 <= max_catchup_runs <= 100:
             raise ValueError("max_catchup_runs must be between 1 and 100")
@@ -123,6 +132,9 @@ class ScheduledBillingWorker:
             financial_database_url, property_id=property_id, actor_id=actor_id
         )
         self._leavers = leavers or HrLeaverTurnOffJob(
+            financial_database_url, property_id=property_id, actor_id=actor_id
+        )
+        self._site_calendars = site_calendars or SiteCalendarSync(
             financial_database_url, property_id=property_id, actor_id=actor_id
         )
 
@@ -257,6 +269,13 @@ class ScheduledBillingWorker:
                 leavers = self._leavers.run(as_of=datetime.now(UTC))
             except LeaverPassError as exc:
                 leavers_error = str(exc)
+        # Daily and weekly rent step 5a: outside the billing lock, as it reads other websites.
+        site_calendars: SiteCalendarResult | None = None
+        site_calendars_error: str | None = None
+        try:
+            site_calendars = self._site_calendars.run()
+        except psycopg.Error as exc:
+            site_calendars_error = getattr(exc, "sqlstate", None) or type(exc).__name__
         return BillingWorkerResult(
             current_business_date,
             tuple(results),
@@ -267,6 +286,8 @@ class ScheduledBillingWorker:
             ledger_posting_error,
             leavers,
             leavers_error,
+            site_calendars,
+            site_calendars_error,
         )
 
 
@@ -315,6 +336,18 @@ def run_bounded_loop(
         if result.ledger_posting_error is not None:
             all_succeeded = False
             print(f"ledger:error:{result.ledger_posting_error}", file=sys.stderr, flush=True)
+        if result.site_calendars_error is not None:
+            all_succeeded = False
+            print(f"calendars:error:{result.site_calendars_error}", file=sys.stderr, flush=True)
+        if result.site_calendars is not None and (
+            result.site_calendars.read or result.site_calendars.failed
+        ):
+            # A site that cannot be read is shown to the Owner; it is not a failed pass.
+            print(
+                f"calendars:read={result.site_calendars.read},"
+                f"failed={result.site_calendars.failed}",
+                flush=True,
+            )
         if result.ledger_posting is not None:
             # A record in "Needs check" waits for the Owner; it is not a failed pass.
             ledger = result.ledger_posting

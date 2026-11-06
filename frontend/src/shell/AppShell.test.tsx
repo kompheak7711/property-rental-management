@@ -61,15 +61,16 @@ describe("V1-058 R1 app shell", () => {
       "Utilities",
       "Waiting for approval",
       "Bookings",
+      "Short stays",
       "Leases",
       "Customers",
       "Units",
       "Products",
       "Problem reports",
       "Ledger",
-      "Telegram",
       // HRIS phase 6: Employees and payroll in Office, after Ledger.
       "Employees and payroll",
+      "Telegram",
       "Reports",
       "History",
       "Settings",
@@ -77,7 +78,7 @@ describe("V1-058 R1 app shell", () => {
     for (const group of ["Daily work", "Tenants", "Building", "Office"]) {
       expect(within(menu).getByText(group)).toBeInTheDocument();
     }
-    expect(MENU.flatMap((group) => group.items)).toHaveLength(17);
+    expect(MENU.flatMap((group) => group.items)).toHaveLength(18);
   });
 
   it("TEST-FE-802 marks only the open page in the menu and names the work area after it", () => {

@@ -2671,6 +2671,20 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **Links:** DL-124, BR-MOVEOUT-006.
 - **Decision date:** 2026-11-04.
 
+## DL-160 — Riel bank account
+
+- **Type:** `OWNER BUSINESS DECISION`
+- **Status:** `BUILT ON THE GENERAL LEDGER BRANCH; WAITS FOR THE OWNER'S TEST`
+- **Source:** the owner's card answers of 04/11/2026 12:05 ("Riel bank account per method") and 17:52 ("Same as riel cash"), and the owner's facts: the NBC asks for a riel account in every bank; one ABA QR code takes riel and dollars; bank transfers come in both.
+- **(A) Account.** The chart gets 1021 ABA Bank · KHR account.
+- **(B) Riel per method.** Each Payment Method may name a riel account (riel cash 1011 or riel bank 1021). A Payment in riel goes there; with none it goes where it went before. Refund methods have none, because Refunds are paid in dollars (Claude's reading).
+- **(C) Month end.** Riel in the bank is valued at the app's month-end rate, like riel cash; the difference goes to 4100.
+- **(D) Matching.** The riel bank account is matched against the ABA riel statement in riel (Claude's reading); its riel is kept line by line.
+- **(E) Waits for later:** bill payments, owner money, advances and paybacks in or out of 1021; typed lines (adjusting entries, Opening balances) on 1021.
+- **Built:** migration `20270609_320` (DB-GL-008), API-GL-015, Ledger › Needs check (riel account per method) and Ledger › Bank and cash (riel in the bank, matching in riel).
+- **Links:** DL-117.
+- **Decision date:** 2026-11-04.
+
 ## DL-170 — Telegram bots: Contact office and the FAQ (bots step 2d part 2)
 
 - **Type:** `TECHNICAL DECISION`
@@ -2743,7 +2757,7 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **(C) Check in and Check out.** The form asks for the phone's Location first (Telegram's location access); if it is off, it says so and opens the settings. Then the camera scans the place QR. The HR rules decide (too early, late, needs check, already in), and the bot answers in the chat with the time, about a minute later (the relay's pull every minute).
 - **(D) Scan employee card.** Caretakers and Authorizers: check in or out, scan the card, pick the reason (Other needs a text) and take a half-body photo; Save stays off until all are given. The photo is kept in the HR files folder, not with the Telegram photos, so the 90-day rule removes it; a refused scan keeps no photo. The person's name comes back in the chat answer (the mock-up showed it at once; the relay holds no staff data to show it).
 - **(E) Accounts.** The HR functions take only a service actor, so the Telegram jobs get one more setting, the service actor (`--service-actor-id`), and the HR files folder. Without them the Staff bot answers that it is not ready. The scanned QR and card texts are not kept in the saved message.
-- **Branch:** the Staff bot needs the HR tables, so it is built on `claude/telegram-staff-bot` (the Telegram branch plus the HR branch); migration `20270619_330` joins the two migration lines. It merges after PR #7 and the HR PR #10.
+- **Branch:** the Staff bot needs the HR tables, so it is built on `claude/telegram-staff-bot` (the Telegram branch plus the HR branch); migration `20270619_330` starts the Staff bot line after the HR head `20270504_304` (HR follows the Telegram head since 6 Nov 2026). It merges after PR #7 and the HR PR #10.
 - **Next (step 4b):** Report a problem (walk-round) and Close job, and the urgent alert to the caretaker on shift: built in DL-175.
 - **Open:** the Khmer texts need a native-speaker check.
 - **Built:** migrations `20270619_330` and `20270620_331` (DB-TG-010), `backend/src/property_rental/telegram_staff_bot.py`, `relay/src/staff_app.ts`.
@@ -2805,16 +2819,3 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **Links:** DL-115, DL-175, DL-177.
 - **Decision date:** 2026-11-05.
 
-## DL-160 — Riel bank account
-
-- **Type:** `OWNER BUSINESS DECISION`
-- **Status:** `BUILT ON THE GENERAL LEDGER BRANCH; WAITS FOR THE OWNER'S TEST`
-- **Source:** the owner's card answers of 04/11/2026 12:05 ("Riel bank account per method") and 17:52 ("Same as riel cash"), and the owner's facts: the NBC asks for a riel account in every bank; one ABA QR code takes riel and dollars; bank transfers come in both.
-- **(A) Account.** The chart gets 1021 ABA Bank · KHR account.
-- **(B) Riel per method.** Each Payment Method may name a riel account (riel cash 1011 or riel bank 1021). A Payment in riel goes there; with none it goes where it went before. Refund methods have none, because Refunds are paid in dollars (Claude's reading).
-- **(C) Month end.** Riel in the bank is valued at the app's month-end rate, like riel cash; the difference goes to 4100.
-- **(D) Matching.** The riel bank account is matched against the ABA riel statement in riel (Claude's reading); its riel is kept line by line.
-- **(E) Waits for later:** bill payments, owner money, advances and paybacks in or out of 1021; typed lines (adjusting entries, Opening balances) on 1021.
-- **Built:** migration `20270609_320` (DB-GL-008), API-GL-015, Ledger › Needs check (riel account per method) and Ledger › Bank and cash (riel in the bank, matching in riel).
-- **Links:** DL-117.
-- **Decision date:** 2026-11-04.

@@ -2,7 +2,9 @@
 // The server checks every right, rule and amount again; this client reads and sends. Money is
 // whole US cents, days are yyyy-mm-dd and times are HH:MM in Phnom Penh.
 
-export type ShiftCode = "MORNING" | "AFTERNOON" | "NIGHT";
+export type ShiftCode = "MORNING" | "AFTERNOON" | "NIGHT" | "OFFICE";
+/** The shifts only the Property caretaker works (owner 06/11/2026). */
+export type CaretakerShift = Exclude<ShiftCode, "OFFICE">;
 export type ReportRole =
   | "CLEANER"
   | "TECHNICIAN"
@@ -20,12 +22,18 @@ export interface Named {
 export interface JobTitle extends Named {
   id: string;
   code: string;
+  /** Only the Property caretaker works shifts; every other job works OFFICE hours. */
+  uses_shifts?: boolean;
+  /** Days off a month, taken on request (caretaker and cleaner: 2); null = a usual day off. */
+  days_off_per_month?: number | null;
 }
 
 export interface Shift extends Named {
   code: ShiftCode;
   starts_at: string;
   ends_at: string;
+  break_starts_at?: string | null;
+  break_ends_at?: string | null;
 }
 
 export interface PayTerms {
@@ -316,6 +324,7 @@ export interface DayLine extends Named {
   employee_code: string;
   job_en: string | null;
   job_km: string | null;
+  uses_shifts?: boolean;
   planned_shift: ShiftCode | null;
   day_off: boolean | null;
   entry_id: string | null;
@@ -346,6 +355,11 @@ export interface AttendanceWeek {
   people: (Named & {
     employee_id: string;
     employee_code: string;
+    uses_shifts?: boolean;
+    /** Days off a month on request; null = a usual day off each week. */
+    days_off_per_month?: number | null;
+    /** Planned days off in each month the week touches (yyyy-mm-01). */
+    month_days_off?: { month: string; planned: number }[];
     days: {
       work_date: string;
       works: boolean;

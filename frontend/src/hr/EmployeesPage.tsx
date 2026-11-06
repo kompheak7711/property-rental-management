@@ -36,6 +36,7 @@ import {
   type HrChoices,
   type PayMethod,
   type ReportRole,
+  type CaretakerShift,
   type ShiftCode,
   type StaffRequest,
 } from "./hrClient";
@@ -49,7 +50,7 @@ export interface EmployeesPageProps {
   api?: HrApi;
 }
 
-const SHIFTS: readonly ShiftCode[] = ["MORNING", "AFTERNOON", "NIGHT"];
+const SHIFTS: readonly CaretakerShift[] = ["MORNING", "AFTERNOON", "NIGHT"];
 const ROLES: readonly ReportRole[] = [
   "CLEANER",
   "TECHNICIAN",
@@ -59,6 +60,54 @@ const ROLES: readonly ReportRole[] = [
 ];
 const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7] as const;
 const DOC_KINDS = ["CONTRACT", "ID_CARD", "CERTIFICATE", "OTHER"] as const;
+const ID_TYPES = ["NATIONAL_ID", "PASSPORT"] as const;
+/** A JSON body carries the photo as base64; the server takes at most 20 MB in all. */
+const ID_PHOTO_MAX_BYTES = 15 * 1024 * 1024;
+const ID_PHOTO_TYPES = ["image/jpeg", "image/png", "application/pdf"];
+
+function usesShifts(jobs: HrChoices["job_titles"], job: string): boolean {
+  return jobs.find((one) => one.id === job)?.uses_shifts === true;
+}
+
+/** Days off a month on request (owner 06/11/2026: caretaker and cleaner 2), else null. */
+function monthlyDaysOff(
+  jobs: HrChoices["job_titles"],
+  job: string,
+): number | null {
+  return jobs.find((one) => one.id === job)?.days_off_per_month ?? null;
+}
+
+/** Only the caretaker sends a shift; only a job with a weekly day off sends that day. */
+function jobBody(
+  jobs: HrChoices["job_titles"],
+  job: string,
+  shift: CaretakerShift,
+  dayOff: number,
+): Body {
+  return {
+    job_title_id: job,
+    ...(usesShifts(jobs, job) ? { shift_code: shift } : {}),
+    ...(monthlyDaysOff(jobs, job) === null ? { usual_day_off: dayOff } : {}),
+  };
+}
+
+function caretakerShift(code: ShiftCode | null): CaretakerShift {
+  return code === null || code === "OFFICE" ? "MORNING" : code;
+}
+
+function base64Of(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const url = typeof reader.result === "string" ? reader.result : "";
+      resolve(url.slice(url.indexOf(",") + 1));
+    };
+    reader.onerror = () => {
+      reject(new Error("The file could not be read"));
+    };
+    reader.readAsDataURL(file);
+  });
+}
 
 function weekdayName(language: Language, day: number | null): string {
   return day === null ? "" : codeText(language, "wd_", String(day));
@@ -349,9 +398,15 @@ function AddEmployeeDialog({
   const [nameKm, setNameKm] = useState("");
   const [phone, setPhone] = useState("");
   const [job, setJob] = useState(choices.job_titles[0]?.id ?? "");
-  const [shift, setShift] = useState<ShiftCode>("MORNING");
+  const [shift, setShift] = useState<CaretakerShift>("MORNING");
   const [dayOff, setDayOff] = useState(7);
   const [start, setStart] = useState(choices.today);
+  const [idType, setIdType] =
+    useState<(typeof ID_TYPES)[number]>("NATIONAL_ID");
+  const [idNumber, setIdNumber] = useState("");
+  const [birth, setBirth] = useState("");
+  const [address, setAddress] = useState("");
+  const [photo, setPhoto] = useState<File | null>(null);
   const [user, setUser] = useState("");
   const [salary, setSalary] = useState("");
   const [method, setMethod] = useState<PayMethod>("CASH_USD");
@@ -370,13 +425,35 @@ function AddEmployeeDialog({
       setError(ht(language, "day_bad"));
       return;
     }
+    if (
+      idNumber.trim() === "" ||
+      birth === "" ||
+      address.trim() === "" ||
+      photo === null
+    ) {
+      setError(ht(language, "e_id_need"));
+      return;
+    }
+    if (photo.size > ID_PHOTO_MAX_BYTES) {
+      setError(ht(language, "e_id_photo_big"));
+      return;
+    }
+    if (!ID_PHOTO_TYPES.includes(photo.type)) {
+      setError(ht(language, "e_id_photo_note"));
+      return;
+    }
+    const idPhoto = photo;
     const body: Body = {
       name_en: nameEn.trim(),
       name_km: nameKm.trim(),
-      job_title_id: job,
-      shift_code: shift,
-      usual_day_off: dayOff,
+      ...jobBody(choices.job_titles, job, shift, dayOff),
       start_date: start,
+      identity: {
+        id_type: idType,
+        id_number: idNumber.trim(),
+        date_of_birth: birth,
+        home_address: address.trim(),
+      },
     };
     if (phone.trim() !== "") body.phone = phone.trim();
     if (user !== "") body.user_actor_id = user;
@@ -397,7 +474,14 @@ function AddEmployeeDialog({
           : {}),
       };
     }
-    run(() => api.addEmployee(propertyId, body), onSaved);
+    run(async () => {
+      body.id_photo = {
+        file_name: idPhoto.name,
+        media_type: idPhoto.type,
+        content_base64: await base64Of(idPhoto),
+      };
+      return api.addEmployee(propertyId, body);
+    }, onSaved);
   };
   return (
     <Dialog
@@ -478,6 +562,82 @@ function AddEmployeeDialog({
           value={start}
         />
       </Field>
+      <h4>{ht(language, "e_id_head")}</h4>
+      <Field
+        id="hr-ae-idt"
+        label={ht(language, "e_id_type")}
+        note={ht(language, "required")}
+      >
+        <select
+          id="hr-ae-idt"
+          onChange={(event) => {
+            setIdType(event.target.value as (typeof ID_TYPES)[number]);
+          }}
+          value={idType}
+        >
+          {ID_TYPES.map((code) => (
+            <option key={code} value={code}>
+              {codeText(language, "id_", code)}
+            </option>
+          ))}
+        </select>
+      </Field>
+      <Field
+        id="hr-ae-idn"
+        label={ht(language, "e_id_number")}
+        note={ht(language, "required")}
+      >
+        <input
+          id="hr-ae-idn"
+          maxLength={40}
+          onChange={(event) => {
+            setIdNumber(event.target.value);
+          }}
+          value={idNumber}
+        />
+      </Field>
+      <Field
+        id="hr-ae-dob"
+        label={ht(language, "e_birth")}
+        note={ht(language, "required")}
+      >
+        <DateInput
+          id="hr-ae-dob"
+          language={language}
+          onChange={setBirth}
+          value={birth}
+        />
+      </Field>
+      <Field
+        id="hr-ae-addr"
+        label={ht(language, "e_address")}
+        note={ht(language, "required")}
+      >
+        <textarea
+          id="hr-ae-addr"
+          maxLength={300}
+          onChange={(event) => {
+            setAddress(event.target.value);
+          }}
+          rows={2}
+          value={address}
+        />
+      </Field>
+      <Field
+        id="hr-ae-photo"
+        label={ht(language, "e_id_photo")}
+        note={ht(language, "required")}
+        help={ht(language, "e_id_photo_note")}
+      >
+        <input
+          accept="image/jpeg,image/png,application/pdf"
+          id="hr-ae-photo"
+          onChange={(event) => {
+            setPhoto(event.target.files?.[0] ?? null);
+          }}
+          type="file"
+        />
+      </Field>
       <Field
         id="hr-ae-user"
         label={ht(language, "e_signin")}
@@ -541,11 +701,13 @@ function JobFields({
   jobs: HrChoices["job_titles"];
   job: string;
   setJob: (value: string) => void;
-  shift: ShiftCode;
-  setShift: (value: ShiftCode) => void;
+  shift: CaretakerShift;
+  setShift: (value: CaretakerShift) => void;
   dayOff: number;
   setDayOff: (value: number) => void;
 }) {
+  const shifts = usesShifts(jobs, job);
+  const monthly = monthlyDaysOff(jobs, job);
   return (
     <>
       <Field
@@ -567,44 +729,56 @@ function JobFields({
           ))}
         </select>
       </Field>
-      <Field
-        id={`${prefix}-shift`}
-        label={ht(language, "e_shift")}
-        note={ht(language, "required")}
-      >
-        <select
+      {shifts ? (
+        <Field
           id={`${prefix}-shift`}
-          onChange={(event) => {
-            setShift(event.target.value as ShiftCode);
-          }}
-          value={shift}
+          label={ht(language, "e_shift")}
+          note={ht(language, "required")}
         >
-          {SHIFTS.map((code) => (
-            <option key={code} value={code}>
-              {shiftText(language, code)}
-            </option>
-          ))}
-        </select>
-      </Field>
-      <Field
-        id={`${prefix}-off`}
-        label={ht(language, "e_dayoff")}
-        note={ht(language, "required")}
-      >
-        <select
-          id={`${prefix}-off`}
-          onChange={(event) => {
-            setDayOff(Number(event.target.value));
-          }}
-          value={dayOff}
-        >
-          {WEEKDAYS.map((day) => (
-            <option key={day} value={day}>
-              {weekdayName(language, day)}
-            </option>
-          ))}
-        </select>
-      </Field>
+          <select
+            id={`${prefix}-shift`}
+            onChange={(event) => {
+              setShift(event.target.value as CaretakerShift);
+            }}
+            value={shift}
+          >
+            {SHIFTS.map((code) => (
+              <option key={code} value={code}>
+                {shiftText(language, code)}
+              </option>
+            ))}
+          </select>
+        </Field>
+      ) : (
+        <p className="ui-muted ui-small">{ht(language, "e_office_hours")}</p>
+      )}
+      {monthly !== null ? (
+        <p className="ui-muted ui-small">
+          {ht(language, "e_monthly_off", monthly)}
+        </p>
+      ) : (
+        <>
+          <Field
+            id={`${prefix}-off`}
+            label={ht(language, "e_dayoff")}
+            note={ht(language, "required")}
+          >
+            <select
+              id={`${prefix}-off`}
+              onChange={(event) => {
+                setDayOff(Number(event.target.value));
+              }}
+              value={dayOff}
+            >
+              {WEEKDAYS.map((day) => (
+                <option key={day} value={day}>
+                  {weekdayName(language, day)}
+                </option>
+              ))}
+            </select>
+          </Field>
+        </>
+      )}
     </>
   );
 }
@@ -1809,7 +1983,9 @@ function JobDialog({
   const [job, setJob] = useState(
     person.job_title?.id ?? choices.job_titles[0]?.id ?? "",
   );
-  const [shift, setShift] = useState<ShiftCode>(person.shift_code ?? "MORNING");
+  const [shift, setShift] = useState<CaretakerShift>(
+    caretakerShift(person.shift_code),
+  );
   const [dayOff, setDayOff] = useState(person.usual_day_off ?? 7);
   const [from, setFrom] = useState(choices.today);
   const [reason, setReason] = useState("");
@@ -1835,9 +2011,7 @@ function JobDialog({
           () =>
             onSave({
               step: "JOB",
-              job_title_id: job,
-              shift_code: shift,
-              usual_day_off: dayOff,
+              ...jobBody(choices.job_titles, job, shift, dayOff),
               effective_date: from,
               reason: reason.trim(),
             }),

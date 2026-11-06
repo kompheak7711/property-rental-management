@@ -363,6 +363,11 @@ database_test_suites='
   tests/test_problem_report_costs_migration.py
   tests/test_problem_report_month_migration.py
   tests/test_problem_report_from_finding_migration.py
+  tests/test_hr_employees_migration.py
+  tests/test_hr_payroll_migration.py
+  tests/test_hr_attendance_migration.py
+  tests/test_hr_leaver_turn_off_migration.py
+  tests/test_hr_office_hours_migration.py
   tests/test_telegram_base_migration.py
   tests/test_telegram_tenant_link_migration.py
   tests/test_telegram_tenant_problem_report_migration.py
@@ -372,15 +377,21 @@ database_test_suites='
   tests/test_telegram_customer_bot_migration.py
   tests/test_telegram_visit_request_work_migration.py
   tests/test_telegram_visit_request_close_out_migration.py
+  tests/test_short_stay_migration.py
+  tests/test_short_stay_booking_migration.py
+  tests/test_short_stay_check_in_migration.py
+  tests/test_short_stay_cleaning_migration.py
+  tests/test_short_stay_cancel_migration.py
+  tests/test_short_stay_lease_migration.py
+  tests/test_short_stay_site_calendar_migration.py
+  tests/test_short_stay_guests_quotes_migration.py
+  tests/test_short_stay_week_report_migration.py
+  tests/test_short_stay_ledger_migration.py
   tests/test_telegram_staff_bot_migration.py
   tests/test_telegram_staff_reports_migration.py
   tests/test_telegram_staff_meter_readings_migration.py
   tests/test_telegram_staff_checklists_migration.py
   tests/test_telegram_staff_unit_checks_migration.py
-  tests/test_hr_employees_migration.py
-  tests/test_hr_payroll_migration.py
-  tests/test_hr_attendance_migration.py
-  tests/test_hr_leaver_turn_off_migration.py
 '
 # The General Ledger suites run first, in a pytest run of their own on the new database: the other
 # suites leave balances on the one Property (up to the largest bigint) that no books can hold.

@@ -158,7 +158,11 @@ def staff(reports_database: HrDatabase) -> dict[str, uuid.UUID]:
     people = {
         "cleaner": add_employee(db, name_en="Yon Dane", name_km="យ៉ន់ ដានេ"),
         "technician": add_employee(
-            db, name_en="Son Sokhen", name_km="សន សុខខេន", job_title_id=job_id(db, "TECHNICIAN")
+            db,
+            name_en="Son Sokhen",
+            name_km="សន សុខខេន",
+            job_title_id=job_id(db, "TECHNICIAN"),
+            usual_day_off=db.today.isoweekday() % 7 + 1,
         ),
         "caretaker": add_employee(
             db, name_en="Pich Pheakdey", name_km="ពេជ ភក្ដី", job_title_id=job_id(db, "CARETAKER")
