@@ -43,7 +43,8 @@ DOCUMENTS = {
     "BUILDING_PROBLEM": "BPyy000n",
     # Telegram bots step 3a (DL-171): Visit requests, migration 20270525_287.
     "VISIT_REQUEST": "VRyy000n",
-    # HRIS phase 6 (HR branch, migrations 300-301): salary loans, payroll and overtime.
+    # HRIS phase 6: Salary loans and the payroll list (migration 20270501_301), overtime
+    # requests (migration 20270502_302).
     "SALARY_LOAN": "SLyy000n",
     "PAYROLL": "PAYyy000n",
     "OVERTIME": "OTyy000n",
