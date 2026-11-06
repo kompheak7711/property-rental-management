@@ -24,6 +24,8 @@ export interface JobTitle extends Named {
   code: string;
   /** Only the Property caretaker works shifts; every other job works OFFICE hours. */
   uses_shifts?: boolean;
+  /** Days off a month, taken on request (caretaker and cleaner: 2); null = a usual day off. */
+  days_off_per_month?: number | null;
 }
 
 export interface Shift extends Named {
@@ -354,14 +356,16 @@ export interface AttendanceWeek {
     employee_id: string;
     employee_code: string;
     uses_shifts?: boolean;
+    /** Days off a month on request; null = a usual day off each week. */
+    days_off_per_month?: number | null;
+    /** Planned days off in each month the week touches (yyyy-mm-01). */
+    month_days_off?: { month: string; planned: number }[];
     days: {
       work_date: string;
       works: boolean;
       shift_code: ShiftCode | null;
       day_off: boolean | null;
       planned: boolean | null;
-      /** A 7th work day in a row (Labour Law Art. 146: at most six a week). */
-      seventh_day?: boolean;
     }[];
   })[];
 }

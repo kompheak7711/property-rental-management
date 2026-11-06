@@ -304,7 +304,7 @@ const WEEK: AttendanceWeek = {
       employee_code: "E-001",
       name_en: "Chan Dara",
       name_km: "ចាន់ ដារ៉ា",
-      uses_shifts: true,
+      uses_shifts: false,
       days: [2, 3, 4, 5, 6, 7, 8].map((date) => ({
         work_date: `2026-11-0${String(date)}`,
         works: true,
@@ -835,7 +835,7 @@ describe("HRIS phase 6 screens", () => {
     });
   });
 
-  it("TEST-FE-1401 the weekly plan marks a 7th work day in a row; office staff plan office hours only", async () => {
+  it("TEST-FE-1401 the weekly plan gives the caretaker no day-off warning; office staff plan office hours only", async () => {
     const [first] = WEEK.people;
     if (first === undefined) throw new Error("The sample week has a person");
     const week: AttendanceWeek = {
@@ -843,12 +843,14 @@ describe("HRIS phase 6 screens", () => {
       people: [
         {
           ...first,
-          days: first.days.map((one, index) => ({
-            ...one,
-            seventh_day: index >= 5,
-          })),
+          employee_id: "emp-3",
+          employee_code: "E-003",
+          name_en: "Sample Caretaker",
+          name_km: "គំរូ អ្នកថែរក្សា",
+          uses_shifts: true,
         },
         {
+          ...first,
           employee_id: "emp-2",
           employee_code: "E-002",
           name_en: "Lim Sokha",
@@ -857,7 +859,6 @@ describe("HRIS phase 6 screens", () => {
           days: first.days.map((one) => ({
             ...one,
             shift_code: "OFFICE" as const,
-            seventh_day: false,
           })),
         },
       ],
@@ -868,8 +869,10 @@ describe("HRIS phase 6 screens", () => {
     );
     await screen.findByText("Late 20 min");
     fireEvent.click(screen.getByRole("button", { name: "Weekly plan" }));
-    expect(await screen.findAllByText("7th work day in a row")).toHaveLength(2);
-    expect(screen.getByText(/allows at most 6 work days a week/)).toBeVisible();
+    // Owner 06/11/2026: the caretaker works without a rest day; only office staff are warned.
+    expect(await screen.findAllByText("Fewer than 1 day off")).toHaveLength(1);
+    const caretakerRow = screen.getByRole("row", { name: /Sample Caretaker/ });
+    expect(within(caretakerRow).queryByText("Fewer than 1 day off")).toBeNull();
     fireEvent.click(
       screen.getByRole("button", { name: "Plan · Lim Sokha · 08/11/2026" }),
     );

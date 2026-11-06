@@ -135,10 +135,10 @@ const TEXT = {
     // new
     "ម៉ោងការិយាល័យ៖ 7:00 ដល់ 11:00 និង 13:00 ដល់ 17:00។ យឺតរាប់ពី 7:00។",
   ],
-  e_no_dayoff: [
-    "The Property caretaker has no usual day off. Set one rest day each week on the Weekly plan.",
+  e_monthly_off: [
+    "No usual day off: {0} days off a month, when the person asks. Mark each one on the Weekly plan.",
     // new
-    "អ្នកថែរក្សាអគារគ្មានថ្ងៃឈប់ធម្មតាទេ។ សូមកំណត់ថ្ងៃសម្រាកមួយថ្ងៃរៀងរាល់សប្ដាហ៍ក្នុងផែនការប្រចាំសប្ដាហ៍។",
+    "គ្មានថ្ងៃឈប់ធម្មតាទេ៖ ឈប់ {0} ថ្ងៃក្នុងមួយខែ នៅពេលបុគ្គលិកស្នើសុំ។ សូមកត់ថ្ងៃនីមួយៗក្នុងផែនការប្រចាំសប្ដាហ៍។",
   ],
   e_id_head: [
     "ID details",
@@ -839,15 +839,10 @@ const TEXT = {
   a_off: ["Day off", "ឈប់"],
   a_days_off: ["Days off", "ថ្ងៃឈប់"],
   a_fewer_off: ["Fewer than {0} day off", "តិចជាង {0} ថ្ងៃឈប់"],
-  a_seventh: [
-    "7th work day in a row",
+  a_month_off: [
+    "{0}: {1} of {2} days off",
     // new
-    "ថ្ងៃធ្វើការទី 7 ជាប់គ្នា",
-  ],
-  a_seventh_note: [
-    "The Labour Law allows at most 6 work days a week. Plan a rest day.",
-    // new
-    "ច្បាប់ការងារអនុញ្ញាតឲ្យធ្វើការច្រើនបំផុត 6 ថ្ងៃក្នុងមួយសប្ដាហ៍។ សូមកំណត់ថ្ងៃសម្រាក។",
+    "{0}៖ ឈប់ {1} ក្នុងចំណោម {2} ថ្ងៃ",
   ],
   a_past_note: [
     "Past days cannot change. A person with fewer than {0} day off in the week gets a warning; it does not stop the plan.",

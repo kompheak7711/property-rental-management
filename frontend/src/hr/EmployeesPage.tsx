@@ -69,16 +69,26 @@ function usesShifts(jobs: HrChoices["job_titles"], job: string): boolean {
   return jobs.find((one) => one.id === job)?.uses_shifts === true;
 }
 
-/** Only the Property caretaker sends a shift; any other job sends its usual day off. */
+/** Days off a month on request (owner 06/11/2026: caretaker and cleaner 2), else null. */
+function monthlyDaysOff(
+  jobs: HrChoices["job_titles"],
+  job: string,
+): number | null {
+  return jobs.find((one) => one.id === job)?.days_off_per_month ?? null;
+}
+
+/** Only the caretaker sends a shift; only a job with a weekly day off sends that day. */
 function jobBody(
   jobs: HrChoices["job_titles"],
   job: string,
   shift: CaretakerShift,
   dayOff: number,
 ): Body {
-  return usesShifts(jobs, job)
-    ? { job_title_id: job, shift_code: shift }
-    : { job_title_id: job, usual_day_off: dayOff };
+  return {
+    job_title_id: job,
+    ...(usesShifts(jobs, job) ? { shift_code: shift } : {}),
+    ...(monthlyDaysOff(jobs, job) === null ? { usual_day_off: dayOff } : {}),
+  };
 }
 
 function caretakerShift(code: ShiftCode | null): CaretakerShift {
@@ -697,6 +707,7 @@ function JobFields({
   setDayOff: (value: number) => void;
 }) {
   const shifts = usesShifts(jobs, job);
+  const monthly = monthlyDaysOff(jobs, job);
   return (
     <>
       <Field
@@ -719,31 +730,34 @@ function JobFields({
         </select>
       </Field>
       {shifts ? (
-        <>
-          <Field
+        <Field
+          id={`${prefix}-shift`}
+          label={ht(language, "e_shift")}
+          note={ht(language, "required")}
+        >
+          <select
             id={`${prefix}-shift`}
-            label={ht(language, "e_shift")}
-            note={ht(language, "required")}
+            onChange={(event) => {
+              setShift(event.target.value as CaretakerShift);
+            }}
+            value={shift}
           >
-            <select
-              id={`${prefix}-shift`}
-              onChange={(event) => {
-                setShift(event.target.value as CaretakerShift);
-              }}
-              value={shift}
-            >
-              {SHIFTS.map((code) => (
-                <option key={code} value={code}>
-                  {shiftText(language, code)}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <p className="ui-muted ui-small">{ht(language, "e_no_dayoff")}</p>
-        </>
+            {SHIFTS.map((code) => (
+              <option key={code} value={code}>
+                {shiftText(language, code)}
+              </option>
+            ))}
+          </select>
+        </Field>
+      ) : (
+        <p className="ui-muted ui-small">{ht(language, "e_office_hours")}</p>
+      )}
+      {monthly !== null ? (
+        <p className="ui-muted ui-small">
+          {ht(language, "e_monthly_off", monthly)}
+        </p>
       ) : (
         <>
-          <p className="ui-muted ui-small">{ht(language, "e_office_hours")}</p>
           <Field
             id={`${prefix}-off`}
             label={ht(language, "e_dayoff")}

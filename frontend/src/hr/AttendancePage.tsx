@@ -797,26 +797,46 @@ function WeekPlan({ language, propertyId, api, active }: PartProps) {
                             {one.planned === true && (
                               <span className="ui-sub2 ui-muted">✎</span>
                             )}
-                            {one.works && one.seventh_day === true && (
-                              <span className="ui-sub2">
-                                <Chip tone="warn">
-                                  {ht(language, "a_seventh")}
-                                </Chip>
-                              </span>
-                            )}
                           </td>
                         );
                       })}
                       <td>
-                        <span className="ui-num">{off}</span>{" "}
-                        {off < week.days_off_per_week && (
-                          <Chip tone="warn">
-                            {ht(
-                              language,
-                              "a_fewer_off",
-                              week.days_off_per_week,
+                        {person.days_off_per_month === undefined ||
+                        person.days_off_per_month === null ? (
+                          <>
+                            <span className="ui-num">{off}</span>{" "}
+                            {off < week.days_off_per_week && (
+                              <Chip tone="warn">
+                                {ht(
+                                  language,
+                                  "a_fewer_off",
+                                  week.days_off_per_week,
+                                )}
+                              </Chip>
                             )}
-                          </Chip>
+                          </>
+                        ) : (
+                          // Owner 06/11/2026: days off a month on request, no weekly day off.
+                          (person.month_days_off ?? []).map((month) => (
+                            <span className="ui-sub2" key={month.month}>
+                              <Chip
+                                tone={
+                                  month.planned >
+                                  (person.days_off_per_month ?? 0)
+                                    ? "warn"
+                                    : "neutral"
+                                }
+                              >
+                                {ht(
+                                  language,
+                                  "a_month_off",
+                                  monthLabel(language, month.month),
+                                  month.planned,
+                                  person.days_off_per_month ?? 0,
+                                )}
+                              </Chip>
+                            </span>
+                          ))
                         )}
                       </td>
                     </tr>
@@ -826,9 +846,6 @@ function WeekPlan({ language, propertyId, api, active }: PartProps) {
             </table>
           </div>
         )}
-        {week.people.some((person) =>
-          person.days.some((one) => one.works && one.seventh_day === true),
-        ) && <p className="ui-notice warn">{ht(language, "a_seventh_note")}</p>}
         <p className="ui-tfoot ui-muted">
           {ht(language, "a_past_note", week.days_off_per_week)}
         </p>

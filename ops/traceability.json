@@ -64077,7 +64077,7 @@
       "test_level": "UI component",
       "test_path": "frontend/src/hr/HrPages.test.tsx",
       "status": "implemented",
-      "notes": "HRIS: the Weekly plan marks a 7th work day in a row; office staff plan office hours only."
+      "notes": "HRIS: the Weekly plan gives the caretaker no day-off warning (owner 06/11); office staff plan office hours only."
     }
   ]
 }
