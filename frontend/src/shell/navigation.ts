@@ -17,6 +17,7 @@ export type PageId =
   | "locations"
   | "customers"
   | "reservations"
+  | "visitreqs"
   | "shortstays"
   | "leases"
   | "letters"
@@ -39,6 +40,10 @@ export type PageId =
   | "loans"
   | "payroll"
   | "attendance"
+  | "tglinks"
+  | "tgcontact"
+  | "tgfaq"
+  | "tghealth"
   | "account";
 
 export type IconName =
@@ -58,7 +63,8 @@ export type IconName =
   | "reports"
   | "history"
   | "staff"
-  | "settings";
+  | "settings"
+  | "send";
 
 export interface MenuItem {
   /** The page the menu link opens; with tabs, the first tab. */
@@ -100,7 +106,8 @@ export const MENU: readonly MenuGroup[] = [
         icon: "calendar",
         // new
         label: ["Bookings", "ការកក់"],
-        tabs: ["reservations"],
+        // Telegram bots step 3a (DL-171): Visit requests from the Customer bot.
+        tabs: ["reservations", "visitreqs"],
       },
       // Daily and weekly rent (phase 6 step 2, mock-up round 28): Tenants › Short stays.
       { page: "shortstays", icon: "calendar" },
@@ -158,6 +165,14 @@ export const MENU: readonly MenuGroup[] = [
         label: ["Employees and payroll", "បុគ្គលិក និងប្រាក់ខែ"],
         tabs: ["employees", "loans", "payroll", "attendance"],
       },
+      // Telegram bots step 2c (DL-128, mock-up round 29): Office › Telegram, with Contact office
+      // and FAQ from step 2d part 2 (DL-170), in the mock-up's tab order.
+      {
+        page: "tglinks",
+        icon: "send",
+        label: ["Telegram", "តេឡេក្រាម"],
+        tabs: ["tglinks", "tgcontact", "tgfaq", "tghealth"],
+      },
       { page: "reports", icon: "reports" },
       { page: "history", icon: "history" },
       { page: "settings", icon: "settings" },
@@ -184,6 +199,7 @@ const PAGE_NAMES: Record<PageId, readonly [string, string]> = {
   locations: ["Locations", "ទីតាំង"],
   customers: ["Customers", "អតិថិជន"],
   reservations: ["Reservations", "ការកក់ទុក"],
+  visitreqs: ["Visit requests", "សំណើមកមើលបន្ទប់"],
   // new
   shortstays: ["Short stays", "ការស្នាក់នៅខ្លី"],
   leases: ["Leases", "កិច្ចសន្យាជួល"],
@@ -207,6 +223,10 @@ const PAGE_NAMES: Record<PageId, readonly [string, string]> = {
   loans: ["Salary loans", "ប្រាក់កម្ចីប្រាក់ខែ"],
   payroll: ["Payroll", "បញ្ជីប្រាក់ខែ"],
   attendance: ["Attendance", "វត្តមាន"],
+  tglinks: ["Linked tenants", "អ្នកជួលដែលបានភ្ជាប់"],
+  tgcontact: ["Contact office", "ទាក់ទងការិយាល័យ"],
+  tgfaq: ["FAQ", "សំណួរញឹកញាប់"],
+  tghealth: ["Telegram health", "ស្ថានភាពតេឡេក្រាម"],
   // new
   account: ["My account", "គណនីរបស់ខ្ញុំ"],
 };
@@ -238,6 +258,8 @@ const PAGE_NEEDS: Record<PageId, readonly string[] | null> = {
   locations: ["products.read"],
   customers: ["customers.read"],
   reservations: ["reservations.read"],
+  // Telegram bots step 3a (DL-171): the Owner, the Manager and Staff.
+  visitreqs: ["visit_requests.read"],
   // Daily and weekly rent: the calendar and bookings read with short_stays.read.
   shortstays: ["short_stays.read"],
   leases: ["leases.read"],
@@ -270,6 +292,11 @@ const PAGE_NEEDS: Record<PageId, readonly string[] | null> = {
   loans: ["hr.salaries.read"],
   payroll: ["hr.salaries.read"],
   attendance: ["hr.attendance.read"],
+  // Telegram bots step 2c (DL-128): Owner and Manager for now.
+  tglinks: ["telegram.read"],
+  tgcontact: ["telegram.contact"],
+  tgfaq: ["telegram.faq", "telegram.contact"],
+  tghealth: ["telegram.read"],
   account: null,
 };
 

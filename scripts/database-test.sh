@@ -368,6 +368,15 @@ database_test_suites='
   tests/test_hr_attendance_migration.py
   tests/test_hr_leaver_turn_off_migration.py
   tests/test_hr_office_hours_migration.py
+  tests/test_telegram_base_migration.py
+  tests/test_telegram_tenant_link_migration.py
+  tests/test_telegram_tenant_problem_report_migration.py
+  tests/test_telegram_app_pages_migration.py
+  tests/test_telegram_tenant_report_updates_migration.py
+  tests/test_telegram_contact_faq_migration.py
+  tests/test_telegram_customer_bot_migration.py
+  tests/test_telegram_visit_request_work_migration.py
+  tests/test_telegram_visit_request_close_out_migration.py
   tests/test_short_stay_migration.py
   tests/test_short_stay_booking_migration.py
   tests/test_short_stay_check_in_migration.py
