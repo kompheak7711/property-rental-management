@@ -161,6 +161,7 @@ IDENTITY = {
     "id_number": "010101010",
     "date_of_birth": "1995-04-14",
     "home_address": "Sample street, Phnom Penh",
+    "place_of_birth": "Kandal",
 }
 
 
@@ -277,6 +278,7 @@ def test_manager_adds_employees_without_salaries(hr_database: HrDatabase) -> Non
     assert found["can_see_salaries"] is False
     owner_view = read(db, first)
     assert owner_view["identity"]["home_address"] == "Sample street, Phnom Penh"
+    assert owner_view["identity"]["place_of_birth"] == "Kandal"
     assert [item["kind"] for item in owner_view["documents"]] == ["ID_CARD"]
     refused(
         db.runtime_url,

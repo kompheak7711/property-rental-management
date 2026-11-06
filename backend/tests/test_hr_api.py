@@ -156,6 +156,7 @@ def test_new_employee_with_pay_needs_manage_salaries(tmp_path: Path) -> None:
             "id_number": "010101010",
             "date_of_birth": "1995-04-14",
             "home_address": "Sample street, Phnom Penh",
+            "place_of_birth": "Kandal",
         },
         "id_photo": {
             "file_name": "id-card.jpg",

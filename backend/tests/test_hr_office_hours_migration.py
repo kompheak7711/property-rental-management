@@ -1,9 +1,10 @@
 """Add employee needs the ID; office hours; days off per job (migration 20270504_304).
 
-Owner 06/11/2026: a new employee comes with the ID type and number, the date of birth, the home
-address and a photo of the ID. Only the Property caretaker works shifts; every other job works
-07:00-11:00 and 13:00-17:00. The caretaker and the cleaner take 2 days off a month on request
-and have no usual day off; every other job, the technician too, has one usual day off a week.
+Owner 06/11/2026: a new employee comes with the ID type and number, the date and place of
+birth, the home address and a photo of the ID. Only the Property caretaker works shifts; every
+other job works 07:00-11:00 and 13:00-17:00. The caretaker and the cleaner take 2 days off a
+month on request and have no usual day off; every other job, the technician too, has one usual
+day off a week.
 """
 
 from __future__ import annotations
@@ -63,6 +64,7 @@ def test_add_employee_needs_the_id_details_and_photo(hr_database: HrDatabase) ->
         ({"identity": IDENTITY | {"id_type": "OTHER"}}, "Choose ID card or passport"),
         ({"identity": IDENTITY | {"id_number": " "}}, "Enter the ID number"),
         ({"identity": IDENTITY | {"home_address": ""}}, "Enter the home address"),
+        ({"identity": IDENTITY | {"place_of_birth": " "}}, "Enter the place of birth"),
         ({"identity": {k: v for k, v in IDENTITY.items() if k != "date_of_birth"}}, "birth"),
         ({"id_document": None}, "Add a photo of the ID card or passport"),
     ):

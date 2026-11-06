@@ -405,6 +405,7 @@ function AddEmployeeDialog({
     useState<(typeof ID_TYPES)[number]>("NATIONAL_ID");
   const [idNumber, setIdNumber] = useState("");
   const [birth, setBirth] = useState("");
+  const [birthPlace, setBirthPlace] = useState("");
   const [address, setAddress] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
   const [user, setUser] = useState("");
@@ -428,6 +429,7 @@ function AddEmployeeDialog({
     if (
       idNumber.trim() === "" ||
       birth === "" ||
+      birthPlace.trim() === "" ||
       address.trim() === "" ||
       photo === null
     ) {
@@ -452,6 +454,7 @@ function AddEmployeeDialog({
         id_type: idType,
         id_number: idNumber.trim(),
         date_of_birth: birth,
+        place_of_birth: birthPlace.trim(),
         home_address: address.trim(),
       },
     };
@@ -606,6 +609,20 @@ function AddEmployeeDialog({
           language={language}
           onChange={setBirth}
           value={birth}
+        />
+      </Field>
+      <Field
+        id="hr-ae-pob"
+        label={ht(language, "e_birth_place")}
+        note={ht(language, "required")}
+      >
+        <input
+          id="hr-ae-pob"
+          maxLength={200}
+          onChange={(event) => {
+            setBirthPlace(event.target.value);
+          }}
+          value={birthPlace}
         />
       </Field>
       <Field
@@ -1590,6 +1607,8 @@ function PayCard({
           <dd className="ui-num">{identity.id_number ?? ""}</dd>
           <dt>{ht(language, "e_birth")}</dt>
           <dd className="ui-num">{dayText(identity.date_of_birth)}</dd>
+          <dt>{ht(language, "e_birth_place")}</dt>
+          <dd>{identity.place_of_birth ?? ""}</dd>
           <dt>{ht(language, "e_address")}</dt>
           <dd>{identity.home_address ?? ""}</dd>
         </dl>
@@ -2180,6 +2199,7 @@ function IdentityDialog({
   const [type, setType] = useState(identity?.id_type ?? "NATIONAL_ID");
   const [number, setNumber] = useState(identity?.id_number ?? "");
   const [birth, setBirth] = useState(identity?.date_of_birth ?? "");
+  const [birthPlace, setBirthPlace] = useState(identity?.place_of_birth ?? "");
   const [address, setAddress] = useState(identity?.home_address ?? "");
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -2203,6 +2223,7 @@ function IdentityDialog({
         };
         if (number.trim() !== "") body.id_number = number.trim();
         if (birth !== "") body.date_of_birth = birth;
+        if (birthPlace.trim() !== "") body.place_of_birth = birthPlace.trim();
         if (address.trim() !== "") body.home_address = address.trim();
         run(() => onSave(body), onSaved);
       }}
@@ -2248,6 +2269,20 @@ function IdentityDialog({
           language={language}
           onChange={setBirth}
           value={birth}
+        />
+      </Field>
+      <Field
+        id="hr-id-pob"
+        label={ht(language, "e_birth_place")}
+        note={ht(language, "optional")}
+      >
+        <input
+          id="hr-id-pob"
+          maxLength={200}
+          onChange={(event) => {
+            setBirthPlace(event.target.value);
+          }}
+          value={birthPlace}
         />
       </Field>
       <Field

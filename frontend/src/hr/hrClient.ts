@@ -115,6 +115,7 @@ export interface EmployeeDetail extends Employee {
     id_type: string;
     id_number: string | null;
     date_of_birth: string | null;
+    place_of_birth?: string | null;
     home_address: string | null;
   } | null;
   documents: EmployeeDocument[];

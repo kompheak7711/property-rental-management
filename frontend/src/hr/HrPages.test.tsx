@@ -368,6 +368,7 @@ const ID_DETAILS = {
   id_type: "NATIONAL_ID",
   id_number: "010101010",
   date_of_birth: "1995-04-14",
+  place_of_birth: "Kandal",
   home_address: "Sample street, Phnom Penh",
 };
 const ID_PHOTO = {
@@ -383,6 +384,9 @@ function fillId(box: HTMLElement) {
   });
   fireEvent.change(within(box).getByLabelText(/Date of birth/), {
     target: { value: "14/04/1995" },
+  });
+  fireEvent.change(within(box).getByLabelText(/Place of birth/), {
+    target: { value: "Kandal" },
   });
   fireEvent.change(within(box).getByLabelText(/Home address/), {
     target: { value: "Sample street, Phnom Penh" },
