@@ -53,7 +53,8 @@ OWNER = ("telegram.contact", "telegram.faq")
 STAFF = ("telegram.contact",)
 REASON = "Owner 2026-11-03 round 29: Contact office and FAQ rights"
 SEED = "app.seed_default_role_bundles(uuid)"
-STAFF_BEFORE = "'problem_reports.add']::text[]"
+# Main's daily and weekly rent (migration 20270531_310) now ends the Staff list.
+STAFF_BEFORE = "'short_stays.housekeeping']::text[]"
 
 
 def _text(value: str) -> str:
@@ -536,7 +537,7 @@ def upgrade() -> None:
     _patch(
         SEED,
         STAFF_BEFORE,
-        "'problem_reports.add', " + ", ".join(_text(name) for name in STAFF) + "]::text[]",
+        "'short_stays.housekeeping', " + ", ".join(_text(name) for name in STAFF) + "]::text[]",
     )
     every = _array(OWNER)
     staff = _array(STAFF)

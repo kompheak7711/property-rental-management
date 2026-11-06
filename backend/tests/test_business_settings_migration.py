@@ -43,6 +43,9 @@ DOCUMENTS = {
     "BUILDING_PROBLEM": "BPyy000n",
     # Telegram bots step 3a (DL-171): Visit requests, migration 20270525_287.
     "VISIT_REQUEST": "VRyy000n",
+    # Daily and weekly rent: bookings and price quotes, migration 20270531_310.
+    "SHORT_STAY": "STyy000n",
+    "SHORT_STAY_QUOTE": "SQyy000n",
 }
 SET_RULE = "SELECT app.set_business_rule(%s, %s, %s, %s::date, %s, %s, gen_random_uuid())"
 

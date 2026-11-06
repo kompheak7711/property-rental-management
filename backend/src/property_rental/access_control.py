@@ -124,6 +124,15 @@ CAPABILITY_CATALOG: Final[dict[str, str]] = {
     "reservations.read": "Read Reservations",
     "service_rates.manage": "Change Service rates",
     "settings.manage": "Change the Settings (given per user by the Owner only)",
+    "short_stays.approve": (
+        "Approve short-stay damage charges and extra discounts and set up booking-site calendars"
+    ),
+    "short_stays.credit": "Turn money kept after a late cancel into Customer Credit",
+    "short_stays.desk": (
+        "Make, change and cancel short-stay bookings, take payment and check guests in and out"
+    ),
+    "short_stays.housekeeping": "Do and tick housekeeping tasks",
+    "short_stays.read": "See short-stay bookings, the calendar and housekeeping",
     "stock.adjust": "Adjust stock in or out",
     "stock.purchase": "Record a Purchase",
     "stock.transfer": "Move stock between places",
@@ -255,6 +264,11 @@ STAFF_TELEGRAM_CAPABILITIES: Final = frozenset({"telegram.contact"})
 # `20270526_288`, DL-172): Staff take, call, book and close them; only the Owner and the Manager
 # give a request to another person or mark it Spam (`visit_requests.manage`).
 STAFF_VISIT_REQUEST_CAPABILITIES: Final = frozenset({"visit_requests.read", "visit_requests.work"})
+# Daily and weekly rent (phase 6 step 1, migration `20270531_310`): Staff see bookings, work the
+# front desk and do housekeeping; the Owner and the Manager also approve and give Credit.
+STAFF_SHORT_STAY_CAPABILITIES: Final = frozenset(
+    {"short_stays.read", "short_stays.desk", "short_stays.housekeeping"}
+)
 STAFF_DEFAULT_BUNDLE_CAPABILITIES: Final = (
     STAFF_L1C_BUNDLE_CAPABILITIES
     | STAFF_RENT_LETTER_CAPABILITIES
@@ -264,6 +278,7 @@ STAFF_DEFAULT_BUNDLE_CAPABILITIES: Final = (
     | STAFF_PROBLEM_REPORT_CAPABILITIES
     | STAFF_TELEGRAM_CAPABILITIES
     | STAFF_VISIT_REQUEST_CAPABILITIES
+    | STAFF_SHORT_STAY_CAPABILITIES
 )
 # The default Manager bundle: every bundle capability except the Owner-only rights.
 MANAGER_DEFAULT_BUNDLE_CAPABILITIES: Final = (

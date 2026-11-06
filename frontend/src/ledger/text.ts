@@ -117,6 +117,7 @@ const TEXT = {
   s_STAFF_PAYBACK: ["Staff paid back", "សងប្រាក់បុគ្គលិក"],
   s_BILL_PAYMENT: ["Supplier bill paid", "វិក្កយបត្រអ្នកផ្គត់ផ្គង់បានបង់"],
   s_MONEY_MOVE: ["Money moved", "ផ្ទេរប្រាក់"],
+  s_SHORT_STAY_DEPOSIT: ["Short-stay deposit", "ប្រាក់កក់ស្នាក់នៅខ្លី"],
   s_OWNER_MONEY: ["Owner money", "ប្រាក់ម្ចាស់"],
   s_PETTY_CASH_TOPUP: ["Petty cash top-up", "បំពេញសាច់ប្រាក់រាយ"],
   s_CASH_COUNT: ["Cash count difference", "ភាពខុសគ្នានៃការរាប់សាច់ប្រាក់"],
@@ -217,6 +218,14 @@ const TEXT = {
   nc_since: ["since {0}", "ចាប់ពី {0}"],
   // new
   nc_saved: ["{0} now uses account {1}.", "{0} ឥឡូវប្រើគណនី {1}។"],
+  // Riel bank account (owner 04/11/2026)
+  nc_riel: ["Riel account", "គណនីរៀល"],
+  nc_riel_none: ["None", "គ្មាន"],
+  nc_riel_h: [
+    "A payment in riel goes to this account. With none, riel paid by a dollar cash method goes to 1011, and other riel goes to the account above.",
+    "ការបង់ប្រាក់ជារៀលចូលគណនីនេះ។ បើគ្មាន រៀលដែលបង់តាមមធ្យោបាយសាច់ប្រាក់ដុល្លារចូល ១០១១ ហើយរៀលផ្សេងទៀតចូលគណនីខាងលើ។",
+  ],
+  nc_riel_line: ["Riel: {0}", "រៀល៖ {0}"],
   // Financial statements
   r_title: ["Financial statements", "របាយការណ៍ហិរញ្ញវត្ថុ"],
   r_sub: [
@@ -595,6 +604,15 @@ const TEXT = {
   bk_done: ["Matched", "ត្រូវគ្នា"],
   bk_done_by: ["Done by {0}, {1}", "ធ្វើដោយ {0}, {1}"],
   bk_stmt: ["ABA statement balance on {0}", "សមតុល្យរបាយការណ៍ ABA នៅ {0}"],
+  bk_stmt_hr: [
+    "Type the closing riel balance printed on the ABA riel account statement.",
+    "វាយសមតុល្យរៀលចុងគ្រាដែលបោះពុម្ពលើរបាយការណ៍គណនីរៀល ABA។",
+  ],
+  bk_e_stmt_r: [
+    "Type the statement balance in whole riel.",
+    "សូមវាយសមតុល្យរបាយការណ៍ជារៀលគត់។",
+  ],
+  bk_worth: ["Value in dollars on {0}", "តម្លៃជាដុល្លារនៅ {0}"],
   bk_stmt_h: [
     "Type the closing balance printed on the ABA statement.",
     "វាយសមតុល្យចុងគ្រាដែលបោះពុម្ពលើរបាយការណ៍ ABA។",
@@ -743,6 +761,12 @@ const TEXT = {
     "បំពេញត្រឹមប្រាក់រាយកំណត់ក្នុងច្បាប់អាជីវកម្មសាច់ប្រាក់រាយ។",
   ],
   kh_t: ["Riel cash", "សាច់ប្រាក់រៀល"],
+  kh_bt: ["Riel in the bank", "រៀលក្នុងធនាគារ"],
+  kh_bb: ["Value in the books ({0})", "តម្លៃក្នុងសៀវភៅ ({0})"],
+  kh_bn: [
+    "On the last day of each month the app values the riel in the bank at the month-end rate. The difference goes to 4100.",
+    "នៅថ្ងៃចុងខែ កម្មវិធីវាយតម្លៃរៀលក្នុងធនាគារតាមអត្រាចុងខែ។ ភាពខុសគ្នាចូល ៤១០០។",
+  ],
   kh_q: ["Riel held", "រៀលដែលកាន់"],
   kh_b: ["Value in the books (1011)", "តម្លៃក្នុងសៀវភៅ (១០១១)"],
   kh_last: ["Last month-end value", "តម្លៃចុងខែចុងក្រោយ"],

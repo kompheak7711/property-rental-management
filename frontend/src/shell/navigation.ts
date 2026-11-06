@@ -18,6 +18,7 @@ export type PageId =
   | "customers"
   | "reservations"
   | "visitreqs"
+  | "shortstays"
   | "leases"
   | "letters"
   | "moveout"
@@ -103,6 +104,8 @@ export const MENU: readonly MenuGroup[] = [
         // Telegram bots step 3a (DL-171): Visit requests from the Customer bot.
         tabs: ["reservations", "visitreqs"],
       },
+      // Daily and weekly rent (phase 6 step 2, mock-up round 28): Tenants › Short stays.
+      { page: "shortstays", icon: "calendar" },
       {
         page: "leases",
         icon: "lease",
@@ -184,6 +187,8 @@ const PAGE_NAMES: Record<PageId, readonly [string, string]> = {
   customers: ["Customers", "អតិថិជន"],
   reservations: ["Reservations", "ការកក់ទុក"],
   visitreqs: ["Visit requests", "សំណើមកមើលបន្ទប់"],
+  // new
+  shortstays: ["Short stays", "ការស្នាក់នៅខ្លី"],
   leases: ["Leases", "កិច្ចសន្យាជួល"],
   letters: ["Letters", "លិខិត"],
   moveout: ["Move-out", "ការចាកចេញ"],
@@ -238,6 +243,8 @@ const PAGE_NEEDS: Record<PageId, readonly string[] | null> = {
   reservations: ["reservations.read"],
   // Telegram bots step 3a (DL-171): the Owner, the Manager and Staff.
   visitreqs: ["visit_requests.read"],
+  // Daily and weekly rent: the calendar and bookings read with short_stays.read.
+  shortstays: ["short_stays.read"],
   leases: ["leases.read"],
   letters: ["rent_nonpayment.read", "leases.warn"],
   moveout: ["deposits.read", "final_settlements.prepare", "leases.move_out"],
