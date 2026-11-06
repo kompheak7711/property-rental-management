@@ -367,6 +367,7 @@ database_test_suites='
   tests/test_hr_payroll_migration.py
   tests/test_hr_attendance_migration.py
   tests/test_hr_leaver_turn_off_migration.py
+  tests/test_hr_office_hours_migration.py
   tests/test_short_stay_migration.py
   tests/test_short_stay_booking_migration.py
   tests/test_short_stay_check_in_migration.py

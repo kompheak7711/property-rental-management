@@ -8,6 +8,7 @@ refuses them; a download checks the SHA-256 first.
 
 from __future__ import annotations
 
+import base64
 import hashlib
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -141,24 +142,55 @@ def test_salary_steps_need_manage_salaries_and_if_match() -> None:
     )
 
 
-def test_new_employee_with_pay_needs_manage_salaries() -> None:
+def test_new_employee_with_pay_needs_manage_salaries(tmp_path: Path) -> None:
     flow = InMemoryHr()
+    photo = b"\xff\xd8\xff sample ID card"
     form = {
         "name_en": "Sample Person",
         "name_km": "គំរូ",
         "job_title_id": str(uuid4()),
-        "shift_code": "MORNING",
         "usual_day_off": 7,
         "start_date": "2026-11-01",
+        "identity": {
+            "id_type": "NATIONAL_ID",
+            "id_number": "010101010",
+            "date_of_birth": "1995-04-14",
+            "home_address": "Sample street, Phnom Penh",
+        },
+        "id_photo": {
+            "file_name": "id-card.jpg",
+            "media_type": "image/jpeg",
+            "content_base64": base64.b64encode(photo).decode(),
+        },
     }
-    manager = client(flow, "hr.employees.manage")
+    manager = client(flow, "hr.employees.manage", files=tmp_path)
     made = manager.post(f"{base(flow)}/employees", json=form, headers=HEADERS)
     assert made.status_code == 201
     assert flow.names() == ["hr_add_employee", "hr_employee_read"]
+    # The Manager sends the ID details and photo; the database gets the saved file's record.
+    sent = flow.calls[0][1][1]
+    assert isinstance(sent, dict)
+    document: dict[str, Any] = sent["id_document"]
+    assert "id_photo" not in sent and sent["identity"]["id_type"] == "NATIONAL_ID"
+    assert document["sha256"] == hashlib.sha256(photo).hexdigest()
+    assert (tmp_path / document["storage_key"]).read_bytes() == photo
     with_pay = form | {"pay": {"monthly_salary_usd_cents": 20000, "payment_method": "CASH_USD"}}
     assert manager.post(f"{base(flow)}/employees", json=with_pay, headers=HEADERS).status_code == (
         403
     )
+    # Without the ID details or the photo the form is refused before the database.
+    for missing in ("identity", "id_photo"):
+        short = {key: value for key, value in form.items() if key != missing}
+        assert manager.post(f"{base(flow)}/employees", json=short, headers=HEADERS).status_code == (
+            422
+        )
+    bad_photo = {"file_name": "id.jpg", "media_type": "image/jpeg", "content_base64": "no!"}
+    broken = form | {"id_photo": bad_photo}
+    assert manager.post(f"{base(flow)}/employees", json=broken, headers=HEADERS).status_code == 422
+    # A refused employee leaves no file behind.
+    flow.refuse = ProductRefused("An employee is at least 15 years old on the start date")
+    assert manager.post(f"{base(flow)}/employees", json=form, headers=HEADERS).status_code == 422
+    assert len(list((tmp_path / "hr" / "documents").rglob("*.jpg"))) == 1
 
 
 @pytest.mark.parametrize(

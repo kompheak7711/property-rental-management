@@ -64018,6 +64018,46 @@
       "test_path": "frontend/src/leases/LeasesPage.test.tsx",
       "status": "implemented",
       "notes": "Short stays: Print draft shows the money off the first month for a daily guest's Lease."
+    },
+    {
+      "test_id": "test_add_employee_needs_the_id_details_and_photo",
+      "upstream_ids": [
+        "PR-HR-011"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_hr_office_hours_migration.py",
+      "status": "implemented",
+      "notes": "HRIS: a new employee needs ID card or passport, number, date of birth, address, ID photo, and age 15 (owner 06/11)."
+    },
+    {
+      "test_id": "test_only_the_caretaker_works_shifts",
+      "upstream_ids": [
+        "PR-HR-011"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_hr_office_hours_migration.py",
+      "status": "implemented",
+      "notes": "HRIS: only the Property caretaker works shifts and has no usual day off; other jobs work office hours (owner 06/11)."
+    },
+    {
+      "test_id": "test_office_late_counts_from_seven",
+      "upstream_ids": [
+        "PR-HR-050"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_hr_office_hours_migration.py",
+      "status": "implemented",
+      "notes": "HRIS: office hours 07:00-11:00 and 13:00-17:00; Late counts from 07:00."
+    },
+    {
+      "test_id": "test_the_weekly_plan_marks_a_seventh_work_day",
+      "upstream_ids": [
+        "PR-HR-052"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_hr_office_hours_migration.py",
+      "status": "implemented",
+      "notes": "HRIS: the Weekly plan marks a 7th work day in a row (Labour Law Art. 146)."
     }
   ]
 }
