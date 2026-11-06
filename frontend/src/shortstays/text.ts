@@ -500,10 +500,39 @@ const TEXT = {
   can_no_show: ["The guest did not come", "ភ្ញៀវមិនបានមក"],
   e_why: ["Say why.", "ប្រាប់មូលហេតុ។"],
   can_back: [
-    "{0} is now Customer Credit of the guest. Pay it back on Refund of Credit.",
-    "{0} ឥឡូវជាឥណទានអតិថិជនរបស់ភ្ញៀវ។ ប្រគល់វិញតាមការសងឥណទាន។",
+    "{0} is now the guest's Credit. Give it back with Refund below.",
+    // new
+    "{0} ឥឡូវជាឥណទានរបស់ភ្ញៀវ។ ប្រគល់វិញដោយប៊ូតុង សងប្រាក់ ខាងក្រោម។",
   ],
   can_open: ["Open the guest's credit", "បើកឥណទានរបស់ភ្ញៀវ"],
+  // new (owner test 06/11/2026): the Refund button after a free cancel.
+  rf_t: ["Give the money back", "ប្រគល់ប្រាក់វិញ"],
+  rf_s: [
+    "{0} goes back to the guest. A Manager or the Owner approves it in Waiting for approval.",
+    // new
+    "{0} ត្រឡប់ទៅភ្ញៀវវិញ។ អ្នកគ្រប់គ្រង ឬម្ចាស់អនុម័តក្នុង កំពុងរង់ចាំការអនុម័ត។",
+  ],
+  rf_method: ["How it goes back", "វិធីប្រគល់វិញ"],
+  rf_note: ["Reference", "ឯកសារយោង"],
+  rf_note_s: [
+    "For example: Cash at the desk, or the ABA transaction number.",
+    // new
+    "ឧទាហរណ៍៖ សាច់ប្រាក់នៅតុ ឬលេខប្រតិបត្តិការ ABA។",
+  ],
+  e_rf_note: ["Type the reference.", "វាយឯកសារយោង។"],
+  rf_b: ["Refund {0}", "សងប្រាក់ {0}"],
+  rf_wait: [
+    "Refund of {0} waits for approval.",
+    // new
+    "ការសងប្រាក់ {0} កំពុងរង់ចាំការអនុម័ត។",
+  ],
+  rf_open: ["Open Waiting for approval", "បើក កំពុងរង់ចាំការអនុម័ត"],
+  rf_done: ["Given back: {0}.", "បានប្រគល់វិញ៖ {0}។"],
+  rf_no_right: [
+    "Your account may not make a Refund. Ask a Manager.",
+    // new
+    "គណនីរបស់អ្នកមិនអាចធ្វើការសងប្រាក់បានទេ។ សូមសួរអ្នកគ្រប់គ្រង។",
+  ],
   can_kept: ["{0} is kept.", "{0} ត្រូវរក្សាទុក។"],
   can_nothing: ["No money was paid.", "មិនមានប្រាក់បានបង់ទេ។"],
   cr_t: ["Credit for a later stay", "ឥណទានសម្រាប់ការស្នាក់នៅពេលក្រោយ"],

@@ -193,6 +193,28 @@ export interface StayDamage {
   invoice_number: string | null;
 }
 
+/** Owner test 06/11/2026: a free cancel's money, given back with the Refund button. */
+export interface StayRefund {
+  credits: { credit_id: string; left_usd_cents: number }[];
+  left_usd_cents: number;
+  waiting_usd_cents: number;
+  refunded_usd_cents: number;
+}
+
+/** A Refund method (Cash, Bank transfer) from Settings. */
+export interface RefundMethod {
+  id: string;
+  name: string;
+}
+
+export interface NewRefund {
+  credit_id: string;
+  amount_usd_cents: number;
+  reason: string;
+  refund_method_id: string;
+  reference_note: string;
+}
+
 export interface Booking {
   booking_id: string;
   booking_number: string;
@@ -246,6 +268,8 @@ export interface Booking {
   paid_usd_cents: number;
   cancellation: StayCancellation | null;
   credit: StayCredit | null;
+  /** After a free cancel: the guest's Credit it made, and what the Refund button gives back. */
+  refund?: StayRefund | null;
   /** Step 4c: what comes off the first month when the guest changes to a Lease (today's rule). */
   lease_off_usd_cents: number;
   lease_offer: StayLeaseOffer | null;
@@ -560,6 +584,9 @@ export interface ShortStaysApi {
   weekReport: (propertyId: string, from: string) => Promise<WeekReport>;
   complaint: (propertyId: string, complaint: NewComplaint) => Promise<void>;
   creditsDue: (propertyId: string) => Promise<CreditDue[]>;
+  refundMethods: (propertyId: string) => Promise<RefundMethod[]>;
+  /** Records a Refund draft of one Credit; a financial.approve holder confirms it. */
+  refund: (propertyId: string, refund: NewRefund, key: string) => Promise<void>;
 }
 
 export class ShortStaysError extends Error {
@@ -802,6 +829,21 @@ function damageOf(value: unknown): StayDamage {
   };
 }
 
+function refundOf(row: Record<string, unknown>): StayRefund {
+  return {
+    credits: list(row.credits).map((entry) => {
+      const credit = record(entry);
+      return {
+        credit_id: text(credit.credit_id),
+        left_usd_cents: whole(credit.left_usd_cents),
+      };
+    }),
+    left_usd_cents: whole(row.left_usd_cents),
+    waiting_usd_cents: whole(row.waiting_usd_cents),
+    refunded_usd_cents: whole(row.refunded_usd_cents),
+  };
+}
+
 export function bookingOf(value: unknown): Booking {
   const row = record(value);
   const invoice =
@@ -892,6 +934,10 @@ export function bookingOf(value: unknown): Booking {
       row.credit === null || row.credit === undefined
         ? null
         : creditOf(record(row.credit)),
+    refund:
+      row.refund === null || row.refund === undefined
+        ? null
+        : refundOf(record(row.refund)),
     lease_off_usd_cents: whole(row.lease_off_usd_cents ?? 0),
     lease_offer:
       row.lease_offer === null || row.lease_offer === undefined
@@ -1242,6 +1288,39 @@ export const shortStaysApi: ShortStaysApi = {
     list(await request(`${base(propertyId)}/credits-due`)).map((row) =>
       creditDueOf(record(row)),
     ),
+  refundMethods: async (propertyId) =>
+    list(
+      await request(
+        `/api/v1/properties/${encodeURIComponent(propertyId)}/refund-methods`,
+        { method: "GET", headers: { "X-Financial-Property-ID": propertyId } },
+      ),
+    ).flatMap((row) => {
+      const method = record(row);
+      return method.active === true &&
+        typeof method.id === "string" &&
+        typeof method.display_name === "string"
+        ? [{ id: method.id, name: method.display_name }]
+        : [];
+    }),
+  refund: async (propertyId, refund, key) => {
+    const init = post({
+      currency: "USD",
+      source_type: "CREDIT",
+      source_id: refund.credit_id,
+      amount_usd_cents: refund.amount_usd_cents,
+      reason: refund.reason,
+      refund_method_id: refund.refund_method_id,
+      reference_note: refund.reference_note,
+    });
+    await request("/api/v1/refund-drafts", {
+      ...init,
+      headers: {
+        ...(init.headers as Record<string, string>),
+        "Idempotency-Key": key,
+        "X-Financial-Property-ID": propertyId,
+      },
+    });
+  },
 };
 
 /** Adds days to an ISO day ("2026-11-04" + 3 → "2026-11-07"), in UTC so no clock shifts it. */

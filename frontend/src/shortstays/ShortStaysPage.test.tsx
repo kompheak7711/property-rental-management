@@ -310,6 +310,8 @@ function fakeApi(overrides: Partial<ShortStaysApi> = {}): ShortStaysApi {
     ),
     complaint: vi.fn(() => Promise.resolve()),
     creditsDue: vi.fn(() => Promise.resolve([])),
+    refundMethods: vi.fn(() => Promise.resolve([])),
+    refund: vi.fn(() => Promise.reject(new Error("not used"))),
     ...overrides,
   };
 }
@@ -1168,7 +1170,7 @@ describe("Daily and weekly rent: Short stays", () => {
     });
     expect(
       await screen.findByText(
-        "$60.90 is now Customer Credit of the guest. Pay it back on Refund of Credit.",
+        "$60.90 is now the guest's Credit. Give it back with Refund below.",
       ),
     ).toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Cancel" })).toBeNull();
@@ -1890,6 +1892,118 @@ describe("Daily and weekly rent: Short stays", () => {
         amount: 6090,
       }),
     ).toEqual(["ថ្លៃស្នាក់នៅ", "Short stay", "INV260011"]);
+  });
+
+  it("TEST-FE-1852 gives the money back after a free cancel with the Refund button", async () => {
+    const cancelled: Booking = {
+      ...BOOKING,
+      status: "CANCELLED",
+      cancel_reason: "Flight changed",
+      payment: "PAID",
+      invoice: INVOICE,
+      cancellation: {
+        kind: "CANCELLED",
+        free: true,
+        paid_usd_cents: 4640,
+        back_usd_cents: 4640,
+        kept_usd_cents: 0,
+      },
+      refund: {
+        credits: [{ credit_id: "cr-1", left_usd_cents: 4640 }],
+        left_usd_cents: 4640,
+        waiting_usd_cents: 0,
+        refunded_usd_cents: 0,
+      },
+    };
+    const waiting: Booking = {
+      ...cancelled,
+      refund: {
+        credits: [{ credit_id: "cr-1", left_usd_cents: 4640 }],
+        left_usd_cents: 4640,
+        waiting_usd_cents: 4640,
+        refunded_usd_cents: 0,
+      },
+    };
+    const get = vi
+      .fn()
+      .mockResolvedValueOnce(cancelled)
+      .mockResolvedValue(waiting);
+    const refund = vi.fn(() => Promise.resolve());
+    show({
+      api: fakeApi({
+        get,
+        refund,
+        refundMethods: vi.fn(() =>
+          Promise.resolve([
+            { id: "m-cash", name: "Cash" },
+            { id: "m-aba", name: "ABA bank" },
+          ]),
+        ),
+      }),
+      capabilities: new Set([...DESK, "refunds.create", "financial.approve"]),
+    });
+    go("#/shortstays/st:b-1");
+    const card = within(
+      await screen.findByRole("region", { name: "Give the money back" }),
+    );
+    const button = card.getByRole("button", { name: "Refund $46.40" });
+    await waitFor(() => {
+      expect(card.getByLabelText(/How it goes back/)).toHaveValue("m-cash");
+    });
+    fireEvent.change(card.getByLabelText(/How it goes back/), {
+      target: { value: "m-aba" },
+    });
+    fireEvent.click(button);
+    expect(card.getByText("Type the reference.")).toBeInTheDocument();
+    expect(refund).not.toHaveBeenCalled();
+    fireEvent.change(card.getByLabelText(/Reference/), {
+      target: { value: "ABA 778899" },
+    });
+    fireEvent.click(button);
+    await waitFor(() => {
+      expect(refund).toHaveBeenCalledWith(
+        "p-1",
+        {
+          credit_id: "cr-1",
+          amount_usd_cents: 4640,
+          reason: "Free cancel ST260001: the money paid goes back",
+          refund_method_id: "m-aba",
+          reference_note: "ABA 778899",
+        },
+        expect.any(String),
+      );
+    });
+    expect(
+      await screen.findByText(/Refund of \$46\.40 waits for approval\./),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Open Waiting for approval" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Refund \$/ })).toBeNull();
+  });
+
+  it("TEST-FE-1853 tells a desk without the Refund right to ask a Manager", async () => {
+    const cancelled: Booking = {
+      ...BOOKING,
+      status: "CANCELLED",
+      refund: {
+        credits: [{ credit_id: "cr-1", left_usd_cents: 4640 }],
+        left_usd_cents: 4640,
+        waiting_usd_cents: 0,
+        refunded_usd_cents: 0,
+      },
+    };
+    show({
+      api: fakeApi({ get: vi.fn(() => Promise.resolve(cancelled)) }),
+      capabilities: DESK,
+    });
+    go("#/shortstays/st:b-1");
+    expect(
+      await screen.findByText(
+        "Your account may not make a Refund. Ask a Manager.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Refund \$/ })).toBeNull();
   });
 
   it("TEST-FE-1851 shows matching Customers while the guest's name is typed", async () => {

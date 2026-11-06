@@ -9,6 +9,7 @@ import { Icon } from "../shell/icons";
 import { openPageInAddress } from "../shell/useHashPage";
 import type { Language } from "../signInText";
 import { GuestPanel } from "./GuestPanel";
+import { RefundCard } from "./RefundCard";
 import { PriceLines } from "./NewBooking";
 import { BookingChip, nightsText, unitTypeText } from "./ShortStaysPage";
 import {
@@ -309,6 +310,15 @@ export function BookingDetail({
           <ExtendCard key={`ext:${cards}`} {...steps} />
           <CancelCard key={`can:${cards}`} {...steps} />
           <CancelledCard key={`done:${cards}`} {...steps} />
+          <RefundCard
+            api={api}
+            booking={booking}
+            key={`refund:${cards}`}
+            language={language}
+            may={may}
+            onDone={load}
+            propertyId={propertyId}
+          />
           <LeaseCard key={`lease:${cards}`} {...steps} />
           <RoomCheckCard key={`room:${cards}`} {...steps} />
           <DamagesCard key={`dmg:${cards}`} {...steps} />

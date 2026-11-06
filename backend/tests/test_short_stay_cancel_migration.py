@@ -14,6 +14,7 @@ from collections.abc import Iterator
 from datetime import date, timedelta
 from pathlib import Path
 
+import psycopg
 import pytest
 from alembic.config import Config
 from alembic.script import ScriptDirectory
@@ -102,6 +103,33 @@ def test_a_free_cancel_gives_the_money_back_as_credit(stay_database: BookingData
     assert (cancel["free"], cancel["back_usd_cents"], cancel["kept_usd_cents"]) == (True, 4640, 0)
     assert cancelled["deposit"]["status"] == "RETURNED"
     assert credit_of(db, guest) == 4640
+    # Owner test 06/11/2026: the booking shows what the Refund button gives back.
+    assert cancelled["refund"]["left_usd_cents"] == 4640
+    assert cancelled["refund"]["waiting_usd_cents"] == 0
+    assert cancelled["refund"]["refunded_usd_cents"] == 0
+    [source] = cancelled["refund"]["credits"]
+    assert source["left_usd_cents"] == 4640
+    with psycopg.connect(db.owner_url) as connection:
+        method = connection.execute(
+            "SELECT id FROM app.refund_methods WHERE active ORDER BY code LIMIT 1"
+        ).fetchone()
+        assert method is not None
+        connection.execute(
+            "SELECT app.record_refund_draft(%s,%s,%s,'USD','CREDIT',%s,NULL,%s,%s,%s,%s,%s)",
+            (
+                db.property_id,
+                db.manager,
+                uuid.uuid4(),
+                source["credit_id"],
+                4640,
+                "Free cancel",
+                method[0],
+                "Cash at the desk",
+                "refunds.create",
+            ),
+        )
+    waiting = read(db, made)["refund"]
+    assert (waiting["left_usd_cents"], waiting["waiting_usd_cents"]) == (4640, 4640)
     # Free cancel gives no extra credit; the nights are free again.
     refused(
         db.runtime_url,
