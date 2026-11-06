@@ -37,6 +37,15 @@ const CLEANER = {
   code: "CLEANER",
   name_en: "Cleaner",
   name_km: "អ្នកសម្អាត",
+  uses_shifts: false,
+};
+
+const CARETAKER = {
+  id: "job-2",
+  code: "CARETAKER",
+  name_en: "Property Caretaker",
+  name_km: "អ្នកថែរក្សាអគារ",
+  uses_shifts: true,
 };
 
 const DARA: Employee = {
@@ -115,7 +124,7 @@ const CHOICES: HrChoices = {
       name_km: "វេនព្រឹក",
     },
   ],
-  job_titles: [CLEANER],
+  job_titles: [CLEANER, CARETAKER],
   free_users: [],
   next_employee_code: "E-003",
   pay_day: 5,
@@ -249,8 +258,9 @@ const DAY: AttendanceDay = {
       employee_code: "E-001",
       name_en: "Chan Dara",
       name_km: "ចាន់ ដារ៉ា",
-      job_en: "Cleaner",
-      job_km: "អ្នកសម្អាត",
+      job_en: "Property Caretaker",
+      job_km: "អ្នកថែរក្សាអគារ",
+      uses_shifts: true,
       planned_shift: "MORNING",
       day_off: false,
       entry_id: "en-1",
@@ -294,6 +304,7 @@ const WEEK: AttendanceWeek = {
       employee_code: "E-001",
       name_en: "Chan Dara",
       name_km: "ចាន់ ដារ៉ា",
+      uses_shifts: true,
       days: [2, 3, 4, 5, 6, 7, 8].map((date) => ({
         work_date: `2026-11-0${String(date)}`,
         works: true,
@@ -351,6 +362,36 @@ const PLACES: PlaceList = {
     },
   ],
 };
+
+const ID_DETAILS = {
+  id_type: "NATIONAL_ID",
+  id_number: "010101010",
+  date_of_birth: "1995-04-14",
+  home_address: "Sample street, Phnom Penh",
+};
+const ID_PHOTO = {
+  file_name: "id.jpg",
+  media_type: "image/jpeg",
+  content_base64: btoa("sample ID"),
+};
+
+/** Fill the ID details and the ID photo of the Add employee form. */
+function fillId(box: HTMLElement) {
+  fireEvent.change(within(box).getByLabelText(/ID card or passport number/), {
+    target: { value: "010101010" },
+  });
+  fireEvent.change(within(box).getByLabelText(/Date of birth/), {
+    target: { value: "14/04/1995" },
+  });
+  fireEvent.change(within(box).getByLabelText(/Home address/), {
+    target: { value: "Sample street, Phnom Penh" },
+  });
+  fireEvent.change(within(box).getByLabelText(/Photo of the ID card/), {
+    target: {
+      files: [new File(["sample ID"], "id.jpg", { type: "image/jpeg" })],
+    },
+  });
+}
 
 function fakeApi(overrides: Partial<HrApi> = {}): HrApi {
   return {
@@ -462,15 +503,17 @@ describe("HRIS phase 6 screens", () => {
     fireEvent.change(within(box).getByLabelText("Salary"), {
       target: { value: "285.50" },
     });
+    fillId(box);
     fireEvent.click(within(box).getByRole("button", { name: "Add employee" }));
     await screen.findByText("Employee Keo Sophea added.");
     expect(api.addEmployee).toHaveBeenCalledWith(PROPERTY, {
       name_en: "Keo Sophea",
       name_km: "កែវ សុភា",
       job_title_id: "job-1",
-      shift_code: "MORNING",
       usual_day_off: 7,
       start_date: "2026-11-05",
+      identity: ID_DETAILS,
+      id_photo: ID_PHOTO,
       pay: { monthly_salary_usd_cents: 28_550, payment_method: "CASH_USD" },
     });
   });
@@ -735,6 +778,106 @@ describe("HRIS phase 6 screens", () => {
       work_date: "2026-11-08",
       shift_code: null,
     });
+  });
+
+  it("TEST-FE-1400 Add employee needs the ID details and photo; only the caretaker picks a shift", async () => {
+    const api = fakeApi();
+    render(
+      <EmployeesPage
+        active
+        api={api}
+        capabilities={null}
+        language="en"
+        propertyId={PROPERTY}
+      />,
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Add employee" }),
+    );
+    const box = dialog();
+    fireEvent.change(within(box).getByLabelText(/Name in English/), {
+      target: { value: "Sok Mara" },
+    });
+    fireEvent.change(within(box).getByLabelText(/Name in Khmer/), {
+      target: { value: "សុខ ម៉ារ៉ា" },
+    });
+    // A cleaner works office hours with a usual day off, and picks no shift.
+    expect(within(box).getByText(/Office hours: 7:00 to 11:00/)).toBeVisible();
+    expect(within(box).queryByLabelText(/Usual shift/)).toBeNull();
+    fireEvent.click(within(box).getByRole("button", { name: "Add employee" }));
+    expect(
+      await within(box).findByText(/Enter the ID type and number/),
+    ).toBeVisible();
+    expect(api.addEmployee).not.toHaveBeenCalled();
+    // The Property caretaker picks a shift and has no usual day off.
+    fireEvent.change(within(box).getByLabelText(/^Job/), {
+      target: { value: "job-2" },
+    });
+    expect(within(box).queryByLabelText(/Usual day off/)).toBeNull();
+    expect(within(box).getByText(/has no usual day off/)).toBeVisible();
+    fireEvent.change(within(box).getByLabelText(/Usual shift/), {
+      target: { value: "NIGHT" },
+    });
+    fireEvent.change(within(box).getByLabelText(/ID type/), {
+      target: { value: "PASSPORT" },
+    });
+    fillId(box);
+    fireEvent.click(within(box).getByRole("button", { name: "Add employee" }));
+    await screen.findByText("Employee Keo Sophea added.");
+    expect(api.addEmployee).toHaveBeenCalledWith(PROPERTY, {
+      name_en: "Sok Mara",
+      name_km: "សុខ ម៉ារ៉ា",
+      job_title_id: "job-2",
+      shift_code: "NIGHT",
+      start_date: "2026-11-05",
+      identity: { ...ID_DETAILS, id_type: "PASSPORT" },
+      id_photo: ID_PHOTO,
+    });
+  });
+
+  it("TEST-FE-1401 the weekly plan marks a 7th work day in a row; office staff plan office hours only", async () => {
+    const [first] = WEEK.people;
+    if (first === undefined) throw new Error("The sample week has a person");
+    const week: AttendanceWeek = {
+      ...WEEK,
+      people: [
+        {
+          ...first,
+          days: first.days.map((one, index) => ({
+            ...one,
+            seventh_day: index >= 5,
+          })),
+        },
+        {
+          employee_id: "emp-2",
+          employee_code: "E-002",
+          name_en: "Lim Sokha",
+          name_km: "លឹម សុខា",
+          uses_shifts: false,
+          days: first.days.map((one) => ({
+            ...one,
+            shift_code: "OFFICE" as const,
+            seventh_day: false,
+          })),
+        },
+      ],
+    };
+    const api = fakeApi({ week: vi.fn(() => Promise.resolve(week)) });
+    render(
+      <AttendancePage active api={api} language="en" propertyId={PROPERTY} />,
+    );
+    await screen.findByText("Late 20 min");
+    fireEvent.click(screen.getByRole("button", { name: "Weekly plan" }));
+    expect(await screen.findAllByText("7th work day in a row")).toHaveLength(2);
+    expect(screen.getByText(/allows at most 6 work days a week/)).toBeVisible();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Plan · Lim Sokha · 08/11/2026" }),
+    );
+    const box = dialog();
+    expect(
+      within(box).getByLabelText("Office hours 7:00-11:00, 13:00-17:00"),
+    ).toBeChecked();
+    expect(within(box).queryByLabelText("Morning shift")).toBeNull();
   });
 
   it("TEST-FE-1308 approves overtime, and a new place QR is shown once after it is made", async () => {

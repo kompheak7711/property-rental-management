@@ -26,6 +26,20 @@ export function shiftText(language: Language, code: ShiftCode | null): string {
   return code === null ? "" : codeText(language, "sh_", code);
 }
 
+const CARETAKER_SHIFTS: readonly ShiftCode[] = [
+  "MORNING",
+  "AFTERNOON",
+  "NIGHT",
+];
+const OFFICE_ONLY: readonly ShiftCode[] = ["OFFICE"];
+
+/** The shifts a person can work: the caretaker's three, or office hours for any other job. */
+export function shiftChoices(
+  usesShifts: boolean | undefined,
+): readonly ShiftCode[] {
+  return usesShifts === true ? CARETAKER_SHIFTS : OFFICE_ONLY;
+}
+
 /** What the person sees when a command did not go through. */
 export function failureText(language: Language, error: unknown): string {
   if (error instanceof HrError) {

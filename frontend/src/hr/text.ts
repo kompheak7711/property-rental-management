@@ -61,9 +61,19 @@ const TEXT = {
   sh_MORNING: ["Morning shift", "វេនព្រឹក"],
   sh_AFTERNOON: ["Afternoon shift", "វេនរសៀល"],
   sh_NIGHT: ["Night shift", "វេនយប់"],
+  sh_OFFICE: [
+    "Office hours 7:00-11:00, 13:00-17:00",
+    // new
+    "ម៉ោងការិយាល័យ 7:00-11:00, 13:00-17:00",
+  ],
   shs_MORNING: ["Morning", "ព្រឹក"],
   shs_AFTERNOON: ["Afternoon", "រសៀល"],
   shs_NIGHT: ["Night", "យប់"],
+  shs_OFFICE: [
+    "Office",
+    // new
+    "ការិយាល័យ",
+  ],
   rr_CLEANER: ["Cleaner reports", "របាយការណ៍អ្នកសម្អាត"],
   rr_TECHNICIAN: ["Technician reports", "របាយការណ៍ជាង"],
   rr_CARETAKER: ["Caretaker reports", "របាយការណ៍អ្នកថែទាំ"],
@@ -115,6 +125,51 @@ const TEXT = {
   e_job: ["Job", "ការងារ"],
   e_shift: ["Usual shift", "វេនធម្មតា"],
   e_dayoff: ["Usual day off", "ថ្ងៃឈប់ធម្មតា"],
+  e_hours: [
+    "Working hours",
+    // new
+    "ម៉ោងធ្វើការ",
+  ],
+  e_office_hours: [
+    "Office hours: 7:00 to 11:00 and 13:00 to 17:00. Late counts from 7:00.",
+    // new
+    "ម៉ោងការិយាល័យ៖ 7:00 ដល់ 11:00 និង 13:00 ដល់ 17:00។ យឺតរាប់ពី 7:00។",
+  ],
+  e_no_dayoff: [
+    "The Property caretaker has no usual day off. Set one rest day each week on the Weekly plan.",
+    // new
+    "អ្នកថែរក្សាអគារគ្មានថ្ងៃឈប់ធម្មតាទេ។ សូមកំណត់ថ្ងៃសម្រាកមួយថ្ងៃរៀងរាល់សប្ដាហ៍ក្នុងផែនការប្រចាំសប្ដាហ៍។",
+  ],
+  e_id_head: [
+    "ID details",
+    // new
+    "ព័ត៌មានអត្តសញ្ញាណ",
+  ],
+  e_id_number: [
+    "ID card or passport number",
+    // new
+    "លេខអត្តសញ្ញាណប័ណ្ណ ឬលិខិតឆ្លងដែន",
+  ],
+  e_id_photo: [
+    "Photo of the ID card or passport",
+    // new
+    "រូបថតអត្តសញ្ញាណប័ណ្ណ ឬលិខិតឆ្លងដែន",
+  ],
+  e_id_photo_note: [
+    "JPG, PNG or PDF, up to 15 MB.",
+    // new
+    "JPG, PNG ឬ PDF ធំបំផុត 15 MB។",
+  ],
+  e_id_photo_big: [
+    "The file is larger than 15 MB.",
+    // new
+    "ឯកសារធំជាង 15 MB។",
+  ],
+  e_id_need: [
+    "Enter the ID type and number, date of birth and home address, and add the ID photo.",
+    // new
+    "សូមបញ្ចូលប្រភេទ និងលេខអត្តសញ្ញាណ ថ្ងៃខែឆ្នាំកំណើត អាសយដ្ឋានផ្ទះ ហើយបន្ថែមរូបថតអត្តសញ្ញាណ។",
+  ],
   e_from: ["From", "ចាប់ពី"],
   e_leaves: ["Leaves {0}", "ចាកចេញ {0}"],
   e_starts: [
@@ -784,6 +839,16 @@ const TEXT = {
   a_off: ["Day off", "ឈប់"],
   a_days_off: ["Days off", "ថ្ងៃឈប់"],
   a_fewer_off: ["Fewer than {0} day off", "តិចជាង {0} ថ្ងៃឈប់"],
+  a_seventh: [
+    "7th work day in a row",
+    // new
+    "ថ្ងៃធ្វើការទី 7 ជាប់គ្នា",
+  ],
+  a_seventh_note: [
+    "The Labour Law allows at most 6 work days a week. Plan a rest day.",
+    // new
+    "ច្បាប់ការងារអនុញ្ញាតឲ្យធ្វើការច្រើនបំផុត 6 ថ្ងៃក្នុងមួយសប្ដាហ៍។ សូមកំណត់ថ្ងៃសម្រាក។",
+  ],
   a_past_note: [
     "Past days cannot change. A person with fewer than {0} day off in the week gets a warning; it does not stop the plan.",
     "ថ្ងៃកន្លងហើយមិនអាចប្ដូរ។ អ្នកមានថ្ងៃឈប់តិចជាង {0} ក្នុងសប្ដាហ៍ ទទួលការព្រមាន វាមិនបញ្ឈប់ផែនការទេ។",

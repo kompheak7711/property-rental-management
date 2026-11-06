@@ -64058,6 +64058,26 @@
       "test_path": "backend/tests/test_hr_office_hours_migration.py",
       "status": "implemented",
       "notes": "HRIS: the Weekly plan marks a 7th work day in a row (Labour Law Art. 146)."
+    },
+    {
+      "test_id": "TEST-FE-1400",
+      "upstream_ids": [
+        "PR-HR-011"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/hr/HrPages.test.tsx",
+      "status": "implemented",
+      "notes": "HRIS: Add employee needs the ID details and ID photo; only the Property caretaker picks a shift (owner 06/11)."
+    },
+    {
+      "test_id": "TEST-FE-1401",
+      "upstream_ids": [
+        "PR-HR-052"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/hr/HrPages.test.tsx",
+      "status": "implemented",
+      "notes": "HRIS: the Weekly plan marks a 7th work day in a row; office staff plan office hours only."
     }
   ]
 }
