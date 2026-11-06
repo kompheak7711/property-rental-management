@@ -191,7 +191,7 @@ export function GuestPanel({
         </>
       )}
       {may("short_stays.desk") && (
-        <form className="ui-form" noValidate onSubmit={add}>
+        <form className="ui-form ss-form" noValidate onSubmit={add}>
           <div className="ui-field">
             <label htmlFor="ss-guest-note">{st(language, "gh_note")}</label>
             <textarea

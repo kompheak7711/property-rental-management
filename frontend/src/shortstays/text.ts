@@ -71,6 +71,12 @@ const TEXT = {
   f_note: ["Note", "កំណត់ចំណាំ"],
   f_guest: ["Guest", "ភ្ញៀវ"],
   f_find: ["Find a guest by name or phone", "ស្វែងរកភ្ញៀវតាមឈ្មោះ ឬទូរស័ព្ទ"],
+  // new (owner test 06/11/2026): Customers who match the typed name or phone.
+  g_matches: [
+    "Already a Customer? Choose them instead of adding again:",
+    // new
+    "ជាអតិថិជនរួចហើយ? ជ្រើសពួកគេជំនួសការបន្ថែមម្តងទៀត៖",
+  ],
   f_found_none: [
     "No Customer has this name or phone. Add the guest below.",
     // new

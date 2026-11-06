@@ -381,7 +381,7 @@ export function WeekReport({
               </ul>
             )}
             {may("short_stays.desk") && (
-              <form className="ui-form" noValidate onSubmit={record}>
+              <form className="ui-form ss-form" noValidate onSubmit={record}>
                 <h3>{st(language, "cp_add")}</h3>
                 <div className="ui-field">
                   <label htmlFor="cp-what">{st(language, "cp_what")}</label>

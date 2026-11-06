@@ -165,10 +165,9 @@ export function NewBookingForm({
   const [note, setNote] = useState("");
   // The guest: a Customer found here, or a new one added with the booking.
   const [guest, setGuest] = useState<Guest | null>(null);
-  const [adding, setAdding] = useState(false);
-  const [query, setQuery] = useState("");
+  // Owner test 06/11/2026: one guest form; typing the name or the phone shows the Customers
+  // who match, to pick instead of adding the guest again.
   const [found, setFound] = useState<CustomerListItem[] | null>(null);
-  const [finding, setFinding] = useState(false);
   const [findFailed, setFindFailed] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -250,23 +249,34 @@ export function NewBookingForm({
     };
   }, [api, propertyId, unitId, checkIn, checkOut]);
 
-  const find = () => {
-    const text = query.trim();
-    if (text === "") return;
-    setFinding(true);
+  const adding = guest === null && mayAddGuest;
+  // The words to look for: the phone when typed, else the name (2 letters at least).
+  const lookFor =
+    phone.trim().length >= 3
+      ? phone.trim()
+      : name.trim().length >= 2
+        ? name.trim()
+        : "";
+  useEffect(() => {
+    setFound(null);
     setFindFailed(false);
-    void customerApi
-      .list(propertyId, { query: text, active: true })
-      .then((page) => {
-        setFound(page.items);
-      })
-      .catch(() => {
-        setFindFailed(true);
-      })
-      .finally(() => {
-        setFinding(false);
-      });
-  };
+    if (guest !== null || lookFor === "") return;
+    let current = true;
+    const wait = window.setTimeout(() => {
+      void customerApi
+        .list(propertyId, { query: lookFor, active: true })
+        .then((page) => {
+          if (current) setFound(page.items.slice(0, 5));
+        })
+        .catch(() => {
+          if (current) setFindFailed(true);
+        });
+    }, 300);
+    return () => {
+      current = false;
+      window.clearTimeout(wait);
+    };
+  }, [customerApi, propertyId, guest, lookFor]);
 
   const count = Number(guestCount);
   // Step 5a: nights a booking site holds; a booking from that same site is that guest.
@@ -299,7 +309,7 @@ export function NewBookingForm({
     in: "sb-in",
     nights: "sb-nights",
     unit: "sb-unit",
-    guest: "sb-find",
+    guest: "sb-name",
     name: "sb-name",
     id: "sb-id",
     guests: "sb-guests",
@@ -341,7 +351,6 @@ export function NewBookingForm({
       };
       // Added once: a later try books this Customer and never adds the guest again.
       setGuest(added);
-      setAdding(false);
       return added;
     } catch (error: unknown) {
       if (error instanceof CustomerIdNumberInUseError)
@@ -418,7 +427,6 @@ export function NewBookingForm({
       legal_name: item.legal_name,
       phone: item.phone_number ?? null,
     });
-    setAdding(false);
     setGuestProblem(null);
   };
 
@@ -565,7 +573,7 @@ export function NewBookingForm({
         </div>
       )}
       <div className="ui-split">
-        <form className="ui-card ui-form" noValidate onSubmit={submit}>
+        <form className="ui-card ui-form ss-form" noValidate onSubmit={submit}>
           <div className="ui-row2">
             <div className="ui-field">
               <label htmlFor="sb-in">
@@ -694,15 +702,20 @@ export function NewBookingForm({
                   {st(language, "g_change")}
                 </button>
               </p>
-            ) : adding ? (
+            ) : (
               <>
                 <div className="ui-field">
                   <label htmlFor="sb-name">
                     {st(language, "f_name")}
-                    <span className="req">{st(language, "required")}</span>
+                    {mayAddGuest && (
+                      <span className="req">{st(language, "required")}</span>
+                    )}
                   </label>
                   <input
-                    aria-invalid={shown("name") !== null}
+                    aria-describedby="sb-name-err"
+                    aria-invalid={
+                      shown("name") !== null || shown("guest") !== null
+                    }
                     autoComplete="off"
                     disabled={busy}
                     id="sb-name"
@@ -712,27 +725,32 @@ export function NewBookingForm({
                     }}
                     value={name}
                   />
-                  <Missing id="sb-name-err" text={shown("name")} />
+                  <Missing
+                    id="sb-name-err"
+                    text={shown("name") ?? shown("guest")}
+                  />
                 </div>
                 <div className="ui-row2">
-                  <div className="ui-field">
-                    <label htmlFor="sb-id">
-                      {st(language, "f_id")}
-                      <span className="req">{st(language, "required")}</span>
-                    </label>
-                    <input
-                      aria-invalid={shown("id") !== null}
-                      autoComplete="off"
-                      disabled={busy}
-                      id="sb-id"
-                      maxLength={64}
-                      onChange={(event) => {
-                        setIdNumber(event.currentTarget.value);
-                      }}
-                      value={idNumber}
-                    />
-                    <Missing id="sb-id-err" text={shown("id")} />
-                  </div>
+                  {mayAddGuest && (
+                    <div className="ui-field">
+                      <label htmlFor="sb-id">
+                        {st(language, "f_id")}
+                        <span className="req">{st(language, "required")}</span>
+                      </label>
+                      <input
+                        aria-invalid={shown("id") !== null}
+                        autoComplete="off"
+                        disabled={busy}
+                        id="sb-id"
+                        maxLength={64}
+                        onChange={(event) => {
+                          setIdNumber(event.currentTarget.value);
+                        }}
+                        value={idNumber}
+                      />
+                      <Missing id="sb-id-err" text={shown("id")} />
+                    </div>
+                  )}
                   <div className="ui-field">
                     <label htmlFor="sb-phone">{st(language, "f_phone")}</label>
                     <input
@@ -748,102 +766,45 @@ export function NewBookingForm({
                     />
                   </div>
                 </div>
-                <button
-                  className="ui-btn link"
-                  disabled={busy}
-                  onClick={() => {
-                    setAdding(false);
-                    setGuestProblem(null);
-                  }}
-                  type="button"
-                >
-                  {st(language, "cancel")}
-                </button>
-              </>
-            ) : (
-              <>
-                <div className="ui-field">
-                  <label htmlFor="sb-find">{st(language, "f_find")}</label>
-                  <div className="ui-actions">
-                    <input
-                      aria-invalid={shown("guest") !== null}
-                      autoComplete="off"
-                      disabled={busy}
-                      id="sb-find"
-                      maxLength={120}
-                      onChange={(event) => {
-                        setQuery(event.currentTarget.value);
-                      }}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter") {
-                          event.preventDefault();
-                          find();
-                        }
-                      }}
-                      type="search"
-                      value={query}
-                    />
-                    <button
-                      className="ui-btn"
-                      disabled={busy || finding}
-                      onClick={find}
-                      type="button"
-                    >
-                      <Icon name="search" small />
-                      {st(language, finding ? "f_finding" : "f_find_b")}
-                    </button>
-                  </div>
-                  <Missing id="sb-guest-err" text={shown("guest")} />
-                </div>
                 {findFailed && (
                   <p className="ui-error">
                     <Icon name="alert" small />
                     <span>{st(language, "failed")}</span>
                   </p>
                 )}
-                {found !== null && found.length === 0 && (
-                  <p className="ui-muted">{st(language, "f_found_none")}</p>
-                )}
                 {found !== null && found.length > 0 && (
-                  <ul className="ui-plain ss-found">
-                    {found.map((item) => (
-                      <li key={item.customer_id}>
-                        <span>
-                          <b>{item.legal_name}</b>
-                          {item.phone_number != null && (
-                            <span className="ui-num">
-                              {" "}
-                              · {item.phone_number}
-                            </span>
-                          )}
-                        </span>
-                        <button
-                          className="ui-btn"
-                          disabled={busy}
-                          onClick={() => {
-                            pickGuest(item);
-                          }}
-                          type="button"
-                        >
-                          {st(language, "g_choose")}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
+                  <div aria-live="polite">
+                    <p className="ui-small ui-muted">
+                      {st(language, "g_matches")}
+                    </p>
+                    <ul className="ui-plain ss-found">
+                      {found.map((item) => (
+                        <li key={item.customer_id}>
+                          <span>
+                            <b>{item.legal_name}</b>
+                            {item.phone_number != null && (
+                              <span className="ui-num">
+                                {" "}
+                                · {item.phone_number}
+                              </span>
+                            )}
+                          </span>
+                          <button
+                            className="ui-btn"
+                            disabled={busy}
+                            onClick={() => {
+                              pickGuest(item);
+                            }}
+                            type="button"
+                          >
+                            {st(language, "g_choose")}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
-                {mayAddGuest ? (
-                  <button
-                    className="ui-btn"
-                    disabled={busy}
-                    onClick={() => {
-                      setAdding(true);
-                    }}
-                    type="button"
-                  >
-                    <Icon name="userplus" small />
-                    {st(language, "g_add_new")}
-                  </button>
-                ) : (
+                {!mayAddGuest && (
                   <p className="ui-small ui-muted">
                     {st(language, "g_no_right")}
                   </p>

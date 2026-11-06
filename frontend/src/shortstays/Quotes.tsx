@@ -231,7 +231,7 @@ export function Quotes({
         </section>
       )}
       {may("short_stays.desk") && (
-        <form className="ui-card ui-form" noValidate onSubmit={make}>
+        <form className="ui-card ui-form ss-form" noValidate onSubmit={make}>
           <h2>{st(language, "q_new")}</h2>
           {problem !== null && (
             <div className="ui-notice warn" role="alert">

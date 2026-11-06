@@ -494,10 +494,10 @@ describe("Daily and weekly rent: Short stays", () => {
     expect(await screen.findByText("3 × night $26.00")).toBeInTheDocument();
     expect(screen.getAllByText("$54.60")).toHaveLength(2);
     expect(screen.getByLabelText(/^Unit/)).toHaveValue("u-503");
-    fireEvent.change(screen.getByLabelText("Find a guest by name or phone"), {
+    // Typing the phone shows the matching Customers (owner test 06/11/2026).
+    fireEvent.change(screen.getByLabelText(/^Phone/), {
       target: { value: "010" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Find" }));
     fireEvent.click(await screen.findByRole("button", { name: "Choose" }));
     expect(customerApi.list).toHaveBeenCalledWith("p-1", {
       query: "010",
@@ -610,9 +610,7 @@ describe("Daily and weekly rent: Short stays", () => {
       customerApi: fakeCustomers({ create }),
       capabilities: new Set([...DESK, "customers.manage"]),
     });
-    fireEvent.click(
-      await screen.findByRole("button", { name: "Add a new guest" }),
-    );
+    await screen.findByLabelText(/^Full name/);
     fireEvent.click(screen.getByRole("button", { name: "Book" }));
     expect(
       await screen.findAllByText("Type the guest's full name."),
@@ -1743,10 +1741,10 @@ describe("Daily and weekly rent: Short stays", () => {
     );
     show({ api: fakeApi({ guest }) });
     await screen.findByText("1 × night $26.00");
-    fireEvent.change(screen.getByLabelText("Find a guest by name or phone"), {
+    // Typing the phone shows the matching Customers (owner test 06/11/2026).
+    fireEvent.change(screen.getByLabelText(/^Phone/), {
       target: { value: "010" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Find" }));
     fireEvent.click(await screen.findByRole("button", { name: "Choose" }));
     expect(
       await screen.findByText(
@@ -1892,5 +1890,30 @@ describe("Daily and weekly rent: Short stays", () => {
         amount: 6090,
       }),
     ).toEqual(["ថ្លៃស្នាក់នៅ", "Short stay", "INV260011"]);
+  });
+
+  it("TEST-FE-1851 shows matching Customers while the guest's name is typed", async () => {
+    go("#/shortstays/new:u-503:2026-11-06");
+    const { customerApi } = show({
+      capabilities: new Set([...DESK, "customers.manage"]),
+    });
+    expect(screen.queryByLabelText("Find a guest by name or phone")).toBeNull();
+    fireEvent.change(await screen.findByLabelText(/^Full name/), {
+      target: { value: "Lim" },
+    });
+    expect(
+      await screen.findByText(
+        "Already a Customer? Choose them instead of adding again:",
+      ),
+    ).toBeInTheDocument();
+    expect(customerApi.list).toHaveBeenLastCalledWith("p-1", {
+      query: "Lim",
+      active: true,
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Choose" }));
+    expect(
+      await screen.findByRole("button", { name: "Change guest" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByLabelText(/^ID or passport number/)).toBeNull();
   });
 });

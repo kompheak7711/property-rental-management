@@ -231,7 +231,7 @@ export function DepositCard({
         </p>
       )}
       {mayTake && (
-        <form className="ui-form" noValidate onSubmit={take}>
+        <form className="ui-form ss-form" noValidate onSubmit={take}>
           <fieldset className="ui-radios">
             <legend className="ui-sr">{st(language, "dep_t")}</legend>
             {(["CASH", "CARD_HOLD"] as const).map((value) => (
@@ -485,7 +485,7 @@ export function RoomCheckCard({
         {st(language, "room_due", dayText(task.task_on))}
       </p>
       {may("short_stays.housekeeping") && (
-        <form className="ui-form" noValidate onSubmit={submit}>
+        <form className="ui-form ss-form" noValidate onSubmit={submit}>
           <label className="ui-chk">
             <input
               checked={damaged}
@@ -1047,7 +1047,7 @@ export function CancelledCard({
           </div>
         )}
       {mayCredit && (
-        <form className="ui-form" noValidate onSubmit={give}>
+        <form className="ui-form ss-form" noValidate onSubmit={give}>
           <h3>{st(language, "cr_t")}</h3>
           <p className="ui-small ui-muted">{st(language, "cr_s")}</p>
           <div className="ui-row2">
@@ -1264,7 +1264,7 @@ export function DiscountCard({
     <section aria-labelledby="ss-disc" className="ui-card">
       <h2 id="ss-disc">{st(language, "dc_t")}</h2>
       <p className="ui-small ui-muted">{st(language, "dc_s")}</p>
-      <form className="ui-form" noValidate onSubmit={give}>
+      <form className="ui-form ss-form" noValidate onSubmit={give}>
         <div className="ui-row2">
           <div className="ui-field">
             <label htmlFor="ss-disc-amount">{st(language, "dc_amount")}</label>

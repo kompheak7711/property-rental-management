@@ -300,7 +300,7 @@ export function SiteCalendars({
           ))}
         </ul>
       )}
-      <form className="ui-card ui-form" noValidate onSubmit={add}>
+      <form className="ui-card ui-form ss-form" noValidate onSubmit={add}>
         <h2>{st(language, "sc_add")}</h2>
         <div className="ui-row2">
           <div className="ui-field">
