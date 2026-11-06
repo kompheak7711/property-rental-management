@@ -2819,3 +2819,15 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **Links:** DL-115, DL-175, DL-177.
 - **Decision date:** 2026-11-05.
 
+## DL-179 — Telegram bots: load the 15 starter FAQ questions
+
+- **Type:** `TECHNICAL DECISION`
+- **Status:** `BUILT ON BRANCH claude/telegram-faq-load; WAITS FOR THE OWNER'S OK TO MERGE`
+- **Source:** the owner's OK of 5 Nov 2026 09:17 to load the 15 questions of the FAQ draft (https://claude.ai/artifact/SRHPb3gRAArsJ5jDeAzgQR), and DL-170 (the Owner approves every FAQ answer before a bot shows it). Technical choices by Claude under the owner's 2026-10-23 22:30 rule; no new business or money rule.
+- **(A) What loads.** The 15 questions and answers of the FAQ draft, in English and Khmer, word for word, with the bots that show each one: questions 1 to 5 and 7 to 10 for the Customer bot, 12 to 14 for the Tenant bot, and 6, 11 and 15 for both.
+- **(B) Each waits for the Owner.** A loaded question is a proposed version with no approval, the same as a question typed by the Manager. No bot shows it until the Owner approves it in Office › Telegram › FAQ.
+- **(C) Once only, on an empty FAQ.** The button "Load the 15 starter questions" shows only when the Property's FAQ is empty and the person has `telegram.faq`. Loading again, or loading when a question already exists, is refused (409), so nothing is doubled and nothing typed is changed.
+- **Open:** the native Khmer check of the answers; question 3 shows the Studio and the One-Bedroom both at $299; question 1 says "Tap Map" and the bot may not have a Map button yet. The Owner can fix any answer before approving it.
+- **Built:** migration `20270625_336` (DB-TG-015), API-TG-007, `frontend/src/telegram/TelegramPages.tsx`.
+- **Links:** DL-170.
+- **Decision date:** 2026-11-06.
