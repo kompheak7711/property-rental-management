@@ -1,4 +1,4 @@
-"""A Refund paid straight from a riel account (migration 20270610_321, DL-161).
+"""A Refund paid straight from a riel account (migration 20270612_321, DL-161).
 
 Owner 05/11/2026 07:25: "Refund straight from riel account." The Refund stays in dollars for
 the tenant; the riel that left the riel account is typed once in Ledger > Needs check, and the

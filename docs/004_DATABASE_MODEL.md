@@ -5671,7 +5671,7 @@ Owner decisions: the cards of 04/11/2026 12:05 ("Riel bank account per method") 
 
 ## DB-GL-009 — Refunds paid from a riel account (General Ledger, DL-161)
 
-Owner message of 05/11/2026 07:25. Migration `20270610_321` (forward-only; changes the GL functions named below).
+Owner message of 05/11/2026 07:25. Migration `20270612_321` (forward-only; changes the GL functions named below).
 
 - `app.gl_refund_riel` (append-only, `app.gl_reject_mutation`): `id`, `property_id`, `refund_id` (unique, FK `app.refunds`), `riel_minor` (1 or more), `created_at`, `created_by`. The runtime login may read it, not write it.
 - `app.gl_record_refund_riel(property, actor, refund, riel_minor, correlation)` (runtime; right `ledger.money_move`): only for a Refund of this Property that waits with "Type the riel paid for this Refund" and is not posted yet (P0002 none, 55000 not waiting or already typed, 22023 riel 0). Audit event `ledger.refund_riel.recorded`.

@@ -514,7 +514,7 @@ function EntryDetail({
 
 const PAY_PREFIX = "No ledger account is set for the Payment Method";
 const REFUND_PREFIX = "No ledger account is set for the Refund method";
-// Refund paid from a riel account (migration 20270610_321, DL-161).
+// Refund paid from a riel account (migration 20270612_321, DL-161).
 const TYPE_RIEL = "Type the riel paid for this Refund";
 const READY = "Ready: it posts at the next run";
 const RIEL_CORRECTION = "A Refund correction on a riel account cannot post yet";

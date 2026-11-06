@@ -2617,6 +2617,6 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **(C) Refund from a riel account.** A Refund method may use a riel account (1021, or riel cash 1011). The Refund stays in dollars for the tenant. The riel that left the account is typed once in Ledger › Needs check (right `ledger.money_move`; the card asking "Needs check or the refund screen" is still open, Claude's recommendation built), then the Refund posts DR its source, CR the riel account with the riel.
 - **(D) Waits for later:** a Refund correction on a riel account waits in Needs check.
 - **(E) Bank transfers (no build).** One Payment Method per account the money goes into: "Bank transfer (USD account)" to 1020 with no riel account, and "Bank transfer (KHR account)" to 1020 with riel account 1021.
-- **Built:** migration `20270610_321` (DB-GL-009), API-GL-016, Ledger › Needs check ("Type the riel"), Month-end close ("Riel at month end"), Balance sheet.
+- **Built:** migration `20270612_321` (DB-GL-009), API-GL-016, Ledger › Needs check ("Type the riel"), Month-end close ("Riel at month end"), Balance sheet.
 - **Links:** DL-160.
 - **Decision date:** 2026-11-05.

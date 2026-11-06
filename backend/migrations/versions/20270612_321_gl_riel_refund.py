@@ -27,8 +27,8 @@ from collections.abc import Sequence
 from alembic import op
 from sqlalchemy import text
 
-revision: str = "20270610_321"
-down_revision: str | None = "20270609_320"
+revision: str = "20270612_321"
+down_revision: str | None = "20270611_351"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
