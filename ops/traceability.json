@@ -63610,16 +63610,6 @@
       "notes": "Telegram bots step 4a: Every Staff bot text is Khmer in both languages (owner rule)."
     },
     {
-      "test_id": "the Staff forms: the page, the person's name, roles and shift, then a card scan with its photo",
-      "upstream_ids": [
-        "DL-174"
-      ],
-      "test_level": "unit",
-      "test_path": "relay/test/relay.test.ts",
-      "status": "implemented",
-      "notes": "Telegram bots step 4a: The relay serves /app/staff (Location, QR scan, card scan), gives a linked person their name, roles and shift, and seals a card scan form with its photo."
-    },
-    {
       "test_id": "test_staff_report_a_problem_with_a_photo",
       "upstream_ids": [
         "DL-175",
@@ -63882,7 +63872,7 @@
       "notes": "Telegram bots step 4e: A Maintenance check moves a planned visit to Checked with the cause, how staff entered and the CHECK photos; fixed at once only for an urgent visit; a visit no longer planned is refused."
     },
     {
-      "test_id": "test_the_new_functions_are_behind_the_telegram_right",
+      "test_id": "test_the_unit_check_functions_are_behind_the_telegram_right",
       "upstream_ids": [
         "DL-178",
         "DB-TG-014"

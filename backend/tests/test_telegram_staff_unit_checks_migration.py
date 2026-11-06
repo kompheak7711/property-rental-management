@@ -316,7 +316,7 @@ def test_a_maintenance_check_moves_the_visit_to_checked(
     }
 
 
-def test_the_new_functions_are_behind_the_telegram_right(
+def test_the_unit_check_functions_are_behind_the_telegram_right(
     checks_database: HrDatabase, staff: dict[str, uuid.UUID]
 ) -> None:
     db = checks_database
