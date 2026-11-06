@@ -65375,6 +65375,26 @@
       "test_path": "backend/tests/test_telegram_staff_bot.py",
       "status": "implemented",
       "notes": "Telegram bots step 4e: The Staff bot answers the Unit Check (all good, findings with their numbers, wrong role, refused) and the Maintenance check (checked, fixed, not planned, refused) in Khmer."
+    },
+    {
+      "test_id": "test_add_employee_checks_the_same_id_number",
+      "upstream_ids": [
+        "PR-HR-011"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_hr_office_hours_migration.py",
+      "status": "implemented",
+      "notes": "HRIS: the same ID number stops Add employee while that person works; a leaver needs Hire again (owner 06/11 14:09, migration 305)."
+    },
+    {
+      "test_id": "TEST-FE-1402",
+      "upstream_ids": [
+        "PR-HR-011"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/hr/HrPages.test.tsx",
+      "status": "implemented",
+      "notes": "HRIS: Add employee asks Hire again when the ID number belonged to a leaver (owner 06/11 14:09)."
     }
   ]
 }

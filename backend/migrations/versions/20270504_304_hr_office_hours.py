@@ -6,7 +6,7 @@
    file first and the employee, the ID details and the ID document are written in one
    transaction. Whoever may add an employee (hr.employees.manage) enters them; seeing them later
    and changing them stays with the salary right. An employee is at least 15 years old on the
-   start date (Labour Law Art. 177).
+   start date (Labour Law Art. 177). Owner 10:45: the place of birth is kept and asked for too.
 2. Only the Property caretaker works shifts (app.shift_job_titles). Every other job works the
    new OFFICE hours, 07:00-11:00 and 13:00-17:00 (Late counts from 07:00).
 3. Days off (owner 10:24): the Property caretaker and the cleaner have no usual day off; they
@@ -47,6 +47,9 @@ def _patch(signature: str, replacements: tuple[tuple[str, str], ...]) -> None:
 
 
 TABLES = """
+    -- Owner 10:45: the place of birth, as on the ID card or passport. Older records have none.
+    ALTER TABLE app.employee_identity_records ADD COLUMN place_of_birth text
+        CHECK (place_of_birth = btrim(place_of_birth) AND length(place_of_birth) BETWEEN 1 AND 200);
     ALTER TABLE app.work_shifts DROP CONSTRAINT work_shifts_code_check;
     ALTER TABLE app.work_shifts ADD CONSTRAINT work_shifts_code_check
         CHECK (code IN ('MORNING', 'AFTERNOON', 'NIGHT', 'OFFICE'));
@@ -219,6 +222,9 @@ ADD_EMPLOYEE_PATCHES = (
         IF nullif(btrim(coalesce(p_body #>> '{identity,home_address}', '')), '') IS NULL THEN
             RAISE EXCEPTION 'Enter the home address' USING ERRCODE = '22023';
         END IF;
+        IF nullif(btrim(coalesce(p_body #>> '{identity,place_of_birth}', '')), '') IS NULL THEN
+            RAISE EXCEPTION 'Enter the place of birth' USING ERRCODE = '22023';
+        END IF;
         v_birth := app.hr_date(p_body -> 'identity', 'date_of_birth', 'The date of birth is not a date');
         IF v_birth IS NULL THEN
             RAISE EXCEPTION 'Enter the date of birth' USING ERRCODE = '22023';
@@ -253,6 +259,29 @@ ADD_EMPLOYEE_PATCHES = (
         INSERT INTO app.employee_documents (employee_id, file_id, document_kind, title, created_by)
         VALUES (v_id, v_file, 'ID_CARD', CASE p_body #>> '{identity,id_type}'
             WHEN 'PASSPORT' THEN 'Passport' ELSE 'ID card' END, p_actor);""",
+    ),
+)
+
+ADD_IDENTITY = "app.hr_add_identity(uuid, jsonb, uuid)"
+ADD_IDENTITY_PATCHES = (
+    (
+        "            date_of_birth, home_address, created_by)",
+        "            date_of_birth, home_address, place_of_birth, created_by)",
+    ),
+    (
+        "            app.problem_text(p_body, 'home_address', 300, 'The address is at most 300 letters'),",
+        "            app.problem_text(p_body, 'home_address', 300, 'The address is at most 300 letters'),\n"
+        "            app.problem_text(p_body, 'place_of_birth', 200,\n"
+        "                'The place of birth is at most 200 letters'),",
+    ),
+)
+
+EMPLOYEE_READ = "app.hr_employee_read(uuid, uuid, uuid, uuid)"
+EMPLOYEE_READ_PATCHES = (
+    (
+        "'date_of_birth', record.date_of_birth, 'home_address', record.home_address,",
+        "'date_of_birth', record.date_of_birth, 'home_address', record.home_address,\n"
+        "                    'place_of_birth', record.place_of_birth,",
     ),
 )
 
@@ -309,6 +338,8 @@ WEEK_PATCHES = (
 def upgrade() -> None:
     op.execute(TABLES)
     op.execute(FUNCTIONS)
+    _patch(ADD_IDENTITY, ADD_IDENTITY_PATCHES)
+    _patch(EMPLOYEE_READ, EMPLOYEE_READ_PATCHES)
     _patch(ADD_EMPLOYEE, ADD_EMPLOYEE_PATCHES)
     _patch(STEP, STEP_PATCHES)
     _patch(CHOICES, CHOICES_PATCHES)

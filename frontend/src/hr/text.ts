@@ -166,9 +166,9 @@ const TEXT = {
     "ឯកសារធំជាង 15 MB។",
   ],
   e_id_need: [
-    "Enter the ID type and number, date of birth and home address, and add the ID photo.",
+    "Enter the ID type and number, date and place of birth and home address, and add the ID photo.",
     // new
-    "សូមបញ្ចូលប្រភេទ និងលេខអត្តសញ្ញាណ ថ្ងៃខែឆ្នាំកំណើត អាសយដ្ឋានផ្ទះ ហើយបន្ថែមរូបថតអត្តសញ្ញាណ។",
+    "សូមបញ្ចូលប្រភេទ និងលេខអត្តសញ្ញាណ ថ្ងៃខែឆ្នាំកំណើត ទីកន្លែងកំណើត អាសយដ្ឋានផ្ទះ ហើយបន្ថែមរូបថតអត្តសញ្ញាណ។",
   ],
   e_from: ["From", "ចាប់ពី"],
   e_leaves: ["Leaves {0}", "ចាកចេញ {0}"],
@@ -224,6 +224,16 @@ const TEXT = {
     "Date of birth",
     // new
     "ថ្ងៃខែឆ្នាំកំណើត",
+  ],
+  e_hire_again: [
+    "Hire again: this person worked here before",
+    // new
+    "ជួលម្តងទៀត៖ បុគ្គលនេះធ្លាប់ធ្វើការនៅទីនេះ",
+  ],
+  e_birth_place: [
+    "Place of birth",
+    // new
+    "ទីកន្លែងកំណើត",
   ],
   e_address: [
     "Home address",

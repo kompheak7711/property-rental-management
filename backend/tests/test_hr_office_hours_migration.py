@@ -1,14 +1,16 @@
 """Add employee needs the ID; office hours; days off per job (migration 20270504_304).
 
-Owner 06/11/2026: a new employee comes with the ID type and number, the date of birth, the home
-address and a photo of the ID. Only the Property caretaker works shifts; every other job works
-07:00-11:00 and 13:00-17:00. The caretaker and the cleaner take 2 days off a month on request
-and have no usual day off; every other job, the technician too, has one usual day off a week.
+Owner 06/11/2026: a new employee comes with the ID type and number, the date and place of
+birth, the home address and a photo of the ID. Only the Property caretaker works shifts; every
+other job works 07:00-11:00 and 13:00-17:00. The caretaker and the cleaner take 2 days off a
+month on request and have no usual day off; every other job, the technician too, has one usual
+day off a week.
 """
 
 from __future__ import annotations
 
 import json
+import uuid
 from collections.abc import Iterator
 from datetime import timedelta
 from typing import Any
@@ -63,6 +65,7 @@ def test_add_employee_needs_the_id_details_and_photo(hr_database: HrDatabase) ->
         ({"identity": IDENTITY | {"id_type": "OTHER"}}, "Choose ID card or passport"),
         ({"identity": IDENTITY | {"id_number": " "}}, "Enter the ID number"),
         ({"identity": IDENTITY | {"home_address": ""}}, "Enter the home address"),
+        ({"identity": IDENTITY | {"place_of_birth": " "}}, "Enter the place of birth"),
         ({"identity": {k: v for k, v in IDENTITY.items() if k != "date_of_birth"}}, "birth"),
         ({"id_document": None}, "Add a photo of the ID card or passport"),
     ):
@@ -225,3 +228,33 @@ def test_the_weekly_plan_counts_days_off_a_month(hr_database: HrDatabase) -> Non
     weekly = week_of(technician)
     assert (weekly["uses_shifts"], weekly["days_off_per_month"]) == (False, None)
     assert [day["shift_code"] for day in weekly["days"]][-2:] == ["OFFICE", None]
+
+
+def test_add_employee_checks_the_same_id_number(hr_database: HrDatabase) -> None:
+    """Migration 20270505_305 (owner 06/11 14:09): one person is not hired twice at once."""
+    db = hr_database
+    same = IDENTITY | {"id_number": "SAME 0505"}
+    first = add_employee(
+        db, db.manager, name_en="Sok Mara", job_title_id=job_id(db, "CLEANER"), identity=same
+    )
+    code = read(db, first)["employee_code"]
+    # Spaces and letter case do not count.
+    message = refused(
+        db.runtime_url,
+        "22023",
+        ADD,
+        db.property_id,
+        form(db, identity=same | {"id_number": "same0505"}),
+        db.manager,
+    )
+    assert f"This ID number belongs to {code} Sok Mara, who still works here" in message
+    left = db.today - timedelta(days=1)
+    step(db, first, "LEAVE", effective_date=str(left), reason="Moved away")
+    message = refused(
+        db.runtime_url, "22023", ADD, db.property_id, form(db, identity=same), db.manager
+    )
+    assert f"belonged to {code} Sok Mara, who left on {left:%d/%m/%Y}. Hire again?" in message
+    again = run(
+        db.runtime_url, ADD, db.property_id, form(db, identity=same, hire_again=True), db.manager
+    )
+    assert read(db, uuid.UUID(str(again)))["identity"]["id_number"] == "SAME 0505"

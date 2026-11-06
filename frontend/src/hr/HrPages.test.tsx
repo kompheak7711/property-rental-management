@@ -368,6 +368,7 @@ const ID_DETAILS = {
   id_type: "NATIONAL_ID",
   id_number: "010101010",
   date_of_birth: "1995-04-14",
+  place_of_birth: "Kandal",
   home_address: "Sample street, Phnom Penh",
 };
 const ID_PHOTO = {
@@ -383,6 +384,9 @@ function fillId(box: HTMLElement) {
   });
   fireEvent.change(within(box).getByLabelText(/Date of birth/), {
     target: { value: "14/04/1995" },
+  });
+  fireEvent.change(within(box).getByLabelText(/Place of birth/), {
+    target: { value: "Kandal" },
   });
   fireEvent.change(within(box).getByLabelText(/Home address/), {
     target: { value: "Sample street, Phnom Penh" },
@@ -834,6 +838,48 @@ describe("HRIS phase 6 screens", () => {
       identity: { ...ID_DETAILS, id_type: "PASSPORT" },
       id_photo: ID_PHOTO,
     });
+  });
+
+  it("TEST-FE-1402 Add employee asks Hire again when the ID number belonged to a leaver", async () => {
+    const api = fakeApi();
+    vi.mocked(api.addEmployee).mockRejectedValueOnce(
+      new HrError(
+        422,
+        "This ID number belonged to E-003 Sok Mara, who left on 30/06/2026. Hire again?",
+      ),
+    );
+    render(
+      <EmployeesPage
+        active
+        api={api}
+        capabilities={null}
+        language="en"
+        propertyId={PROPERTY}
+      />,
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Add employee" }),
+    );
+    const box = dialog();
+    fireEvent.change(within(box).getByLabelText(/Name in English/), {
+      target: { value: "Sok Mara" },
+    });
+    fireEvent.change(within(box).getByLabelText(/Name in Khmer/), {
+      target: { value: "សុខ ម៉ារ៉ា" },
+    });
+    fillId(box);
+    expect(within(box).queryByLabelText(/Hire again/)).toBeNull();
+    fireEvent.click(within(box).getByRole("button", { name: "Add employee" }));
+    expect(
+      await within(box).findByText(/who left on 30\/06\/2026/),
+    ).toBeVisible();
+    fireEvent.click(within(box).getByLabelText(/Hire again/));
+    fireEvent.click(within(box).getByRole("button", { name: "Add employee" }));
+    await screen.findByText("Employee Keo Sophea added.");
+    expect(api.addEmployee).toHaveBeenLastCalledWith(
+      PROPERTY,
+      expect.objectContaining({ hire_again: true }),
+    );
   });
 
   it("TEST-FE-1401 the weekly plan counts the caretaker's days off a month; office staff plan office hours only", async () => {

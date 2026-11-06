@@ -5836,7 +5836,7 @@ Added by DL-173 (migration `20270527_289`, forward-only).
 
 ## DB-TG-010 — The Staff bot: join, check-in and card scans (bots step 4a)
 
-Added by DL-174 (migrations `20270619_330`, which only starts the Staff bot line after the HR head `20270504_304`, and `20270620_331`, forward-only). No new table: the staff requests, links and scans are HR's (`telegram_staff_requests`, `employee_telegram_links`, `attendance_scans`).
+Added by DL-174 (migrations `20270619_330`, which only starts the Staff bot line after the HR head `20270505_305`, and `20270620_331`, forward-only). No new table: the staff requests, links and scans are HR's (`telegram_staff_requests`, `employee_telegram_links`, `attendance_scans`).
 
 - Each call checks the Telegram jobs' account (`telegram.operate`) and then calls the HR function with the service actor the job was given: `app.telegram_staff_who` (`hr_telegram_staff`, plus whether a join request waits), `app.telegram_staff_join` (`hr_record_staff_request`), `app.telegram_staff_check` (`record_staff_check_scan`), `app.telegram_staff_card` (`record_card_check_scan`), `app.telegram_staff_photos_due` and `app.telegram_staff_photo_removed` (`hr_photos_due`, `hr_record_photo_removal`). The scan answers add the time and the shift start in Property time and the shift's Khmer name.
 - `app.telegram_staff_form_data` (`telegram.operate`): the relay's Staff list (staff with a working link today: name, report roles, shift) and the form choices (the Problem report types and places).
