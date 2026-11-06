@@ -2827,7 +2827,8 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **(A) What loads.** The 15 questions and answers of the FAQ draft, in English and Khmer, word for word, with the bots that show each one: questions 1 to 5 and 7 to 10 for the Customer bot, 12 to 14 for the Tenant bot, and 6, 11 and 15 for both.
 - **(B) Each waits for the Owner.** A loaded question is a proposed version with no approval, the same as a question typed by the Manager. No bot shows it until the Owner approves it in Office › Telegram › FAQ.
 - **(C) Once only, on an empty FAQ.** The button "Load the 15 starter questions" shows only when the Property's FAQ is empty and the person has `telegram.faq`. Loading again, or loading when a question already exists, is refused (409), so nothing is doubled and nothing typed is changed.
-- **Open:** the native Khmer check of the answers; question 3 shows the Studio and the One-Bedroom both at $299; question 1 says "Tap Map" and the bot may not have a Map button yet. The Owner can fix any answer before approving it.
+- **(D) Owner changes of 6 Nov 2026 17:32.** Question 1 ends with the Google Maps link of the building, and question 3 sends the reader to the website for the monthly rent instead of listing prices (the website address is written `[website link]` until the Owner gives it). The public website drops these two questions from its own FAQ.
+- **Open:** the native Khmer check of the answers; the website address in question 3. The Owner can change any answer at any time; each change waits for the Owner's approval.
 - **Built:** migration `20270625_336` (DB-TG-015), API-TG-007, `frontend/src/telegram/TelegramPages.tsx`.
 - **Links:** DL-170.
 - **Decision date:** 2026-11-06.

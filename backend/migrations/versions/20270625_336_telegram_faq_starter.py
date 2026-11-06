@@ -15,8 +15,9 @@ Owner").
    12 to 14 for the Tenant bot, and 6, 11 and 15 for both bots.
 4. Loading is refused once the FAQ has any question, so the starter questions never come twice.
 
-The words are kept here as they were in the draft; the Owner can change any of them before
-approving. Technical choices by Claude under the owner's 2026-10-23 22:30 rule.
+The words are kept here as they were in the draft, except (owner 06/11 17:32) question 1 links to
+Google Maps and question 3 sends the reader to the website for prices; the Owner can change any
+of them before or after approving. Technical choices by Claude under the owner's 2026-10-23 22:30 rule.
 """
 
 import json
@@ -34,9 +35,9 @@ STARTER: tuple[tuple[str, str, str, str, str], ...] = (
     (
         "CUSTOMER",
         "Where is CHETANA Residence located?",
-        "CHETANA Residence is located at No. 39JZ, Street 598, Sangkat Tuol Sangke 1, Khan Russey Keo, Phnom Penh, near Camko Roundabout. Tap \"Map\" for directions.",
+        "CHETANA Residence is located at No. 39JZ, Street 598, Sangkat Tuol Sangke 1, Khan Russey Keo, Phnom Penh, near Camko Roundabout. Open the map in Google Maps: https://maps.app.goo.gl/S5k67Jj44EARjabP8",
         "លំនៅដ្ឋាន ចេតនា ស្ថិតនៅទីណា?",
-        "លំនៅដ្ឋាន ចេតនា ស្ថិតនៅផ្ទះលេខ 39JZ ផ្លូវលេខ 598 សង្កាត់ទួលសង្កែ១ ខណ្ឌឫស្សីកែវ រាជធានីភ្នំពេញ ក្បែររង្វង់មូលកាំកូ (Camko)។ សូមចុច «ផែនទី» ដើម្បីមើលទិសដៅ។",
+        "លំនៅដ្ឋាន ចេតនា ស្ថិតនៅផ្ទះលេខ 39JZ ផ្លូវលេខ 598 សង្កាត់ទួលសង្កែ១ ខណ្ឌឫស្សីកែវ រាជធានីភ្នំពេញ ក្បែររង្វង់មូលកាំកូ (Camko)។ បើកផែនទីក្នុង Google Maps៖ https://maps.app.goo.gl/S5k67Jj44EARjabP8",
     ),
     (
         "CUSTOMER",
@@ -48,9 +49,9 @@ STARTER: tuple[tuple[str, str, str, str, str], ...] = (
     (
         "CUSTOMER",
         "How much is the monthly rent?",
-        "Monthly rent starts from: Studio $299, One-Bedroom $299, Two-Bedroom $499 and Three-Bedroom $699. Rent includes 24/7 security cameras, parking and building caretakers. A 12-month lease gets 5% off the monthly rent. Move-in offer: 50% off the first month's rent with a lease of 6 months or more. The final price depends on the specific room.",
+        "Please see the latest monthly rent for each room type on our website: [website link]. The final price depends on the specific room.",
         "ថ្លៃជួលប្រចាំខែប៉ុន្មាន?",
-        "ថ្លៃជួលប្រចាំខែចាប់ពី៖ ស្ទូឌីយោ $299 បន្ទប់គេង១ $299 បន្ទប់គេង២ $499 និងបន្ទប់គេង៣ $699។ ថ្លៃជួលរួមមាន កាមេរ៉ាសុវត្ថិភាព ២៤/៧ ចំណតយានយន្ត និងអ្នកថែរក្សាអគារ។ កិច្ចសន្យា ១២ ខែ ទទួលបានបញ្ចុះតម្លៃ ៥% លើថ្លៃជួលប្រចាំខែ។ កម្មវិធីពិសេសសម្រាប់អ្នកចូលថ្មី៖ បញ្ចុះតម្លៃ ៥០% លើថ្លៃជួលខែដំបូង សម្រាប់កិច្ចសន្យា ៦ ខែ ឬលើសពីនេះ។ តម្លៃជាក់ស្តែងអាស្រ័យលើបន្ទប់នីមួយៗ។",
+        "សូមមើលថ្លៃជួលប្រចាំខែចុងក្រោយសម្រាប់បន្ទប់នីមួយៗ នៅលើគេហទំព័ររបស់យើង៖ [website link]។ តម្លៃជាក់ស្តែងអាស្រ័យលើបន្ទប់នីមួយៗ។",
     ),
     (
         "CUSTOMER",
