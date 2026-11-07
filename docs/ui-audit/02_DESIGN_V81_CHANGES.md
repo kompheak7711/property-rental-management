@@ -12,12 +12,16 @@ Date 07/11/2026. Branch `ui-v81`.
 ## What changed
 
 1. **Wording.** The A1 review (03_WORDING_REVIEW.md) applied to the design: 148 design texts changed (list below). Ledger names 1100/1110 Accounts receivable, 2210 Unapplied payments, 3900 Retained earnings. Khmer is not changed except the new words, which are marked `// new` in the source.
-2. **Sub-tab rule (B2).** A record or Settings page with more than one table shows a sub-tab row: "Details" (records) or "General" (Settings) first, holding the cards, then one sub-tab per table with a count badge. Number cards stay above. A page with one table and no cards has no sub-tab row. Pills on desktop, one scrolling row on a phone. The chosen sub-tab is kept in the address (`#unit?tab=t1`) and does not add a Back step. Keyboard: arrow keys, Home and End.
+2. **Sub-tab rule (B2).** Settings (and any list page with more than one table) shows a sub-tab row. Record pages (Lease, Customer, Unit, Employee, Reservation) stay on one page, as the owner asked on 07/11 07:55 (see 8). Settings sub-tabs: "Details" (records) or "General" (Settings) first, holding the cards, then one sub-tab per table with a count badge. Number cards stay above. A page with one table and no cards has no sub-tab row. Pills on desktop, one scrolling row on a phone. The chosen sub-tab is kept in the address (`#unit?tab=t1`) and does not add a Back step. Keyboard: arrow keys, Home and End.
 3. **Back rule (B3).** The Back link reads "Back to X" (the page you came from). It returns to that page with its tab, filters and scroll place. Opened directly, it goes to the parent list. The browser Back button does the same, and closes an open drawer first. Changing a section tab or sub-tab adds no history step.
 4. **Drawer forms (B2).** Add and Edit forms open as a right drawer (full-screen sheet at 640 px or less), with the Save row fixed at the bottom. Closing with changes asks first. Confirm dialogs without fields stay in the middle.
 5. **Audit log Export.** One "Export" button; the dialog asks Excel (.xlsx) or PDF.
 6. **Items the app already has**, now in the design: riel bank 1021 (Bank and cash sub-tab with "Riel in the bank" and the ABA riel statement match), the riel account per Payment Method, the riel amount for a Refund paid from 1021 in Needs check, and the Short stays Quotes tab.
 7. Footer and banner say "Design v81".
+8. **Owner changes after Part A (07/11 07:55).**
+   - Record pages stay on one page, no sub-tabs. The History card shows the latest 5 with a "History" button to a full History page. Customer: Latest Receipts shows 5 with "All Receipts"; Customer statement shows only the balance due with "Full statement". Unit and Lease work the same way.
+   - Buttons stay short: a role badge never sits inside a button. "Reduce or waive MANAGER" is now "Adjust charge" with "Manager only" beside it. This applies to every button with a role badge.
+   - Short stays: pressing Check out before the booked check-out day shows "Not the check-out date" with "Keep the stay" or "Check out early".
 
 ## Not changed in v81 (on purpose)
 
@@ -39,7 +43,7 @@ Phone (v81, 375): ![01-home after 375](screenshots/design-v81/01-home-after-375.
 
 ### 2. Unit record (U101)
 
-Sub-tab rule: Details first, then one sub-tab per table with a count badge. "Back to Units" instead of "Back". Record section "History" (owner decision 8).
+"Back to Units" instead of "Back". The record stays on one page; the History card shows the latest 5 with a History button (owner 07/11 07:55).
 
 | Before (v80, 1280) | After (v81, 1280) |
 |---|---|
@@ -116,6 +120,38 @@ Forms open as a right drawer (full-screen sheet on a phone). Closing with change
 | ![09-edit-form before 1280](screenshots/design-v81/09-edit-form-before-1280.png) | ![09-edit-form after 1280](screenshots/design-v81/09-edit-form-after-1280.png) |
 
 Phone (v81, 375): ![09-edit-form after 375](screenshots/design-v81/09-edit-form-after-375.png)
+
+### Customer record
+
+One page. Statement shows the balance due and "Full statement"; Latest Receipts shows 5 and "All Receipts"; History shows 5 and "History".
+
+| v81, 1280 | v81, 375 |
+|---|---|
+| ![10-customer-record 1280](screenshots/design-v81/10-customer-record-after-1280.png) | ![10-customer-record 375](screenshots/design-v81/10-customer-record-after-375.png) |
+
+### Lease record
+
+Signers, Occupants and History together on one page; History shows the latest 5 and a History button.
+
+| v81, 1280 | v81, 375 |
+|---|---|
+| ![11-lease-record 1280](screenshots/design-v81/11-lease-record-after-1280.png) | ![11-lease-record 375](screenshots/design-v81/11-lease-record-after-375.png) |
+
+### Late-payment charge button
+
+"Adjust charge" with "Manager only" beside the button.
+
+| v81, 1280 | v81, 375 |
+|---|---|
+| ![12-late-charge-button 1280](screenshots/design-v81/12-late-charge-button-after-1280.png) | ![12-late-charge-button 375](screenshots/design-v81/12-late-charge-button-after-375.png) |
+
+### Short stay early check-out
+
+Warning before checking out a paid stay before its check-out day.
+
+| v81, 1280 | v81, 375 |
+|---|---|
+| ![13-early-checkout-warning 1280](screenshots/design-v81/13-early-checkout-warning-after-1280.png) | ![13-early-checkout-warning 375](screenshots/design-v81/13-early-checkout-warning-after-375.png) |
 
 ## Wording changed in the design (v80 → v81)
 
