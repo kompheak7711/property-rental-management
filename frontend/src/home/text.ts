@@ -3,6 +3,7 @@
 // in the mock-up.
 
 import type { Language } from "../signInText";
+import { singular } from "../shell/plural";
 
 const TEXT = {
   as_of: ["As of {0}", "គិតត្រឹមម៉ោង {0}"],
@@ -190,10 +191,12 @@ export function hmt(
   ...values: (string | number)[]
 ): string {
   const text = TEXT[key][language === "en" ? 0 : 1];
-  return text.replace(/\{(\d+)\}/g, (match, index: string) => {
-    const value = values[Number(index)];
-    return value === undefined ? match : String(value);
-  });
+  return singular(
+    text.replace(/\{(\d+)\}/g, (match, index: string) => {
+      const value = values[Number(index)];
+      return value === undefined ? match : String(value);
+    }),
+  );
 }
 
 const WEEKDAYS = {

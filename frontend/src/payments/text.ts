@@ -3,6 +3,7 @@
 // are not in the mock-up.
 
 import type { Language } from "../signInText";
+import { singular } from "../shell/plural";
 
 const TEXT = {
   pay_title: ["Payments", "ការបង់ប្រាក់"],
@@ -404,8 +405,10 @@ export function pyt(
   ...values: (string | number)[]
 ): string {
   const text = TEXT[key][language === "en" ? 0 : 1];
-  return text.replace(/\{(\d+)\}/g, (match, index: string) => {
-    const value = values[Number(index)];
-    return value === undefined ? match : String(value);
-  });
+  return singular(
+    text.replace(/\{(\d+)\}/g, (match, index: string) => {
+      const value = values[Number(index)];
+      return value === undefined ? match : String(value);
+    }),
+  );
 }

@@ -181,7 +181,10 @@ import {
 } from "./telegram/TelegramPages";
 import type { TelegramApi } from "./telegram/telegramClient";
 import { ShortStaysPage } from "./shortstays/ShortStaysPage";
-import type { ShortStaysApi } from "./shortstays/shortStaysClient";
+import {
+  type ShortStaysApi,
+  shortStaysApi as defaultShortStaysApi,
+} from "./shortstays/shortStaysClient";
 import type { QuotationsApi } from "./quotations/quotationsClient";
 import type { ProductsApi } from "./products/productsClient";
 import { type ActorAccessApi, actorAccessApi } from "./shell/accessClient";
@@ -1844,6 +1847,7 @@ export function App({
           decisionApi={draftDecisionApi}
           language={language}
           propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
+          shortStaysApi={shortStaysApi ?? defaultShortStaysApi}
         />
       </div>
       <div className="shell-page" data-page="units" hidden={!shown("units")}>

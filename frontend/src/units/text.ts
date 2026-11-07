@@ -3,6 +3,7 @@
 // the mock-up.
 
 import type { Language } from "../signInText";
+import { singular } from "../shell/plural";
 
 const TEXT = {
   sub: ["{0} Units at CHETANA Residence", "បន្ទប់ {0} នៅ CHETANA Residence"],
@@ -400,7 +401,9 @@ export function ut(
   key: UnitTextKey,
   ...values: (string | number)[]
 ): string {
-  return TEXT[key][language === "en" ? 0 : 1].replace(/\{(\d)\}/g, (_, n) =>
-    String(values[Number(n)] ?? ""),
+  return singular(
+    TEXT[key][language === "en" ? 0 : 1].replace(/\{(\d)\}/g, (_, n) =>
+      String(values[Number(n)] ?? ""),
+    ),
   );
 }

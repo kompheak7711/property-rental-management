@@ -1864,7 +1864,7 @@ describe("Utilities Import readings (V1-058 R4c)", () => {
     );
     expect(
       await screen.findByText(
-        "1 readings confirmed from readings.csv. 1 meters marked broken, each with a Problem report.",
+        "1 reading confirmed from readings.csv. 1 meter marked broken, each with a Problem report.",
       ),
     ).toBeTruthy();
     const [, , items] = recordBatch.mock.calls[0] ?? [];

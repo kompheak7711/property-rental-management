@@ -14,8 +14,8 @@ Rules kept in every batch: layout, navigation and display text only. No change t
 | B5 data | Migration 20270626_360: English names of 1100, 1110, 2210, 3900 in `gl_chart_template` and `gl_accounts` | (batch 1b) |
 | B1 | 00_SCREEN_INVENTORY.md | (batch 1b) |
 | 2 | Users and access is its own menu item (Users, Roles, Sign-in and security, History). Settings tabs: General, Utility rates, Monthly services, Unit setup, System health. An old `#/settings/users` address opens Users and access | (batch 2) |
-
 | 3 | Home: Owner money (Cash and bank today, Customers owe, Owed over 30 days, Spent this month against budget, Profit this year; Owner only: ledger.owner_money with ledger.read) from the Ledger reports; Attendance card (scans to check, no check-out) from today's sheet. Top-bar search for Customers (name or phone) and Units (number) | (batch 3) |
+| 4 | Fixes: Document numbering shows names (never codes) and fits its card; the count on a dark selected filter is readable; report group titles are not ALL CAPS; "1 days" reads "1 day" (English only, every screen); Short stays tabs are underlined tabs; Problem reports has two tabs, Reports and Monthly report. Builds: Approvals tabs (Financial approvals, Short-stay approvals: damage charges waiting, for short_stays.approve); Audit log has one Export button and the window asks Excel or PDF | (batch 4) |
 
 ## Open questions
 
@@ -28,3 +28,4 @@ Rules kept in every batch: layout, navigation and display text only. No change t
 3. **Customer Latest Receipts** come from the Customer's ledger lines (Payment received), newest first, up to 1,000. The line shows the payment number, the payment day and the amount, and opens the Receipt. A reversed payment still shows, with its reversal in the full statement.
 4. **Top-bar search** finds Customers and Units. Invoice, Receipt and Lease numbers are not searched: the server has no number search for them yet. Adding one is a server change, so it waits for an OK.
 5. **Owner money "Spent this month"** adds the expense lines 5000 to 6999 of Budget vs actual. Profit this year is the "Profit (or loss)" line, year to date, of Profit and loss.
+6. **Inspections menu (Joint Inspection, Unit Check) is not built yet.** The server has no list of inspections for a Property: Move-out inspections are read one Lease at a time, and Unit Checks are saved only by the Staff bot with no read route. A menu over them needs a new server read. That is more than a layout change, so it waits for an OK. Proposal: one read route "inspections of a Property" (Move-out inspections and Unit Checks, newest first), then the menu with two tabs.

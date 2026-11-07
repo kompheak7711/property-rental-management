@@ -699,7 +699,7 @@ describe("HRIS phase 6 screens", () => {
       <PayrollPage active api={api} language="en" propertyId={PROPERTY} />,
     );
     expect(
-      await screen.findByText("1 people not marked paid yet"),
+      await screen.findByText("1 person not marked paid yet"),
     ).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Add a line" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Mark paid" }));

@@ -266,11 +266,17 @@ describe("History", () => {
       });
     });
     await screen.findByRole("table");
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: "Export audit · Spreadsheet (.xlsx)",
-      }),
-    );
+    // UI v81: one Export button; the window asks the file type.
+    const exportAs = (type: string) => {
+      fireEvent.click(screen.getByRole("button", { name: "Export" }));
+      fireEvent.click(screen.getByRole("radio", { name: type }));
+      fireEvent.click(
+        within(screen.getByRole("dialog")).getByRole("button", {
+          name: "Export",
+        }),
+      );
+    };
+    exportAs("Spreadsheet (.xlsx)");
     expect(
       await screen.findByText(
         "history.xlsx is ready. Its fingerprint is written to History.",
@@ -298,7 +304,7 @@ describe("History", () => {
       sha256: "def",
       file: new Blob(["y"]),
     } as never);
-    fireEvent.click(screen.getByRole("button", { name: "Export audit · PDF" }));
+    exportAs("PDF");
     expect(
       await screen.findByText(
         "history.pdf is ready. Its fingerprint is written to History.",
@@ -306,7 +312,7 @@ describe("History", () => {
     ).toBeTruthy();
     expect(exporter.download).toHaveBeenCalledWith("property-1", "x2");
     exporter.exportAudit.mockRejectedValueOnce(new ExportRefusedError());
-    fireEvent.click(screen.getByRole("button", { name: "Export audit · PDF" }));
+    exportAs("PDF");
     expect(
       await screen.findByText(
         "This file cannot be made with these choices. Choose fewer days, or a spreadsheet instead of a PDF.",
@@ -316,7 +322,7 @@ describe("History", () => {
 
     setup(undefined, new Set(["audit.view"]));
     await screen.findByRole("table");
-    expect(screen.queryByRole("button", { name: /Export audit/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Export" })).toBeNull();
   });
 
   it("TEST-FE-960 no right says so; a failed read offers Retry; no events says so; names that cannot be read show a short id", async () => {

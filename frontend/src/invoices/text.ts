@@ -4,6 +4,7 @@
 
 import type { InvoiceCategory, ShortStayInvoiceKind } from "../invoiceClient";
 import type { Language } from "../signInText";
+import { singular } from "../shell/plural";
 
 const TEXT = {
   inv_sub: ["All Invoices", "វិក្កយបត្រទាំងអស់"],
@@ -644,8 +645,10 @@ export function ivt(
   ...values: (string | number)[]
 ): string {
   const text = TEXT[key][language === "en" ? 0 : 1];
-  return text.replace(/\{(\d+)\}/g, (match, index: string) => {
-    const value = values[Number(index)];
-    return value === undefined ? match : String(value);
-  });
+  return singular(
+    text.replace(/\{(\d+)\}/g, (match, index: string) => {
+      const value = values[Number(index)];
+      return value === undefined ? match : String(value);
+    }),
+  );
 }

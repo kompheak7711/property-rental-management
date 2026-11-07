@@ -1,6 +1,7 @@
 // V1.1 part 3 (DL-120): the words of Roles and permissions, in English and Khmer.
 
 import type { Language } from "../signInText";
+import { singular } from "../shell/plural";
 
 const TEXT = {
   ro_title: ["Roles", "តួនាទី"],
@@ -83,8 +84,10 @@ export function at(
   ...values: (string | number)[]
 ): string {
   const words = TEXT[key][language === "km" ? 1 : 0];
-  return values.reduce<string>(
-    (text, value, index) => text.replace(`{${String(index)}}`, String(value)),
-    words,
+  return singular(
+    values.reduce<string>(
+      (text, value, index) => text.replace(`{${String(index)}}`, String(value)),
+      words,
+    ),
   );
 }

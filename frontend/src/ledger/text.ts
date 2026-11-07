@@ -4,6 +4,7 @@
 
 import type { Language } from "../signInText";
 import type { AccountType } from "./ledgerClient";
+import { singular } from "../shell/plural";
 
 const TEXT = {
   loading: ["Loading…", "កំពុងផ្ទុក…"],
@@ -1220,9 +1221,11 @@ export function lt(
   ...values: string[]
 ): string {
   const text = TEXT[key][language === "en" ? 0 : 1];
-  return values.reduce(
-    (out, value, index) => out.split(`{${String(index)}}`).join(value),
-    text,
+  return singular(
+    values.reduce(
+      (out, value, index) => out.split(`{${String(index)}}`).join(value),
+      text,
+    ),
   );
 }
 

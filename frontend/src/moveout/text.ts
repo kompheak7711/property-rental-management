@@ -3,6 +3,7 @@
 // Lines marked "new" are not in the mock-up.
 
 import type { Language } from "../signInText";
+import { singular } from "../shell/plural";
 
 const TEXT = {
   title: ["Move-out", "ការចាកចេញ"],
@@ -976,10 +977,12 @@ export function mt(
   ...values: (string | number)[]
 ): string {
   const text = TEXT[key][language === "km" ? 1 : 0];
-  return text.replace(/\{(\d+)\}/g, (match, index: string) => {
-    const value = values[Number(index)];
-    return value === undefined ? match : String(value);
-  });
+  return singular(
+    text.replace(/\{(\d+)\}/g, (match, index: string) => {
+      const value = values[Number(index)];
+      return value === undefined ? match : String(value);
+    }),
+  );
 }
 
 export function conditionText(language: Language, condition: string): string {

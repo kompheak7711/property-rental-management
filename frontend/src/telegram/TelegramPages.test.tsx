@@ -942,7 +942,7 @@ describe("Office › Telegram", () => {
       />,
     );
     expect(await screen.findByText("VR260001")).toBeTruthy();
-    expect(screen.getByText("1 requests")).toBeTruthy();
+    expect(screen.getByText("1 request")).toBeTruthy();
     expect(screen.getAllByText("Sokha Chan")).toHaveLength(2);
     expect(screen.getByText("sokha@example.com")).toBeTruthy();
     expect(screen.getByText("2 bedrooms")).toBeTruthy();

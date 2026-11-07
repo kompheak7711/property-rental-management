@@ -2767,3 +2767,79 @@ a.ui-kpi.ui-home-kpi {
   align-self: center;
   margin-left: 4px;
 }
+
+/* UI v81 (B4): a count on a chosen (dark) filter button stays readable. */
+.ui-seg button[aria-pressed="true"] .ui-muted,
+.ui-seg button[aria-pressed="true"] .ui-num,
+.ui-seg button[aria-pressed="true"] small {
+  color: inherit;
+}
+
+.ui-seg button[aria-pressed="true"] .ui-count,
+.ui-seg button[aria-pressed="true"] .ui-chip {
+  background: var(--surface);
+  color: var(--text);
+}
+
+/* UI v81 (B4): underlined tabs drawn inside a page (Short stays, Problem reports). */
+.ui-tabline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.ui-tabline [role="tab"],
+.ui-tabline > a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: none;
+  color: var(--text-2);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ui-tabline [role="tab"][aria-selected="true"],
+.ui-tabline > a[aria-current="page"] {
+  border-bottom-color: var(--primary);
+  color: var(--heading);
+}
+
+@media (max-width: 640px) {
+  .ui-tabline {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .ui-tabline [role="tab"],
+  .ui-tabline > a {
+    flex: none;
+  }
+}
+
+/* UI v81 (B4): Document numbering fits its card: names wrap, numbers stay on one line. */
+table.ui-numbering {
+  font-size: 0.875rem;
+}
+
+table.ui-numbering th,
+table.ui-numbering td {
+  padding: 8px 10px;
+}
+
+table.ui-numbering .ui-btn.link {
+  min-height: 0;
+  padding: 0;
+  text-align: left;
+  white-space: normal;
+}
+
+table.ui-numbering td.ui-num {
+  white-space: nowrap;
+}

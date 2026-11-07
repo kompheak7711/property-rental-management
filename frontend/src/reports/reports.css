@@ -63,10 +63,9 @@
 .rp-group {
   margin: 0;
   color: var(--text-2);
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  /* UI v81 (B4): report group titles in normal case, not ALL CAPS. */
 }
 
 .rp-cards {

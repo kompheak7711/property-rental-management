@@ -4,6 +4,7 @@
 // in that sheet and needs the native check, like every Khmer text before the app is used.
 
 import type { Language } from "../signInText";
+import { singular } from "../shell/plural";
 
 const TEXT = {
   loading: ["Loading…", "កំពុងផ្ទុក…"],
@@ -1020,10 +1021,12 @@ export function ht(
   ...values: (string | number)[]
 ): string {
   const words: string = TEXT[key][language === "km" ? 1 : 0];
-  return words.replace(/\{(\d+)\}/g, (match, index: string) => {
-    const value = values[Number(index)];
-    return value === undefined ? match : String(value);
-  });
+  return singular(
+    words.replace(/\{(\d+)\}/g, (match, index: string) => {
+      const value = values[Number(index)];
+      return value === undefined ? match : String(value);
+    }),
+  );
 }
 
 /** Words for a code such as a shift, a status or a line kind; the code itself when unknown. */

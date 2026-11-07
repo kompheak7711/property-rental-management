@@ -3,6 +3,7 @@
 // in the mock-up.
 
 import type { Language } from "../signInText";
+import { singular } from "../shell/plural";
 
 const TEXT = {
   se_sub: [
@@ -1053,13 +1054,23 @@ const TEXT = {
   nr_UNIT_PROBLEM: ["Unit Problem", "បញ្ហាបន្ទប់"],
   nr_BUILDING_PROBLEM: ["Building problem", "បញ្ហាអគារ"],
   // new: Telegram bots step 3a (DL-171).
-  nr_VISIT_REQUEST: ["Visit request", "សំណើមកមើលបន្ទប់"],
+  nr_VISIT_REQUEST: ["Viewing request", "សំណើមកមើលបន្ទប់"],
   // Daily and weekly rent.
   nr_SHORT_STAY: ["Short-stay booking", "ការកក់ស្នាក់នៅខ្លី"],
   nr_SHORT_STAY_QUOTE: ["Short-stay price quote", "សម្រង់តម្លៃស្នាក់នៅខ្លី"],
+  // UI v81 (B4): every document type has a name; the code never shows.
+  nr_PAYROLL: ["Payroll", "បញ្ជីប្រាក់ខែ"], // new
+  nr_PAYSLIP: ["Payslip", "បង្កាន់ដៃប្រាក់ខែ"], // new
+  nr_SALARY_LOAN: ["Salary loan", "ប្រាក់កម្ចីប្រាក់ខែ"], // new
+  nr_OVERTIME: ["Overtime", "ម៉ោងបន្ថែម"], // new
 } as const satisfies Record<string, readonly [string, string]>;
 
 export type SettingsTextKey = keyof typeof TEXT;
+
+/** UI v81: is there a Settings text with this key? */
+export function hasSettingsText(key: string): key is SettingsTextKey {
+  return Object.prototype.hasOwnProperty.call(TEXT, key);
+}
 
 /** The words for `key`, with {0}, {1} … filled in. */
 export function sst(
@@ -1068,8 +1079,10 @@ export function sst(
   ...values: (string | number)[]
 ): string {
   const text = TEXT[key][language === "km" ? 1 : 0];
-  return text.replace(/\{(\d+)\}/g, (match, index: string) => {
-    const value = values[Number(index)];
-    return value === undefined ? match : String(value);
-  });
+  return singular(
+    text.replace(/\{(\d+)\}/g, (match, index: string) => {
+      const value = values[Number(index)];
+      return value === undefined ? match : String(value);
+    }),
+  );
 }

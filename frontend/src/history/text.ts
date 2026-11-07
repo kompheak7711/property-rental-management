@@ -3,6 +3,7 @@
 // the mock-up.
 
 import type { Language } from "../signInText";
+import { singular } from "../shell/plural";
 
 const TEXT = {
   hi_title: ["History", "ប្រវត្តិ"],
@@ -28,7 +29,14 @@ const TEXT = {
   hi_n1: ["1 event", "1 ព្រឹត្តិការណ៍"],
   hi_n: ["{0} events", "{0} ព្រឹត្តិការណ៍"],
   hi_none: ["No events match.", "គ្មានព្រឹត្តិការណ៍ត្រូវគ្នាទេ។"],
-  hi_export: ["Export audit", "នាំចេញសវនកម្ម"],
+  hi_export: ["Export", "នាំចេញ"], // new
+  ex_title: ["Export the audit log", "នាំចេញកំណត់ហេតុសវនកម្ម"], // new
+  ex_as: ["File type", "ប្រភេទឯកសារ"], // new
+  ex_same: [
+    "The file uses the same days, person and Unit as the list.",
+    "ឯកសារប្រើថ្ងៃ មនុស្ស និងបន្ទប់ ដូចបញ្ជីដែរ។",
+  ], // new
+  ex_close: ["Close", "បិទ"], // new
   hi_note: [
     "Each search here is itself written to History. Record pages show the same events for one record.",
     "ការស្វែងរកនីមួយៗនៅទីនេះ ក៏សរសេរក្នុងប្រវត្តិដែរ។ ទំព័រកំណត់ត្រាបង្ហាញព្រឹត្តិការណ៍ដូចគ្នា សម្រាប់កំណត់ត្រាមួយ។",
@@ -104,10 +112,12 @@ export function hit(
   ...values: (string | number)[]
 ): string {
   const text = TEXT[key][language === "km" ? 1 : 0];
-  return text.replace(/\{(\d+)\}/g, (match, index: string) => {
-    const value = values[Number(index)];
-    return value === undefined ? match : String(value);
-  });
+  return singular(
+    text.replace(/\{(\d+)\}/g, (match, index: string) => {
+      const value = values[Number(index)];
+      return value === undefined ? match : String(value);
+    }),
+  );
 }
 
 export type HistoryKind =
