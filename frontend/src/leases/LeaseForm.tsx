@@ -62,6 +62,7 @@ import {
   withRequired,
 } from "./leaseServices";
 import { lt } from "./text";
+import { PageHead } from "../shell/pageHead";
 
 export type LeaseFormMode =
   | { kind: "new" }
@@ -792,7 +793,7 @@ export function LeaseForm({
   return (
     <>
       {back}
-      <div className="ui-head">
+      <PageHead>
         <div>
           <h2>{title}</h2>
           <p>
@@ -803,7 +804,7 @@ export function LeaseForm({
                 : lt(language, "new_sub")}
           </p>
         </div>
-      </div>
+      </PageHead>
       <form className="ui-split ui-leaseform" noValidate onSubmit={check}>
         <section aria-labelledby="lease-form-terms" className="ui-card ui-form">
           <h2 id="lease-form-terms">{lt(language, "terms")}</h2>

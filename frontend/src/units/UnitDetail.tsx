@@ -44,6 +44,7 @@ import { UnitChip, floorText } from "./UnitsList";
 import { ut } from "./text";
 import { type UtilityPricesApi, UnitUtilitiesCard } from "./UtilityPrices";
 import { itemName, typeName } from "./unitsData";
+import { PageHead } from "../shell/pageHead";
 
 type LeaseKind = "current" | "draft" | "ended" | "terminated" | "cancelled";
 
@@ -501,7 +502,7 @@ export function UnitDetail({
   return (
     <>
       {back}
-      <div className="ui-head">
+      <PageHead>
         <div>
           <div className="ui-hrow">
             <h2 className="ui-num" data-record-title="">
@@ -597,7 +598,7 @@ export function UnitDetail({
             </>
           )}
         </div>
-      </div>
+      </PageHead>
       {warning !== null && (
         <div className="ui-notice warn" role="alert">
           <Icon name="alert" />

@@ -43,6 +43,7 @@ import {
   roleOn,
   standingOf,
 } from "./customersData";
+import { PageHead } from "../shell/pageHead";
 
 type LeaseKind = "current" | "draft" | "ended" | "terminated" | "cancelled";
 
@@ -306,7 +307,7 @@ export function CustomerDetail({
   return (
     <>
       {back}
-      <div className="ui-head">
+      <PageHead>
         <div>
           <div className="ui-hrow">
             <h2 data-record-title="">{customer.legal_name}</h2>
@@ -359,7 +360,7 @@ export function CustomerDetail({
             </button>
           )}
         </div>
-      </div>
+      </PageHead>
       {(customer.can_manage || customer.can_deactivate) &&
         customer.active &&
         !gate.open && (

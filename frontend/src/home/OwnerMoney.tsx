@@ -159,7 +159,9 @@ export function OwnerMoney({
     <section aria-labelledby="home-owner-money" className="ui-card">
       <div className="ui-chead">
         <h2 id="home-owner-money">{hmt(language, "om_t")}</h2>
-        <Chip tone="neutral">{hmt(language, "om_only")}</Chip>
+        <Chip icon="lock" tone="neutral">
+          {hmt(language, "om_only")}
+        </Chip>
       </div>
       <div className="ui-kpis ui-home-kpis">
         <MoneyCard
@@ -261,20 +263,31 @@ export function AttendanceCard({
   }, [active, api, propertyId]);
   if (found === null) return null;
   return (
+    // UI v81 round 2: one row as in the design (app31 .hm31r): the icon, the words, the button.
     <section aria-labelledby="home-attendance" className="ui-card">
-      <div className="ui-chead">
-        <h2 id="home-attendance">
-          {hmt(language, "at_t")}: <span className="ui-num">{found.total}</span>
-        </h2>
+      <div className="ui-attrow">
+        <span
+          aria-hidden="true"
+          className={found.total > 0 ? "ui-attic warn" : "ui-attic ok"}
+        >
+          <Icon name={found.total > 0 ? "alert" : "check"} />
+        </span>
+        <div>
+          <h2 id="home-attendance">
+            {hmt(language, "at_t")}:{" "}
+            <span className="ui-num">{found.total}</span>
+          </h2>
+          <p className="ui-small">
+            {found.total > 0
+              ? hmt(language, "at_n", found.total, found.scans, found.noOut)
+              : hmt(language, "at_0")}
+          </p>
+        </div>
         <a className="ui-btn" href={hashForPage("attendance")}>
           {hmt(language, "at_open")}
+          <Icon name="forward" small />
         </a>
       </div>
-      <p className="ui-small">
-        {found.total > 0
-          ? hmt(language, "at_n", found.total, found.scans, found.noOut)
-          : hmt(language, "at_0")}
-      </p>
     </section>
   );
 }

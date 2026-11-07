@@ -31,6 +31,7 @@ import {
   type QuotationsApi,
 } from "./quotationsClient";
 import { qt, type QuotationsTextKey } from "./text";
+import { PageHead } from "../shell/pageHead";
 
 /** At most 20 lines on one Quotation, each a whole quantity from 1 to 999 (DB-QT-001). */
 const MAX_LINES = 20;
@@ -399,7 +400,7 @@ function Form({
   return (
     <>
       {back}
-      <div className="ui-head">
+      <PageHead>
         <div>
           <h2>
             {replacing !== null
@@ -408,7 +409,7 @@ function Form({
           </h2>
           <p>{qt(language, replacing !== null ? "new_ver_h" : "new_sub")}</p>
         </div>
-      </div>
+      </PageHead>
       <div className="ui-split ui-split-wide">
         <form
           aria-label={qt(language, "new_t")}

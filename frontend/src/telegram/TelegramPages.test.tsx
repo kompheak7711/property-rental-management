@@ -1064,17 +1064,17 @@ describe("Office › Telegram", () => {
       />,
     );
     expect(
-      await screen.findByRole("button", { name: /^Overdue: 1\./ }),
+      await screen.findByRole("button", { name: /^Response overdue: 1\./ }),
     ).toBeTruthy();
     expect(
-      screen.getByRole("button", { name: /^Waiting now: 1\./ }),
+      screen.getByRole("button", { name: /^Awaiting first contact: 1\./ }),
     ).toBeTruthy();
     expect(
       screen.getByRole("button", { name: /^Viewings booked: 1\./ }),
     ).toBeTruthy();
     expect(screen.getByRole("button", { name: /^Mine: 1\./ })).toBeTruthy();
     expect(screen.getByText("3 h 5 min")).toBeTruthy();
-    expect(screen.getAllByText("Overdue").length).toBeGreaterThan(1);
+    expect(screen.getAllByText("Overdue").length).toBeGreaterThan(0);
     // The words go in the customer's language (Khmer here), with the day and the address.
     const box = screen.getByRole("region", { name: "Send manually today" });
     expect(within(box).getByText("Viewing confirmation")).toBeTruthy();
@@ -1092,8 +1092,10 @@ describe("Office › Telegram", () => {
       what: "CONFIRMATION",
     });
     // A card shows only its requests.
-    fireEvent.click(screen.getByRole("button", { name: /^Overdue: 1\./ }));
-    expect(screen.getByText("Showing: Overdue")).toBeTruthy();
+    fireEvent.click(
+      screen.getByRole("button", { name: /^Response overdue: 1\./ }),
+    );
+    expect(screen.getByText("Showing: Response overdue")).toBeTruthy();
     expect(screen.queryByText("VR260003")).toBeNull();
   });
 

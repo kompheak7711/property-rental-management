@@ -17,6 +17,7 @@ Rules kept in every batch: layout, navigation and display text only. No change t
 | 3 | Home: Owner money (Cash and bank today, Customers owe, Owed over 30 days, Spent this month against budget, Profit this year; Owner only: ledger.owner_money with ledger.read) from the Ledger reports; Attendance card (scans to check, no check-out) from today's sheet. Top-bar search for Customers (name or phone) and Units (number) | (batch 3) |
 | 4 | Fixes: Document numbering shows names (never codes) and fits its card; the count on a dark selected filter is readable; report group titles are not ALL CAPS; "1 days" reads "1 day" (English only, every screen); Short stays tabs are underlined tabs; Problem reports has two tabs, Reports and Monthly report. Builds: Approvals tabs (Financial approvals, Short-stay approvals: damage charges waiting, for short_stays.approve); Audit log has one Export button and the window asks Excel or PDF | (batch 4) |
 | 5 | Wording: all 657 approved rows of 03 applied in the screens and the customer and tenant bots (03 Status column: every row "Done"). Ledger key `from` split (From date label; new `source` for the journal source column). `st_open` comparison left as it is (no new value was proposed). The words before a server detail are plain now ("This could not be saved: ..."); the detail itself still shows (open question 8). Early check-out window states the owner money rule. 04_GLOSSARY.md written | (batch 5) |
+| Round 2 | Owner 07/11 13:51. Every screen compared with design v81 at 1440, 1920 and 390 (see "Round 2" below). Home: full width (the 1280 cap is gone), head row (title, "CHETANA Residence · date · As of", buttons), Owner money 3 + 2, no "Signed in as" banner, cards Occupancy / Paid this month / Leases ending soon, "notices", search placeholder, Inspections menu, Viewing requests waiting card. Card rows never leave one card alone (12-column grid with count rules; Reports cards too). One head row on all 43 pages (shell head slots). Menu "Staff" (Khmer បុគ្គលិក, native check). Bookings tabs: Viewing requests first. Settings: card "General", "Add payment method", "Add a type", Move-out cleaning rates under Utility rates. Approved words taken by the app (Unit handed over, Awaiting first contact, Response overdue, Rent arrears notices, Lease breach notices, Monthly services) and by the design (Staff, notices, Accounts receivable aging, Refunds pending, QR locations, Past employees, Failed link attempts, Recent message checks, Fund transfer, Owner's capital and drawings). Tests TEST-FE-1912 to 1914 | (round 2) |
 
 ## B6 UI checklist
 
@@ -37,7 +38,45 @@ Checked on the code and the frontend tests (2182 pass) after batch 5. "Yes" mean
 | 11 | Phone width (375): sub-tabs and tab lines scroll in one row; tables scroll inside their card | Yes (CSS); see screenshots note |
 | 12 | Khmer: only new words added, each marked `// new` | Yes |
 
-**Screenshots of the app.** The design screenshots (before and after, 375 and 1280) are in `screenshots/design-v81/`. Screenshots of the running app at 375, 768 and 1280 could not be taken here: the app needs its database and API, which start only with Docker (the Mac test app). They were not faked. To see the changes, pull `ui-v81` on the Mac and double-click "Start test app.command".
+**Screenshots.** The design screenshots (before and after, 375 and 1280) are in `screenshots/design-v81/`. Round 2 (07/11): the app was run here with its own PostgreSQL and API (a review copy with a near-empty sample database, so most counts are 0) and every screen was photographed beside design v81 at 1440, 1920 and 390. The side-by-side sheets (design left, app right) are in `screenshots/round2/` for 1440 (and Home at all three widths); the full set at all widths is in the project Library under `ui-audit/round2/`. Nothing was faked: a screen the app does not have says "No page in the app yet" on its sheet.
+
+## Round 2: compared with design v81 (owner 07/11 13:51)
+
+How: a script opened every view of the design (63 views) and of the running app (51 views) at 1440, 1920 and 390, saved both screenshots and dumped each page's title, sub-line, tabs, head buttons, section names, cards and buttons. The two dumps were compared and every difference was fixed or listed here.
+
+**Fixed in the app.** Full width on every page (the 1280 cap is gone); one head row (title on the left with its sub-line, buttons on the right) on all 43 pages; the page title is the tab name (Invoices, Quotations, Reservations…) as in the design; Owner money 3 + 2, Home cards 4 + 3 + 3, Reports cards balanced; no green "Signed in as" banner; card names Occupancy, Paid this month, Leases ending soon, Viewing requests waiting; "Day-20 and day-30 notices"; search placeholder "Search Invoice, Receipt, Customer or Unit"; Inspections in the menu; menu "Staff"; Bookings tabs Viewing requests then Reservations; Settings card "General", "Add payment method", "Add a type", Move-out cleaning rates under Utility rates; Move-outs "Unit handed over"; Viewing requests cards "Awaiting first contact" and "Response overdue"; Notices tabs "Rent arrears notices" and "Lease breach notices"; Settings tab "Monthly services".
+
+**Fixed in the design** (the app already had the approved word from 03): see 02_DESIGN_V81_CHANGES.md "Round 2".
+
+**Kept differences, with the reason.**
+
+| Screen | Design v81 | App | Why it is kept |
+|---|---|---|---|
+| Home | 12 cards, with Birthdays and Paid on time | 10 cards | Both need a server read that does not exist: Paid on time (fully paid by the Due Date, last 12 months) is a new report; Birthdays needs Customer birth dates (open question 9) |
+| Home, Tasks | "Show 6" on Later | Every task shown | Few tasks in the real app; a Show more can come with real volume |
+| Menu | "Collapse menu" icon rail with fly-outs; a chevron folds each group | Fixed menu | Not built yet; it is its own small batch (open question 10) |
+| Every page | "· As of 10:30" at the end of the sub-line | Only Home shows As of | Lists reload each time they open, so the time adds little; can be added if wanted |
+| Payments cards | "3 Customers" | "3 payments" | The cards count payments; counting Customers per card needs a new read |
+| Quotations | 3 filter cards | 4 (plus All Quotations) | The list needs an "all" choice; the design hides it |
+| Utilities, Problem reports, Settings, Users and access, Approvals, Short stays | Tabs in the shell's tab row | Tabs inside the page | Each is one menu page with its own addresses (#/settings/rates…); moving the tabs to the shell changes every address, so it waits |
+| Utilities | Import and Add meter in the page head | In their card's header | Each button opens that card's own form; a head button for it is a later small step |
+| Meters | "Estimates" card | No card | No estimates read yet |
+| Notices | "Paid after a letter" card; Record letter and Termination notice in the head | 3 cards; the actions sit on each case's row | Needs a read (paid after a letter); the actions belong to one case |
+| Viewing requests | 4th card "Closed"; Viewing dashboard tab | 4th card "Mine"; no dashboard | "Mine" is the Telegram step's filter (DL-171) and Closed is in the status filter; the dashboard needs new reads |
+| Customers | Birthdays tab | No tab | Needs birth dates (open question 9) |
+| Inspections | Cards and Start Joint Inspection, New Unit Check, Print blank form | A page that points to Move-outs and Problem reports | Waits for the V1.2 Inspection build (DL-201, open question 6) |
+| Problem reports, Monthly report | Sample sections, Print in the head | The built report's sections (Repair cost by Unit…) | The sections come from the Problem reports build; the browser prints the page |
+| Products | Cards (All products, Low stock, Automatic price updates); Add product, Record purchase, Record stock movement in the head | No cards; Adjust stock, Move stock, New purchase | Needs new reads; the three windows are the V1.1 build |
+| Ledger tab | "Needs check · 4" | "Needs check" | The count in the tab needs a read in the shell |
+| Journal entries | "New adjusting entry" | No button | The adjusting-entry window is not built (the Ledger thread) |
+| Chart of accounts | Six sections (Assets, Liabilities…) | One table with the type | Splitting the table is a later layout step |
+| Bank and cash | Top up petty cash in the head | In the Petty cash card | Belongs to its card |
+| Reports | Four summary cards, period filters, one card per report | A list of reports with their own filters | The summaries need new reads; the card list is a bigger relayout, proposed as the next batch |
+| Employees | "New staff from Telegram" card | No card | Needs the Staff-bot link read on this page |
+| Design counts and row buttons (Approve, Pay, Edit times, Payslip, Close October 2026, Retry, Reply…) | Shown with sample data | Shown when the data exists | The review database is almost empty |
+| Width | 1172 px of content | 1188 px | The design keeps 16 px for its own scrollbar |
+
+The Approvals, Short stays and Users and access tabs were not caught by the crawl (tab timing); they were compared by hand in batch 4 and match the design's names.
 
 ## Open questions
 
@@ -53,3 +92,6 @@ Checked on the code and the frontend tests (2182 pass) after batch 5. "Yes" mean
 6. **Inspections menu (Joint Inspection, Unit Check) is not built yet.** The server has no list of inspections for a Property: Move-out inspections are read one Lease at a time, and Unit Checks are saved only by the Staff bot with no read route. A menu over them needs a new server read. That is more than a layout change, so it waits for an OK. Proposal: one read route "inspections of a Property" (Move-out inspections and Unit Checks, newest first), then the menu with two tabs.
 7. **Early check-out money (owner rule 07/11 10:04, from the Database v1.2 review thread).** Unused nights stay paid; there is no money back by itself. Only the Owner, a Manager or a person with the credit right may give Credit for unused nights, with a reason, the same way as a late cancel. The "Check out early" window now says this. Decided: DL-200, added in a separate docs change by the Database v1.2 review thread.
 8. **Server detail after an error.** A few messages (Ledger, Employees and payroll, Settings users) still add the server's own detail after the plain sentence, for example "This could not be saved: Enter a reason". Most server details are already plain English; Khmer screens show the Khmer words for known codes (V1-061). Hiding the detail completely needs a list of each module's error codes in the screens. Proposal: do it module by module in a later step, so a useful reason is never lost.
+9. **Paid on time card and Birthdays (Home, Customers).** The design shows a "Paid on time" card (Invoices fully paid by their Due Date, last 12 months, from 04_GLOSSARY.md) and a Birthdays card and tab. Both need a server read: a new report for Paid on time, and Customer birth dates for Birthdays (the Customer record has no birth date today). Proposal: add both reads in the next server step, then the cards.
+10. **Collapse menu.** The design's "Collapse menu" turns the menu into an icon rail with fly-outs, and a chevron folds each group. The app's menu is fixed. Proposal: build it as its own small batch (display only) after the owner OKs round 2.
+11. **Number search in the top bar.** "Search Invoice, Receipt, Customer or Unit" is the placeholder, as in the design, but Invoice and Receipt numbers cannot be searched until the server has a number search (open question 4). When a person types a number such as INV260001, the search says so and points to the Invoices and Payments filters.

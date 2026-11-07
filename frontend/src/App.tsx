@@ -139,6 +139,7 @@ import {
 import { type Language, storeLanguage, storedLanguage } from "./signInText";
 import { AppShell } from "./shell/AppShell";
 import { NoAccess, PropertyNeeded } from "./shell/pages";
+import { InspectionsPage } from "./inspections/InspectionsPage";
 import { openPageInAddress, useHashPage } from "./shell/useHashPage";
 import type { CustomerCommandGate } from "./customers/commands";
 import { CustomersPage } from "./customers/CustomersPage";
@@ -1683,7 +1684,8 @@ export function App({
       environment={environment}
       language={language}
       notice={
-        notice !== null && (
+        notice !== null &&
+        notice !== "" && (
           <p className="global-status" role="status">
             {notice}
           </p>
@@ -1862,6 +1864,13 @@ export function App({
           unitApi={unitApi ?? defaultUnitApi}
           utilityApi={utilityApi}
         />
+      </div>
+      <div
+        className="shell-page"
+        data-page="inspections"
+        hidden={!shown("inspections")}
+      >
+        <InspectionsPage active={shown("inspections")} language={language} />
       </div>
       <div
         className="shell-page"

@@ -39,6 +39,11 @@ import {
   ledgerApi as defaultLedgerApi,
 } from "../ledger/ledgerClient";
 import { AttendanceCard, OwnerMoney } from "./OwnerMoney";
+import { PageHead } from "../shell/pageHead";
+import {
+  type TelegramApi,
+  telegramApi as defaultTelegramApi,
+} from "../telegram/telegramClient";
 
 export interface HomeApi {
   home: (propertyId: string) => Promise<HomePage>;
@@ -57,6 +62,44 @@ export interface HomeScreenProps {
   ledgerApi?: Pick<LedgerApi, "report">;
   /** UI v81: the Attendance card (hr.attendance.read). */
   attendanceApi?: Pick<HrApi, "day">;
+  /** UI v81 round 2: the Viewing requests waiting card (visit_requests.read). */
+  visitsApi?: Pick<TelegramApi, "visitRequests">;
+}
+
+/** The Viewing requests card: new requests nobody took yet, how many are late, visits this week. */
+export interface VisitsWaiting {
+  waiting: number;
+  late: number;
+  visitsThisWeek: number;
+}
+
+/** Monday to Sunday of the week that holds `today` ("yyyy-mm-dd"), as a "yyyy-mm-dd" pair. */
+function weekOf(today: string): [string, string] {
+  const start = new Date(`${today.slice(0, 10)}T00:00:00Z`);
+  const shift = (start.getUTCDay() + 6) % 7;
+  start.setUTCDate(start.getUTCDate() - shift);
+  const end = new Date(start);
+  end.setUTCDate(start.getUTCDate() + 6);
+  return [start.toISOString().slice(0, 10), end.toISOString().slice(0, 10)];
+}
+
+export function visitsWaitingOf(
+  requests: readonly {
+    status: string;
+    late: boolean;
+    visit_local: string | null;
+  }[],
+  today: string,
+): VisitsWaiting {
+  const [from, to] = weekOf(today);
+  return {
+    waiting: requests.filter((item) => item.status === "NEW").length,
+    late: requests.filter((item) => item.status === "NEW" && item.late).length,
+    visitsThisWeek: requests.filter((item) => {
+      const day = item.visit_local?.slice(0, 10) ?? "";
+      return day >= from && day <= to;
+    }).length,
+  };
 }
 
 type Tone = "err" | "warn" | "info" | "neutral" | "ok" | "brand";
@@ -291,7 +334,7 @@ function Cards({
   language: Language;
   cards: HomeCards;
   today: string;
-  /** A card from another read (the Problem reports card). */
+  /** Cards from other reads: Viewing requests waiting, then Problem reports (design order). */
   extra?: ReactNode;
 }) {
   const shown: ReactNode[] = [];
@@ -333,11 +376,8 @@ function Cards({
   }
   const paid = cards.paid_this_month;
   if (paid !== undefined) {
-    const label = hmt(
-      language,
-      "k_paid",
-      monthText(language, today).split(" ")[0] ?? "",
-    );
+    const label = hmt(language, "k_paid");
+    const month = monthText(language, today).split(" ")[0] ?? "";
     if (paid.billed_usd_cents !== undefined) {
       const billed = paid.billed_usd_cents;
       const settled = paid.billed_paid_usd_cents ?? 0;
@@ -351,7 +391,7 @@ function Cards({
           meter={percent}
           note={
             billed > 0
-              ? hmt(language, "k_paid_s", percent, usdFromCents(billed))
+              ? hmt(language, "k_paid_s", percent, usdFromCents(billed), month)
               : hmt(language, "k_paid_none")
           }
           page="invoices"
@@ -490,6 +530,26 @@ function ProblemsCard({
       page="problems"
       tone={summary.urgent > 0 || summary.late > 0 ? "err" : "info"}
       value={String(summary.open)}
+    />
+  );
+}
+
+function VisitsCard({
+  language,
+  visits,
+}: {
+  language: Language;
+  visits: VisitsWaiting;
+}) {
+  return (
+    <Card
+      empty={visits.waiting === 0}
+      icon="door"
+      label={hmt(language, "n_vr")}
+      note={hmt(language, "n_vr_s", visits.late, visits.visitsThisWeek)}
+      page="visitreqs"
+      tone={visits.late > 0 ? "err" : "brand"}
+      value={String(visits.waiting)}
     />
   );
 }
@@ -669,13 +729,16 @@ export function HomeScreen({
   problemsApi = defaultProblemsApi,
   ledgerApi = defaultLedgerApi,
   attendanceApi = defaultHrApi,
+  visitsApi = defaultTelegramApi,
 }: HomeScreenProps) {
   const may = (capability: string) =>
     capabilities === null || capabilities.has(capability);
   const [page, setPage] = useState<HomePage | null>(null);
   const [failure, setFailure] = useState<"failed" | "not_allowed" | null>(null);
   const [problems, setProblems] = useState<ProblemSummary | null>(null);
+  const [visits, setVisits] = useState<VisitsWaiting | null>(null);
   const sequence = useRef(0);
+  const seesVisits = capabilities?.has("visit_requests.read") === true;
   // Only a person known to see Problem reports reads the card.
   const seesProblems = capabilities?.has("problem_reports.read") === true;
   const checksCosts = capabilities?.has("problem_reports.costs") === true;
@@ -707,13 +770,24 @@ export function HomeScreen({
           // The card is left out; the rest of Home still shows.
           if (operation === sequence.current) setProblems(null);
         });
-  }, [homeApi, problemsApi, propertyId, seesProblems]);
+    if (seesVisits)
+      visitsApi
+        .visitRequests(propertyId)
+        .then((loaded) => {
+          if (operation === sequence.current)
+            setVisits(visitsWaitingOf(loaded.requests, loaded.today));
+        })
+        .catch(() => {
+          if (operation === sequence.current) setVisits(null);
+        });
+  }, [homeApi, problemsApi, propertyId, seesProblems, seesVisits, visitsApi]);
 
   // Another Property never shows the numbers of the one before.
   useEffect(() => {
     sequence.current++;
     setPage(null);
     setProblems(null);
+    setVisits(null);
   }, [propertyId]);
 
   useEffect(() => {
@@ -740,20 +814,26 @@ export function HomeScreen({
 
   if (propertyId === "") return null;
 
+  // UI v81 round 2: the design's head row, "CHETANA Residence · Tuesday 03/11/2026 · As of
+  // 10:30" under the title and the two buttons beside it.
   const head = (
-    <div className="ui-head">
-      <div>
-        {page !== null && (
-          <p className="ui-num">
+    <PageHead
+      actions={actions}
+      active={active}
+      sub={
+        page !== null ? (
+          <p className="ui-sub ui-num">
             {[
+              hmt(language, "property"),
               `${weekdayText(language, page.business_date)} ${dayText(page.business_date)}`,
               hmt(language, "as_of", momentText(page.as_of).slice(11)),
             ].join(" · ")}
           </p>
-        )}
-      </div>
-      {actions}
-    </div>
+        ) : (
+          <p className="ui-sub">{hmt(language, "property")}</p>
+        )
+      }
+    />
   );
 
   if (failure !== null) {
@@ -810,8 +890,15 @@ export function HomeScreen({
       <Cards
         cards={page.cards}
         extra={
-          problems === null ? null : (
-            <ProblemsCard language={language} summary={problems} />
+          visits === null && problems === null ? null : (
+            <>
+              {visits !== null && (
+                <VisitsCard language={language} visits={visits} />
+              )}
+              {problems !== null && (
+                <ProblemsCard language={language} summary={problems} />
+              )}
+            </>
           )
         }
         language={language}

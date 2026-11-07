@@ -508,9 +508,11 @@ describe("local sign-in", () => {
         password: "local-password",
       });
     });
-    expect(await screen.findByRole("status")).toHaveTextContent(
-      "Signed in as local-user.",
-    );
+    // UI v81 round 2: the app opens on Home with no welcome banner.
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Home" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Signed in as/)).not.toBeInTheDocument();
   });
 
   it("TEST-FE-221 mounts the Utilities workflow only in the authenticated workspace", async () => {
@@ -646,9 +648,11 @@ describe("local sign-in", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
 
-    expect(await screen.findByRole("status")).toHaveTextContent(
-      "Signed in as local-user.",
-    );
+    // UI v81 round 2: the app opens on Home with no welcome banner.
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Home" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Signed in as/)).not.toBeInTheDocument();
     expect(authenticate).toHaveBeenCalledTimes(2);
   });
 
@@ -2261,7 +2265,7 @@ describe("local sign-in", () => {
         within(menu)
           .getAllByRole("link")
           .map((link) => link.textContent),
-      ).toEqual(["Home", "Customers", "Units"]);
+      ).toEqual(["Home", "Customers", "Units", "Inspections"]);
     });
     // On Home, the Units page is mounted but neither shown nor in the accessibility tree.
     const unitsPage = document.querySelector('[data-page="units"]');

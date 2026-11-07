@@ -41,6 +41,7 @@ import {
 } from "./quotationsClient";
 import { QuotationChip } from "./QuotationsPage";
 import { qt } from "./text";
+import { PageHead } from "../shell/pageHead";
 
 /** Prints only the Quotation sheet (invoiceDocument.css), then the page is as before. */
 function printSheet() {
@@ -239,7 +240,7 @@ export function QuotationDetail({
   return (
     <>
       {back}
-      <div className="ui-head">
+      <PageHead>
         <div>
           <div className="ui-hrow">
             <h2 className="ui-num" data-record-title="">
@@ -327,7 +328,7 @@ export function QuotationDetail({
             </a>
           )}
         </div>
-      </div>
+      </PageHead>
       {notice !== null && (
         <div className="ui-notice ok" role="status">
           <Icon name="check" />

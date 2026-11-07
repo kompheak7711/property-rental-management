@@ -2,11 +2,12 @@
 // search"): the green menu on the left, the top bar with Phnom Penh time and the language
 // switch, and the work area. Pages are drawn by App; the shell only frames them.
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import logoUrl from "../assets/brand/CHETANA_Logo_Horizontal_Reverse.svg";
 import type { Language } from "../signInText";
 import { Icon } from "./icons";
+import { PageHeadContext, type PageHeadSlots } from "./pageHead";
 import { openPageInAddress } from "./useHashPage";
 import {
   MENU,
@@ -118,6 +119,13 @@ export function AppShell({
   const t = (key: TextKey) => TEXT[key][language === "en" ? 0 : 1];
   const [menuOpen, setMenuOpen] = useState(false);
   const [instant, setInstant] = useState(now);
+  // UI v81 round 2: the page's sub-line and buttons sit in the head row, as in the design.
+  const [headSub, setHeadSub] = useState<HTMLElement | null>(null);
+  const [headActions, setHeadActions] = useState<HTMLElement | null>(null);
+  const slots: PageHeadSlots = useMemo(
+    () => ({ page, sub: headSub, actions: headActions }),
+    [page, headSub, headActions],
+  );
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -176,10 +184,10 @@ export function AppShell({
   const clock = phnomPenhClock(instant, language);
   const openItem = menuItemFor(page);
   const tabs = openItem === null ? [] : allowedPagesOf(openItem, capabilities);
-  const title =
-    openItem === null
-      ? pageName(page, language)
-      : menuItemName(openItem, language);
+  // UI v81 round 2: the title is the open page's name (the tab's), as in design v81; the tab
+  // bar is named after the menu item.
+  const title = pageName(page, language);
+  const tabsName = openItem === null ? title : menuItemName(openItem, language);
   const menu = MENU.map((group) => ({
     group,
     items: group.items.flatMap((item) => {
@@ -338,10 +346,14 @@ export function AppShell({
           tabIndex={-1}
         >
           <div className="shell-head">
-            <h1 id="page-title">{title}</h1>
+            <div className="shell-head-text">
+              <h1 id="page-title">{title}</h1>
+              <div className="shell-head-sub" ref={setHeadSub} />
+            </div>
+            <div className="shell-head-actions" ref={setHeadActions} />
           </div>
           {tabs.length > 1 && (
-            <nav aria-label={title} className="shell-tabs">
+            <nav aria-label={tabsName} className="shell-tabs">
               {tabs.map((tab) => (
                 <a
                   aria-current={tab === page ? "page" : undefined}
@@ -362,7 +374,7 @@ export function AppShell({
             </nav>
           )}
           {notice}
-          {children}
+          <PageHeadContext value={slots}>{children}</PageHeadContext>
         </main>
       </div>
     </div>

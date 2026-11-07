@@ -28,6 +28,7 @@ import {
   problemsApi as defaultProblemsApi,
 } from "./problemsClient";
 import { pt } from "./text";
+import { PageHead } from "../shell/pageHead";
 
 export interface ProblemReportsPageProps {
   language: Language;
@@ -355,7 +356,7 @@ export function ProblemReportsPage({
     <>
       {views}
       {failure}
-      <div className="ui-head">
+      <PageHead>
         <p>{pt(language, "sub")}</p>
         {may("problem_reports.add") && (
           <div className="ui-actions">
@@ -370,7 +371,7 @@ export function ProblemReportsPage({
             )}
           </div>
         )}
-      </div>
+      </PageHead>
       <div className="ui-filters">
         <div aria-label={pt(language, "tabs")} className="ui-seg" role="group">
           {(["open", "urgent", "late", "done"] as const).map((value) => (

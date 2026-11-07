@@ -314,7 +314,7 @@ describe("Settings: Rates and services", () => {
         "01/12/2024Letter under each door",
       ],
     ]);
-    const services = screen.getByRole("region", { name: "Monthly Services" });
+    const services = screen.getByRole("region", { name: "Monthly services" });
     expect(rowsOf(services)).toEqual([
       [
         "Trash Collectionប្រមូលសំរាម",
@@ -795,10 +795,8 @@ describe("Settings: Rates and services", () => {
       within(types).queryByRole("button", { name: "Remove: Trash" }),
     ).toBeNull();
 
-    fireEvent.click(
-      within(types).getByRole("button", { name: "Add a Service type" }),
-    );
-    let dialog = screen.getByRole("dialog", { name: "Add a Service type" });
+    fireEvent.click(within(types).getByRole("button", { name: "Add a type" }));
+    let dialog = screen.getByRole("dialog", { name: "Add a type" });
     expect(
       within(dialog).getByRole<HTMLInputElement>("radio", {
         name: "Only one per Lease",

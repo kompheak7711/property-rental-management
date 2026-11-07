@@ -34,6 +34,7 @@ import {
   useBusy,
 } from "./SpendingPage";
 import { lt, monthLabel } from "./text";
+import { PageHead } from "../shell/pageHead";
 
 export interface BankCashPageProps {
   language: Language;
@@ -115,7 +116,7 @@ export function BankCashPage({
     <>
       <Done text={done} />
       <section aria-labelledby="bc-title" className="ui-card">
-        <div className="ui-head">
+        <PageHead>
           <div>
             <h2 id="bc-title">{lt(language, "bc_t")}</h2>
             <p>{lt(language, "bc_sub")}</p>
@@ -161,7 +162,7 @@ export function BankCashPage({
               </button>
             )}
           </span>
-        </div>
+        </PageHead>
       </section>
       {data === null ? (
         <Waiting

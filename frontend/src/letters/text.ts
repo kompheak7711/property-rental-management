@@ -7,13 +7,14 @@ import { singular } from "../shell/plural";
 
 const TEXT = {
   sub: [
-    "Rent letters on day 20 and day 30, and Lease rule warnings",
+    "Rent arrears notices on day 20 and day 30, and Lease breach notices",
     "លិខិតថ្លៃឈ្នួលថ្ងៃទី២០ និងថ្ងៃទី៣០ និងការព្រមានអំពីវិន័យកិច្ចសន្យា",
   ],
   // new
   as_of: ["as of {0}", "គិតត្រឹម {0}"],
-  tab_rent: ["Rent letters", "លិខិតថ្លៃឈ្នួល"],
-  tab_warn: ["Lease rule warnings", "ការព្រមានវិន័យកិច្ចសន្យា"],
+  // UI v81 round 2: the design's names (sub-tabs and the C26 card). Khmer needs the native check.
+  tab_rent: ["Rent arrears notices", "សេចក្ដីជូនដំណឹងបំណុលថ្លៃឈ្នួល"],
+  tab_warn: ["Lease breach notices", "សេចក្ដីជូនដំណឹងរំលោភកិច្ចសន្យា"],
   // new
   loading: ["Loading the letters…", "កំពុងផ្ទុកលិខិត…"],
   // new
@@ -46,7 +47,7 @@ const TEXT = {
     "Day 20 and day 30 have both passed and no letter is recorded yet.",
     "ថ្ងៃទី២០ និងទី៣០ បានកន្លងទាំងពីរ ហើយមិនទាន់កត់ត្រាលិខិតទេ។",
   ],
-  cases: ["Unpaid Rent after day 20", "ថ្លៃឈ្នួលមិនទាន់បង់ក្រោយថ្ងៃទី២០"],
+  cases: ["Rent arrears after day 20", "ប្រាក់ឈ្នួលជំពាក់ក្រោយថ្ងៃទី២០"],
   col_case: ["Unit and Customer", "បន្ទប់ និងអតិថិជន"],
   col_month: ["Rent month", "ខែថ្លៃឈ្នួល"],
   col_20: ["Day-20 letter", "លិខិតថ្ងៃទី២០"],
@@ -166,7 +167,7 @@ const TEXT = {
   lw_n: ["{0} of 3", "{0} ក្នុង ៣"],
   lw_new: ["Record warning", "កត់ត្រាការព្រមាន"],
   lw_none: [
-    "No Lease rule warnings recorded.",
+    "No Lease breach notices recorded.",
     "គ្មានការព្រមានវិន័យកិច្ចសន្យាដែលបានកត់ត្រាទេ។",
   ],
   // new

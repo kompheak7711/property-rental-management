@@ -33,6 +33,7 @@ import {
   HistoryNotAllowedError,
 } from "./historyClient";
 import { actionText, hit, kindOf, kindText } from "./text";
+import { PageHead } from "../shell/pageHead";
 
 export interface HistoryExportApi {
   exportAudit: (
@@ -294,7 +295,7 @@ export function HistoryPage({
   if (!names.has(me.id)) whoList.unshift([me.id, me.name]);
 
   const head = (
-    <div className="ui-head">
+    <PageHead>
       <p>{hit(language, "hi_sub")}</p>
       {mayExport && (
         <div className="ui-actions">
@@ -344,7 +345,7 @@ export function HistoryPage({
           <p className="ui-small ui-muted">{hit(language, "ex_same")}</p>
         </Dialog>
       )}
-    </div>
+    </PageHead>
   );
 
   const filters = (

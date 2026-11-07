@@ -21,6 +21,7 @@ import {
 } from "./problemsClient";
 import { costText } from "./RepairCost";
 import { pt } from "./text";
+import { PageHead } from "../shell/pageHead";
 
 /** The last 12 months, newest first, as "yyyy-mm". */
 export function lastMonths(today: string): string[] {
@@ -151,7 +152,7 @@ export function MonthlyReport({
   return (
     <>
       {back}
-      <div className="ui-head">
+      <PageHead>
         <div>
           <h2>{pt(language, "m_title")}</h2>
           <p>{pt(language, "m_sub")}</p>
@@ -173,7 +174,7 @@ export function MonthlyReport({
             ))}
           </select>
         </div>
-      </div>
+      </PageHead>
       {problem !== null && (
         <div className="ui-notice warn" role="status">
           <Icon name="alert" />

@@ -1,4 +1,4 @@
-// UI v81: the top-bar search. TEST-FE-1909.
+// UI v81: the top-bar search. TEST-FE-1909, TEST-FE-1913.
 import {
   act,
   cleanup,
@@ -8,7 +8,7 @@ import {
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { TopSearch } from "./TopSearch";
+import { TopSearch, looksLikeDocumentNumber } from "./TopSearch";
 
 afterEach(() => {
   cleanup();
@@ -63,5 +63,36 @@ describe("Top-bar search (UI v81)", () => {
       await vi.advanceTimersByTimeAsync(300);
     });
     expect(screen.getByText("Nothing found for “zz”.")).toBeTruthy();
+  });
+  it("TEST-FE-1913 names Invoice and Receipt in the placeholder and says that their numbers cannot be searched yet", async () => {
+    vi.useFakeTimers();
+    render(
+      <TopSearch
+        language="en"
+        propertyId="property-1"
+        sources={{
+          customers: () => Promise.resolve([]),
+          units: () => Promise.resolve([]),
+        }}
+      />,
+    );
+    const box = screen.getByRole("combobox", { name: "Search" });
+    expect(box).toHaveAttribute(
+      "placeholder",
+      "Search Invoice, Receipt, Customer or Unit",
+    );
+    fireEvent.change(box, { target: { value: "INV260006" } });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(300);
+    });
+    expect(
+      screen.getByText(
+        "Invoice and Receipt numbers cannot be searched yet. Open Invoices or Payments and use the filters there.",
+      ),
+    ).toBeInTheDocument();
+    expect(looksLikeDocumentNumber("PAY-2026-0012")).toBe(true);
+    expect(looksLikeDocumentNumber("inv 12")).toBe(true);
+    expect(looksLikeDocumentNumber("Kong Heng")).toBe(false);
+    expect(looksLikeDocumentNumber("Prak Sok")).toBe(false);
   });
 });

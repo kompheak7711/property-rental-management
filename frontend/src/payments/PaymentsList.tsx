@@ -26,6 +26,7 @@ import {
   type PaymentsSummary,
 } from "./paymentsClient";
 import { pyt, type PaymentsTextKey } from "./text";
+import { PageHead } from "../shell/pageHead";
 
 export type PayPeriod = "all" | "today" | "month" | "last" | "pick";
 
@@ -173,7 +174,7 @@ export function PaymentsList({
   };
 
   const head = (
-    <div className="ui-head">
+    <PageHead>
       <div>
         <p className="ui-num">
           {pyt(language, "pc_range", dayText(from), dayText(to))}
@@ -190,7 +191,7 @@ export function PaymentsList({
           </a>
         </div>
       )}
-    </div>
+    </PageHead>
   );
 
   const filters = (

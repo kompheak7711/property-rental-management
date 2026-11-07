@@ -22,6 +22,7 @@ import {
   sortLeases,
 } from "./leasesData";
 import { lt } from "./text";
+import { PageHead } from "../shell/pageHead";
 
 const KIND_CHIPS: Record<LeaseKind, [Tone, ShellIcon | undefined]> = {
   current: ["ok", "check"],
@@ -99,7 +100,7 @@ export function LeasesList({
 
   return (
     <>
-      <div className="ui-head">
+      <PageHead>
         <p>{lt(language, "sub")}</p>
         {canCreate && (
           <div className="ui-actions">
@@ -109,7 +110,7 @@ export function LeasesList({
             </a>
           </div>
         )}
-      </div>
+      </PageHead>
       <div className="ui-kpis">
         {CARDS.map(([value, icon, tone]) => (
           <CountCard

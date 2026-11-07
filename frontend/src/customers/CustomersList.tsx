@@ -18,6 +18,7 @@ import {
   CustomersData,
   phoneKey,
 } from "./customersData";
+import { PageHead } from "../shell/pageHead";
 
 const KIND_CHIPS: Record<CustomerKind, [Tone, ShellIcon | undefined]> = {
   tenant: ["ok", "check"],
@@ -116,7 +117,7 @@ export function CustomersList({
 
   return (
     <>
-      <div className="ui-head">
+      <PageHead>
         <p>{ct(language, "sub", data.customers.length)}</p>
         {onAdd !== null && (
           <div className="ui-actions">
@@ -126,7 +127,7 @@ export function CustomersList({
             </button>
           </div>
         )}
-      </div>
+      </PageHead>
       <form className="ui-filters" onSubmit={submit} role="search">
         <label className="ui-sr" htmlFor="customers-search">
           {ct(language, "search")}

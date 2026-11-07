@@ -449,9 +449,10 @@ const TEXT = {
   vst_CANCELLED: ["Cancelled", "បានបោះបង់"],
   vst_SPAM: ["Spam", "សារឥតបានការ"],
   vst_LATE: ["Overdue", "យឺត"],
-  vr_c_waiting: ["Waiting now", "កំពុងរង់ចាំ"],
+  // UI v81 round 2: the design's card names (C7, C8).
+  vr_c_waiting: ["Awaiting first contact", "រង់ចាំការទាក់ទងដំបូង"],
   vr_c_waiting_s: ["New, not yet assigned", "ថ្មី មិនទាន់មាននរណាយក"],
-  vr_c_late: ["Overdue", "យឺត"],
+  vr_c_late: ["Response overdue", "ការឆ្លើយតបហួសពេល"],
   vr_c_late_s: ["Over 2 working hours", "លើស 2 ម៉ោងធ្វើការ"],
   vr_c_booked: ["Viewings booked", "ការមកមើលដែលបានកក់"],
   vr_c_booked_s: ["Upcoming viewings", "កំពុងរង់ចាំការមកមើល"],

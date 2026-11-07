@@ -22,6 +22,7 @@ import {
   resultOf,
 } from "./reservationsData";
 import { rt } from "./text";
+import { PageHead } from "../shell/pageHead";
 
 const STATUS_CHIPS: Record<ReservationStatus, [Tone, ShellIcon | undefined]> = {
   ACTIVE: ["ok", "check"],
@@ -93,10 +94,10 @@ export function ReservationsList({
 
   return (
     <>
-      <div className="ui-head">
+      <PageHead>
         <p>{rt(language, "sub", data.reservations.length)}</p>
         {action !== undefined && <div className="ui-actions">{action}</div>}
-      </div>
+      </PageHead>
       <div className="ui-kpis">
         {CARDS.map(([value, icon, tone]) => (
           <CountCard

@@ -49,6 +49,7 @@ import {
   showsCost,
 } from "./RepairCost";
 import { hasText, pt, type ProblemsTextKey } from "./text";
+import { PageHead } from "../shell/pageHead";
 
 type Problem = "failed" | "missing";
 type DialogName = StepName | "REPLAN" | "ANSWER" | "COST" | "COST_CHECK";
@@ -344,7 +345,7 @@ export function ProblemReportDetail({
   return (
     <>
       {back}
-      <div className="ui-head">
+      <PageHead>
         <div>
           <div className="ui-hrow">
             <h2 className="ui-num" data-record-title="">
@@ -378,7 +379,7 @@ export function ProblemReportDetail({
               .join(" · ")}
           </p>
         </div>
-      </div>
+      </PageHead>
       {notice !== null && (
         <div className="ui-notice ok" role="status">
           <Icon name="check" />

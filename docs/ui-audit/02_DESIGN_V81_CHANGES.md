@@ -305,3 +305,29 @@ Warning before checking out a paid stay before its check-out day.
 | `tg_e_phone` | Type a phone number. | Enter a phone number. |
 | `pr_join_s` | Pick the main report. Only open reports of the same kind are shown: the same Unit for a Unit Problem. | Choose the main report. Only open reports of the same kind are shown: the same Unit for a Unit Problem. |
 | `pr_e_name` | Type the name. | Enter the name. |
+
+## Round 2 (owner 07/11/2026 13:51): changed in the design
+
+Source files `round4-source/i18n44.js` and `round4-source/app44.js`; the mock-up was rebuilt and republished at the same address.
+
+| Key | Before | Round 2 | Why |
+|---|---|---|---|
+| `nav_staff` | Employees and payroll | Staff (Khmer បុគ្គលិក, native check needed) | Owner item 4. The page tabs stay Employees, Attendance, Loans and Payroll |
+| `n_letters_s` | Day-20 and day-30 letters | Day-20 and day-30 notices | Owner item 2: "notices", not "letters" |
+| `om_owe_s`, `om_over_s` | Opens Money customers owe | Opens Accounts receivable aging | Owner item 2: the report's approved name |
+| `n_appr_s` | {0} to confirm · {1} money out | {0} to confirm · Refunds pending {1} | Owner item 2: the approved word for money out (04_GLOSSARY.md) |
+| `vrc_booked` | Visits booked | Viewings booked | The app already carries the approved word (03) |
+| `mk_confirm` | Waiting for a Manager | Pending Manager approval | Same |
+| `er_c_adv` | Advances not cleared | Outstanding advances | Same |
+| `er_c_owed`, `ag_owed_t` | Money owed to staff | Staff reimbursements due | Same |
+| `gl_r_bc`, `cl_books` | Books check | Books reconciliation | Same |
+| `gl_r_ap` | Supplier bill aging | Accounts payable aging | Same |
+| `sb_c_late` | Late | Overdue | Same |
+| `at_v_qr`, `q31_t` | QR places | QR locations | Same (03 `a_places`) |
+| `emp_f_left` | Left | Past employees | Same (03 `e_left`) |
+| `tg_pulls` | Last relay pulls | Recent message checks | Same (03 `pulls`) |
+| `tg_tries_h`, `tg_tries_t` | Link tries that did not match | Failed link attempts | Same (03 `tries_h`) |
+| `ow_t` | Owner money (Bank and cash button) | Owner's capital and drawings | Same (03 `ow_t`); the Home card stays "Owner money" |
+| `mm_t` | Transfer funds (Bank and cash button) | Fund transfer | Same (03 `mm_t`) |
+
+Layout in the design is unchanged: the app took the design's rules instead (full width, one head row, balanced card rows).

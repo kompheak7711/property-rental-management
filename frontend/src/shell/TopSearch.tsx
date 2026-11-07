@@ -11,7 +11,16 @@ import { hashForPage } from "./navigation";
 
 const TEXT = {
   label: ["Search", "ស្វែងរក"], // new
-  placeholder: ["Customer, phone or Unit", "អតិថិជន ទូរសព្ទ ឬបន្ទប់"], // new
+  // Owner 07/11/2026: the design's placeholder (i18n.js search_ph).
+  placeholder: [
+    "Search Invoice, Receipt, Customer or Unit",
+    "ស្វែងរក វិក្កយបត្រ បង្កាន់ដៃ អតិថិជន ឬបន្ទប់",
+  ],
+  // new: the server has no number search yet (open question in the UI audit report).
+  numbers: [
+    "Invoice and Receipt numbers cannot be searched yet. Open Invoices or Payments and use the filters there.",
+    "មិនទាន់អាចស្វែងរកលេខវិក្កយបត្រ និងបង្កាន់ដៃបានទេ។ សូមបើកវិក្កយបត្រ ឬការបង់ប្រាក់ ហើយប្រើតម្រងនៅទីនោះ។",
+  ],
   none: ["Nothing found for “{0}”.", "រកមិនឃើញ “{0}” ទេ។"], // new
   customer: ["Customer", "អតិថិជន"], // new
   unit: ["Unit", "បន្ទប់"], // new
@@ -35,6 +44,11 @@ export interface SearchSources {
   units?: (
     propertyId: string,
   ) => Promise<readonly { unit_id: string; unit_number: string }[]>;
+}
+
+/** "INV-2026-0001", "PAY-000123", "inv 12": a document number, which the search cannot find yet. */
+export function looksLikeDocumentNumber(query: string): boolean {
+  return /^(INV|PAY|RCP|RES|QT|PR)[-\s]?\d+/i.test(query.trim());
 }
 
 interface Hit {
@@ -162,7 +176,11 @@ export function TopSearch({
           {hits === "failed" ? (
             <li className="shell-search-note">{tt(language, "failed")}</li>
           ) : list.length === 0 ? (
-            <li className="shell-search-note">{tt(language, "none", query)}</li>
+            <li className="shell-search-note">
+              {looksLikeDocumentNumber(query)
+                ? tt(language, "numbers")
+                : tt(language, "none", query)}
+            </li>
           ) : (
             list.map((hit, index) => (
               <li

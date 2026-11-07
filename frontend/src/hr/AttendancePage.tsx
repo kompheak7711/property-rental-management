@@ -50,6 +50,7 @@ import {
   type ShiftCode,
 } from "./hrClient";
 import { codeText, ht } from "./text";
+import { PageHead } from "../shell/pageHead";
 
 export interface AttendancePageProps {
   language: Language;
@@ -88,12 +89,12 @@ export function AttendancePage({
   return (
     <>
       <section aria-labelledby="hr-a-title" className="ui-card">
-        <div className="ui-head">
+        <PageHead>
           <div>
             <h2 id="hr-a-title">{ht(language, "a_title")}</h2>
             <p>{ht(language, "a_sub")}</p>
           </div>
-        </div>
+        </PageHead>
         <div
           aria-label={ht(language, "a_title")}
           className="ui-seg"

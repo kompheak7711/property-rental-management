@@ -284,7 +284,7 @@ function rowOf(unit: string): HTMLElement {
 describe("Letters page (V1-058 R3)", () => {
   it("TEST-FE-862 Rent letters show each unpaid Rent month with its letters, the counts and the next step", async () => {
     setup();
-    await screen.findByText("Unpaid Rent after day 20");
+    await screen.findByText("Rent arrears after day 20");
     expect(screen.getByText(/as of 25\/11\/2026/)).toBeTruthy();
     // Cards: due (U101 day 20, U104 day 20), day-20 given and waiting (U102), day-30 given (U103).
     expect(
@@ -341,7 +341,7 @@ describe("Letters page (V1-058 R3)", () => {
 
   it("TEST-FE-863 Record letter opens the case once, needs a letter number for day 20, and sends the very same request on Try again", async () => {
     const { api } = setup();
-    await screen.findByText("Unpaid Rent after day 20");
+    await screen.findByText("Rent arrears after day 20");
     fireEvent.click(
       within(rowOf("U101")).getByRole("button", { name: /Record letter/ }),
     );
@@ -428,7 +428,7 @@ describe("Letters page (V1-058 R3)", () => {
 
   it("TEST-FE-864 the day-30 letter goes on the open case without a number, and a change meanwhile reads the list again", async () => {
     const { api } = setup();
-    await screen.findByText("Unpaid Rent after day 20");
+    await screen.findByText("Rent arrears after day 20");
     // U104: both letters due; day 20 comes first.
     fireEvent.click(
       within(rowOf("U104")).getByRole("button", { name: /Record letter/ }),
@@ -495,7 +495,7 @@ describe("Letters page (V1-058 R3)", () => {
 
   it("TEST-FE-865 a person without the letter rights sees the letters but cannot record or give notice", async () => {
     setup(new Set(["rent_nonpayment.read", "leases.read"]));
-    await screen.findByText("Unpaid Rent after day 20");
+    await screen.findByText("Rent arrears after day 20");
     expect(screen.queryByRole("button", { name: /Record letter/ })).toBeNull();
     expect(within(rowOf("U101")).getByText("Record letter")).toBeTruthy();
     expect(
@@ -513,7 +513,9 @@ describe("Letters page (V1-058 R3)", () => {
     window.location.hash = "#/letters";
     const { api } = setup(new Set(["leases.read"]));
     await screen.findByText("Noise at night 2");
-    expect(screen.queryByRole("link", { name: "Rent letters" })).toBeNull();
+    expect(
+      screen.queryByRole("link", { name: "Rent arrears notices" }),
+    ).toBeNull();
     expect(api.alerts).not.toHaveBeenCalled();
     cleanup();
 
@@ -564,7 +566,7 @@ describe("Letters page (V1-058 R3)", () => {
     await waitFor(() => {
       expect(screen.queryByText(/The warnings of U103/)).toBeNull();
     });
-    expect(screen.getByText("No Lease rule warnings recorded.")).toBeTruthy();
+    expect(screen.getByText("No Lease breach notices recorded.")).toBeTruthy();
   });
 
   it("TEST-FE-867 Record warning offers moved-in Leases, numbers the warning from the server and checks the dates", async () => {
@@ -650,7 +652,7 @@ describe("Letters page (V1-058 R3)", () => {
 
   it("TEST-FE-868 Cancel after the case was opened reads the list again, and Leases that cannot be warned get no Record warning button", async () => {
     const { api } = setup();
-    await screen.findByText("Unpaid Rent after day 20");
+    await screen.findByText("Rent arrears after day 20");
     fireEvent.click(
       within(rowOf("U101")).getByRole("button", { name: /Record letter/ }),
     );

@@ -311,7 +311,7 @@ describe("sign-in screens", () => {
     await waitFor(() => {
       expect(onAuthenticated).toHaveBeenCalledWith(
         { phase: "authenticated", session },
-        "Signed in as Sokha Chan.",
+        "",
       );
     });
     expect(completeMfa).toHaveBeenNthCalledWith(1, {
@@ -513,7 +513,7 @@ describe("sign-in screens", () => {
     );
     expect(onAuthenticated).toHaveBeenCalledWith(
       { phase: "authenticated", session },
-      "Signed in as Sokha Chan.",
+      "",
     );
     expect(screen.queryByText("first-recovery-code")).not.toBeInTheDocument();
   });
@@ -538,7 +538,7 @@ describe("sign-in screens", () => {
     await waitFor(() => {
       expect(onAuthenticated).toHaveBeenCalledWith(
         { phase: "authenticated", session },
-        "Signed in as Sokha Chan. Two-step sign-in is set up, but your recovery codes were not made. Make new codes in your account soon.",
+        "Two-step sign-in is set up, but your recovery codes were not made. Make new codes in your account soon.",
       );
     });
   });
@@ -887,9 +887,8 @@ describe("sign-in layer in the app", () => {
     });
     expect(screen.getByRole("main")).toHaveAccessibleName("Home");
     expect(screen.getByText("Sokha Chan")).toBeInTheDocument();
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "Signed in as Sokha Chan.",
-    );
+    // UI v81 round 2: no welcome banner (the design has none; the name is in the menu).
+    expect(screen.queryByText(/Signed in as/)).not.toBeInTheDocument();
     await act(async () => {
       await vi.advanceTimersByTimeAsync(1000);
     });

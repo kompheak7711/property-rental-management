@@ -84,6 +84,7 @@ import { Kv, type Mark, Step } from "./parts";
 import { type SettlementState, readSettlement } from "./settlement";
 import { SettlementStep } from "./SettlementStep";
 import { conditionText, mt } from "./text";
+import { PageHead } from "../shell/pageHead";
 
 const STEP_CHIPS: Record<MoveOutStep, [Tone, ShellIcon]> = {
   soon: ["warn", "clock"],
@@ -324,9 +325,9 @@ function MoveoutList({
           <p>{mt(language, "settle_failed")}</p>
         </div>
       )}
-      <div className="ui-head">
+      <PageHead>
         <p>{mt(language, "sub")}</p>
-      </div>
+      </PageHead>
       <div className="ui-kpis">
         {cards.map(([value, icon, tone]) => (
           <CountCard
@@ -1157,7 +1158,7 @@ function MoveoutDetail({
           <p>{mt(language, renewed ? "renewed_note" : "not_yet_note")}</p>
         </div>
       )}
-      <div className="ui-head">
+      <PageHead>
         <div>
           <div className="ui-hrow">
             <h2 className="ui-num" data-record-title="">
@@ -1182,7 +1183,7 @@ function MoveoutDetail({
             {mt(language, "open_unit")}
           </a>
         </div>
-      </div>
+      </PageHead>
       <div className="ui-split">
         <div className="ui-stack">
           <section aria-labelledby="mo-steps" className="ui-card">

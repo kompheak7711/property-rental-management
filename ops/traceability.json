@@ -65672,6 +65672,38 @@
       "test_path": "backend/tests/test_local_run_scripts.py",
       "status": "implemented",
       "notes": "Telegram bots on the Mac test run: tokens are typed with echo off and reach Telegram and Cloudflare only through standard input; the bot jobs read the database address from its file; the setup refuses to run without Terminal."
+    },
+    {
+      "test_id": "TEST-FE-1912",
+      "upstream_ids": [
+        "UI-008",
+        "DL-172"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/home/HomeScreen.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 round 2 Home: the Viewing requests waiting card (new requests, late ones, visits this week) sits before Problem reports, in the design's order, for a person with visit_requests.read."
+    },
+    {
+      "test_id": "TEST-FE-1913",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shell/TopSearch.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 round 2 top-bar search: the design's placeholder names Invoice and Receipt; a document number gets the note that numbers cannot be searched yet."
+    },
+    {
+      "test_id": "TEST-FE-1914",
+      "upstream_ids": [
+        "UI-008",
+        "DL-201"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/inspections/InspectionsPage.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 round 2 Property > Inspections: says the Joint Inspection and Unit Check records come in V1.2 and opens Move-outs and Problem reports, in English and Khmer."
     }
   ]
 }

@@ -33,6 +33,7 @@ import { type RatesApi, RatesTab } from "./RatesTab";
 import { type SetupApi, UnitSetupTab } from "./UnitSetupTab";
 import { type StaffLookup, type UsersApi, UsersTab } from "./UsersTab";
 import type { RolesApi } from "../access/rolesClient";
+import { PageHead } from "../shell/pageHead";
 
 export type SettingsTab =
   | "business"
@@ -383,9 +384,9 @@ export function SettingsPage({
         </div>
       )}
       <div hidden={mode === "access"}>
-        <div className="ui-head">
+        <PageHead>
           <p>{sst(language, "se_sub")}</p>
-        </div>
+        </PageHead>
         {allowed.length > 1 && (
           <nav aria-label={sst(language, "tabs")} className="ui-subtabs">
             {allowed.map((item) => (
@@ -495,9 +496,9 @@ function AccessPage({
   });
   return (
     <>
-      <div className="ui-head">
+      <PageHead>
         <p>{sst(language, "ac_sub")}</p>
-      </div>
+      </PageHead>
       <SubTabs
         current={tab}
         idPrefix="access"

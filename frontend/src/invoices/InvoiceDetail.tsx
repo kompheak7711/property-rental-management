@@ -35,6 +35,7 @@ import {
   unitOf,
 } from "./invoicesData";
 import { invoiceType, ivt } from "./text";
+import { PageHead } from "../shell/pageHead";
 
 function textOf(value: JsonValue | undefined): string | null {
   return typeof value === "string" && value.trim() !== "" ? value : null;
@@ -378,7 +379,7 @@ export function InvoiceDetail({
   return (
     <>
       {back}
-      <div className="ui-head">
+      <PageHead>
         <div>
           <div className="ui-hrow">
             <h2 className="ui-num" data-record-title="">
@@ -460,7 +461,7 @@ export function InvoiceDetail({
             </button>
           )}
         </div>
-      </div>
+      </PageHead>
       {notice !== null && (
         <div
           className={

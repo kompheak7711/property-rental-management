@@ -36,6 +36,7 @@ import {
   timeText,
 } from "./StaySteps";
 import { hasText, st, type StaysTextKey } from "./text";
+import { PageHead } from "../shell/pageHead";
 
 /** The words for a refused step; 412 and 409 also show the booking as it is now. */
 function stepProblem(error: unknown): StaysTextKey {
@@ -200,7 +201,7 @@ export function BookingDetail({
   return (
     <>
       {back}
-      <div className="ui-head">
+      <PageHead>
         <div>
           <div className="ui-hrow">
             <h2 className="ui-num" data-record-title="">
@@ -213,7 +214,7 @@ export function BookingDetail({
             {nightsText(language, booking.nights)}
           </p>
         </div>
-      </div>
+      </PageHead>
       {booking.problem_guest && (
         <div className="ui-notice warn" role="note">
           <Icon name="alert" />

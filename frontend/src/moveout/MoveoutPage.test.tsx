@@ -852,7 +852,7 @@ describe("Move-out", () => {
         "Tenant U105",
         "10/10/2026End Date was 24/10/2026",
         "12/10/2026",
-        "Handed backRecord final readings",
+        "Unit handed overRecord final readings",
         "$500.00",
       ],
       [
@@ -888,7 +888,7 @@ describe("Move-out", () => {
         "$500.00",
       ],
     ]);
-    fireEvent.click(screen.getByRole("button", { name: /Handed back/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Unit handed over/ }));
     expect(rows().map((row) => row[0])).toEqual(["U105", "U106"]);
     fireEvent.click(screen.getByRole("button", { name: "Show all" }));
     expect(rows()).toHaveLength(5);

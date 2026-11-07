@@ -457,80 +457,89 @@ export function RatesTab({
       </div>
       <div className="ui-stack">
         {part !== "services" && (
-          <section aria-labelledby="rates-utility" className="ui-card pad0">
-            <header className="ui-chead pad">
-              <h2 id="rates-utility">{sst(language, "se_util")}</h2>
-              {capabilities.manage_utility_rates && (
-                <button
-                  className="ui-btn"
-                  onClick={() => {
-                    start({ kind: "utility" });
-                  }}
-                  type="button"
-                >
-                  <Icon name="plus" small />
-                  {sst(language, "se_util_add")}
-                </button>
-              )}
-            </header>
-            {utilityRates.length === 0 ? (
-              <p className="pad ui-muted">{sst(language, "util_none")}</p>
-            ) : (
-              <div className="ui-tablewrap">
-                <table className="ui-table">
-                  <thead>
-                    <tr>
-                      <th scope="col">{sst(language, "ro_kind")}</th>
-                      <th className="r" scope="col">
-                        {sst(language, "ro_rate")}
-                      </th>
-                      <th scope="col">{sst(language, "ro_since")}</th>
-                      <th scope="col">{sst(language, "ro_until")}</th>
-                      <th scope="col">{sst(language, "ro_told")}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {utilityRows(utilityRates).map(({ rate, until }) => (
-                      <tr key={rate.id}>
-                        <td>{sst(language, KIND_TEXT[rate.utility_type])}</td>
-                        <td className="r ui-num">
-                          {ratePerUnit(rate.rate_usd_per_unit)} /{" "}
-                          {KIND_UNIT[rate.utility_type]}
-                        </td>
-                        <td className="ui-num">
-                          {dayText(rate.effective_date)}
-                        </td>
-                        <td>
-                          {rate.effective_date > today ? (
-                            <Chip icon="clock" tone="info">
-                              {sst(language, "se_sched")}
-                            </Chip>
-                          ) : until === null ? (
-                            <Chip icon="check" tone="ok">
-                              {sst(language, "se_active")}
-                            </Chip>
-                          ) : (
-                            <span className="ui-num">{dayText(until)}</span>
-                          )}
-                        </td>
-                        <td>
-                          <span className="ui-num">
-                            {dayText(rate.notice_at.slice(0, 10))}
-                          </span>
-                          <span className="ui-sub2">
-                            {rate.notice_evidence}
-                          </span>
-                        </td>
+          <>
+            <section aria-labelledby="rates-utility" className="ui-card pad0">
+              <header className="ui-chead pad">
+                <h2 id="rates-utility">{sst(language, "se_util")}</h2>
+                {capabilities.manage_utility_rates && (
+                  <button
+                    className="ui-btn"
+                    onClick={() => {
+                      start({ kind: "utility" });
+                    }}
+                    type="button"
+                  >
+                    <Icon name="plus" small />
+                    {sst(language, "se_util_add")}
+                  </button>
+                )}
+              </header>
+              {utilityRates.length === 0 ? (
+                <p className="pad ui-muted">{sst(language, "util_none")}</p>
+              ) : (
+                <div className="ui-tablewrap">
+                  <table className="ui-table">
+                    <thead>
+                      <tr>
+                        <th scope="col">{sst(language, "ro_kind")}</th>
+                        <th className="r" scope="col">
+                          {sst(language, "ro_rate")}
+                        </th>
+                        <th scope="col">{sst(language, "ro_since")}</th>
+                        <th scope="col">{sst(language, "ro_until")}</th>
+                        <th scope="col">{sst(language, "ro_told")}</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {utilityRows(utilityRates).map(({ rate, until }) => (
+                        <tr key={rate.id}>
+                          <td>{sst(language, KIND_TEXT[rate.utility_type])}</td>
+                          <td className="r ui-num">
+                            {ratePerUnit(rate.rate_usd_per_unit)} /{" "}
+                            {KIND_UNIT[rate.utility_type]}
+                          </td>
+                          <td className="ui-num">
+                            {dayText(rate.effective_date)}
+                          </td>
+                          <td>
+                            {rate.effective_date > today ? (
+                              <Chip icon="clock" tone="info">
+                                {sst(language, "se_sched")}
+                              </Chip>
+                            ) : until === null ? (
+                              <Chip icon="check" tone="ok">
+                                {sst(language, "se_active")}
+                              </Chip>
+                            ) : (
+                              <span className="ui-num">{dayText(until)}</span>
+                            )}
+                          </td>
+                          <td>
+                            <span className="ui-num">
+                              {dayText(rate.notice_at.slice(0, 10))}
+                            </span>
+                            <span className="ui-sub2">
+                              {rate.notice_evidence}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              <div className="ui-tfoot">
+                <span>{sst(language, "se_util_n")}</span>
               </div>
-            )}
-            <div className="ui-tfoot">
-              <span>{sst(language, "se_util_n")}</span>
-            </div>
-          </section>
+            </section>
+            {/* UI v81 round 2: the Move-out cleaning rates sit under Utility rates, as in the design. */}
+            <CleaningRatesCard
+              active={active}
+              api={cleaning}
+              language={language}
+              propertyId={propertyId}
+            />
+          </>
         )}
 
         {part !== "utility" && (
@@ -754,12 +763,6 @@ export function RatesTab({
                 </a>
               </p>
             </div>
-            <CleaningRatesCard
-              active={active}
-              api={cleaning}
-              language={language}
-              propertyId={propertyId}
-            />
           </>
         )}
       </div>

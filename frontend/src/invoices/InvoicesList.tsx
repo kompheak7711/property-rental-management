@@ -27,6 +27,7 @@ import {
   unitOf,
 } from "./invoicesData";
 import { invoiceType, ivt, type InvoicesTextKey } from "./text";
+import { PageHead } from "../shell/pageHead";
 
 const STATE_CHIPS: Record<
   InvoiceState,
@@ -237,7 +238,7 @@ export function InvoicesList({
 
   return (
     <>
-      <div className="ui-head">
+      <PageHead>
         <p>
           {month === null
             ? ivt(language, "inv_sub")
@@ -254,7 +255,7 @@ export function InvoicesList({
             </a>
           </div>
         )}
-      </div>
+      </PageHead>
       <div className="ui-filters">
         <div
           aria-label={ivt(language, "pm_period")}

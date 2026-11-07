@@ -79,6 +79,12 @@ const PATHS: Record<ShellIcon, string[]> = {
   ],
   // Telegram bots step 2c: a paper plane for Office › Telegram.
   send: ["M21 3 10.5 13.5", "M21 3l-6.5 18-4-7.5-7.5-4z"],
+  // UI v81 round 2: a clipboard for Property › Inspections (the design's "clip" icon).
+  clip: [
+    "M9 3.5h6v3H9z",
+    "M8 5.5H6.5A1.5 1.5 0 0 0 5 7v12a1.5 1.5 0 0 0 1.5 1.5h11A1.5 1.5 0 0 0 19 19V7a1.5 1.5 0 0 0-1.5-1.5H16",
+    "M9 12h6M9 16h4",
+  ],
   menu: ["M4 7h16M4 12h16M4 17h16"],
   search: ["M11 4.5a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13z", "m20 20-4.2-4.2"],
   signout: [

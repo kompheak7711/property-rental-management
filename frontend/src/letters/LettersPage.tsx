@@ -29,6 +29,7 @@ import {
   warnable,
 } from "./lettersData";
 import { ltr, monthText } from "./text";
+import { PageHead } from "../shell/pageHead";
 
 export interface LettersPageProps {
   language: Language;
@@ -129,14 +130,14 @@ export function LettersPage({
 
   return (
     <>
-      <div className="ui-head">
+      <PageHead>
         <p>
           {ltr(language, "sub")}
           {tab === "rent" && rent !== null && (
             <> · {ltr(language, "as_of", dayText(businessDate))}</>
           )}
         </p>
-      </div>
+      </PageHead>
       {mayRent && mayWarn && (
         <nav aria-label={ltr(language, "sub")} className="ui-subtabs">
           <a

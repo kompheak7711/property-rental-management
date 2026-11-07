@@ -35,6 +35,7 @@ import {
   type StayPrice,
 } from "./shortStaysClient";
 import { hasText, st } from "./text";
+import { PageHead } from "../shell/pageHead";
 
 export const SITES = ["Booking.com", "Agoda", "Airbnb"];
 
@@ -539,12 +540,12 @@ export function NewBookingForm({
   return (
     <>
       {back}
-      <div className="ui-head">
+      <PageHead>
         <div>
           <h2>{st(language, "add")}</h2>
           <p>{st(language, "new_sub")}</p>
         </div>
-      </div>
+      </PageHead>
       {checked && wrong.length > 0 && (
         <div className="ui-notice err" role="alert">
           <Icon name="alert" />

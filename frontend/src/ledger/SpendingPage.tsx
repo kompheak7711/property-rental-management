@@ -37,6 +37,7 @@ import {
   type SupplierBill,
 } from "./spendingClient";
 import { type LedgerTextKey, lt } from "./text";
+import { PageHead } from "../shell/pageHead";
 
 export type SpendingTab = "exreqs" | "expenses" | "bills";
 
@@ -648,7 +649,7 @@ function RequestsTab({
   const days = formData?.report_days ?? 3;
   const rows = list.data;
   const header = (
-    <div className="ui-head">
+    <PageHead>
       <div>
         <h2>{lt(language, "er_t")}</h2>
         <p>{lt(language, "er_sub")}</p>
@@ -681,7 +682,7 @@ function RequestsTab({
           </button>
         </span>
       )}
-    </div>
+    </PageHead>
   );
   const abilities: string[] = [];
   if (rights.overLimit) abilities.push(lt(language, "er_can_all"));
@@ -1063,7 +1064,7 @@ function RequestDetailView({
   return (
     <>
       {back}
-      <div className="ui-head">
+      <PageHead>
         <div>
           <div className="ui-hrow">
             <h2 className="ui-num" data-record-title="">
@@ -1099,7 +1100,7 @@ function RequestDetailView({
               ))}
           </span>
         )}
-      </div>
+      </PageHead>
       <div className="ui-split">
         <section aria-labelledby="er-details" className="ui-card">
           <h2 id="er-details">{lt(language, "er_details")}</h2>
@@ -2604,7 +2605,7 @@ function BillsTab({
   const lateDays = (bill: SupplierBill) =>
     today === "" ? 0 : daysBetween(bill.due_date, today);
   const header = (
-    <div className="ui-head">
+    <PageHead>
       <div>
         <h2 id="sb-title">{lt(language, "sb_t")}</h2>
         <p>{lt(language, "sb_sub")}</p>
@@ -2625,7 +2626,7 @@ function BillsTab({
           </button>
         </span>
       )}
-    </div>
+    </PageHead>
   );
   const reloadAll = (text: string) => {
     setAdding(false);

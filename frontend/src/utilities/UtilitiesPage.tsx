@@ -47,6 +47,7 @@ import {
   readingDayOf,
   withReading,
 } from "./utilitiesData";
+import { PageHead } from "../shell/pageHead";
 
 export interface UtilitiesPageProps {
   language: Language;
@@ -140,9 +141,9 @@ export function UtilitiesPage({
 
   return (
     <>
-      <div className="ui-head">
+      <PageHead>
         <p>{utt(language, "sub")}</p>
-      </div>
+      </PageHead>
       {tab !== "meter" && (
         <nav aria-label={utt(language, "sub")} className="ui-subtabs">
           <a

@@ -17,7 +17,8 @@ const TEXT = {
     "Lease ends within 60 days, or terminated and still in",
     "កិច្ចសន្យាបញ្ចប់ក្នុង 60 ថ្ងៃ ឬបានបញ្ចប់ហើយនៅមិនទាន់ចេញ",
   ],
-  c_out: ["Handed back", "បានប្រគល់បន្ទប់"],
+  // UI v81 round 2: the design's card name (C10).
+  c_out: ["Unit handed over", "បានប្រគល់បន្ទប់"],
   c_out_s: [
     "Readings, inspection and charges to finish",
     "អំណាន ការត្រួតពិនិត្យ និងថ្លៃត្រូវបញ្ចប់",
@@ -42,7 +43,7 @@ const TEXT = {
   col_unit: ["Unit", "បន្ទប់"],
   col_cust: ["Customer", "អតិថិជន"],
   col_end: ["Lease ends", "កិច្ចសន្យាបញ្ចប់"],
-  col_hb: ["Handed back", "បានប្រគល់"],
+  col_hb: ["Unit handed over", "បានប្រគល់"],
   col_step: ["Step", "ជំហាន"],
   col_dep: ["Deposits held", "ប្រាក់កក់កាន់កាប់"],
   was: ["End Date was {0}", "ថ្ងៃបញ្ចប់គឺ {0}"],
@@ -65,7 +66,7 @@ const TEXT = {
   ],
   s_soon: ["Leaving soon", "ជិតចាកចេញ"],
   s_in: ["Still in the Unit", "នៅក្នុងបន្ទប់"],
-  s_out: ["Handed back", "បានប្រគល់"],
+  s_out: ["Unit handed over", "បានប្រគល់"],
   // new: terminated before anybody moved in.
   s_skip: ["Never moved in", "មិនដែលចូលស្នាក់នៅ"],
   // new (M5)

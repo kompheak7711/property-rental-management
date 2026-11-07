@@ -24,6 +24,7 @@ import { CancelDialog, ExtendDialog } from "./ReservationDialogs";
 import { ReservationChip, leftText, resultText } from "./ReservationsList";
 import { daysLeft, percentText, suggestedDeposit } from "./reservationsData";
 import { rt, type ReservationTextKey } from "./text";
+import { PageHead } from "../shell/pageHead";
 
 function Kv({ rows }: { rows: [string, ReactNode][] }) {
   return (
@@ -217,7 +218,7 @@ export function ReservationDetail({
   return (
     <>
       {back}
-      <div className="ui-head">
+      <PageHead>
         <div>
           <div className="ui-hrow">
             <h2 className="ui-num" data-record-title="">
@@ -287,7 +288,7 @@ export function ReservationDetail({
             </button>
           )}
         </div>
-      </div>
+      </PageHead>
       {failure}
       {active && left <= 7 && (
         <div className="ui-notice warn" role="status">

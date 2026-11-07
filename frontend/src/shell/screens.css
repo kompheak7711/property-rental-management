@@ -47,7 +47,8 @@
   justify-content: space-between;
 }
 
-.ui-head p {
+.ui-head p,
+.ui-sub {
   margin: 0;
   color: var(--text-2);
 }
@@ -331,10 +332,41 @@
   font: inherit;
 }
 
+/* UI v81 round 2 (owner 07/11/2026, responsive rule): a card grid never leaves one card alone
+   in a row. Twelve columns; four cards per row, and the last rows are balanced by the number of
+   cards: 5 = 3 + 2, 7 = 4 + 3, 9 = 3 + 3 + 3, 10 = 4 + 3 + 3, 11 = 4 + 4 + 3, 13 = 4 + 3 + 3 + 3.
+   One to three cards stretch to fill the row. */
 .ui-kpis {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: 14px;
+}
+
+.ui-kpis > * {
+  grid-column: span 3;
+}
+
+.ui-kpis:has(> :nth-child(1):last-child) > * {
+  grid-column: span 12;
+}
+
+.ui-kpis:has(> :nth-child(2):last-child) > * {
+  grid-column: span 6;
+}
+
+.ui-kpis:has(> :nth-child(3):last-child) > *,
+.ui-kpis:has(> :nth-child(6):last-child) > *,
+.ui-kpis:has(> :nth-child(9):last-child) > *,
+.ui-kpis:has(> :nth-child(5):last-child) > :nth-child(-n + 3),
+.ui-kpis:has(> :nth-child(7):last-child) > :nth-child(n + 5),
+.ui-kpis:has(> :nth-child(10):last-child) > :nth-child(n + 5),
+.ui-kpis:has(> :nth-child(11):last-child) > :nth-child(n + 9),
+.ui-kpis:has(> :nth-child(13):last-child) > :nth-child(n + 5) {
+  grid-column: span 4;
+}
+
+.ui-kpis:has(> :nth-child(5):last-child) > :nth-child(n + 4) {
+  grid-column: span 6;
 }
 
 .ui-kpi {
@@ -793,9 +825,18 @@ table.ui-table a.ui-no {
   .ui-split {
     grid-template-columns: minmax(0, 1fr);
   }
+}
 
-  .ui-kpis {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+/* Two cards per row on a narrow screen (design app.css, 900px); an odd last card fills the row. */
+@media (max-width: 900px) {
+  .ui-kpis > *,
+  .ui-kpis:has(> :nth-child(n):last-child) > * {
+    grid-column: span 6;
+  }
+
+  .ui-kpis > :nth-child(odd):last-child,
+  .ui-kpis:has(> :nth-child(n):last-child) > :nth-child(odd):last-child {
+    grid-column: span 12;
   }
 }
 
@@ -2842,4 +2883,57 @@ table.ui-numbering .ui-btn.link {
 
 table.ui-numbering td.ui-num {
   white-space: nowrap;
+}
+
+/* UI v81 round 2: the Attendance card on Home is one row (design app31 .hm31r): the icon, the
+   words, the button; it wraps on a narrow screen. */
+.ui-attrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+.ui-attrow > div {
+  flex: 1 1 14rem;
+  min-width: 0;
+}
+.ui-attrow h2,
+.ui-attrow p {
+  margin: 0;
+}
+.ui-attrow p {
+  margin-top: 2px;
+}
+.ui-attic {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+.ui-attic.warn {
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+.ui-attic.ok {
+  background: var(--ok-bg);
+  color: var(--ok);
+}
+
+/* UI v81 round 2: Property › Inspections, the two places of today's inspection work. */
+.ui-insp-list {
+  display: grid;
+  gap: 12px;
+}
+.ui-insp-list li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  align-items: center;
+  justify-content: space-between;
+}
+.ui-insp-list li > span {
+  flex: 1 1 18rem;
 }

@@ -37,6 +37,7 @@ import {
   useWaitingDamages,
 } from "./ShortStayApprovals";
 import { apt, draftEffect, draftLabel } from "./text";
+import { PageHead } from "../shell/pageHead";
 
 export const FINANCIAL_APPROVE = "financial.approve";
 
@@ -379,7 +380,7 @@ function FinancialApprovals({
   if (propertyId === "") return null;
 
   const head = (
-    <div className="ui-head">
+    <PageHead>
       <p>
         {apt(language, "ap_sub")}
         {page !== null && readAt !== "" && (
@@ -389,7 +390,7 @@ function FinancialApprovals({
           </span>
         )}
       </p>
-    </div>
+    </PageHead>
   );
 
   if (failure !== null) {

@@ -560,7 +560,7 @@ const TEXT = {
     "ទាំងនេះធ្វើតាមច្បាប់អាជីវកម្មសិន។ ការប្តូរនៅទីនេះនឹងមកក្នុងជំហានក្រោយ។",
   ],
   se_methods: ["Payment Methods", "វិធីបង់ប្រាក់"],
-  pm_add: ["Add a method", "បន្ថែមវិធី"],
+  pm_add: ["Add payment method", "បន្ថែមវិធីបង់ប្រាក់"], // new (UI v81 round 2)
   pm_edit: ["Edit method", "កែវិធី"],
   pm_off: ["Turned off", "បានបិទ"],
   pm_note: [
@@ -693,7 +693,7 @@ const TEXT = {
   ],
   se_util_saved: ["New {0} Rate from {1}.", "អត្រា{0}ថ្មី ចាប់ពី {1}។"],
   // V1.1 (DL-115 (I)): renamed from "Services", beside the new Regular services.
-  se_svc: ["Monthly Services", "សេវាប្រចាំខែ"],
+  se_svc: ["Monthly services", "សេវាប្រចាំខែ"],
   se_svc_n: [
     "Billed in advance on the Rent Invoice. Each Lease ticks its Services on the New Lease form. A new rate starts on the first day of a month and never changes Invoices already issued.",
     "គិតថ្លៃជាមុននៅលើវិក្កយបត្រថ្លៃឈ្នួល។ កិច្ចសន្យានីមួយៗធីកសេវារបស់ខ្លួននៅលើទម្រង់កិច្ចសន្យាថ្មី។ អត្រាថ្មីចាប់ផ្តើមនៅថ្ងៃទីមួយនៃខែ ហើយមិនប្តូរវិក្កយបត្រដែលចេញរួចទេ។",
@@ -748,7 +748,7 @@ const TEXT = {
     "Enter the first day of this month or a later month, like 01/12/2026.",
     "បញ្ចូលថ្ងៃទីមួយនៃខែនេះ ឬខែក្រោយ ដូចជា 01/12/2026។",
   ],
-  st_add: ["Add a Service type", "បន្ថែមប្រភេទសេវា"],
+  st_add: ["Add a type", "បន្ថែមប្រភេទ"], // new (UI v81 round 2)
   st_rule: ["Per Lease", "ក្នុងមួយកិច្ចសន្យា"],
   st_one: ["Only one per Lease", "តែមួយក្នុងមួយកិច្ចសន្យា"],
   st_many: ["One or more per Lease", "មួយ ឬច្រើនក្នុងមួយកិច្ចសន្យា"],
@@ -886,7 +886,7 @@ const TEXT = {
     "Counted from the Units list each time. Never entered.",
     "រាប់ពីបញ្ជីបន្ទប់រាល់ពេល។ មិនវាយទេ។",
   ],
-  se20_biz: ["Business", "អាជីវកម្ម"],
+  se20_biz: ["General", "ទូទៅ"], // new (UI v81 round 2): the design's card name
   se20_biz_name: ["Business name", "ឈ្មោះអាជីវកម្ម"],
   se20_biz_n: [
     "Can differ from the property name.",

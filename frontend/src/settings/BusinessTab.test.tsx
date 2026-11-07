@@ -287,7 +287,7 @@ describe("Settings: Business", () => {
       "Address: Street 271, Phnom Penh",
       "Rentable Units: 2Counted from the Units list each time. Never entered.",
     ]);
-    expect(pairs(card("Business"))).toEqual([
+    expect(pairs(card("General"))).toEqual([
       "Business name: Not givenCan differ from the property name.",
     ]);
     const rules = card("Business rules");
@@ -365,7 +365,7 @@ describe("Settings: Business", () => {
     });
     expect(api.property.load).toHaveBeenCalledTimes(2);
 
-    fireEvent.click(screen.getByRole("button", { name: "Edit: Business" }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit: General" }));
     dialog = screen.getByRole("dialog", { name: "Edit business" });
     fireEvent.change(within(dialog).getByLabelText("Business name"), {
       target: { value: " CHETANA Co. " },
@@ -383,9 +383,11 @@ describe("Settings: Business", () => {
     });
 
     fireEvent.click(
-      screen.getByRole("button", { name: "Add a method: Payment Methods" }),
+      screen.getByRole("button", {
+        name: "Add payment method: Payment Methods",
+      }),
     );
-    dialog = screen.getByRole("dialog", { name: "Add a method" });
+    dialog = screen.getByRole("dialog", { name: "Add payment method" });
     fireEvent.change(within(dialog).getByLabelText(/^Method name/), {
       target: { value: "cash" },
     });
@@ -521,11 +523,13 @@ describe("Settings: Business", () => {
     fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
     expect(await screen.findByText("Saved.")).toBeTruthy();
     fireEvent.click(
-      screen.getByRole("button", { name: "Add a method: Payment Methods" }),
+      screen.getByRole("button", {
+        name: "Add payment method: Payment Methods",
+      }),
     );
     const save = () =>
       within(
-        screen.getByRole("dialog", { name: "Add a method" }),
+        screen.getByRole("dialog", { name: "Add payment method" }),
       ).getByRole<HTMLButtonElement>("button", { name: "Save" });
     expect(save().disabled).toBe(true);
     finish.read?.({ ...PROPERTY, version: 5 });

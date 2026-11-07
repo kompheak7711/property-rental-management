@@ -412,17 +412,33 @@ html[lang="km"] .shell-group-label {
   font-weight: 500;
 }
 
+/* UI v81 round 2: the design's views are wide (#view.wide), so the work area has no largest
+   width; forms keep their own (.ui-form, .ui-split-form). */
 .shell-view {
   display: grid;
   align-content: start;
   gap: 22px;
   width: 100%;
-  max-width: 1280px;
+  min-width: 0;
   padding: 24px 24px 64px;
 }
 
 .shell-view:focus {
   outline: none;
+}
+
+/* UI v81 round 2: the design's head row (app.css .head): the title with its sub-line on the
+   left, the page's buttons on the right; the buttons wrap under on a narrow screen. */
+.shell-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.shell-head-text {
+  min-width: 0;
 }
 
 .shell-head h1 {
@@ -431,6 +447,16 @@ html[lang="km"] .shell-group-label {
   font-size: 1.75rem;
   font-weight: 600;
   line-height: 1.25;
+}
+
+.shell-head-sub:empty,
+.shell-head-actions:empty {
+  display: none;
+}
+
+.shell-head-sub > * {
+  margin: 2px 0 0;
+  color: var(--text-2);
 }
 
 html[lang="km"] .shell-head h1 {

@@ -37,6 +37,7 @@ import {
   shortStaysApi as defaultShortStaysApi,
 } from "./shortStaysClient";
 import { hasText, st } from "./text";
+import { PageHead } from "../shell/pageHead";
 
 export interface ShortStaysPageProps {
   language: Language;
@@ -556,7 +557,7 @@ export function ShortStaysPage({
 
   return (
     <>
-      <div className="ui-head">
+      <PageHead>
         <p>{st(language, "sub")}</p>
         {may("short_stays.desk") && (
           <div className="ui-actions">
@@ -569,7 +570,7 @@ export function ShortStaysPage({
             </a>
           </div>
         )}
-      </div>
+      </PageHead>
       <div className="ui-filters">
         {/* UI v81 (B4): the Short stays tabs are underlined tabs, like every page's tabs. */}
         <div

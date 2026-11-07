@@ -67,6 +67,7 @@ import {
 import { ReceiveDepositDialog } from "./ReceiveDepositDialog";
 import { daysBetween, initialRent, kindOf } from "./leasesData";
 import { hasLeaseText, lt } from "./text";
+import { PageHead } from "../shell/pageHead";
 
 function Kv({ rows }: { rows: [string, ReactNode][] }) {
   return (
@@ -556,7 +557,7 @@ export function LeaseDetail({
   return (
     <>
       {back}
-      <div className="ui-head">
+      <PageHead>
         <div>
           <div className="ui-hrow">
             <h2 className="ui-num" data-record-title="">
@@ -682,7 +683,7 @@ export function LeaseDetail({
             </a>
           )}
         </div>
-      </div>
+      </PageHead>
       {failure}
       {warning !== null && (
         <div className="ui-notice warn" role="alert">
