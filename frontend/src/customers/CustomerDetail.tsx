@@ -3,6 +3,7 @@
 // Invoices and Latest Receipts (step R5), History.
 
 import { ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { BackLink } from "../shell/backNav";
 
 import type {
   CustomerApi,
@@ -18,7 +19,6 @@ import type { LeaseResource } from "../leaseClient";
 import { dayText, momentText, todayInPhnomPenh } from "../shell/format";
 import { Icon } from "../shell/icons";
 import { hashForPage } from "../shell/navigation";
-import { openPageInAddress } from "../shell/useHashPage";
 import { Chip, type Tone } from "../shell/ui";
 import type { Language } from "../signInText";
 import { DeactivateDialog, EditContactDialog } from "./CustomerDialogs";
@@ -154,18 +154,7 @@ export function CustomerDetail({
     return load();
   }, [load]);
 
-  const back = (
-    <button
-      className="ui-crumb"
-      onClick={() => {
-        openPageInAddress("customers");
-      }}
-      type="button"
-    >
-      <Icon name="back" small />
-      {ct(language, "back")}
-    </button>
-  );
+  const back = <BackLink language={language} parent="customers" />;
 
   if (missing) {
     return (
@@ -222,7 +211,7 @@ export function CustomerDetail({
       <div className="ui-head">
         <div>
           <div className="ui-hrow">
-            <h2>{customer.legal_name}</h2>
+            <h2 data-record-title="">{customer.legal_name}</h2>
             {known && <KindChip kind={standing.kind} language={language} />}
             {!customer.active && (
               <Chip tone="err">{ct(language, "deactivated")}</Chip>

@@ -107,10 +107,9 @@ describe("Reports list", () => {
     ).toBeTruthy();
     await screen.findByRole("table", { name: "Total Income" });
     expect(page.totals).toHaveBeenCalledTimes(1);
-    expect(screen.getByRole("link", { name: "All reports" })).toHaveAttribute(
-      "href",
-      "#/reports",
-    );
+    expect(
+      screen.getByRole("button", { name: "Back to Reports" }),
+    ).toBeInTheDocument();
   });
 
   it("TEST-FE-1031 shows only the reports the account may read: Staff see Utility consumption, Unit occupancy and Lease dates; History adds Audit activity; the money right adds the Totals tables and the money registers", () => {
@@ -174,7 +173,7 @@ describe("Report states", () => {
     expect(page.totals).not.toHaveBeenCalled();
     expect(page.register).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole("link", { name: "All reports" }));
+    fireEvent.click(screen.getByRole("button", { name: "Back to Reports" }));
     expect(
       await screen.findByRole("region", { name: "Registers and lists" }),
     ).toBeTruthy();
@@ -533,7 +532,7 @@ describe("Language and parameters", () => {
     expect(
       screen.getByRole("heading", { level: 2, name: "ចំណូលសរុប" }),
     ).toBeTruthy();
-    expect(screen.getByRole("link", { name: "របាយការណ៍ទាំងអស់" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^ត្រឡប់ទៅ / })).toBeTruthy();
     const table = screen.getByRole("table", { name: "ចំណូលសរុប" });
     expect(headRow(table)).toEqual([
       "ឆ្នាំ",

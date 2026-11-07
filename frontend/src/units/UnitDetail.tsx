@@ -6,6 +6,7 @@
 // Lease and Open Reservation open that record, not the list.
 
 import { ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { BackLink } from "../shell/backNav";
 
 import type { LeaseApi, LeaseResource } from "../leaseClient";
 import type { ProductsApi } from "../products/productsClient";
@@ -19,7 +20,6 @@ import {
 } from "../shell/format";
 import { Icon } from "../shell/icons";
 import { hashForPage } from "../shell/navigation";
-import { openPageInAddress } from "../shell/useHashPage";
 import { Chip, type Tone } from "../shell/ui";
 import type { Language } from "../signInText";
 import {
@@ -276,18 +276,7 @@ export function UnitDetail({
     load();
   }, [load]);
 
-  const back = (
-    <button
-      className="ui-crumb"
-      onClick={() => {
-        openPageInAddress("units");
-      }}
-      type="button"
-    >
-      <Icon name="back" small />
-      {ut(language, "back")}
-    </button>
-  );
+  const back = <BackLink language={language} parent="units" />;
 
   if (missing) {
     return (
@@ -480,7 +469,9 @@ export function UnitDetail({
       <div className="ui-head">
         <div>
           <div className="ui-hrow">
-            <h2 className="ui-num">{unit.unit_number}</h2>
+            <h2 className="ui-num" data-record-title="">
+              {unit.unit_number}
+            </h2>
             <UnitChip language={language} status={unit.status} />
             {!forRent && <Chip tone="neutral">{ut(language, "fr_no")}</Chip>}
           </div>

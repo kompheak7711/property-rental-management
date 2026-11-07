@@ -1066,7 +1066,9 @@ function RequestDetailView({
       <div className="ui-head">
         <div>
           <div className="ui-hrow">
-            <h2 className="ui-num">{data.request_number}</h2>
+            <h2 className="ui-num" data-record-title="">
+              {data.request_number}
+            </h2>
             <StatusChip language={language} request={data} />
             <MoreChips language={language} request={data} />
           </div>

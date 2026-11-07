@@ -2516,3 +2516,248 @@ a.ui-kpi.ui-home-kpi {
 .ui-qlines li .ui-sub2 {
   display: block;
 }
+
+/* ---------- UI v81 (B2, owner task 07/11/2026): shared parts ---------- */
+
+/* Add and Edit forms open as a drawer from the right; a full-screen sheet on a phone. */
+.ui-drawer-back {
+  place-items: stretch end;
+  padding: 0;
+}
+
+.ui-dlg.ui-drawer {
+  align-content: start;
+  width: min(560px, 100%);
+  height: 100dvh;
+  max-height: 100dvh;
+  padding: 24px;
+  border-radius: 12px 0 0 12px;
+}
+
+.ui-dlg.ui-drawer.wide {
+  width: min(820px, 100%);
+}
+
+.ui-dlg.ui-drawer .ui-dlg-buttons {
+  position: sticky;
+  bottom: -24px;
+  margin: 0 -24px -24px;
+  padding: 12px 24px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+@media (max-width: 640px) {
+  .ui-dlg.ui-drawer,
+  .ui-dlg.ui-drawer.wide {
+    width: 100%;
+    padding: 16px;
+    border-radius: 0;
+  }
+
+  .ui-dlg.ui-drawer .ui-dlg-buttons {
+    bottom: -16px;
+    margin: 0 -16px -16px;
+    padding: 12px 16px;
+  }
+}
+
+.ui-discard {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid var(--warn);
+  border-radius: var(--radius);
+  background: var(--warn-bg);
+}
+
+.ui-discard p {
+  flex: 1 1 160px;
+  margin: 0;
+  font-weight: 600;
+}
+
+/* Sub-tabs: pills on a wide screen, one scrolling row on a phone. */
+.ui-subtabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 16px;
+}
+
+.ui-subtabs [role="tab"] {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.ui-subtabs [role="tab"]:hover {
+  background: var(--hover);
+}
+
+.ui-subtabs [role="tab"][aria-selected="true"] {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.ui-subtab-count {
+  min-width: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--sunken);
+  color: var(--text);
+  font-size: 0.8125rem;
+  line-height: 24px;
+  text-align: center;
+}
+
+.ui-subtabs [aria-selected="true"] .ui-subtab-count {
+  background: var(--surface);
+  color: var(--text);
+}
+
+@media (max-width: 640px) {
+  .ui-subtabs {
+    flex-wrap: nowrap;
+    margin-right: -16px;
+    margin-left: -16px;
+    padding: 0 16px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .ui-subtabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .ui-subtabs [role="tab"] {
+    flex: 0 0 auto;
+  }
+}
+
+/* Panel header: title, one line, and the "+ Add" button. */
+.ui-panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin: 0 0 16px;
+}
+
+.ui-panel-head h2 {
+  margin: 0;
+  color: var(--heading);
+  font-size: 1.25rem;
+}
+
+.ui-panel-sub {
+  margin: 4px 0 0;
+  color: var(--text-2);
+}
+
+.ui-panel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Empty state: a heading, one line and an action. */
+.ui-empty-state {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  padding: 32px 16px;
+  color: var(--text-2);
+  text-align: center;
+}
+
+.ui-empty-state p {
+  margin: 0;
+}
+
+.ui-empty-title {
+  color: var(--text);
+  font-weight: 700;
+}
+
+/* The column choice above a table. */
+.ui-coltoggle {
+  position: relative;
+}
+
+.ui-coltoggle > summary {
+  list-style: none;
+}
+
+.ui-coltoggle-list {
+  position: absolute;
+  z-index: 5;
+  right: 0;
+  display: grid;
+  gap: 8px;
+  min-width: 200px;
+  margin-top: 8px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+/* Skeleton while data loads. */
+.ui-skeleton {
+  display: grid;
+  gap: 10px;
+  padding: 16px 0;
+}
+
+.ui-skeleton-line {
+  height: 14px;
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    var(--sunken),
+    var(--hover),
+    var(--sunken)
+  );
+  background-size: 200% 100%;
+  animation: ui-skeleton 1.2s ease-in-out infinite;
+}
+
+.ui-skeleton-line:nth-child(3n + 2) {
+  width: 80%;
+}
+
+.ui-skeleton-line:nth-child(3n) {
+  width: 60%;
+}
+
+@keyframes ui-skeleton {
+  from {
+    background-position: 200% 0;
+  }
+
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-skeleton-line {
+    animation: none;
+  }
+}

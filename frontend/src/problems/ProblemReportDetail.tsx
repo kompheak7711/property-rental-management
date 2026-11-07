@@ -11,6 +11,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { BackLink } from "../shell/backNav";
 
 import { centsFromText } from "../products/productsClient";
 import { DateInput } from "../shell/DateInput";
@@ -22,7 +23,6 @@ import {
 } from "../shell/format";
 import { Icon } from "../shell/icons";
 import { hashForPage } from "../shell/navigation";
-import { openPageInAddress } from "../shell/useHashPage";
 import { Chip, Dialog } from "../shell/ui";
 import type { Language } from "../signInText";
 import { problemRefusal } from "./NewProblemReport";
@@ -196,18 +196,7 @@ export function ProblemReportDetail({
     load();
   }, [load]);
 
-  const back = (
-    <button
-      className="ui-crumb"
-      onClick={() => {
-        openPageInAddress("problems");
-      }}
-      type="button"
-    >
-      <Icon name="back" small />
-      {pt(language, "back")}
-    </button>
-  );
+  const back = <BackLink language={language} parent="problems" />;
 
   if (report === null)
     return (
@@ -358,7 +347,9 @@ export function ProblemReportDetail({
       <div className="ui-head">
         <div>
           <div className="ui-hrow">
-            <h2 className="ui-num">{report.report_number}</h2>
+            <h2 className="ui-num" data-record-title="">
+              {report.report_number}
+            </h2>
             <StatusChip language={language} state={state} />
             {report.urgent && (
               <Chip icon="alert" tone="err">

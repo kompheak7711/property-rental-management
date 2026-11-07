@@ -5,6 +5,7 @@
 // Settlement apart (the server has no read of it), so "To confirm" and "Closed" come later.
 
 import "../shell/screens.css";
+import { BackLink } from "../shell/backNav";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -802,18 +803,7 @@ function MoveoutDetail({
     };
   }, [problemsApi, propertyId, seesProblems, loads]);
 
-  const back = (
-    <button
-      className="ui-crumb"
-      onClick={() => {
-        openPageInAddress("moveout");
-      }}
-      type="button"
-    >
-      <Icon name="back" small />
-      {mt(language, "back")}
-    </button>
-  );
+  const back = <BackLink language={language} parent="moveout" />;
   const failure = loadFailed && (
     <div className="ui-notice warn" role="status">
       <Icon name="alert" />
@@ -1170,7 +1160,7 @@ function MoveoutDetail({
       <div className="ui-head">
         <div>
           <div className="ui-hrow">
-            <h2 className="ui-num">
+            <h2 className="ui-num" data-record-title="">
               {mt(language, "moveout_of", lease.unit_number)}
             </h2>
             {step !== null && <MoveOutChip language={language} step={step} />}

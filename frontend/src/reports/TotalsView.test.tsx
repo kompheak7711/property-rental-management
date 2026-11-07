@@ -358,9 +358,8 @@ describe("Totals by Unit and month", () => {
         "Amounts in USD. Riel payments are shown with their riel amount and rate; never added to USD.",
       ),
     ).toBeTruthy();
-    expect(screen.getByRole("link", { name: "All reports" })).toHaveAttribute(
-      "href",
-      "#/reports",
-    );
+    expect(
+      screen.getByRole("button", { name: "Back to Reports" }),
+    ).toBeInTheDocument();
   });
 });

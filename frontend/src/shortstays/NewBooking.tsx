@@ -4,6 +4,7 @@
 // from the owner's rules in Settings, and shows the monthly hint and why a Unit cannot be booked.
 
 import { type FormEvent, useEffect, useRef, useState } from "react";
+import { BackLink } from "../shell/backNav";
 
 import {
   type CustomerApi,
@@ -408,18 +409,7 @@ export function NewBookingForm({
     save();
   };
 
-  const back = (
-    <button
-      className="ui-crumb"
-      onClick={() => {
-        openPageInAddress("shortstays");
-      }}
-      type="button"
-    >
-      <Icon name="back" small />
-      {st(language, "back")}
-    </button>
-  );
+  const back = <BackLink language={language} parent="shortstays" />;
 
   const pickGuest = (item: CustomerListItem) => {
     setGuest({

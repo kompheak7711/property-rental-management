@@ -492,7 +492,7 @@ describe("Customer page", () => {
         "This Customer was not found, or your account cannot open it.",
       ),
     ).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    fireEvent.click(screen.getByRole("button", { name: "Back to Customers" }));
     expect(window.location.hash).toBe("#/customers");
   });
 });

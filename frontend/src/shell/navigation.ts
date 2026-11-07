@@ -88,7 +88,7 @@ export interface MenuGroup {
 export const MENU: readonly MenuGroup[] = [
   { label: null, items: [{ page: "home", icon: "home" }] },
   {
-    label: ["Daily work", "ការងារប្រចាំថ្ងៃ"],
+    label: ["Operations", "ប្រតិបត្តិការ"],
     items: [
       { page: "payments", icon: "payments" },
       // V1.1 part 6 (DL-123): Quotations is a tab of Invoices.
@@ -98,8 +98,8 @@ export const MENU: readonly MenuGroup[] = [
     ],
   },
   {
-    // new
-    label: ["Tenants", "អ្នកជួល"],
+    // UI v81 (02/11 wording review): Tenants → Leasing.
+    label: ["Leasing", "ការជួល"],
     items: [
       {
         page: "reservations",
@@ -120,8 +120,8 @@ export const MENU: readonly MenuGroup[] = [
     ],
   },
   {
-    // new
-    label: ["Building", "អគារ"],
+    // UI v81: Building → Property.
+    label: ["Property", "អចលនទ្រព្យ"],
     items: [
       { page: "units", icon: "units" },
       // V1.1 part 4 (DL-121): Building › Products with its three tabs.
@@ -135,7 +135,7 @@ export const MENU: readonly MenuGroup[] = [
     ],
   },
   {
-    label: ["Office", "ការិយាល័យ"],
+    label: ["Administration", "រដ្ឋបាល"],
     items: [
       // General Ledger phase 6 step 6 (mock-up v76, Administration › Ledger): its tabs in the
       // mock-up's order. Every role sees Expense requests; the other tabs need ledger.read.
@@ -188,7 +188,7 @@ const PAGE_NAMES: Record<PageId, readonly [string, string]> = {
   invoices: ["Invoices", "វិក្កយបត្រ"],
   quotations: ["Quotations", "សម្រង់តម្លៃ"],
   utilities: ["Utilities", "ទឹកភ្លើង"],
-  approvals: ["Waiting for approval", "រង់ចាំការអនុម័ត"],
+  approvals: ["Approvals", "ការអនុម័ត"],
   units: ["Units", "បន្ទប់"],
   problems: ["Problem reports", "របាយការណ៍បញ្ហា"],
   // new
@@ -196,17 +196,17 @@ const PAGE_NAMES: Record<PageId, readonly [string, string]> = {
   // new
   stock: ["Stock movements", "ចលនាស្តុក"],
   // new
-  locations: ["Locations", "ទីតាំង"],
+  locations: ["Storage locations", "ទីតាំងស្តុក"],
   customers: ["Customers", "អតិថិជន"],
   reservations: ["Reservations", "ការកក់ទុក"],
-  visitreqs: ["Visit requests", "សំណើមកមើលបន្ទប់"],
+  visitreqs: ["Viewing requests", "សំណើមើលបន្ទប់"],
   // new
   shortstays: ["Short stays", "ការស្នាក់នៅខ្លី"],
   leases: ["Leases", "កិច្ចសន្យាជួល"],
-  letters: ["Letters", "លិខិត"],
-  moveout: ["Move-out", "ការចាកចេញ"],
+  letters: ["Notices", "សេចក្ដីជូនដំណឹង"],
+  moveout: ["Move-outs", "ការចាកចេញ"],
   reports: ["Reports", "របាយការណ៍"],
-  history: ["History", "ប្រវត្តិ"],
+  history: ["Audit log", "កំណត់ហេតុសវនកម្ម"],
   settings: ["Settings", "ការកំណត់"],
   exreqs: ["Expense requests", "សំណើចំណាយ"],
   expenses: ["Expenses", "ចំណាយ"],
@@ -355,13 +355,13 @@ export function isPageId(value: string): value is PageId {
  * else.
  */
 export function pageFromHash(hash: string): PageId {
-  const name = hash.replace(/^#\/?/, "").split("/")[0] ?? "";
+  const name = stripQuery(hash).replace(/^#\/?/, "").split("/")[0] ?? "";
   return isPageId(name) ? name : "home";
 }
 
 /** V1-058 R2: the record an address opens inside its page ("#/units/<id>"), or null. */
 export function detailFromHash(hash: string): string | null {
-  const parts = hash.replace(/^#\/?/, "").split("/");
+  const parts = stripQuery(hash).replace(/^#\/?/, "").split("/");
   if (parts.length < 2 || !isPageId(parts[0] ?? "")) return null;
   let detail: string;
   try {
@@ -371,6 +371,19 @@ export function detailFromHash(hash: string): string | null {
     return null;
   }
   return detail === "" ? null : detail;
+}
+
+/** UI v81 (B2): an address may end with "?tab=<sub-tab>"; the page and record ignore it. */
+function stripQuery(hash: string): string {
+  const at = hash.indexOf("?");
+  return at < 0 ? hash : hash.slice(0, at);
+}
+
+/** UI v81 (B2): the sub-tab kept in the address ("#/settings?tab=rates"), or null. */
+export function subTabFromHash(hash: string): string | null {
+  const at = hash.indexOf("?");
+  if (at < 0) return null;
+  return new URLSearchParams(hash.slice(at + 1)).get("tab");
 }
 
 export function hashForPage(page: PageId, detail?: string): string {

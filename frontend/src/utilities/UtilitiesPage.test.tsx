@@ -973,9 +973,10 @@ describe("Utilities Meters tab (V1-058 R4b)", () => {
       await screen.findByRole("heading", { name: "EL-OLD-201" }),
     ).toBeTruthy();
     expect(screen.queryByRole("link", { name: "Meter readings" })).toBeNull();
+    // UI v81 (B3): opened directly, Back names the parent tab.
     expect(
-      screen.getByRole("link", { name: /Back to Meters/ }).getAttribute("href"),
-    ).toBe("#/utilities/meters");
+      screen.getByRole("button", { name: "Back to Meters" }),
+    ).toBeInTheDocument();
     expect(screen.getByText("Found broken")).toBeTruthy();
     expect(screen.getByText("20/08/2026")).toBeTruthy();
     expect(

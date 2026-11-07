@@ -12,6 +12,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { BackLink } from "../shell/backNav";
 
 import { SheetFrame } from "../invoices/InvoiceDocument";
 import {
@@ -29,7 +30,6 @@ import {
 } from "../shell/format";
 import { Icon } from "../shell/icons";
 import { hashForPage } from "../shell/navigation";
-import { openPageInAddress } from "../shell/useHashPage";
 import { Dialog } from "../shell/ui";
 import type { Language } from "../signInText";
 import { QuotationDocument } from "./QuotationDocument";
@@ -129,18 +129,7 @@ export function QuotationDetail({
     load();
   }, [load]);
 
-  const back = (
-    <button
-      className="ui-crumb"
-      onClick={() => {
-        openPageInAddress("quotations");
-      }}
-      type="button"
-    >
-      <Icon name="back" small />
-      {qt(language, "back")}
-    </button>
-  );
+  const back = <BackLink language={language} parent="quotations" />;
 
   if (quotation === null) {
     return (
@@ -253,7 +242,9 @@ export function QuotationDetail({
       <div className="ui-head">
         <div>
           <div className="ui-hrow">
-            <h2 className="ui-num">{quotation.quotation_number}</h2>
+            <h2 className="ui-num" data-record-title="">
+              {quotation.quotation_number}
+            </h2>
             <QuotationChip language={language} state={state} />
           </div>
           <p>

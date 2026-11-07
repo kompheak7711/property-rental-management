@@ -3,10 +3,10 @@
 // of the stay: payment, deposit, check-in, check-out, room check and damage.
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { BackLink } from "../shell/backNav";
 
 import { dayText, momentText, usdFromCents } from "../shell/format";
 import { Icon } from "../shell/icons";
-import { openPageInAddress } from "../shell/useHashPage";
 import type { Language } from "../signInText";
 import { GuestPanel } from "./GuestPanel";
 import { RefundCard } from "./RefundCard";
@@ -144,18 +144,7 @@ export function BookingDetail({
     [api, propertyId, unitId, checkIn, kept],
   );
 
-  const back = (
-    <button
-      className="ui-crumb"
-      onClick={() => {
-        openPageInAddress("shortstays");
-      }}
-      type="button"
-    >
-      <Icon name="back" small />
-      {st(language, "back")}
-    </button>
-  );
+  const back = <BackLink language={language} parent="shortstays" />;
 
   if (booking === null)
     return (
@@ -214,7 +203,9 @@ export function BookingDetail({
       <div className="ui-head">
         <div>
           <div className="ui-hrow">
-            <h2 className="ui-num">{booking.booking_number}</h2>
+            <h2 className="ui-num" data-record-title="">
+              {booking.booking_number}
+            </h2>
             <BookingChip language={language} status={booking.status} />
           </div>
           <p>

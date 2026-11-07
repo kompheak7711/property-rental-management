@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 // V1-061 Fix 3: its address listener goes first, so a money window can keep the page.
 import "./leaveGuard";
+import { beforeForward } from "./backNav";
 
 import {
   detailFromHash,
@@ -63,6 +64,10 @@ export function openPageInAddress(
   const target = hashForPage(page, detail);
   if (window.location.hash === target) return;
   if (replace) window.history.replaceState(null, "", target);
-  else window.history.pushState(null, "", target);
+  else {
+    // UI v81 (B3): the page being left is remembered, so "Back to X" can return to it.
+    beforeForward();
+    window.history.pushState(null, "", target);
+  }
   window.dispatchEvent(new HashChangeEvent("hashchange"));
 }

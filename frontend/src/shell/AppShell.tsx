@@ -7,6 +7,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import logoUrl from "../assets/brand/CHETANA_Logo_Horizontal_Reverse.svg";
 import type { Language } from "../signInText";
 import { Icon } from "./icons";
+import { openPageInAddress } from "./useHashPage";
 import {
   MENU,
   allowedPagesOf,
@@ -343,6 +344,13 @@ export function AppShell({
                   className="shell-tab"
                   href={hashForPage(tab)}
                   key={tab}
+                  onClick={(event) => {
+                    // UI v81 (B3): changing a tab replaces the address, so Back skips it.
+                    if (event.metaKey || event.ctrlKey || event.shiftKey)
+                      return;
+                    event.preventDefault();
+                    openPageInAddress(tab, true);
+                  }}
                 >
                   {pageName(tab, language)}
                 </a>

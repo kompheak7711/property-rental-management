@@ -13,6 +13,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { BackLink } from "../shell/backNav";
 
 import type { InvoicesData } from "../invoices/invoicesData";
 import { centsOf, payerIds } from "../invoices/invoicesData";
@@ -20,7 +21,6 @@ import { InvoiceClientError } from "../invoiceClient";
 import { dayText, usdFromCents } from "../shell/format";
 import { Icon } from "../shell/icons";
 import { hashForPage } from "../shell/navigation";
-import { openPageInAddress } from "../shell/useHashPage";
 import { useLeaveGuard } from "../shell/leaveGuard";
 import { Dialog } from "../shell/ui";
 import type { Language } from "../signInText";
@@ -654,16 +654,7 @@ export function ReceivePayment({
 
   return (
     <>
-      <button
-        className="ui-crumb"
-        onClick={() => {
-          openPageInAddress("payments");
-        }}
-        type="button"
-      >
-        <Icon name="back" small />
-        {pyt(language, "back")}
-      </button>
+      <BackLink language={language} parent="payments" />
       <div className="ui-head">
         <div>
           <h2>{pyt(language, "rp_title")}</h2>

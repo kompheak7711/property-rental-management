@@ -4,6 +4,7 @@
 // with the next step; until then they stay in the earlier forms under the page.
 
 import { ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { BackLink } from "../shell/backNav";
 
 import type { DepositApi, DepositResource } from "../depositClient";
 import {
@@ -21,7 +22,6 @@ import {
 } from "../shell/format";
 import { Icon } from "../shell/icons";
 import { hashForPage } from "../shell/navigation";
-import { openPageInAddress } from "../shell/useHashPage";
 import { Chip } from "../shell/ui";
 import type { Language } from "../signInText";
 import type { UnitApi } from "../unitClient";
@@ -291,18 +291,7 @@ export function LeaseDetail({
     load();
   }, [load]);
 
-  const back = (
-    <button
-      className="ui-crumb"
-      onClick={() => {
-        openPageInAddress("leases");
-      }}
-      type="button"
-    >
-      <Icon name="back" small />
-      {lt(language, "back")}
-    </button>
-  );
+  const back = <BackLink language={language} parent="leases" />;
   const failure = loadFailed && (
     <div className="ui-notice warn" role="status">
       <Icon name="alert" />
@@ -523,7 +512,7 @@ export function LeaseDetail({
       <div className="ui-head">
         <div>
           <div className="ui-hrow">
-            <h2 className="ui-num">
+            <h2 className="ui-num" data-record-title="">
               {lt(language, "title", lease.unit_number)}
             </h2>
             <LeaseChip kind={kind} language={language} />

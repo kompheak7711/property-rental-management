@@ -5,6 +5,7 @@
 // page is open. Export makes a spreadsheet or a PDF through the V1-057 export, which writes its
 // own History row.
 
+import { BackLink } from "../shell/backNav";
 import "../shell/screens.css";
 import "./reports.css";
 
@@ -453,10 +454,7 @@ function ReportView({
 
   const head = (
     <>
-      <a className="ui-crumb" href={hashForPage("reports")}>
-        <Icon name="back" small />
-        {rpt(language, "back")}
-      </a>
+      <BackLink language={language} parent="reports" />
       <div className="ui-head">
         <div>
           <div className="ui-hrow">

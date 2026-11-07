@@ -5,11 +5,11 @@
 // Needs "Plan repairs" (problem_reports.plan); the server checks it again.
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { BackLink } from "../shell/backNav";
 
 import { todayInPhnomPenh, usdFromCents } from "../shell/format";
 import { Icon } from "../shell/icons";
 import { hashForPage } from "../shell/navigation";
-import { openPageInAddress } from "../shell/useHashPage";
 import type { Language } from "../signInText";
 import { monthText } from "../utilities/text";
 import { typeIcon } from "./ProblemReportsPage";
@@ -100,18 +100,7 @@ export function MonthlyReport({
     load();
   }, [load]);
 
-  const back = (
-    <button
-      className="ui-crumb"
-      onClick={() => {
-        openPageInAddress("problems");
-      }}
-      type="button"
-    >
-      <Icon name="back" small />
-      {pt(language, "back")}
-    </button>
-  );
+  const back = <BackLink language={language} parent="problems" />;
 
   const costTable = (
     id: string,

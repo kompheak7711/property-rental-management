@@ -8,6 +8,7 @@
 // after an unknown result is saved once. Edit items ("#/invoices/edit:<id>") changes the items of
 // such a Draft with the reason for the change; an item that stays the same keeps its charge.
 
+import { BackLink } from "../shell/backNav";
 import {
   type FormEvent,
   type ReactNode,
@@ -239,16 +240,11 @@ function EditItems({
   }, [load]);
 
   const toInvoice = (
-    <button
-      className="ui-crumb"
-      onClick={() => {
-        openPageInAddress("invoices", false, `inv:${editId}`);
-      }}
-      type="button"
-    >
-      <Icon name="back" small />
-      {ivt(language, "ni_back_one")}
-    </button>
+    <BackLink
+      language={language}
+      parent="invoices"
+      parentDetail={`inv:${editId}`}
+    />
   );
   if (failed)
     return (
@@ -513,22 +509,12 @@ function ItemsForm({
   const backToList = () => {
     openPageInAddress("invoices");
   };
-  const back = editing ? (
-    <button
-      className="ui-crumb"
-      onClick={() => {
-        openPageInAddress("invoices", false, `inv:${invoice.id}`);
-      }}
-      type="button"
-    >
-      <Icon name="back" small />
-      {ivt(language, "ni_back_one")}
-    </button>
-  ) : (
-    <button className="ui-crumb" onClick={backToList} type="button">
-      <Icon name="back" small />
-      {ivt(language, "back")}
-    </button>
+  const back = (
+    <BackLink
+      language={language}
+      parent="invoices"
+      parentDetail={editing ? `inv:${invoice.id}` : undefined}
+    />
   );
 
   if (done !== null) {

@@ -300,7 +300,7 @@ export function ReceiptPage({
       <div className="ui-head">
         <div>
           <div className="ui-hrow">
-            <h2 className="ui-num">
+            <h2 className="ui-num" data-record-title="">
               {pyt(language, "rc_title", receipt.receiptNumber ?? "—")}
             </h2>
             <PaymentChip

@@ -4,6 +4,7 @@
 // never above the list price, and a lower price needs its reason. "#/quotations/new:<id>"
 // starts from another Quotation: a waiting one is replaced by the new version (same Customer).
 
+import { BackLink } from "../shell/backNav";
 import {
   type FormEvent,
   type ReactNode,
@@ -184,17 +185,11 @@ export function NewQuotationForm({
   }, [load]);
 
   const back = (
-    <button
-      className="ui-crumb"
-      onClick={() => {
-        if (fromId === null) openPageInAddress("quotations");
-        else openPageInAddress("quotations", false, `qt:${fromId}`);
-      }}
-      type="button"
-    >
-      <Icon name="back" small />
-      {qt(language, "back")}
-    </button>
+    <BackLink
+      language={language}
+      parent="quotations"
+      parentDetail={fromId === null ? undefined : `qt:${fromId}`}
+    />
   );
   if (failed)
     return (

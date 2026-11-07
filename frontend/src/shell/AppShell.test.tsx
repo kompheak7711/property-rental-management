@@ -59,7 +59,7 @@ describe("V1-058 R1 app shell", () => {
       "Payments",
       "Invoices",
       "Utilities",
-      "Waiting for approval",
+      "Approvals",
       "Bookings",
       "Short stays",
       "Leases",
@@ -72,10 +72,15 @@ describe("V1-058 R1 app shell", () => {
       "Employees and payroll",
       "Telegram",
       "Reports",
-      "History",
+      "Audit log",
       "Settings",
     ]);
-    for (const group of ["Daily work", "Tenants", "Building", "Office"]) {
+    for (const group of [
+      "Operations",
+      "Leasing",
+      "Property",
+      "Administration",
+    ]) {
       expect(within(menu).getByText(group)).toBeInTheDocument();
     }
     expect(MENU.flatMap((group) => group.items)).toHaveLength(18);
@@ -182,9 +187,9 @@ describe("V1-058 R1 app shell", () => {
       ["Units", "#/units"],
       // audit.view reads the Audit activity report (V1-060 B6).
       ["Reports", "#/reports"],
-      ["History", "#/history"],
+      ["Audit log", "#/history"],
     ]);
-    expect(within(menu).queryByText("Daily work")).not.toBeInTheDocument();
+    expect(within(menu).queryByText("Operations")).not.toBeInTheDocument();
     // One allowed tab: no tab bar.
     expect(
       screen.queryByRole("navigation", { name: "Leases" }),
@@ -254,10 +259,10 @@ describe("V1-058 R1 app shell", () => {
         .map((link) => [link.textContent, link.getAttribute("href")]),
     ).toEqual([
       ["Leases", "#/leases"],
-      ["Letters", "#/letters"],
-      ["Move-out", "#/moveout"],
+      ["Notices", "#/letters"],
+      ["Move-outs", "#/moveout"],
     ]);
-    expect(within(tabs).getByRole("link", { name: "Letters" })).toHaveAttribute(
+    expect(within(tabs).getByRole("link", { name: "Notices" })).toHaveAttribute(
       "aria-current",
       "page",
     );
@@ -272,7 +277,7 @@ describe("V1-058 R1 app shell", () => {
         .map((link) => [link.textContent, link.getAttribute("href")]),
     ).toEqual([
       ["Reservations", "#/reservations"],
-      ["Visit requests", "#/visitreqs"],
+      ["Viewing requests", "#/visitreqs"],
     ]);
   });
 
