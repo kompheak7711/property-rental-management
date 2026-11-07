@@ -65544,6 +65544,26 @@
       "test_path": "backend/tests/test_telegram_jobs.py",
       "status": "implemented",
       "notes": "Telegram relay: the office calls the relay with its own User-Agent, because Cloudflare refuses Python's default name with 403 (owner's Mac test run 07/11/2026)."
+    },
+    {
+      "test_id": "test_the_nssf_number_is_optional",
+      "upstream_ids": [
+        "PR-HR-011"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_hr_office_hours_migration.py",
+      "status": "implemented",
+      "notes": "HRIS: an optional NSSF number with the ID details, seen only with See salaries, at most 30 letters (owner 07/11 17:59, migration 306)."
+    },
+    {
+      "test_id": "TEST-FE-1403",
+      "upstream_ids": [
+        "PR-HR-011"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/hr/HrPages.test.tsx",
+      "status": "implemented",
+      "notes": "HRIS: the NSSF number is optional at Add employee and shows on the employee page (owner 07/11 17:59)."
     }
   ]
 }
