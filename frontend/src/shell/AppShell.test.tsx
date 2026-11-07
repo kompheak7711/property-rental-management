@@ -73,6 +73,7 @@ describe("V1-058 R1 app shell", () => {
       "Telegram",
       "Reports",
       "Audit log",
+      "Users and access",
       "Settings",
     ]);
     for (const group of [
@@ -83,7 +84,7 @@ describe("V1-058 R1 app shell", () => {
     ]) {
       expect(within(menu).getByText(group)).toBeInTheDocument();
     }
-    expect(MENU.flatMap((group) => group.items)).toHaveLength(18);
+    expect(MENU.flatMap((group) => group.items)).toHaveLength(19);
   });
 
   it("TEST-FE-802 marks only the open page in the menu and names the work area after it", () => {

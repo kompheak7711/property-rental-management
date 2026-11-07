@@ -2599,10 +2599,13 @@ export function App({
       <div
         className="shell-page"
         data-page="settings"
-        hidden={!shown("settings")}
+        hidden={!shown("settings") && !shown("access")}
       >
+        {/* UI v81: Users and access is its own menu item, drawn by the same component so the
+            earlier forms are mounted once. */}
         <SettingsPage
-          active={shown("settings")}
+          active={shown("settings") || shown("access")}
+          mode={shown("access") ? "access" : "settings"}
           propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
           unitApi={unitApi ?? defaultUnitApi}
           capabilities={capabilities}

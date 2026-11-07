@@ -817,7 +817,7 @@ describe("local sign-in", () => {
   });
 
   it("TEST-FE-012 exposes account commands only after server capability and recent-auth checks with explicit consequence confirmation", async () => {
-    openPage("settings");
+    openPage("access");
     const user: UserAccount = {
       user_id: "user-1",
       property_id: "property-1",
@@ -870,8 +870,8 @@ describe("local sign-in", () => {
     fireEvent.change(await screen.findByLabelText("Property identifier"), {
       target: { value: "property-1" },
     });
-    // V1-058 R7b: the account forms live on the Users and sign-in tab of Settings.
-    openPage("settings/users");
+    // UI v81: the account forms live on Users and access (moved out of Settings).
+    openPage("access");
     fireEvent.click(
       screen.getByRole("button", { name: "Check administration access" }),
     );
@@ -1027,7 +1027,7 @@ describe("local sign-in", () => {
   });
 
   it("TEST-FE-014 requires consequence confirmation before administrative recovery", async () => {
-    openPage("settings");
+    openPage("access");
     const user: UserAccount = {
       user_id: "user-1",
       property_id: "property-1",
@@ -1085,8 +1085,8 @@ describe("local sign-in", () => {
     fireEvent.change(await screen.findByLabelText("Property identifier"), {
       target: { value: "property-1" },
     });
-    // V1-058 R7b: the account forms live on the Users and sign-in tab of Settings.
-    openPage("settings/users");
+    // UI v81: the account forms live on Users and access (moved out of Settings).
+    openPage("access");
     fireEvent.click(
       screen.getByRole("button", { name: "Check administration access" }),
     );
@@ -1128,7 +1128,7 @@ describe("local sign-in", () => {
   });
 
   it("TEST-FE-684 shows a new account's first one-time password once and clears it", async () => {
-    openPage("settings");
+    openPage("access");
     const created: UserAccount = {
       user_id: "user-2",
       property_id: "property-1",
@@ -1184,8 +1184,8 @@ describe("local sign-in", () => {
     fireEvent.change(await screen.findByLabelText("Property identifier"), {
       target: { value: "property-1" },
     });
-    // V1-058 R7b: the account forms live on the Users and sign-in tab of Settings.
-    openPage("settings/users");
+    // UI v81: the account forms live on Users and access (moved out of Settings).
+    openPage("access");
     fireEvent.click(
       screen.getByRole("button", { name: "Check administration access" }),
     );

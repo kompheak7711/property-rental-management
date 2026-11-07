@@ -14,17 +14,34 @@ const TEXT = {
     "ការប្តូរចាប់ផ្តើមពីថ្ងៃដែលបង្ហាញ ហើយមិនប្តូរវិក្កយបត្រ ឬបង្កាន់ដៃដែលបានធ្វើរួចទេ។",
   ],
   tabs: ["Settings tabs", "ផ្ទាំងការកំណត់"],
-  se_tab_biz: ["Business", "អាជីវកម្ម"],
-  se_tab_rates: ["Rates and services", "អត្រា និងសេវា"],
+  // UI v81: General first; Rates split into Utility rates and Monthly services.
+  se_tab_biz: ["General", "ទូទៅ"], // new
+  se_tab_rates: ["Utility rates", "អត្រាទឹកភ្លើង"], // new
+  se_tab_msvc: ["Monthly services", "សេវាប្រចាំខែ"], // new
   se_tab_units: ["Unit setup", "ការរៀបចំបន្ទប់"],
-  se_tab_users: ["Users and sign-in", "អ្នកប្រើ និងការចូល"],
+  se_tab_users: ["Users and access", "អ្នកប្រើ និងសិទ្ធិ"], // new
+  // UI v81: the Users and access page and its sub-tabs.
+  ac_sub: [
+    "Who can sign in, what each role may do, and the sign-in rules.",
+    "អ្នកណាអាចចូល តួនាទីនីមួយៗអាចធ្វើអ្វី និងច្បាប់ចូល។",
+  ], // new
+  ac_tabs: ["Users and access sections", "ផ្នែកអ្នកប្រើ និងសិទ្ធិ"], // new
+  ac_users: ["Users", "អ្នកប្រើ"], // new
+  ac_roles: ["Roles", "តួនាទី"], // new
+  ac_signin: ["Sign-in and security", "ការចូល និងសុវត្ថិភាព"], // new
+  ac_history: ["History", "ប្រវត្តិ"], // new
+  ac_history_note: [
+    "The full list of access changes is in the earlier forms below until it moves here. Every change is also in the Audit log.",
+    "បញ្ជីពេញនៃការប្តូរសិទ្ធិ មាននៅក្នុងទម្រង់មុនខាងក្រោម រហូតដល់ផ្លាស់មកទីនេះ។ រាល់ការប្តូរក៏មាននៅក្នុងកំណត់ហេតុសវនកម្មដែរ។",
+  ], // new
   se_tab_health: ["System health", "សុខភាពប្រព័ន្ធ"],
   // new: tabs not rebuilt yet keep the earlier forms.
   earlier: ["Earlier forms (English)", "ទម្រង់មុន (អង់គ្លេស)"],
   // V1-061 Fix 4 (owner bug list 29/10/2026): the tabs waited forever with no Property open.
+  // UI v81: the Business tab is called General now. // new
   no_property: [
-    "No Property is open yet. On the Business tab, open “Earlier forms (English)”, type the Property identifier and press “Load business configuration”. Then every tab fills in.",
-    "មិនទាន់មានអគារបើកនៅឡើយទេ។ នៅផ្ទាំងអាជីវកម្ម សូមបើក “ទម្រង់មុន (អង់គ្លេស)” វាយលេខសម្គាល់អគារ ហើយចុច “Load business configuration”។ បន្ទាប់មក ផ្ទាំងទាំងអស់នឹងបង្ហាញព័ត៌មាន។",
+    "No Property is open yet. In Settings, on the General tab, open “Earlier forms (English)”, type the Property identifier and press “Load business configuration”. Then every tab fills in.",
+    "មិនទាន់មានអគារបើកនៅឡើយទេ។ នៅក្នុងការកំណត់ ផ្ទាំងទូទៅ សូមបើក “ទម្រង់មុន (អង់គ្លេស)” វាយលេខសម្គាល់អគារ ហើយចុច “Load business configuration”។ បន្ទាប់មក ផ្ទាំងទាំងអស់នឹងបង្ហាញព័ត៌មាន។",
   ],
   // new
   earlier_note: [

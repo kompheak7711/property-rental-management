@@ -25,6 +25,7 @@ export type PageId =
   | "reports"
   | "history"
   | "settings"
+  | "access"
   | "exreqs"
   | "expenses"
   | "bills"
@@ -175,6 +176,8 @@ export const MENU: readonly MenuGroup[] = [
       },
       { page: "reports", icon: "reports" },
       { page: "history", icon: "history" },
+      // UI v81 (B4): Users and access is its own menu item, moved out of Settings.
+      { page: "access", icon: "customers" },
       { page: "settings", icon: "settings" },
     ],
   },
@@ -208,6 +211,8 @@ const PAGE_NAMES: Record<PageId, readonly [string, string]> = {
   reports: ["Reports", "របាយការណ៍"],
   history: ["Audit log", "កំណត់ហេតុសវនកម្ម"],
   settings: ["Settings", "ការកំណត់"],
+  // new
+  access: ["Users and access", "អ្នកប្រើ និងសិទ្ធិ"],
   exreqs: ["Expense requests", "សំណើចំណាយ"],
   expenses: ["Expenses", "ចំណាយ"],
   bills: ["Supplier bills", "វិក្កយបត្រអ្នកផ្គត់ផ្គង់"],
@@ -270,11 +275,8 @@ const PAGE_NEEDS: Record<PageId, readonly string[] | null> = {
   reports: ["reports.read", "utility.read", "leases.read", "audit.view"],
   history: ["audit.view"],
   // V1-058 R7b: System health is a Settings tab for operations.status.read too.
-  settings: [
-    "settings.manage",
-    "identity.manage_access",
-    "operations.status.read",
-  ],
+  settings: ["settings.manage", "operations.status.read"],
+  access: ["identity.manage_access"],
   // General Ledger (owner plan 03/11/2026, rights table L1): Owner and Manager read the ledger.
   exreqs: ["expenses.request"],
   expenses: ["ledger.read"],
