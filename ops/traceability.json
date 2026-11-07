@@ -65484,6 +65484,144 @@
       "test_path": "frontend/src/telegram/TelegramPages.test.tsx",
       "status": "implemented",
       "notes": "Telegram FAQ starter: an empty FAQ offers the Owner and the Manager the 15 starter questions, which load waiting for the Owner; Staff do not see the button."
+    },
+    {
+      "test_id": "TEST-FE-1900",
+      "upstream_ids": [
+        "UI-004",
+        "UI-007"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shell/backNav.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 Back helper: a record page shows one Back link named after the page you came from."
+    },
+    {
+      "test_id": "TEST-FE-1901",
+      "upstream_ids": [
+        "UI-004",
+        "UI-007"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shell/backNav.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 Back helper: opened directly, Back goes to the parent list."
+    },
+    {
+      "test_id": "TEST-FE-1902",
+      "upstream_ids": [
+        "UI-004",
+        "UI-007"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shell/backNav.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 Back helper: Back returns to the page you came from with its place kept."
+    },
+    {
+      "test_id": "TEST-FE-1903",
+      "upstream_ids": [
+        "UI-004",
+        "UI-007"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shell/backNav.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 Back helper: a named parent label reads Back to that page."
+    },
+    {
+      "test_id": "TEST-FE-1904",
+      "upstream_ids": [
+        "PR-SS-STEP5",
+        "DL-049"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shortstays/earlyCheckOut.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 early check-out: Check out before the booked day warns, Keep the stay closes, Check out early goes on; the window states that unused nights stay paid."
+    },
+    {
+      "test_id": "TEST-FE-1905",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shell/recordViews.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 record pages: History shows the latest 5 with a History button to the full page."
+    },
+    {
+      "test_id": "TEST-FE-1906",
+      "upstream_ids": [
+        "UI-093",
+        "DL-114"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/settings/SettingsPage.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 Users and access is its own page with Users, Roles, Sign-in and security and History tabs; the old Settings users address opens it."
+    },
+    {
+      "test_id": "TEST-FE-1907",
+      "upstream_ids": [
+        "UI-008",
+        "API-GL-006"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/home/OwnerMoney.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 Home Owner money: cash and bank, customers owe, over 30 days, spent against budget and profit this year from the Ledger reports."
+    },
+    {
+      "test_id": "TEST-FE-1908",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/home/OwnerMoney.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 Home Attendance card: counts scans to check and people with no check-out."
+    },
+    {
+      "test_id": "TEST-FE-1909",
+      "upstream_ids": [
+        "UI-007"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shell/TopSearch.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 top-bar search finds Customers and Units and opens the record."
+    },
+    {
+      "test_id": "TEST-FE-1911",
+      "upstream_ids": [
+        "UI-008",
+        "DL-069"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/approvals/ShortStayApprovals.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 Approvals tabs: Short-stay approvals lists waiting damage charges and opens the booking; without short_stays.approve there are no tabs."
+    },
+    {
+      "test_id": "test_360_follows_321_and_is_the_head",
+      "upstream_ids": [
+        "API-GL-006"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_gl_account_names_migration.py",
+      "status": "implemented",
+      "notes": "UI v81 migration 360 follows 321 and is the head; forward only."
+    },
+    {
+      "test_id": "test_360_changes_only_the_four_english_names",
+      "upstream_ids": [
+        "API-GL-006"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_gl_account_names_migration.py",
+      "status": "implemented",
+      "notes": "UI v81 migration 360 changes only the English display names of 1100, 1110, 2210 and 3900, guarded by the old names."
     }
   ]
 }
