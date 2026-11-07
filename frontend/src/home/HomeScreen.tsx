@@ -33,6 +33,12 @@ import {
 } from "../problems/problemsClient";
 import { costText } from "../problems/RepairCost";
 import { type HomeTextKey, hmt, weekdayText } from "./text";
+import { type HrApi, hrApi as defaultHrApi } from "../hr/hrClient";
+import {
+  type LedgerApi,
+  ledgerApi as defaultLedgerApi,
+} from "../ledger/ledgerClient";
+import { AttendanceCard, OwnerMoney } from "./OwnerMoney";
 
 export interface HomeApi {
   home: (propertyId: string) => Promise<HomePage>;
@@ -47,6 +53,10 @@ export interface HomeScreenProps {
   capabilities: ReadonlySet<string> | null;
   /** DL-131: the Problem reports card, read only by a person who may see Problem reports. */
   problemsApi?: Pick<ProblemsApi, "summary">;
+  /** UI v81: the Owner money box (ledger.owner_money and ledger.read). */
+  ledgerApi?: Pick<LedgerApi, "report">;
+  /** UI v81: the Attendance card (hr.attendance.read). */
+  attendanceApi?: Pick<HrApi, "day">;
 }
 
 type Tone = "err" | "warn" | "info" | "neutral" | "ok" | "brand";
@@ -657,6 +667,8 @@ export function HomeScreen({
   homeApi,
   capabilities,
   problemsApi = defaultProblemsApi,
+  ledgerApi = defaultLedgerApi,
+  attendanceApi = defaultHrApi,
 }: HomeScreenProps) {
   const may = (capability: string) =>
     capabilities === null || capabilities.has(capability);
@@ -770,9 +782,31 @@ export function HomeScreen({
       </>
     );
   }
+  // UI v81: shown only to a person known to hold the rights (the server checks again).
+  const seesOwnerMoney =
+    capabilities?.has("ledger.owner_money") === true &&
+    capabilities.has("ledger.read");
+  const seesAttendance = capabilities?.has("hr.attendance.read") === true;
   return (
     <>
       {head}
+      {seesOwnerMoney && (
+        <OwnerMoney
+          active={active}
+          api={ledgerApi}
+          language={language}
+          propertyId={propertyId}
+          today={page.business_date}
+        />
+      )}
+      {seesAttendance && (
+        <AttendanceCard
+          active={active}
+          api={attendanceApi}
+          language={language}
+          propertyId={propertyId}
+        />
+      )}
       <Cards
         cards={page.cards}
         extra={

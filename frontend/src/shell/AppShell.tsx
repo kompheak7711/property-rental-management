@@ -96,6 +96,8 @@ export interface AppShellProps {
   children: ReactNode;
   /** The person's capabilities; null while unknown (then every item shows). */
   capabilities: ReadonlySet<string> | null;
+  /** UI v81: the top-bar search box. */
+  search?: ReactNode;
 }
 
 export function AppShell({
@@ -111,6 +113,7 @@ export function AppShell({
   notice,
   children,
   capabilities,
+  search,
 }: AppShellProps) {
   const t = (key: TextKey) => TEXT[key][language === "en" ? 0 : 1];
   const [menuOpen, setMenuOpen] = useState(false);
@@ -296,6 +299,7 @@ export function AppShell({
           >
             <Icon name="menu" />
           </button>
+          {search}
           <p className="shell-clock">
             <b>
               {clock.weekday} {clock.date} · {clock.time}

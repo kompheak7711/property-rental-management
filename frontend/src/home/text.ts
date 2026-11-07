@@ -160,6 +160,26 @@ const TEXT = {
   tip_lease: ["Open Lease", "បើកកិច្ចសន្យា"],
   tip_appr: ["Open the draft", "បើកសេចក្តីព្រាង"],
   tip_letter: ["Open Letters", "បើកលិខិត"],
+  // UI v81 (design v81 Home): Owner money and Attendance.
+  om_t: ["Owner money", "ប្រាក់ម្ចាស់"], // new
+  om_only: ["Only the Owner sees this", "មានតែម្ចាស់ឃើញ"], // new
+  om_cash: ["Cash and bank today", "សាច់ប្រាក់ និងធនាគារថ្ងៃនេះ"], // new
+  om_cash_s: ["Opens the Balance sheet", "បើកតារាងតុល្យការ"], // new
+  om_owe: ["Customers owe", "អតិថិជនជំពាក់"], // new
+  om_owe_s: ["Opens Accounts receivable aging", "បើកអាយុបំណុលអតិថិជន"], // new
+  om_over: ["Owed over 30 days", "ជំពាក់លើស ៣០ ថ្ងៃ"], // new
+  om_spent: ["Spent this month", "ចំណាយខែនេះ"], // new
+  om_spent_s: ["Budget {0}", "ថវិកា {0}"], // new
+  om_nobudget: ["No budget for this month", "គ្មានថវិកាសម្រាប់ខែនេះ"], // new
+  om_profit: ["Profit this year", "ចំណេញឆ្នាំនេះ"], // new
+  om_profit_s: ["{0} so far", "{0} រហូតមកដល់ពេលនេះ"], // new
+  at_t: ["Attendance needs attention", "វត្តមានត្រូវយកចិត្តទុកដាក់"], // new
+  at_n: [
+    "{0} to check: Needs check {1}, No check-out {2}.",
+    "{0} ត្រូវពិនិត្យ៖ ត្រូវពិនិត្យ {1} គ្មានការចុះចេញ {2}។",
+  ], // new
+  at_0: ["Nothing to check today.", "ថ្ងៃនេះគ្មានអ្វីត្រូវពិនិត្យ។"], // new
+  at_open: ["Open the daily sheet", "បើកតារាងប្រចាំថ្ងៃ"], // new
 } as const satisfies Record<string, readonly [string, string]>;
 
 export type HomeTextKey = keyof typeof TEXT;

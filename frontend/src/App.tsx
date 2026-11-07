@@ -50,6 +50,7 @@ import {
   businessSettingsApi as businessSettingsClient,
 } from "./settings/businessSettingsClient";
 import { UnitApi, unitApi as defaultUnitApi } from "./unitClient";
+import { type SearchSources, TopSearch } from "./shell/TopSearch";
 import {
   CustomerManagement,
   CustomerReconciliationRequirement,
@@ -1651,6 +1652,25 @@ export function App({
   };
   const allowed = pageAllowed(page, capabilities);
   const shown = (candidate: PageId) => candidate === page && allowed;
+  // UI v81: the top-bar search reads only what the person may read (the server checks again).
+  const searchSources: SearchSources = {
+    ...(pageAllowed("customers", capabilities)
+      ? {
+          customers: (property: string, query: string) =>
+            (customerApi ?? defaultCustomerApi)
+              .list(property, { query })
+              .then((found) => found.items),
+        }
+      : {}),
+    ...(pageAllowed("units", capabilities)
+      ? {
+          units: (property: string) =>
+            (unitApi ?? defaultUnitApi)
+              .list(property)
+              .then((found) => found.items),
+        }
+      : {}),
+  };
 
   return (
     <AppShell
@@ -1670,6 +1690,13 @@ export function App({
       onLanguageChange={changeLanguage}
       onSignOut={handleLogout}
       page={page}
+      search={
+        <TopSearch
+          language={language}
+          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
+          sources={searchSources}
+        />
+      }
       signOutDisabled={isSubmitting}
     >
       {!allowed && <NoAccess language={language} />}
@@ -1682,6 +1709,8 @@ export function App({
           capabilities={capabilities}
           homeApi={homeApi}
           language={language}
+          attendanceApi={hrApi}
+          ledgerApi={generalLedgerApi}
           problemsApi={problemsApi}
           propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
         />
