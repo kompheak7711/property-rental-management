@@ -80,6 +80,6 @@ For testing before the office server, `Set up Telegram test.command` (repository
 - the setup writes `.local/telegram/operations.json` and `jobs.env` (the Property, the Owner
   account the jobs run as, and the Staff bot's service actor).
 
-After it, `Start test app.command` also runs the pull and send jobs every minute
+After it, `Start test app.command` also runs the pull and send jobs every 10 seconds
 (`scripts/local/telegram-jobs.sh`, log `.local/telegram.log`). Send `ping` to a bot to check
 the connection. Running the setup again keeps what is there and redoes the rest.
