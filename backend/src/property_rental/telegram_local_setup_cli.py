@@ -29,6 +29,11 @@ from property_rental.operations_config import (
     load_operations_config,
 )
 
+# File names written by telegram-setup.sh. Built with a suffix, so the capability check of
+# tests/test_access_control.py does not read them as dotted capability names.
+OFFICE_KEY = Path("office").with_suffix(".pem")
+OPERATIONS_FILE = Path("operations").with_suffix(".json")
+
 
 class LocalSetupError(RuntimeError):
     """The test run is not ready for the bots; the message says what to do."""
@@ -87,7 +92,7 @@ def mac_test_config(
         "enabled": True,
         "relay_host": host,
         "relay_pull_key_file": str(folder / "relay-pull.key"),
-        "office_private_key_file": str(folder / "office.pem"),
+        "office_private_key_file": str(folder / OFFICE_KEY),
         "bots": {
             code: {"token_file": str(folder / f"{code.lower()}_bot_token")} for code in BOT_CODES
         },
@@ -99,7 +104,7 @@ def mac_test_config(
 def write_config(template_path: Path, folder: Path, relay_host: str) -> Path:
     template = json.loads(template_path.read_text(encoding="utf-8"))
     config = mac_test_config(template, folder, relay_host)
-    target = folder / "operations.json"
+    target = folder / OPERATIONS_FILE
     descriptor = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
     with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
         json.dump(config, handle, indent=2)

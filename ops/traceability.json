@@ -65704,6 +65704,16 @@
       "test_path": "frontend/src/inspections/InspectionsPage.test.tsx",
       "status": "implemented",
       "notes": "UI v81 round 2 Property > Inspections: says the Joint Inspection and Unit Check records come in V1.2 and opens Move-outs and Problem reports, in English and Khmer."
+    },
+    {
+      "test_id": "test_the_office_names_itself_to_the_relay",
+      "upstream_ids": [
+        "DL-125"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_jobs.py",
+      "status": "implemented",
+      "notes": "Telegram relay: the office calls the relay with its own User-Agent, because Cloudflare refuses Python's default name with 403 (owner's Mac test run 07/11/2026)."
     }
   ]
 }
