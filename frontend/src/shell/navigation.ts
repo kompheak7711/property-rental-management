@@ -395,9 +395,17 @@ function stripQuery(hash: string): string {
 
 /** UI v81 (B2): the sub-tab kept in the address ("#/settings?tab=rates"), or null. */
 export function subTabFromHash(hash: string): string | null {
+  return queryFromHash(hash, "tab");
+}
+
+/**
+ * UI v81 round 3: one value kept after "?" in the address ("#/home?tasks=overdue" gives
+ * "overdue" for "tasks"), or null when the address has none.
+ */
+export function queryFromHash(hash: string, key: string): string | null {
   const at = hash.indexOf("?");
   if (at < 0) return null;
-  return new URLSearchParams(hash.slice(at + 1)).get("tab");
+  return new URLSearchParams(hash.slice(at + 1)).get(key);
 }
 
 export function hashForPage(page: PageId, detail?: string): string {

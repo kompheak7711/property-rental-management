@@ -410,7 +410,7 @@ describe("Expense requests", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", {
-        name: /^Staff reimbursements due: \$25\.00/,
+        name: /^Owed to staff: \$25\.00/,
       }),
     ).toBeInTheDocument();
     expect(

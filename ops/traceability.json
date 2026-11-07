@@ -65706,6 +65706,26 @@
       "notes": "UI v81 round 2 Property > Inspections: says the Joint Inspection and Unit Check records come in V1.2 and opens Move-outs and Problem reports, in English and Khmer."
     },
     {
+      "test_id": "TEST-FE-1915",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/home/HomeScreen.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 round 3 Home Tasks cards: the card named in the address (#/home?tasks=later) opens at once; with nothing overdue no list is open and the Overdue count is not red."
+    },
+    {
+      "test_id": "TEST-FE-1916",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shell/tableFit.test.ts",
+      "status": "implemented",
+      "notes": "UI v81 round 3 list pages: the main table's scrolling area is planned from the screen (fit on a desktop, page scroll with stuck headings on a phone or a short screen, plain when the table is wider than its box), the main table is the visible one with the most rows, a record page is left alone, and the scroll place is kept for Back."
+    },
+    {
       "test_id": "test_the_office_names_itself_to_the_relay",
       "upstream_ids": [
         "DL-125"

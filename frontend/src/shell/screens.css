@@ -301,9 +301,11 @@
   background: var(--btn-hover);
 }
 
+/* UI v81 round 3: the chosen segment looks chosen (as the design's), not like a filled button. */
 .ui-seg button[aria-pressed="true"] {
-  background: var(--primary);
-  color: var(--on-primary);
+  background: var(--selected);
+  box-shadow: inset 0 -3px 0 var(--primary);
+  color: var(--heading);
   font-weight: 700;
 }
 
@@ -332,41 +334,162 @@
   font: inherit;
 }
 
-/* UI v81 round 2 (owner 07/11/2026, responsive rule): a card grid never leaves one card alone
-   in a row. Twelve columns; four cards per row, and the last rows are balanced by the number of
-   cards: 5 = 3 + 2, 7 = 4 + 3, 9 = 3 + 3 + 3, 10 = 4 + 3 + 3, 11 = 4 + 4 + 3, 13 = 4 + 3 + 3 + 3.
-   One to three cards stretch to fill the row. */
+/* UI v81 round 3 (owner 07/11/2026 17:30, responsive rule): a card grid changes with the screen.
+   Phone (under 640px): two cards per row, Owner money one per row. Tablet (640 to 1023px): three
+   per row, Owner money two per row. Desktop (1024px and up): four per row, and the last rows are
+   balanced by the number of cards so no card is alone: 5 = 3 + 2, 7 = 4 + 3, 9 = 3 + 3 + 3,
+   10 = 4 + 3 + 3, 11 = 4 + 4 + 3, 13 = 4 + 3 + 3 + 3. One to three cards stretch to fill the
+   row. Twelve columns. A label or note never wraps past two lines; the cards of one row share
+   the row's height. The Home Tasks cards (.ui-tasks) are four in a row, two by two on a phone. */
 .ui-kpis {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: 14px;
+  align-items: stretch;
 }
 
 .ui-kpis > * {
   grid-column: span 3;
 }
 
-.ui-kpis:has(> :nth-child(1):last-child) > * {
-  grid-column: span 12;
+@media (min-width: 1024px) {
+  .ui-kpis:has(> :nth-child(1):last-child) > * {
+    grid-column: span 12;
+  }
+
+  .ui-kpis:has(> :nth-child(2):last-child) > * {
+    grid-column: span 6;
+  }
+
+  .ui-kpis:has(> :nth-child(3):last-child) > *,
+  .ui-kpis:has(> :nth-child(6):last-child) > *,
+  .ui-kpis:has(> :nth-child(9):last-child) > *,
+  .ui-kpis:has(> :nth-child(5):last-child) > :nth-child(-n + 3),
+  .ui-kpis:has(> :nth-child(7):last-child) > :nth-child(n + 5),
+  .ui-kpis:has(> :nth-child(10):last-child) > :nth-child(n + 5),
+  .ui-kpis:has(> :nth-child(11):last-child) > :nth-child(n + 9),
+  .ui-kpis:has(> :nth-child(13):last-child) > :nth-child(n + 5) {
+    grid-column: span 4;
+  }
+
+  .ui-kpis:has(> :nth-child(5):last-child) > :nth-child(n + 4) {
+    grid-column: span 6;
+  }
+
+  .ui-kpis.ui-tasks > * {
+    grid-column: span 3;
+  }
 }
 
-.ui-kpis:has(> :nth-child(2):last-child) > * {
-  grid-column: span 6;
+@media (min-width: 640px) and (max-width: 1023px) {
+  .ui-kpis > * {
+    grid-column: span 4;
+  }
+
+  /* 4 = 2 + 2, 7 = 3 + 2 + 2 (one left over: the last four share two rows);
+     5 = 3 + 2, 8 = 3 + 3 + 2 (two left over: the last two share a row). */
+  .ui-kpis:not(.ui-om):not(.ui-tasks):has(> :nth-child(3n + 1):last-child)
+    > :nth-last-child(-n + 4),
+  .ui-kpis:not(.ui-om):not(.ui-tasks):has(> :nth-child(3n + 2):last-child)
+    > :nth-last-child(-n + 2) {
+    grid-column: span 6;
+  }
+
+  .ui-kpis.ui-om > * {
+    grid-column: span 6;
+  }
+
+  .ui-kpis.ui-om > :nth-child(odd):last-child {
+    grid-column: span 12;
+  }
+
+  .ui-kpis.ui-tasks > * {
+    grid-column: span 3;
+  }
 }
 
-.ui-kpis:has(> :nth-child(3):last-child) > *,
-.ui-kpis:has(> :nth-child(6):last-child) > *,
-.ui-kpis:has(> :nth-child(9):last-child) > *,
-.ui-kpis:has(> :nth-child(5):last-child) > :nth-child(-n + 3),
-.ui-kpis:has(> :nth-child(7):last-child) > :nth-child(n + 5),
-.ui-kpis:has(> :nth-child(10):last-child) > :nth-child(n + 5),
-.ui-kpis:has(> :nth-child(11):last-child) > :nth-child(n + 9),
-.ui-kpis:has(> :nth-child(13):last-child) > :nth-child(n + 5) {
-  grid-column: span 4;
-}
+@media (max-width: 639px) {
+  .ui-kpis {
+    gap: 10px;
+  }
 
-.ui-kpis:has(> :nth-child(5):last-child) > :nth-child(n + 4) {
-  grid-column: span 6;
+  .ui-kpis > * {
+    grid-column: span 6;
+  }
+
+  .ui-kpis:not(.ui-om):not(.ui-tasks) > :nth-child(odd):last-child,
+  .ui-kpis.ui-om > * {
+    grid-column: span 12;
+  }
+
+  .ui-kpi {
+    padding: 12px;
+  }
+
+  /* No icon circle beside a phone-width label, so the label keeps to two lines; a note may take
+     three short lines. */
+  .ui-kpi-label > .ui-kpi-icon {
+    display: none;
+  }
+
+  /* A value scales with the screen; a value made of words may take two lines. */
+  .ui-kpis .ui-kpi .ui-kpi-value {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    font-size: clamp(1rem, 5vw, 1.5rem);
+    white-space: normal;
+  }
+
+  .ui-kpis .ui-kpi .ui-kpi-label {
+    font-size: 0.82rem;
+  }
+
+  .ui-kpis .ui-kpi .ui-kpi-note {
+    font-size: 0.76rem;
+    -webkit-line-clamp: 4;
+  }
+
+  /* A button in a phone table keeps to one line: the table scrolls sideways anyway. */
+  table.ui-table .ui-btn,
+  table.ui-table.ui-numbering .ui-btn.link {
+    white-space: nowrap;
+  }
+
+  /* A value made of words in a key-value list (System health) wraps instead of leaving the card
+     (more specific than the one-line rule written later in this file). */
+  .shell-view .ui-kv.ui-is dd.ui-num {
+    white-space: normal;
+  }
+
+  /* A phone table scrolls sideways in its box, so its headings stay on one line. */
+  table.ui-table th {
+    white-space: nowrap;
+  }
+
+  /* Filter segments become chips that wrap, so none runs off the screen. */
+  .ui-seg {
+    display: flex;
+    gap: 6px;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  .ui-seg button {
+    min-height: 40px;
+    border: 1px solid var(--btn-edge);
+    border-radius: 8px;
+    background: var(--btn-bg);
+  }
+
+  .ui-seg button[aria-pressed="true"] {
+    border-color: var(--primary);
+    background: var(--selected);
+    box-shadow: inset 0 0 0 1px var(--primary);
+  }
 }
 
 .ui-kpi {
@@ -401,6 +524,24 @@
   color: var(--text-2);
   font-size: 0.88rem;
   font-weight: 600;
+}
+
+/* UI v81 round 3: a label shows at most two lines, a note at most three (its last line is often
+   a count, such as "0 payments"); a number stays on one line. */
+.ui-kpi-label > :not(.ui-kpi-icon),
+.ui-kpi-note {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.ui-kpi-note {
+  -webkit-line-clamp: 3;
+}
+
+.ui-kpi-label > :not(.ui-kpi-icon) {
+  min-width: 0;
 }
 
 .ui-kpi-icon {
@@ -440,9 +581,12 @@
 }
 
 .ui-kpi-value {
+  overflow: hidden;
   font-size: 1.75rem;
   font-weight: 700;
   line-height: 1.15;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .ui-kpi.none .ui-kpi-value {
@@ -467,8 +611,168 @@
 }
 
 .ui-tablewrap {
+  position: relative;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+}
+
+/* UI v81 round 3 (owner 07/11/2026 17:30): on a list page the main table scrolls in its own
+   area and its column headings stay at the top of that area (shell/tableFit.ts picks the table
+   and sets the height). On a phone or a short screen the page scrolls and only the headings
+   stick, under the top bar, when the table is not wider than the screen. */
+.ui-tablewrap.ui-tscroll {
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.ui-tablewrap.ui-tscroll table.ui-table th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.ui-tablewrap.ui-tflow {
+  overflow: visible;
+}
+
+/* A card's hidden overflow would push the sticky headings down by the top bar's height. */
+.ui-card:has(> .ui-tablewrap.ui-tflow) {
+  overflow: visible;
+}
+
+.ui-tablewrap.ui-tflow table.ui-table th {
+  position: sticky;
+  top: var(--ui-top, 0px);
+  z-index: 2;
+}
+
+body.ui-fit .shell-view {
+  gap: 14px;
+  padding: 16px 24px;
+}
+
+body.ui-fit .ui-kpis {
+  gap: 10px;
+}
+
+body.ui-fit .ui-kpi {
+  padding: 12px 14px;
+}
+
+/* A short desktop screen (under 1000px tall): the number cards take one line each, so at least
+   eight table rows show. */
+body.ui-fit.ui-short .shell-view {
+  gap: 10px;
+}
+
+body.ui-fit.ui-short .ui-kpis:not(.ui-tasks) .ui-kpi {
+  grid-template-rows: auto;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 10px;
+  align-items: center;
+  min-height: 0;
+  padding: 8px 12px;
+}
+
+body.ui-fit.ui-short .ui-kpis:not(.ui-tasks) .ui-kpi .ui-kpi-note,
+body.ui-fit.ui-short .ui-kpis:not(.ui-tasks) .ui-kpi .ui-home-meter {
+  display: none;
+}
+
+body.ui-fit.ui-short .ui-kpis:not(.ui-tasks) .ui-kpi .ui-kpi-value {
+  font-size: 1.1rem;
+}
+
+body.ui-fit.ui-short .ui-kpis {
+  gap: 8px;
+}
+
+body.ui-fit.ui-short .shell-head h1 {
+  font-size: 1.3rem;
+}
+
+body.ui-fit.ui-short .ui-tablewrap.ui-tscroll table.ui-table th,
+body.ui-fit.ui-short .ui-tablewrap.ui-tscroll table.ui-table td {
+  padding: 8px 14px;
+}
+
+body.ui-fit.ui-short .ui-card {
+  gap: 10px;
+  padding: 12px 16px;
+}
+
+body.ui-fit.ui-short .shell-view .ui-btn {
+  min-height: 38px;
+  padding: 6px 14px;
+}
+
+body.ui-fit.ui-short .shell-view {
+  gap: 8px;
+  padding: 10px 24px;
+}
+
+body.ui-fit.ui-short .shell-tab {
+  min-height: 38px;
+}
+
+body.ui-fit.ui-short .shell-head {
+  align-items: center;
+}
+
+body.ui-fit.ui-short .shell-head-text {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  align-items: baseline;
+}
+
+body.ui-fit.ui-short .shell-head h1 {
+  font-size: 1.25rem;
+}
+
+body.ui-fit.ui-short .shell-view .ui-seg button {
+  min-height: 36px;
+}
+
+body.ui-fit.ui-short .ui-kpis:not(.ui-tasks) .ui-kpi {
+  padding: 6px 12px;
+}
+
+body.ui-fit.ui-short .ui-tablewrap.ui-tscroll table.ui-table td {
+  padding: 5px 12px;
+}
+
+body.ui-fit.ui-short .ui-tablewrap.ui-tscroll table.ui-table th {
+  padding: 6px 12px;
+}
+
+body.ui-fit.ui-short .ui-addup {
+  display: none;
+}
+
+/* The folded Records block under a list keeps its place but gives its room to the table. */
+body.ui-fit.ui-short .ui-records {
+  margin-top: 0;
+  padding-top: 6px;
+}
+
+body.ui-fit.ui-short .ui-records summary {
+  min-height: 36px;
+}
+
+body.ui-fit.ui-short .ui-tfoot {
+  padding: 6px 14px;
+}
+
+body.ui-fit.ui-short .ui-listbar {
+  padding: 6px 16px;
+}
+
+/* A tablet table scrolls sideways in its box too, so its headings stay on one line. */
+@media (min-width: 640px) and (max-width: 1023px) {
+  table.ui-table th {
+    white-space: nowrap;
+  }
 }
 
 table.ui-table {
@@ -542,6 +846,13 @@ table.ui-table a.ui-no {
   gap: 16px;
   align-content: start;
   min-width: 0;
+}
+
+/* UI v81 round 3: under 1024 px the two columns stack, so a rules table never widens the page. */
+@media (max-width: 1023px) {
+  .ui-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .ui-kv {
@@ -824,19 +1135,6 @@ table.ui-table a.ui-no {
 @media (max-width: 1080px) {
   .ui-split {
     grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-/* Two cards per row on a narrow screen (design app.css, 900px); an odd last card fills the row. */
-@media (max-width: 900px) {
-  .ui-kpis > *,
-  .ui-kpis:has(> :nth-child(n):last-child) > * {
-    grid-column: span 6;
-  }
-
-  .ui-kpis > :nth-child(odd):last-child,
-  .ui-kpis:has(> :nth-child(n):last-child) > :nth-child(odd):last-child {
-    grid-column: span 12;
   }
 }
 
@@ -1718,6 +2016,25 @@ a.ui-kpi.ui-home-kpi {
 .ui-card.ui-todo-card {
   gap: 4px;
   padding: 18px 18px 8px;
+}
+/* UI v81 round 3 (owner 07/11/2026 17:30): the Tasks are four cards (Overdue, Today, This week,
+   Later); the chosen card's list opens under them. The Overdue count is red when above 0. */
+.ui-todo-card .ui-kpis.ui-tasks {
+  margin-top: 6px;
+}
+.ui-tasks .ui-kpi.err .ui-kpi-value {
+  color: var(--err);
+}
+.ui-tasks-list h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 0 6px;
+  color: var(--text);
+  font-size: 1rem;
+}
+.ui-tasks-hint {
+  margin: 8px 0 0;
 }
 .ui-todo-card > header {
   margin-bottom: 6px;

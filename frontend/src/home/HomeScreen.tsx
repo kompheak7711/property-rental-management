@@ -23,7 +23,7 @@ import {
 } from "../reportsClient";
 import { dayText, momentText, usdFromCents } from "../shell/format";
 import { Icon, type ShellIcon } from "../shell/icons";
-import { type PageId, hashForPage } from "../shell/navigation";
+import { type PageId, hashForPage, queryFromHash } from "../shell/navigation";
 import type { Language } from "../signInText";
 import { monthText } from "../utilities/text";
 import {
@@ -103,13 +103,6 @@ export function visitsWaitingOf(
 }
 
 type Tone = "err" | "warn" | "info" | "neutral" | "ok" | "brand";
-
-const GROUPS: readonly [TodoGroup, Tone][] = [
-  ["overdue", "err"],
-  ["today", "warn"],
-  ["this_week", "info"],
-  ["later", "neutral"],
-];
 
 /** Whole days from `from` to `to`, both "yyyy-mm-dd". */
 function daysBetween(from: string, to: string): number {
@@ -591,8 +584,39 @@ function CostsToCheck({
   );
 }
 
+// UI v81 round 3 (owner 07/11/2026 17:30): the Tasks are four cards in one row (two by two on a
+// phone): Overdue, Today, This week, Later. Each shows its count and one short line; the chosen
+// card's list opens under the cards, one list at a time, and the chosen card is kept in the
+// address ("#/home?tasks=overdue") so Back returns to it. On open, Overdue is open when it has
+// items; otherwise no list is open.
+const TASK_CARDS: readonly {
+  group: TodoGroup;
+  tone: Tone;
+  icon: ShellIcon;
+  /** The word kept in the address. */
+  word: string;
+}[] = [
+  { group: "overdue", tone: "err", icon: "alert", word: "overdue" },
+  { group: "today", tone: "warn", icon: "check", word: "today" },
+  { group: "this_week", tone: "info", icon: "calendar", word: "week" },
+  { group: "later", tone: "neutral", icon: "list", word: "later" },
+];
+
+/** The Tasks card named in the address ("#/home?tasks=week"), or null. */
+export function tasksFromHash(hash: string): TodoGroup | null {
+  const word = queryFromHash(hash, "tasks");
+  const card = TASK_CARDS.find((candidate) => candidate.word === word);
+  return card === undefined ? null : card.group;
+}
+
+function tasksHash(group: TodoGroup | null): string {
+  const home = hashForPage("home");
+  if (group === null) return home;
+  const card = TASK_CARDS.find((candidate) => candidate.group === group);
+  return card === undefined ? home : `${home}?tasks=${card.word}`;
+}
+
 function TodoList({ language, page }: { language: Language; page: HomePage }) {
-  const [showLater, setShowLater] = useState(false);
   const known = page.todo.filter((item) => rowOf(language, item) !== null);
   const inGroup = (group: TodoGroup) =>
     known.filter((item) => groupOf(item, page.business_date) === group);
@@ -601,6 +625,28 @@ function TodoList({ language, page }: { language: Language; page: HomePage }) {
     today: inGroup("today").length,
     this_week: inGroup("this_week").length,
   };
+  const [chosen, setChosen] = useState<TodoGroup | null>(
+    () =>
+      tasksFromHash(window.location.hash) ??
+      (counts.overdue > 0 ? "overdue" : null),
+  );
+  function choose(group: TodoGroup) {
+    const next = chosen === group ? null : group;
+    setChosen(next);
+    window.history.replaceState(null, "", tasksHash(next));
+  }
+  // The earliest item of a group names its line: "Oldest: 29 days late", "Next: in 2 days".
+  const earliest = (items: TodoItem[]) =>
+    items.reduce((first, item) => (item.date < first.date ? item : first));
+  const lineOf = (group: TodoGroup, items: TodoItem[]) => {
+    if (items.length === 0)
+      return hmt(language, group === "overdue" ? "tk_over_none" : "tk_none");
+    if (group === "today") return hmt(language, "tk_today_s");
+    const when = relativeText(language, earliest(items), page.business_date);
+    return hmt(language, group === "overdue" ? "tk_oldest" : "tk_next", when);
+  };
+  const open = TASK_CARDS.find((card) => card.group === chosen);
+  const openItems = open === undefined ? [] : inGroup(open.group);
   return (
     <section aria-labelledby="home-todo" className="ui-card ui-todo-card">
       <header>
@@ -615,79 +661,88 @@ function TodoList({ language, page }: { language: Language; page: HomePage }) {
           )}
         </p>
       </header>
-      {GROUPS.map(([group, tone]) => {
-        const items = inGroup(group);
-        const folded = group === "later" && !showLater && items.length > 0;
-        return (
-          <div className="ui-tgroup" key={group}>
+      <div
+        aria-label={hmt(language, "todo_t")}
+        className="ui-kpis ui-tasks"
+        role="group"
+      >
+        {TASK_CARDS.map(({ group, tone, icon }) => {
+          const items = inGroup(group);
+          return (
+            <button
+              aria-controls="home-tasks-list"
+              aria-pressed={chosen === group}
+              className={`ui-kpi ${items.length === 0 ? "none" : tone}`}
+              key={group}
+              onClick={() => {
+                choose(group);
+              }}
+              type="button"
+            >
+              <span className="ui-kpi-label">
+                <span className="ui-kpi-icon">
+                  <Icon name={icon} small />
+                </span>
+                <span>{hmt(language, `g_${group}`)}</span>
+              </span>
+              <span className="ui-kpi-value ui-num">{items.length}</span>
+              <span className="ui-kpi-note">{lineOf(group, items)}</span>
+            </button>
+          );
+        })}
+      </div>
+      <div
+        className="ui-tasks-list"
+        hidden={open === undefined || openItems.length === 0}
+        id="home-tasks-list"
+      >
+        {open !== undefined && openItems.length > 0 && (
+          <>
             <h3>
-              <span className={`ui-dot ${tone}`} />
-              {hmt(language, `g_${group}`)}
-              <span className="ui-count ui-num">{items.length}</span>
+              <span className={`ui-dot ${open.tone}`} />
+              {hmt(language, `g_${open.group}`)}
+              <span className="ui-count ui-num">{openItems.length}</span>
             </h3>
-            {group === "later" && items.length > 0 && (
-              <button
-                aria-controls="home-later"
-                aria-expanded={showLater}
-                className="ui-btn link ui-tmore"
-                onClick={() => {
-                  setShowLater(!showLater);
-                }}
-                type="button"
-              >
-                {showLater
-                  ? hmt(language, "show_less")
-                  : hmt(language, "show_more", items.length)}
-              </button>
-            )}
-            {items.length === 0 && (
-              <p className={group === "overdue" ? "ui-tnone ok" : "ui-tnone"}>
-                {group === "overdue" && <Icon name="check" small />}
-                {hmt(language, group === "overdue" ? "g_over_none" : "g_none")}
-              </p>
-            )}
-            {items.length > 0 && !folded && (
-              <ul
-                className="ui-todos"
-                id={group === "later" ? "home-later" : undefined}
-              >
-                {items.map((item, index) => {
-                  const row = rowOf(language, item);
-                  if (row === null) return null;
-                  return (
-                    <li
-                      className={`ui-todo ${tone}`}
-                      key={`${item.kind}:${item.date}:${String(index)}`}
+            <ul className="ui-todos">
+              {openItems.map((item, index) => {
+                const row = rowOf(language, item);
+                if (row === null) return null;
+                return (
+                  <li
+                    className={`ui-todo ${open.tone}`}
+                    key={`${item.kind}:${item.date}:${String(index)}`}
+                  >
+                    <span aria-hidden="true" className="ui-todo-icon">
+                      <Icon name={row.icon} />
+                    </span>
+                    <span className="ui-todo-body">
+                      <b>{row.title}</b>
+                      {row.detail !== "" && <span>{row.detail}</span>}
+                    </span>
+                    <span className="ui-when ui-num">
+                      {dayText(item.date)}
+                      <small>
+                        {relativeText(language, item, page.business_date)}
+                      </small>
+                    </span>
+                    <a
+                      aria-label={`${row.tip}: ${row.title}`}
+                      className="ui-iconbtn ui-todo-go"
+                      href={row.href}
+                      title={row.tip}
                     >
-                      <span aria-hidden="true" className="ui-todo-icon">
-                        <Icon name={row.icon} />
-                      </span>
-                      <span className="ui-todo-body">
-                        <b>{row.title}</b>
-                        {row.detail !== "" && <span>{row.detail}</span>}
-                      </span>
-                      <span className="ui-when ui-num">
-                        {dayText(item.date)}
-                        <small>
-                          {relativeText(language, item, page.business_date)}
-                        </small>
-                      </span>
-                      <a
-                        aria-label={`${row.tip}: ${row.title}`}
-                        className="ui-iconbtn ui-todo-go"
-                        href={row.href}
-                        title={row.tip}
-                      >
-                        <Icon name="forward" />
-                      </a>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </div>
-        );
-      })}
+                      <Icon name="forward" />
+                    </a>
+                  </li>
+                );
+              })}
+            </ul>
+          </>
+        )}
+      </div>
+      <p className="ui-muted ui-small ui-tasks-hint">
+        {hmt(language, "tk_hint")}
+      </p>
     </section>
   );
 }

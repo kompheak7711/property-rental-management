@@ -163,7 +163,7 @@ export function OwnerMoney({
           {hmt(language, "om_only")}
         </Chip>
       </div>
-      <div className="ui-kpis ui-home-kpis">
+      <div className="ui-kpis ui-home-kpis ui-om">
         <MoneyCard
           icon="payments"
           label={hmt(language, "om_cash")}

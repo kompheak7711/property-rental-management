@@ -352,7 +352,7 @@ const TEXT = {
   er_c_wait: ["Pending approval", "រង់ចាំការអនុម័ត"],
   er_c_adv: ["Outstanding advances", "ប្រាក់បុរេប្រទានមិនទាន់ជម្រះ"],
   er_c_late: ["Late reports", "របាយការណ៍យឺត"],
-  er_c_owed: ["Staff reimbursements due", "ប្រាក់ជំពាក់បុគ្គលិក"],
+  er_c_owed: ["Owed to staff", "ប្រាក់ជំពាក់បុគ្គលិក"],
   er_c_all: ["All requests", "សំណើទាំងអស់"],
   er_c_n: ["{0} open", "{0} នៅបើក"],
   er_list_open: ["Open requests", "សំណើដែលនៅបើក"],

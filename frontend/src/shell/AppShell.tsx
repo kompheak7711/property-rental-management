@@ -8,6 +8,7 @@ import logoUrl from "../assets/brand/CHETANA_Logo_Horizontal_Reverse.svg";
 import type { Language } from "../signInText";
 import { Icon } from "./icons";
 import { PageHeadContext, type PageHeadSlots } from "./pageHead";
+import { installTableFit } from "./tableFit";
 import { openPageInAddress } from "./useHashPage";
 import {
   MENU,
@@ -142,6 +143,9 @@ export function AppShell({
       document.documentElement.lang = "en";
     };
   }, [language]);
+
+  // UI v81 round 3: a list page's main table scrolls in its own area and keeps its place for Back.
+  useEffect(() => installTableFit(), []);
 
   const menuButton = useRef<HTMLButtonElement>(null);
   const firstMenuLink = useRef<HTMLAnchorElement>(null);

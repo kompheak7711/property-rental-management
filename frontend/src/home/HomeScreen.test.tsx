@@ -262,7 +262,8 @@ describe("Home", () => {
     expect(visits.className).toContain("err");
   });
 
-  it("TEST-FE-929 lists what to do by group, top down (a wait that began earlier is for today), with dates, late or ago words and a named link for each row; Later folds", async () => {
+  it("TEST-FE-929 shows the Tasks as four cards with a count and a line each, Overdue open at first (red when above 0), one list at a time (a wait that began earlier is for today; dates, late or ago words and a named link per row), and keeps the chosen card in the address", async () => {
+    window.history.replaceState(null, "", "#/home");
     show(() => Promise.resolve(PAGE));
     const list = await screen.findByRole("region", { name: "Tasks" });
     expect(
@@ -270,20 +271,33 @@ describe("Home", () => {
         "2 overdue, 2 for today, 1 this week. Do them from the top down.",
       ),
     ).toBeTruthy();
+    const taskCard = (name: RegExp) =>
+      within(list).getByRole("button", { name });
+    const titles = () =>
+      within(list)
+        .queryAllByRole("listitem")
+        .map((row) => row.querySelector("b")?.textContent);
 
+    expect(taskCard(/^Overdue/).textContent).toBe(
+      "Overdue2Oldest: 29 days late",
+    );
+    expect(taskCard(/^Today/).textContent).toBe("Today2Do them today");
+    expect(taskCard(/^This week/).textContent).toBe(
+      "This week1Next: in 2 days",
+    );
+    expect(taskCard(/^Later/).textContent).toBe("Later2Next: in 58 days");
+    expect(taskCard(/^Overdue/).className).toContain("err");
+    expect(taskCard(/^Overdue/).getAttribute("aria-pressed")).toBe("true");
+    expect(taskCard(/^Today/).getAttribute("aria-pressed")).toBe("false");
+
+    // Overdue is open: its two rows, oldest first, each with a named link.
     const rows = within(list).getAllByRole("listitem");
-    expect(rows.map((row) => row.querySelector("b")?.textContent)).toEqual([
+    expect(titles()).toEqual([
       "INV260006: $210.00 not paid",
       "Day 20 letter due: U201",
-      "Refund pending approval",
-      "Deposit pending a decision: U305",
-      "Reservation for U406 ends",
     ]);
     expect(rows[0]?.textContent).toContain("Ouk Chanthy · U201 · Initial Rent");
     expect(rows[0]?.textContent).toContain("05/10/202629 days late");
-    expect(rows[2]?.textContent).toContain("yesterday");
-    expect(rows[3]?.textContent).toContain("2 days ago");
-    expect(rows[4]?.textContent).toContain("in 2 days");
     expect(
       within(list)
         .getByRole("link", {
@@ -296,6 +310,18 @@ describe("Home", () => {
         .getByRole("link", { name: "Open Notices: Day 20 letter due: U201" })
         .getAttribute("href"),
     ).toBe("#/letters");
+
+    fireEvent.click(taskCard(/^Today/));
+    expect(window.location.hash).toBe("#/home?tasks=today");
+    expect(taskCard(/^Today/).getAttribute("aria-pressed")).toBe("true");
+    expect(taskCard(/^Overdue/).getAttribute("aria-pressed")).toBe("false");
+    expect(titles()).toEqual([
+      "Refund pending approval",
+      "Deposit pending a decision: U305",
+    ]);
+    const today = within(list).getAllByRole("listitem");
+    expect(today[0]?.textContent).toContain("yesterday");
+    expect(today[1]?.textContent).toContain("2 days ago");
     expect(
       within(list)
         .getByRole("link", {
@@ -304,20 +330,73 @@ describe("Home", () => {
         .getAttribute("href"),
     ).toBe("#/reservations/res-305");
 
-    fireEvent.click(within(list).getByRole("button", { name: "Show 2" }));
-    const later = within(list).getAllByRole("listitem").slice(5);
-    expect(later.map((row) => row.querySelector("b")?.textContent)).toEqual([
+    fireEvent.click(taskCard(/^This week/));
+    expect(window.location.hash).toBe("#/home?tasks=week");
+    expect(titles()).toEqual(["Reservation for U406 ends"]);
+    expect(within(list).getByRole("listitem").textContent).toContain(
+      "in 2 days",
+    );
+
+    fireEvent.click(taskCard(/^Later/));
+    expect(window.location.hash).toBe("#/home?tasks=later");
+    expect(titles()).toEqual([
       "Lease for U204 ends",
       "Deposit refund due: U110",
     ]);
-    expect(later[1]?.textContent).toContain("Sok Mean · $400.00 held");
+    expect(within(list).getAllByRole("listitem")[1]?.textContent).toContain(
+      "Sok Mean · $400.00 held",
+    );
     expect(
       within(list)
         .getByRole("link", { name: "Open Lease: Lease for U204 ends" })
         .getAttribute("href"),
     ).toBe("#/leases/lease-204");
-    fireEvent.click(within(list).getByRole("button", { name: "Hide" }));
-    expect(within(list).getAllByRole("listitem")).toHaveLength(5);
+
+    // The same card again closes the list.
+    fireEvent.click(taskCard(/^Later/));
+    expect(window.location.hash).toBe("#/home");
+    expect(taskCard(/^Later/).getAttribute("aria-pressed")).toBe("false");
+    expect(titles()).toEqual([]);
+    expect(
+      within(list).getByText(
+        "Tap a card to see its list. Tap it again to close the list.",
+      ),
+    ).toBeTruthy();
+  });
+
+  it("TEST-FE-1915 the Tasks card named in the address opens at once (#/home?tasks=later); with nothing overdue no list is open and the Overdue count is not red", async () => {
+    window.history.replaceState(null, "", "#/home?tasks=later");
+    show(() => Promise.resolve(PAGE));
+    const list = await screen.findByRole("region", { name: "Tasks" });
+    expect(
+      within(list)
+        .getByRole("button", { name: /^Later/ })
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
+    expect(
+      within(list)
+        .getAllByRole("listitem")
+        .map((row) => row.querySelector("b")?.textContent),
+    ).toEqual(["Lease for U204 ends", "Deposit refund due: U110"]);
+    cleanup();
+
+    window.history.replaceState(null, "", "#/home");
+    show(() =>
+      Promise.resolve({
+        ...PAGE,
+        todo: PAGE.todo.filter((item) => item.group !== "overdue"),
+      }),
+    );
+    const quiet = await screen.findByRole("region", { name: "Tasks" });
+    const overdue = within(quiet).getByRole("button", { name: /^Overdue/ });
+    expect(overdue.textContent).toBe("Overdue0Nothing overdue");
+    expect(overdue.className).not.toContain("err");
+    expect(overdue.getAttribute("aria-pressed")).toBe("false");
+    expect(
+      within(quiet).getByRole("button", { name: /^Today/ }).textContent,
+    ).toBe("Today0Nothing here");
+    expect(within(quiet).queryAllByRole("listitem")).toHaveLength(0);
+    expect(window.location.hash).toBe("#/home");
   });
 
   it("TEST-FE-930 shows only the cards the answer holds, leaves out unknown to-do kinds, empty groups say so, the jobs line says when no billing ran, and the head buttons follow the rights", async () => {
@@ -346,8 +425,8 @@ describe("Home", () => {
     expect(await screen.findByText("0 / 0")).toBeTruthy();
     expect(document.querySelectorAll(".ui-home-kpi")).toHaveLength(2);
     expect(screen.queryByText("Pending payment")).toBeNull();
-    expect(screen.getByText("Nothing is overdue.")).toBeTruthy();
-    expect(screen.getAllByText("Nothing here.")).toHaveLength(3);
+    expect(screen.getByText("Nothing overdue")).toBeTruthy();
+    expect(screen.getAllByText("Nothing here")).toHaveLength(3);
     expect(
       screen.getByText(
         "0 overdue, 0 for today, 0 this week. Do them from the top down.",

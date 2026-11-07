@@ -331,3 +331,18 @@ Source files `round4-source/i18n44.js` and `round4-source/app44.js`; the mock-up
 | `mm_t` | Transfer funds (Bank and cash button) | Fund transfer | Same (03 `mm_t`) |
 
 Layout in the design is unchanged: the app took the design's rules instead (full width, one head row, balanced card rows).
+
+## Round 3 (owner 07/11/2026 17:30): changed in the design
+
+Source files `round4-source/i18n45.js` and `round4-source/app45.js`; the mock-up was rebuilt and republished at the same address (v7).
+
+| What | Round 3 | Why |
+|---|---|---|
+| Card grids | Phone: Owner money 1 per row, other cards 2 per row; tablet: 2 and 3 per row; desktop as before. Cards of one row share a height; labels clamp at 2 lines, notes at 3 (4 on a phone); the value never wraps; on a phone the icon is hidden and the value scales with the width. Reports cards and Tasks cards follow the same rules | Owner point 1 |
+| Buttons | Row and list buttons are outline buttons; only the one main action of an area is filled. Selected pills and the chosen part of a switch use the selected-card look (tint with a green underline) | Owner point 2 |
+| Home Tasks | Four cards (Overdue · Today · This week · Later) with the count and one line; the list opens under the cards, one at a time; the selected card is highlighted; Overdue opens by itself when it has items | Owner point 3 |
+| List pages | On screens at least 1024 × 700 the page fits the screen and only the main table scrolls in its own area with sticky headings and the footer at its bottom; under 1000 px tall a tighter look (one-line cards without icon and note, smaller title, tighter rows); phones and short screens scroll normally with sticky headings; when tall blocks leave no room the page scrolls normally | Owner point 4 |
+| `c_name_th` (new) | Customers table heading "Legal name (last, middle, first)" (Khmer ឈ្មោះតាមច្បាប់ (ត្រកូល កណ្តាល ខ្លួន), native check needed) | The column heading named the order of the name parts |
+| `er_c_owed` | "Staff reimbursements due" → "Owed to staff" (Khmer unchanged) | The long word "reimbursements" needed 3 lines in a phone card |
+| Viewing requests | The "Messages to send manually" box folds to one line with its count (open by a tap) | It took a third of a 768 px screen above the list |
+| Tabs on phones | Table column headings stay on one line under 1024 px (the box scrolls sideways) | Headings wrapped to 3 lines at 390 px |

@@ -98,6 +98,16 @@ const TEXT = {
   g_none: ["Nothing here.", "គ្មានអ្វីទេ។"],
   show_more: ["Show {0}", "បង្ហាញ {0}"],
   show_less: ["Hide", "លាក់"],
+  // UI v81 round 3 (owner 07/11/2026 17:30): the Tasks are four cards, one list open at a time.
+  tk_oldest: ["Oldest: {0}", "ចាស់បំផុត៖ {0}"], // new (UI v81 round 3)
+  tk_today_s: ["Do them today", "ធ្វើថ្ងៃនេះ"], // new (UI v81 round 3)
+  tk_next: ["Next: {0}", "បន្ទាប់៖ {0}"], // new (UI v81 round 3)
+  tk_none: ["Nothing here", "គ្មានអ្វីទេ"], // new (UI v81 round 3)
+  tk_over_none: ["Nothing overdue", "គ្មានអ្វីហួសកំណត់"], // new (UI v81 round 3)
+  tk_hint: [
+    "Tap a card to see its list. Tap it again to close the list.",
+    "ចុចកាតដើម្បីមើលបញ្ជី។ ចុចម្ដងទៀតដើម្បីបិទ។",
+  ], // new (UI v81 round 3)
 
   r_over: ["{0}: {1} not paid", "{0}៖ {1} មិនទាន់បង់"],
   // new
