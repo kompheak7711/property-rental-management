@@ -5906,3 +5906,12 @@ Added by DL-179 (migration `20270625_336`, forward-only). No new table.
 
 - `app.telegram_faq_starter()` (internal, not granted): the 15 starter questions as JSON (bots, question and answer in English and Khmer).
 - `app.telegram_faq_load_starter(property, actor)` (`telegram.faq`): locks the Property, refuses with 55000 when its FAQ already has a question, then adds the 15 questions numbered 1 to 15, each with one proposed version and no approval, and answers `{"loaded": 15}`. No bot shows a question until the Owner approves it.
+
+## DB-TG-016 — The Tenant bot while the app is closed (DL-210)
+
+Added by DL-210 (migration `20270708_380`, forward-only). No new table.
+
+- `app.tenant_unit_places(unit)` (internal, not granted): a Unit's places as the Tenant bot form shows them.
+- `app.telegram_tenant_offline_data(property, actor)` (`telegram.operate`): each person a Lease link may name today with their phones (one format) and name forms (`s:` words in any order, `c:` written together, and written together backwards), each Unit's number, Unit key and places, the problem types and shared places by id, and who gets an urgent alert (the Authorizers, and each caretaker's shift times from yesterday to the day after tomorrow). The pull job hashes names and phones before anything leaves the office.
+- `app.telegram_tenant_form_data` now also gives each linked tenant's Unit number (`data.unit`).
+- `app.telegram_staff_urgent_alert` (trigger) queues nothing when `prm.relay_alerted` is `on` for the change (a report the relay already alerted).
