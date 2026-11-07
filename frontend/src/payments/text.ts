@@ -21,7 +21,7 @@ const TEXT = {
   loading: ["Loading…", "កំពុងផ្ទុក…"],
   // new
   failed: [
-    "This could not be read just now. Check the connection and try again.",
+    "This could not be loaded. Check the connection and try again.",
     "មិនអាចអានបានទេឥឡូវនេះ។ សូមពិនិត្យការតភ្ជាប់ ហើយព្យាយាមម្តងទៀត។",
   ],
   retry: ["Retry", "ព្យាយាមម្តងទៀត"],
@@ -216,7 +216,7 @@ const TEXT = {
   pc_today: ["Today", "ថ្ងៃនេះ"],
   pc_month: ["This month", "ខែនេះ"],
   pc_last: ["Last month", "ខែមុន"],
-  pc_pick: ["Pick dates", "ជ្រើសថ្ងៃ"],
+  pc_pick: ["Custom range", "ជ្រើសថ្ងៃ"],
   f_all: ["All", "ទាំងអស់"],
   pc_from: ["From", "ពី"],
   pc_to: ["To", "ដល់"],
@@ -371,7 +371,7 @@ const TEXT = {
   ],
   // new
   rc_names_failed: [
-    "The Customer names could not be read, so the Receipt cannot print yet.",
+    "The Customer names could not be loaded, so the Receipt cannot print yet.",
     "មិនអាចអានឈ្មោះអតិថិជនបានទេ ដូច្នេះមិនទាន់អាចបោះពុម្ពបង្កាន់ដៃបាន។",
   ],
   // new

@@ -208,7 +208,7 @@ describe("Report states", () => {
       totals,
     });
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "The report could not be read just now. Check the connection and try again.",
+      "The report could not be loaded. Check the connection and try again.",
     );
     expect(screen.getByRole("button", { name: "Export" })).toBeDisabled();
 
@@ -314,7 +314,7 @@ describe("Export", () => {
       ),
     ).toBeTruthy();
     expect(
-      within(dialog).getByText(/^Every export is written to History/),
+      within(dialog).getByText(/Every export is recorded in the audit log/),
     ).toBeTruthy();
     expect(
       within(dialog).queryByText(/^A PDF holds at most 5,000 rows/),
@@ -327,7 +327,7 @@ describe("Export", () => {
     fireEvent.click(within(dialog).getByRole("button", { name: "Export" }));
     expect(
       await screen.findByText(
-        "invoice-register.pdf is ready. The export is written to History.",
+        "invoice-register.pdf is ready. The export is recorded in the audit log.",
       ),
     ).toBeTruthy();
     expect(page.exportFile).toHaveBeenCalledTimes(1);
@@ -401,7 +401,7 @@ describe("Export", () => {
     fireEvent.click(within(dialog).getByRole("button", { name: "Export" }));
     expect(
       await screen.findByText(
-        "total-payment.xlsx is ready. The export is written to History.",
+        "total-payment.xlsx is ready. The export is recorded in the audit log.",
       ),
     ).toBeTruthy();
     expect(page.exportFile).toHaveBeenCalledWith(PROPERTY, {

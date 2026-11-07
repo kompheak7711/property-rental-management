@@ -18,7 +18,7 @@ const TEXT = {
   loading: ["Loading the letters…", "កំពុងផ្ទុកលិខិត…"],
   // new
   failed: [
-    "The letters could not be read just now. Check the connection and try again.",
+    "The letters could not be loaded. Check the connection and try again.",
     "មិនអាចអានលិខិតបានទេឥឡូវនេះ។ សូមពិនិត្យការតភ្ជាប់ ហើយព្យាយាមម្តងទៀត។",
   ],
   retry: ["Retry", "ព្យាយាមម្តងទៀត"],
@@ -32,10 +32,10 @@ const TEXT = {
     "You are not allowed to see this list.",
     "អ្នកមិនត្រូវបានអនុញ្ញាតឱ្យមើលបញ្ជីនេះទេ។",
   ],
-  c_due: ["Letters due", "លិខិតត្រូវផ្តល់"],
+  c_due: ["Notices due", "លិខិតត្រូវផ្តល់"],
   c_due_s: ["Day 20 or day 30 passed", "ថ្ងៃទី២០ ឬទី៣០ បានកន្លង"],
   c_w20: ["Day-20 letter given", "បានផ្តល់លិខិតថ្ងៃទី២០"],
-  c_w20_s: ["Waiting for day 30", "រង់ចាំថ្ងៃទី៣០"],
+  c_w20_s: ["Pending day 30", "រង់ចាំថ្ងៃទី៣០"],
   c_w30: ["Day-30 letter given", "បានផ្តល់លិខិតថ្ងៃទី៣០"],
   c_w30_s: ["Termination may follow", "អាចបញ្ចប់កិច្ចសន្យាបន្ទាប់"],
   // new
@@ -53,7 +53,7 @@ const TEXT = {
   col_30: ["Day-30 letter", "លិខិតថ្ងៃទី៣០"],
   col_next: ["Next step", "ជំហានបន្ទាប់"],
   // new: the mock-up's two letter columns share one, so the table fits an iPad
-  col_letters: ["Letters", "លិខិត"],
+  col_letters: ["Notices", "លិខិត"],
   dayn: ["Day {0}", "ថ្ងៃទី {0}"],
   due_date: ["Due Date {0}", "ថ្ងៃផុតកំណត់ {0}"],
   // new: the mock-up's "Rent still owed" column, as a line under the Customer
@@ -83,7 +83,7 @@ const TEXT = {
   ],
   // new
   letters_failed: [
-    "The letters of {0} could not be read. Retry before recording one.",
+    "The letters of {0} could not be loaded. Retry before recording one.",
     "មិនអាចអានលិខិតរបស់ {0} បានទេ។ សូមព្យាយាមម្តងទៀត មុនកត់ត្រា។",
   ],
   d_t: ["Record a Rent letter · {0}", "កត់ត្រាលិខិតថ្លៃឈ្នួល · {0}"],
@@ -119,7 +119,7 @@ const TEXT = {
     "ឧទាហរណ៍៖ អ្នកជួលបានចុះហត្ថលេខាលើច្បាប់ចម្លងយើង ឬឈ្មោះសាក្សី។",
   ],
   d_detail_e: ["Write the details.", "សូមសរសេរព័ត៌មានលម្អិត។"],
-  d_no: ["Letter number", "លេខលិខិត"],
+  d_no: ["Notice number", "លេខលិខិត"],
   d_no_ph: [
     "The number written on the paper letter",
     "លេខដែលសរសេរលើលិខិតក្រដាស",
@@ -171,7 +171,7 @@ const TEXT = {
   ],
   // new
   lw_some_failed: [
-    "The warnings of {0} could not be read. Retry to see them.",
+    "The warnings of {0} could not be loaded. Retry to see them.",
     "មិនអាចអានការព្រមានរបស់ {0} បានទេ។ សូមព្យាយាមម្តងទៀត។",
   ],
   lw_d_t: ["Record a Lease rule warning", "កត់ត្រាការព្រមានវិន័យកិច្ចសន្យា"],
@@ -200,7 +200,7 @@ const TEXT = {
   ],
   // new
   lw_d_ctx_failed: [
-    "The next warning number could not be read. Close and try again.",
+    "The next warning number could not be loaded. Close and try again.",
     "មិនអាចអានលេខការព្រមានបន្ទាប់បានទេ។ សូមបិទ ហើយព្យាយាមម្តងទៀត។",
   ],
   lw_toast: [

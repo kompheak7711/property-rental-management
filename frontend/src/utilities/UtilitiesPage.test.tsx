@@ -533,7 +533,7 @@ describe("Utilities page (V1-058 R4)", () => {
       within(rowOf("U101")).getByRole("button", { name: /^Save U/ }),
     );
     await screen.findByText(
-      "The reading was refused. It may be lower than a reading already saved, or dated before the meter was put in.",
+      "The reading could not be saved. It may be lower than a reading already saved, or dated before the meter was put in.",
     );
     const keys = recordReading.mock.calls.map((call) => String(call[2]));
     expect(keys[0]).toBe(keys[1]);
@@ -554,7 +554,7 @@ describe("Utilities page (V1-058 R4)", () => {
   it("TEST-FE-1226 Before reading day only the test app shows Import, with a note that the readings get today's date; the dialog opens", async () => {
     show({ today: "2026-10-10" });
     await screen.findByText(
-      "Reading day is 24/10/2026. The list to type the readings opens that day.",
+      "Reading day is 24/10/2026. The list to enter the readings opens that day.",
     );
     expect(screen.queryByRole("button", { name: "Import" })).toBeNull();
     cleanup();
@@ -577,7 +577,7 @@ describe("Utilities page (V1-058 R4)", () => {
       capabilities: new Set(["utility_readings.read"]),
     });
     await screen.findByText(
-      "Reading day is 24/10/2026. The list to type the readings opens that day.",
+      "Reading day is 24/10/2026. The list to enter the readings opens that day.",
     );
     expect(screen.queryByRole("button", { name: "Import" })).toBeNull();
   });
@@ -586,7 +586,7 @@ describe("Utilities page (V1-058 R4)", () => {
     show({ today: "2026-10-10" });
     expect(
       await screen.findByText(
-        "Reading day is 24/10/2026. The list to type the readings opens that day.",
+        "Reading day is 24/10/2026. The list to enter the readings opens that day.",
       ),
     ).toBeTruthy();
     expect(within(rowOf("U102")).getByText("330")).toBeTruthy();
@@ -596,7 +596,7 @@ describe("Utilities page (V1-058 R4)", () => {
     expect(screen.getByText("No readings in October 2026.")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: /Electricity/ }));
 
-    fireEvent.click(screen.getByRole("button", { name: "Pick a month" }));
+    fireEvent.click(screen.getByRole("button", { name: "Choose month" }));
     fireEvent.change(screen.getByLabelText("Month", { selector: "select" }), {
       target: { value: "2026-09" },
     });
@@ -670,7 +670,7 @@ describe("Utilities page (V1-058 R4)", () => {
     fireEvent.blur(box);
     expect(
       screen.getByText(
-        'No Unit "u999". Type a Unit number such as U101, or clear the box to see all Units.',
+        'No Unit "u999". Enter a Unit number such as U101, or clear the box to see all Units.',
       ),
     ).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "All Units" }));
@@ -780,7 +780,7 @@ describe("Utilities page (V1-058 R4)", () => {
     show({ api });
     expect(
       await screen.findByText(
-        "The meters of U201 could not be read. Try again.",
+        "The meters of U201 could not be loaded. Try again.",
       ),
     ).toBeTruthy();
     expect(screen.getByText("1 of 4 meters read")).toBeTruthy();
@@ -1517,7 +1517,7 @@ describe("Utilities Import readings (V1-058 R4c)", () => {
     for (const text of [
       "Lower than previous",
       "Already saved this month: 330",
-      "Empty. Type the reading.",
+      "Empty. Enter the reading.",
       "There is no Unit U999.",
     ]) {
       expect(within(dialog).getByText(text)).toBeTruthy();
@@ -1650,7 +1650,7 @@ describe("Utilities Import readings (V1-058 R4c)", () => {
     ).toBeTruthy();
     // An empty Water box of a Unit that has a water meter needs fixing; a Unit with no meter
     // of that kind is named, and its empty box is left out.
-    expect(within(dialog).getByText("Empty. Type the reading.")).toBeTruthy();
+    expect(within(dialog).getByText("Empty. Enter the reading.")).toBeTruthy();
     expect(
       within(dialog).getByText(
         "This Unit has no electricity meter. A Manager adds it on the Meters tab.",
@@ -1766,7 +1766,7 @@ describe("Utilities Import readings (V1-058 R4c)", () => {
       await screen.findByText("100 readings confirmed from readings.csv."),
     ).toBeTruthy();
     expect(
-      screen.getAllByText(/: Not saved\. Type it on the screen\.$/),
+      screen.getAllByText(/: Not saved\. Enter it on the screen\.$/),
     ).toHaveLength(10);
     await waitFor(() => {
       expect(units.list).toHaveBeenCalledTimes(2);
@@ -1850,7 +1850,7 @@ describe("Utilities Import readings (V1-058 R4c)", () => {
     const dialog = await openCheck();
     expect(
       within(dialog)
-        .getByText("Broken: mark the meter and make a Problem report")
+        .getByText("Broken: mark the meter and create a Problem report.")
         .closest("tr")?.textContent,
     ).toContain("U101Electricity");
     expect(

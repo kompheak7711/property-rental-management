@@ -357,7 +357,7 @@ describe("Invoices page (V1-058 R5)", () => {
       "INV260005",
       "INV260001",
     ]);
-    fireEvent.click(screen.getByRole("button", { name: "Pick a month" }));
+    fireEvent.click(screen.getByRole("button", { name: "Choose month" }));
     fireEvent.change(screen.getByRole("combobox", { name: "Month" }), {
       target: { value: "2026-11" },
     });

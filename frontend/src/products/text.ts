@@ -6,10 +6,7 @@ import { singular } from "../shell/plural";
 
 const TEXT = {
   loading: ["Loading…", "កំពុងផ្ទុក…"],
-  failed: [
-    "This list could not be read just now.",
-    "មិនអាចអានបញ្ជីនេះបានទេឥឡូវនេះ។",
-  ],
+  failed: ["This list could not be loaded.", "មិនអាចអានបញ្ជីនេះបានទេឥឡូវនេះ។"],
   retry: ["Try again", "សាកម្តងទៀត"],
   no_property: ["Choose the Property first.", "សូមជ្រើសរើសអចលនទ្រព្យជាមុនសិន។"],
   cancel: ["Cancel", "បោះបង់"],
@@ -66,7 +63,7 @@ const TEXT = {
   ],
   pd_service_cost: ["Cost of one", "ថ្លៃដើមមួយ"],
   pd_service_cost_h: [
-    "A Service's cost is typed by a Manager or the Owner. The app sets the price from it.",
+    "A Service's cost is entered by a Manager or the Owner. The app sets the price from it.",
     "ថ្លៃដើមរបស់សេវាត្រូវវាយដោយអ្នកគ្រប់គ្រង ឬម្ចាស់។ កម្មវិធីកំណត់តម្លៃពីវា។",
   ],
   pd_item_cost_h: [
@@ -169,7 +166,7 @@ const TEXT = {
   e_short: ["There is only {0} at this place.", "មានតែ {0} នៅទីតាំងនេះ។"],
   e_reason: ["Enter the reason.", "សូមបញ្ចូលមូលហេតុ។"],
   // Locations tab
-  lo_title: ["Locations", "ទីតាំង"],
+  lo_title: ["Storage locations", "ទីតាំង"],
   lo_unit: ["Unit {0}", "បន្ទប់ {0}"],
   lo_not_for_rent: ["Not for rent", "មិនជួល"],
   lo_place: ["Place", "ទីតាំង"],
@@ -219,7 +216,7 @@ const TEXT = {
   ui_saved: ["{0} moved into {1}.", "បានផ្លាស់ {0} ចូល {1}។"],
   ui_nothing: ["Fill in a row first.", "សូមបំពេញជួរមួយជាមុនសិន។"],
   e_row: [
-    "choose the Location, the Item and the Storage, and a quantity",
+    "Choose the Location, the Item and the Storage, and enter a quantity.",
     "ជ្រើសរើសទីតាំង របស់ និងឃ្លាំង ហើយបញ្ចូលបរិមាណ",
   ],
   e_row_short: ["only {0} in that storage place", "មានតែ {0} នៅឃ្លាំងនោះ"],
@@ -241,7 +238,7 @@ const TEXT = {
     "របស់ចូលទៅទីតាំងឃ្លាំងជាមុន បន្ទាប់មកចូលជួរនៃសារពើភណ្ឌបន្ទប់។",
   ],
   np_no_storage: [
-    "There is no storage place yet. Add a place to the warehouse in Building › Products › Locations.",
+    "There is no storage place yet. Add a place to the warehouse in Property › Products › Storage locations.",
     "មិនទាន់មានទីតាំងឃ្លាំងទេ។ សូមបន្ថែមទីតាំងទៅឃ្លាំងនៅក្នុង អគារ › ផលិតផល › ទីតាំង។",
   ],
   np_saved: ["{0} bought.", "បានទិញ {0}។"],

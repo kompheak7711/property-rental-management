@@ -7,7 +7,7 @@ import { singular } from "../shell/plural";
 
 const TEXT = {
   loading: ["Loading…", "កំពុងផ្ទុក…"],
-  failed: ["This could not be read just now.", "មិនអាចអានបានទេឥឡូវនេះ។"],
+  failed: ["This could not be loaded.", "មិនអាចអានបានទេឥឡូវនេះ។"],
   retry: ["Try again", "សាកម្តងទៀត"],
   back: ["Back to Problem reports", "ត្រឡប់ទៅរបាយការណ៍បញ្ហា"],
   no_property: ["Choose a Property first.", "សូមជ្រើសអចលនទ្រព្យជាមុន។"],
@@ -255,7 +255,7 @@ const TEXT = {
   ],
   s_NOT_A_REPAIR: ["Not a repair", "មិនមែនការជួសជុល"],
   s_MAKE_JOB: ["Make a repair job", "បង្កើតការងារជួសជុល"],
-  s_CLEANING: ["Give to cleaning", "ប្រគល់ឱ្យផ្នែកសម្អាត"],
+  s_CLEANING: ["Give to housekeeping", "ប្រគល់ឱ្យផ្នែកសម្អាត"],
   s_CLOSE_NOTE: ["Close with a note", "បិទដោយមានកំណត់ចំណាំ"],
   s_CHECKED: [
     "Write the check report",
@@ -293,7 +293,7 @@ const TEXT = {
   why_tenant: ["Reason (the tenant sees it)", "មូលហេតុ (អ្នកជួលឃើញ)"],
   tech: ["Technician", "ជាងបច្ចេកទេស"],
   tech_h: [
-    "Type the name for now. The Employees list comes later.",
+    "Enter the technician's name for now. Choosing from the Employees list comes later.",
     // new
     "វាយឈ្មោះសម្រាប់ពេលនេះ។ បញ្ជីបុគ្គលិកនឹងមកពេលក្រោយ។",
   ],
@@ -340,7 +340,7 @@ const TEXT = {
     "អ្នកជួលនិយាយយ៉ាងណាចំពោះ {0}?",
   ],
   ans_AGREED: ["Agreed", "យល់ព្រម"],
-  ans_REFUSED: ["Refused", "បដិសេធ"],
+  ans_REFUSED: ["Rejected", "បដិសេធ"],
   ans_how: [
     "How the tenant answered",
     // new
@@ -389,17 +389,17 @@ const TEXT = {
   join_why: ["Reason", "មូលហេតុ"],
   save: ["Save", "រក្សាទុក"],
   e_note: ["Please write this.", "សូមសរសេរ។"],
-  e_tech: ["Type the technician's name.", "វាយឈ្មោះជាង។"],
-  e_cleaner: ["Type the cleaner's name.", "វាយឈ្មោះអ្នកសម្អាត។"],
+  e_tech: ["Enter the technician's name.", "វាយឈ្មោះជាង។"],
+  e_cleaner: ["Enter the cleaner's name.", "វាយឈ្មោះអ្នកសម្អាត។"],
   e_day: [
     "Choose a day from today, at most 60 days ahead.",
     // new
     "ជ្រើសថ្ងៃចាប់ពីថ្ងៃនេះ យ៉ាងច្រើន ៦០ ថ្ងៃខាងមុខ។",
   ],
-  e_time: ["Pick a time later than now.", "ជ្រើសម៉ោងក្រោយពេលនេះ។"],
+  e_time: ["Choose a time later than now.", "ជ្រើសម៉ោងក្រោយពេលនេះ។"],
   e_cause: ["Choose the cause.", "ជ្រើសមូលហេតុ។"],
   e_pays: ["Choose who pays.", "ជ្រើសអ្នកចេញថ្លៃ។"],
-  e_amount: ["Type the amount.", "វាយចំនួនទឹកប្រាក់។"],
+  e_amount: ["Enter the amount.", "វាយចំនួនទឹកប្រាក់។"],
   e_pick: ["Choose one.", "ជ្រើសរើសមួយ។"],
   saved: ["{0}: saved.", "{0}៖ បានរក្សាទុក។"],
   agreed_done: [
@@ -468,7 +468,7 @@ const TEXT = {
   h_NOT_ACCEPTED: ["Not accepted", "មិនទទួលយក"],
   h_REPAIR_JOB: ["Made a repair job", "បានបង្កើតការងារជួសជុល"],
   h_CLEANING: [
-    "Given to cleaning ({0}): Done",
+    "Given to housekeeping ({0}): Done",
     "បានប្រគល់ឱ្យផ្នែកសម្អាត ({0})៖ រួចរាល់",
   ],
   h_CLOSED_NOTE: ["Closed with a note", "បានបិទដោយកំណត់ចំណាំ"],
@@ -539,7 +539,7 @@ const TEXT = {
     "មាននរណាម្នាក់បានប្ដូររបាយការណ៍នេះ។ វាត្រូវបានបង្ហាញម្ដងទៀត សូមពិនិត្យ ហើយសាកម្ដងទៀត។",
   ],
   f_refused: [
-    "The server refused this. Check what you typed and the report's status.",
+    "This could not be saved. Check what you entered and the report's status.",
     // new
     "ម៉ាស៊ីនមេបានបដិសេធ។ ពិនិត្យអ្វីដែលអ្នកបានវាយ និងស្ថានភាពរបាយការណ៍។",
   ],
@@ -550,11 +550,11 @@ const TEXT = {
   // Repair cost (DL-130, mock-up round 32 A5). Khmer here is new and needs the native check.
   cost_h: ["Repair cost", "ថ្លៃជួសជុល"],
   cost_none: [
-    "No cost typed yet. Type parts and outside workers only; our own staff are paid by payroll.",
+    "No cost entered yet. Enter parts and outside workers only; our own staff are paid through payroll.",
     "មិនទាន់វាយថ្លៃនៅឡើយ។ វាយតែគ្រឿងបន្លាស់ និងជាងខាងក្រៅ។ បុគ្គលិកយើងទទួលប្រាក់ខែ។",
   ],
-  cost_enter: ["Type the cost", "វាយថ្លៃ"],
-  cost_again: ["Type the cost again", "វាយថ្លៃម្តងទៀត"],
+  cost_enter: ["Enter the cost", "វាយថ្លៃ"],
+  cost_again: ["Enter the cost again", "វាយថ្លៃម្តងទៀត"],
   cost_by: ["Typed by {0}, {1}", "វាយដោយ {0}, {1}"],
   cost_no_cost: [
     "No cost: the repair cost nothing to pay.",
@@ -562,7 +562,7 @@ const TEXT = {
   ],
   cost_total: ["Total", "សរុប"],
   cost_wait: [
-    "Waiting for a Manager to check the cost.",
+    "Pending a Manager check of the cost.",
     "កំពុងរង់ចាំអ្នកគ្រប់គ្រងពិនិត្យថ្លៃ។",
   ],
   cost_check: [
@@ -575,7 +575,7 @@ const TEXT = {
   ],
   cost_er: ["Expense report {0}: {1}", "របាយការណ៍ចំណាយ {0}៖ {1}"],
   cost_refused: [
-    "The Expense report was not approved. Staff may type the cost again.",
+    "The Expense report was not approved. Staff may enter the cost again.",
     "របាយការណ៍ចំណាយមិនត្រូវបានអនុម័ត។ បុគ្គលិកអាចវាយថ្លៃម្តងទៀត។",
   ],
   cost_compare: [
@@ -602,8 +602,14 @@ const TEXT = {
     "Keep the receipt. A Manager checks it before the Expense report is made.",
     "រក្សាបង្កាន់ដៃ។ អ្នកគ្រប់គ្រងពិនិត្យវា មុនបង្កើតរបាយការណ៍ចំណាយ។",
   ],
-  e_amount_usd: ["Type dollars, like 12.50.", "វាយជាដុល្លារ ដូចជា 12.50។"],
-  e_amount_khr: ["Type whole riel, like 40000.", "វាយជារៀលគត់ ដូចជា 40000។"],
+  e_amount_usd: [
+    "Enter dollars, for example 12.50.",
+    "វាយជាដុល្លារ ដូចជា 12.50។",
+  ],
+  e_amount_khr: [
+    "Enter whole riel, for example 40000.",
+    "វាយជារៀលគត់ ដូចជា 40000។",
+  ],
   e_lines: [
     "Add at least one line, or tick No cost.",
     "បន្ថែមយ៉ាងហោចណាស់មួយជួរ ឬធីក គ្មានថ្លៃ។",
@@ -633,13 +639,13 @@ const TEXT = {
     "{0}: cost checked. Expense report {1} made.",
     "{0}៖ បានពិនិត្យថ្លៃ។ បានបង្កើតរបាយការណ៍ចំណាយ {1}។",
   ],
-  est_WAITING: ["Waiting for approval", "រង់ចាំការអនុម័ត"],
+  est_WAITING: ["Pending approval", "រង់ចាំការអនុម័ត"],
   est_APPROVED: ["Approved", "បានអនុម័ត"],
-  est_REFUSED: ["Not approved", "មិនបានអនុម័ត"],
+  est_REFUSED: ["Rejected", "មិនបានអនុម័ត"],
   est_PAID_OUT: ["Advance given", "បានផ្ដល់ប្រាក់បុរេប្រទាន"],
   est_DONE: ["Posted", "បានកត់ត្រា"],
   est_VOID: ["Void", "ទុកជាមោឃៈ"],
-  h_COST_ENTERED: ["Repair cost typed", "បានវាយថ្លៃជួសជុល"],
+  h_COST_ENTERED: ["Repair cost entered", "បានវាយថ្លៃជួសជុល"],
   h_COST_CHECKED: [
     "Repair cost checked; Expense report {0}",
     "បានពិនិត្យថ្លៃជួសជុល៖ របាយការណ៍ចំណាយ {0}",

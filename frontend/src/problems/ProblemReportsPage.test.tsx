@@ -466,10 +466,10 @@ describe("Building › Problem reports (V1.1 part 7, DL-124)", () => {
     dialog = screen.getByRole("dialog");
     fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
     expect(
-      within(dialog).getByText("Type the technician's name."),
+      within(dialog).getByText("Enter the technician's name."),
     ).toBeTruthy();
     expect(
-      within(dialog).getByText("Pick a time later than now."),
+      within(dialog).getByText("Choose a time later than now."),
     ).toBeTruthy();
     const times = within(dialog).getByLabelText(/^Time/);
     const options = Array.from(times.querySelectorAll("option")).map(
@@ -567,7 +567,7 @@ describe("Building › Problem reports (V1.1 part 7, DL-124)", () => {
       target: { value: "abc" },
     });
     fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
-    expect(within(dialog).getByText("Type the amount.")).toBeTruthy();
+    expect(within(dialog).getByText("Enter the amount.")).toBeTruthy();
     expect(within(dialog).getByText("Please write this.")).toBeTruthy();
     fireEvent.change(within(dialog).getByLabelText(/^Amount the tenant pays/), {
       target: { value: "25" },
@@ -595,7 +595,7 @@ describe("Building › Problem reports (V1.1 part 7, DL-124)", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Tenant's answer" }));
     dialog = screen.getByRole("dialog");
-    fireEvent.click(within(dialog).getByLabelText("Refused"));
+    fireEvent.click(within(dialog).getByLabelText("Rejected"));
     fireEvent.click(within(dialog).getByLabelText("Phone call"));
     fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
     expect(
@@ -738,12 +738,14 @@ describe("Building › Problem reports (V1.1 part 7, DL-124)", () => {
     const cost = vi.fn(() => Promise.resolve(typed));
     show(apiOf({ get: vi.fn(() => Promise.resolve(done)), cost }), STAFF);
     fireEvent.click(
-      await screen.findByRole("button", { name: "Type the cost" }),
+      await screen.findByRole("button", { name: "Enter the cost" }),
     );
     const dialog = screen.getByRole("dialog");
     fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
     expect(within(dialog).getByText("Choose one.")).toBeTruthy();
-    expect(within(dialog).getByText("Type dollars, like 12.50.")).toBeTruthy();
+    expect(
+      within(dialog).getByText("Enter dollars, for example 12.50."),
+    ).toBeTruthy();
     expect(cost).not.toHaveBeenCalled();
     fireEvent.change(within(dialog).getByLabelText("Kind"), {
       target: { value: "PARTS" },
@@ -770,7 +772,7 @@ describe("Building › Problem reports (V1.1 part 7, DL-124)", () => {
     });
     fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
     expect(
-      within(dialog).getByText("Type whole riel, like 40000."),
+      within(dialog).getByText("Enter whole riel, for example 40000."),
     ).toBeTruthy();
     fireEvent.change(within(second).getByLabelText("Amount"), {
       target: { value: "40,000" },
@@ -804,7 +806,7 @@ describe("Building › Problem reports (V1.1 part 7, DL-124)", () => {
     expect(within(box).getAllByText("$12.50")).toHaveLength(2);
     expect(within(box).getAllByText("40,000 ៛")).toHaveLength(2);
     expect(
-      within(box).getByText("Waiting for a Manager to check the cost."),
+      within(box).getByText("Pending a Manager check of the cost."),
     ).toBeTruthy();
     expect(
       within(box).queryByRole("button", {
@@ -915,9 +917,9 @@ describe("Building › Problem reports (V1.1 part 7, DL-124)", () => {
     ).toBeTruthy();
     const link = screen.getByRole("link", { name: "ER26000003" });
     expect(link.getAttribute("href")).toContain("ER26000003");
-    expect(screen.getByText(/Waiting for approval/)).toBeTruthy();
+    expect(screen.getByText(/Pending approval/)).toBeTruthy();
     expect(
-      screen.queryByRole("button", { name: "Type the cost again" }),
+      screen.queryByRole("button", { name: "Enter the cost again" }),
     ).toBeNull();
   });
 

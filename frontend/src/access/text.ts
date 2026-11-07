@@ -60,7 +60,7 @@ const TEXT = {
     "ម្ចាស់តែងតែរក្សាតួនាទីម្ចាស់។",
   ],
   ur_roles_reason_h: [
-    "Needed when a role is taken away. It is kept in History.",
+    "Needed when a role is taken away. It is kept in the audit log.",
     "ត្រូវការនៅពេលដកតួនាទីចេញ។ វាត្រូវបានរក្សាទុកក្នុងប្រវត្តិ។",
   ],
   ur_roles_code: [

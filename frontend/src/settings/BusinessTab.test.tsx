@@ -285,7 +285,7 @@ describe("Settings: Business", () => {
       "Property: CHETANA Residence",
       "Description: Apartments near Camko",
       "Address: Street 271, Phnom Penh",
-      "Rentable Units: 2Counted from the Units list each time. Never typed.",
+      "Rentable Units: 2Counted from the Units list each time. Never entered.",
     ]);
     expect(pairs(card("Business"))).toEqual([
       "Business name: Not givenCan differ from the property name.",
@@ -587,10 +587,12 @@ describe("Settings: Business", () => {
     });
     fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
     expect(
-      within(dialog).getByText("Type a value that fits the unit."),
+      within(dialog).getByText("Enter a value that fits the unit."),
     ).toBeTruthy();
     expect(
-      within(dialog).getByText("Type a real date, dd/mm/yyyy, today or later."),
+      within(dialog).getByText(
+        "Enter a real date, dd/mm/yyyy, today or later.",
+      ),
     ).toBeTruthy();
     expect(within(dialog).getByText("Say why.")).toBeTruthy();
     expect(api.settings.setRule).not.toHaveBeenCalled();
@@ -627,7 +629,7 @@ describe("Settings: Business", () => {
     );
     dialog = screen.getByRole("dialog", { name: "Add a business rule" });
     fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
-    expect(within(dialog).getAllByText("Type the rule name.").length).toBe(2);
+    expect(within(dialog).getAllByText("Enter the rule name.").length).toBe(2);
     fireEvent.change(within(dialog).getByLabelText(/^Name in English/), {
       target: { value: "Key copy price" },
     });
@@ -689,7 +691,7 @@ describe("Settings: Business", () => {
     dialog = screen.getByRole("dialog", {
       name: "Change the letters for Receipt",
     });
-    const letters = within(dialog).getByLabelText(/^Letters/);
+    const letters = within(dialog).getByLabelText(/Prefix/);
     fireEvent.change(letters, { target: { value: "INV" } });
     fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
     expect(

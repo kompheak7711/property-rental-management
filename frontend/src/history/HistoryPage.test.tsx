@@ -162,7 +162,7 @@ describe("History", () => {
         "25/10/2026 10:15",
         "A user (33333333)",
         "Final Settlement",
-        "Final settlement correction confirmed Refused",
+        "Final settlement correction confirmed Rejected",
         "55555555",
       ],
     ]);
@@ -279,7 +279,7 @@ describe("History", () => {
     exportAs("Spreadsheet (.xlsx)");
     expect(
       await screen.findByText(
-        "history.xlsx is ready. Its fingerprint is written to History.",
+        "history.xlsx is ready. Its fingerprint is recorded in the audit log.",
       ),
     ).toBeTruthy();
     expect(exporter.exportAudit).toHaveBeenCalledWith("property-1", {
@@ -307,7 +307,7 @@ describe("History", () => {
     exportAs("PDF");
     expect(
       await screen.findByText(
-        "history.pdf is ready. Its fingerprint is written to History.",
+        "history.pdf is ready. Its fingerprint is recorded in the audit log.",
       ),
     ).toBeTruthy();
     expect(exporter.download).toHaveBeenCalledWith("property-1", "x2");
@@ -329,7 +329,7 @@ describe("History", () => {
     setup(() => Promise.reject(new HistoryNotAllowedError()));
     expect(
       await screen.findByText(
-        "Your account cannot see History. Use the menu to open your work.",
+        "Your account cannot see the audit log. Use the menu to open your work.",
       ),
     ).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Retry" })).toBeNull();

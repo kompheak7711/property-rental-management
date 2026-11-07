@@ -288,7 +288,7 @@ describe("Letters page (V1-058 R3)", () => {
     expect(screen.getByText(/as of 25\/11\/2026/)).toBeTruthy();
     // Cards: due (U101 day 20, U104 day 20), day-20 given and waiting (U102), day-30 given (U103).
     expect(
-      screen.getByRole("button", { name: /^Letters due: 2\./ }),
+      screen.getByRole("button", { name: /^Notices due: 2\./ }),
     ).toBeTruthy();
     expect(
       screen.getByRole("button", { name: /^Day-20 letter given: 1\./ }),
@@ -393,7 +393,7 @@ describe("Letters page (V1-058 R3)", () => {
     fireEvent.change(within(dialog).getByLabelText(/Details/), {
       target: { value: " the tenant signed our copy " },
     });
-    fireEvent.change(within(dialog).getByLabelText(/Letter number/), {
+    fireEvent.change(within(dialog).getByLabelText(/Notice number/), {
       target: { value: "L-021" },
     });
     api.recordLetter.mockRejectedValueOnce(new LettersUnavailableError());
@@ -557,7 +557,7 @@ describe("Letters page (V1-058 R3)", () => {
       );
     });
     expect(
-      await screen.findByText(/The warnings of U103 could not be read/),
+      await screen.findByText(/The warnings of U103 could not be loaded/),
     ).toBeTruthy();
     second.api.warnings.mockResolvedValue([]);
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
@@ -663,7 +663,7 @@ describe("Letters page (V1-058 R3)", () => {
     fireEvent.change(within(dialog).getByLabelText(/Details/), {
       target: { value: "signed our copy" },
     });
-    fireEvent.change(within(dialog).getByLabelText(/Letter number/), {
+    fireEvent.change(within(dialog).getByLabelText(/Notice number/), {
       target: { value: "L-021" },
     });
     api.recordLetter.mockRejectedValueOnce(new LettersRequestError());

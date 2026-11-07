@@ -192,7 +192,7 @@ describe("Settings", () => {
     businessApi.property.load.mockClear();
     show(() => new Promise<HealthStatus>(() => undefined), { propertyId: "" });
     const note =
-      "No Property is open yet. In Settings, on the General tab, open “Earlier forms (English)”, type the Property identifier and press “Load business configuration”. Then every tab fills in.";
+      "No Property is open yet. In Settings, on the General tab, open “Earlier forms (English)”, enter the Property identifier and press “Load business configuration”. Then every tab fills in.";
     expect(await screen.findByText(note)).toBeInTheDocument();
     expect(screen.queryByText("Reading the business settings…")).toBeNull();
     expect(screen.getByText("Old business form")).toBeInTheDocument();
@@ -298,7 +298,7 @@ describe("Settings", () => {
     openTab("health");
     expect(
       await screen.findByText(
-        "System health could not be read just now. The app may still be working; try again.",
+        "System health could not be loaded. The app may still be working; try again.",
       ),
     ).toBeTruthy();
     expect(screen.queryByText("Needs attention")).toBeNull();

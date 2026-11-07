@@ -290,7 +290,7 @@ function JournalTab({
                 <th scope="col">{lt(language, "no")}</th>
                 <th scope="col">{lt(language, "date")}</th>
                 <th scope="col">{lt(language, "what")}</th>
-                <th scope="col">{lt(language, "from")}</th>
+                <th scope="col">{lt(language, "source")}</th>
                 <th className="r" scope="col">
                   {lt(language, "amount")}
                 </th>
@@ -428,7 +428,7 @@ function EntryDetail({
           {data.description}
         </p>
         <p className="pad">
-          {lt(language, "from")}:{" "}
+          {lt(language, "source")}:{" "}
           {data.reverses !== null ? (
             <>
               {lt(language, "rev_of", "")}

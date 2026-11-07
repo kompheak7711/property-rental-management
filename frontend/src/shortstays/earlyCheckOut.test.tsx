@@ -43,6 +43,9 @@ describe("Early check-out warning", () => {
     expect(dialog).toHaveTextContent(
       "U305 is booked until 12/11/2026 (7 nights). Today is 07/11/2026.",
     );
+    expect(dialog).toHaveTextContent(
+      "The unused nights stay paid. There is no money back by itself.",
+    );
     fireEvent.click(screen.getByRole("button", { name: "Keep the stay" }));
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(onStep).not.toHaveBeenCalled();

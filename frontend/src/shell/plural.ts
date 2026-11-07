@@ -2,7 +2,7 @@
 // a whole number standing alone, so "21 days" and "$1 days" are left as they are.
 
 const NOUNS =
-  "days|nights|months|weeks|years|items|times|lines|places|hours|minutes|readings|meters|rooms|people|Invoices|Receipts|Units|Customers|Leases|stays|requests|reports|entries|scans";
+  "days|nights|months|weeks|years|items|times|lines|places|hours|minutes|readings|meters|rooms|payments|bills|advances|records|people|Invoices|Receipts|Units|Customers|Leases|stays|requests|reports|entries|scans";
 
 const SINGULAR: Record<string, string> = { people: "person", entries: "entry" };
 

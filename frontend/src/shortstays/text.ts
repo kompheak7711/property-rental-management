@@ -7,7 +7,7 @@ import { singular } from "../shell/plural";
 
 const TEXT = {
   loading: ["Loading…", "កំពុងផ្ទុក…"],
-  failed: ["This could not be read just now.", "មិនអាចអានបានទេឥឡូវនេះ។"],
+  failed: ["This could not be loaded.", "មិនអាចអានបានទេឥឡូវនេះ។"],
   retry: ["Try again", "សាកម្តងទៀត"],
   no_property: ["Choose a Property first.", "សូមជ្រើសអចលនទ្រព្យជាមុន។"],
   // new
@@ -58,7 +58,7 @@ const TEXT = {
   src_BOOKING_SITE: ["Booking site", "គេហទំព័រកក់"],
   // New booking
   new_sub: [
-    "Pick the Unit and the nights. The price follows the rules in Settings.",
+    "Choose the Unit and the nights. The price follows the rules in Settings.",
     // new
     "ជ្រើសបន្ទប់ និងយប់។ តម្លៃគិតតាមច្បាប់ក្នុងការកំណត់។",
   ],
@@ -95,7 +95,7 @@ const TEXT = {
   // Price box
   p_title: ["Price", "តម្លៃ"],
   p_pick: [
-    "Pick a Unit and the nights to see the price.",
+    "Choose a Unit and the nights to see the price.",
     // new
     "ជ្រើសបន្ទប់ និងយប់ ដើម្បីមើលតម្លៃ។",
   ],
@@ -170,12 +170,12 @@ const TEXT = {
     "គណនីរបស់អ្នកមិនអាចធ្វើការកក់បានទេ។",
   ],
   f_taken: [
-    "Someone has just booked one of these nights. Pick other nights or another Unit.",
+    "Someone has just booked one of these nights. Choose other nights or another Unit.",
     // new
     "មាននរណាម្នាក់ទើបតែកក់យប់មួយក្នុងចំណោមនេះ។ ជ្រើសយប់ផ្សេង ឬបន្ទប់ផ្សេង។",
   ],
   f_refused: [
-    "The server refused this booking. Check what you typed.",
+    "This booking could not be saved. Check what you entered.",
     // new
     "ម៉ាស៊ីនមេបានបដិសេធការកក់នេះ។ ពិនិត្យអ្វីដែលអ្នកបានវាយ។",
   ],
@@ -233,7 +233,7 @@ const TEXT = {
     "Card's last 4 digits (if wanted)",
     "លេខ 4 ខ្ទង់ចុងក្រោយនៃកាត (បើចង់)",
   ],
-  dep_never: ["Never type the card number.", "កុំវាយលេខកាតឲ្យសោះ។"],
+  dep_never: ["Never enter the card number.", "កុំវាយលេខកាតឲ្យសោះ។"],
   dep_take: ["Take the deposit", "ទទួលប្រាក់កក់"],
   dep_HELD: ["Held", "កំពុងរក្សាទុក"],
   dep_RETURNED: ["Returned", "បានប្រគល់វិញ"],
@@ -277,6 +277,11 @@ const TEXT = {
     "{0} is booked until {1} ({2} nights). Today is {3}. Check out now only if the guest is really leaving today.",
     "{0} បានកក់រហូតដល់ {1} ({2} យប់)។ ថ្ងៃនេះ {3}។ ចុះចេញឥឡូវ លុះត្រាតែភ្ញៀវពិតជាចាកចេញថ្ងៃនេះ។",
   ], // new
+  // Owner rule 07/11 10:04: unused nights stay paid; no money back by itself.
+  out_early_money: [
+    "The unused nights stay paid. There is no money back by itself. Only the Owner, a Manager or a person with the credit right can give Credit for unused nights, with a reason, the same way as a late cancel.",
+    "យប់ដែលមិនបានប្រើ នៅតែបានបង់។ គ្មានការសងប្រាក់វិញដោយស្វ័យប្រវត្តិទេ។ មានតែម្ចាស់ អ្នកគ្រប់គ្រង ឬអ្នកមានសិទ្ធិផ្តល់ឥណទានប៉ុណ្ណោះ ដែលអាចផ្តល់ឥណទានសម្រាប់យប់ដែលមិនបានប្រើ ដោយមានហេតុផល ដូចការលុបចោលយឺត។",
+  ], // new
   out_early_ok: ["Check out early", "ចុះចេញមុនថ្ងៃ"], // new
   out_early_keep: ["Keep the stay", "រក្សាការស្នាក់នៅ"], // new
   room_t: ["Room check", "ពិនិត្យបន្ទប់"],
@@ -289,18 +294,18 @@ const TEXT = {
   room_b: ["Room check done", "ពិនិត្យបន្ទប់រួច"],
   e_what: ["Say what is damaged.", "សូមប្រាប់អ្វីដែលខូច។"],
   e_cost: [
-    "Type the cost in dollars, for example 80 or 80.50.",
+    "Enter the cost in dollars, for example 80 or 80.50.",
     "វាយតម្លៃជាដុល្លារ ឧទាហរណ៍ 80 ឬ 80.50។",
   ],
   dmg_t: ["Damage", "ការខូចខាត"],
   dmg_WAITING: ["Waits for the Manager", "រង់ចាំអ្នកគ្រប់គ្រង"],
   dmg_APPROVED: ["Approved", "បានអនុម័ត"],
-  dmg_REFUSED: ["Refused", "បានបដិសេធ"],
+  dmg_REFUSED: ["Rejected", "បានបដិសេធ"],
   dmg_from: ["{0} from the deposit", "{0} ពីប្រាក់កក់"],
   dmg_inv: ["Invoice {0} for the rest", "វិក្កយបត្រ {0} សម្រាប់ចំនួនដែលនៅសល់"],
   dmg_note: ["Reason", "មូលហេតុ"],
   dmg_ok: ["Approve", "អនុម័ត"],
-  dmg_no: ["Refuse", "បដិសេធ"],
+  dmg_no: ["Reject", "បដិសេធ"],
   e_reason: ["A refusal says why.", "ការបដិសេធត្រូវប្រាប់មូលហេតុ។"],
   f_stale: [
     "This booking changed meanwhile. It is shown as it is now.",
@@ -311,7 +316,7 @@ const TEXT = {
     "គណនីរបស់អ្នកមិនអាចធ្វើជំហាននេះបានទេ។",
   ],
   f_step_refused: [
-    "The server refused this step. Check what you typed.",
+    "This step could not be saved. Check what you entered.",
     "ម៉ាស៊ីនមេបានបដិសេធជំហាននេះ។ ពិនិត្យអ្វីដែលអ្នកបានវាយ។",
   ],
   f_not_now: [
@@ -325,7 +330,7 @@ const TEXT = {
   ev_CHECKED_OUT: ["Checked out", "បានចេញ"],
   ev_ROOM_CHECKED: ["Room checked", "បានពិនិត្យបន្ទប់"],
   ev_DAMAGE_APPROVED: ["Damage approved", "បានអនុម័តការខូចខាត"],
-  ev_DAMAGE_REFUSED: ["Damage refused", "បានបដិសេធការខូចខាត"],
+  ev_DAMAGE_REFUSED: ["Damage rejected", "បានបដិសេធការខូចខាត"],
   ev_DEPOSIT_RETURNED: ["Deposit returned", "បានប្រគល់ប្រាក់កក់វិញ"],
   ev_DEPOSIT_KEPT: [
     "Deposit kept for damage",
@@ -405,14 +410,14 @@ const TEXT = {
   e_in: ["Choose the check-in day.", "ជ្រើសថ្ងៃចូល។"],
   // new
   e_nights: [
-    "Type the nights: a whole number, 1 or more.",
+    "Enter the nights: a whole number, 1 or more.",
     "វាយចំនួនយប់៖ ចំនួនគត់ ចាប់ពី 1 ឡើងទៅ។",
   ],
   // new
-  e_name: ["Type the guest's full name.", "វាយឈ្មោះពេញរបស់ភ្ញៀវ។"],
+  e_name: ["Enter the guest's full name.", "វាយឈ្មោះពេញរបស់ភ្ញៀវ។"],
   // new
   e_id: [
-    "Type the ID or passport number.",
+    "Enter the ID or passport number.",
     "វាយលេខអត្តសញ្ញាណប័ណ្ណ ឬលិខិតឆ្លងដែន។",
   ],
   // Booking page, more
@@ -456,7 +461,7 @@ const TEXT = {
     "The difference is a new Invoice for the guest.",
     "ចំនួនខុសគ្នាជាវិក្កយបត្រថ្មីសម្រាប់ភ្ញៀវ។",
   ],
-  e_out: ["Pick a day after {0}.", "ជ្រើសថ្ងៃក្រោយ {0}។"],
+  e_out: ["Choose a day after {0}.", "ជ្រើសថ្ងៃក្រោយ {0}។"],
   x_EXTEND: ["Extension", "ការបន្ត"],
   x_EARLY_CHECK_IN: ["Early check-in", "ការចូលមុនម៉ោង"],
   x_LATE_CHECK_OUT: ["Late check-out", "ការចេញយឺត"],
@@ -468,7 +473,7 @@ const TEXT = {
   ev_EXTENDED: ["Stay extended", "បានបន្តការស្នាក់នៅ"],
   ev_EARLY_CHECK_IN: ["Early check-in added", "បានបន្ថែមការចូលមុនម៉ោង"],
   ev_LATE_CHECK_OUT: ["Late check-out added", "បានបន្ថែមការចេញយឺត"],
-  tab_clean: ["Cleaning", "ការសម្អាត"],
+  tab_clean: ["Housekeeping", "ការសម្អាត"],
   tab_sites: ["Booking sites", "គេហទំព័រកក់"],
   cl_prev: ["Day before", "ថ្ងៃមុន"],
   cl_next: ["Next day", "ថ្ងៃបន្ទាប់"],
@@ -517,7 +522,7 @@ const TEXT = {
   // new (owner test 06/11/2026): the Refund button after a free cancel.
   rf_t: ["Give the money back", "ប្រគល់ប្រាក់វិញ"],
   rf_s: [
-    "{0} goes back to the guest. A Manager or the Owner approves it in Waiting for approval.",
+    "{0} goes back to the guest. A Manager or the Owner approves it in Approvals.",
     // new
     "{0} ត្រឡប់ទៅភ្ញៀវវិញ។ អ្នកគ្រប់គ្រង ឬម្ចាស់អនុម័តក្នុង កំពុងរង់ចាំការអនុម័ត។",
   ],
@@ -528,14 +533,14 @@ const TEXT = {
     // new
     "ឧទាហរណ៍៖ សាច់ប្រាក់នៅតុ ឬលេខប្រតិបត្តិការ ABA។",
   ],
-  e_rf_note: ["Type the reference.", "វាយឯកសារយោង។"],
+  e_rf_note: ["Enter the reference.", "វាយឯកសារយោង។"],
   rf_b: ["Refund {0}", "សងប្រាក់ {0}"],
   rf_wait: [
     "Refund of {0} waits for approval.",
     // new
     "ការសងប្រាក់ {0} កំពុងរង់ចាំការអនុម័ត។",
   ],
-  rf_open: ["Open Waiting for approval", "បើក កំពុងរង់ចាំការអនុម័ត"],
+  rf_open: ["Open Approvals", "បើក កំពុងរង់ចាំការអនុម័ត"],
   rf_done: ["Given back: {0}.", "បានប្រគល់វិញ៖ {0}។"],
   rf_no_right: [
     "Your account may not make a Refund. Ask a Manager.",
@@ -553,7 +558,7 @@ const TEXT = {
   cr_note: ["Why", "មូលហេតុ"],
   cr_b: ["Give credit", "ផ្ដល់ឥណទាន"],
   cr_given: ["{0} credit, to use by {1}.", "ឥណទាន {0} ប្រើបានរហូតដល់ {1}។"],
-  e_credit: ["Type an amount up to {0}.", "វាយចំនួនរហូតដល់ {0}។"],
+  e_credit: ["Enter an amount up to {0}.", "វាយចំនួនរហូតដល់ {0}។"],
   ev_CANCELLED: ["Cancelled", "បានលុបចោល"],
   ev_NO_SHOW: ["Did not come", "មិនបានមក"],
   ev_CREDIT_GIVEN: ["Credit given", "បានផ្ដល់ឥណទាន"],
@@ -622,7 +627,7 @@ const TEXT = {
   sc_ok: ["Read", "បានអាន"],
   sc_failed: ["Could not read", "មិនអាចអានបាន"],
   sc_read: [
-    "Last read {0} · {1} booked ranges ahead",
+    "Last checked {0} · {1} booked ranges ahead",
     "អានចុងក្រោយ {0} · {1} ចន្លោះដែលបានកក់ខាងមុខ",
   ],
   sc_url: ["Calendar link", "តំណប្រតិទិន"],
@@ -643,7 +648,7 @@ const TEXT = {
     "តំណប្រតិទិនចាប់ផ្ដើមដោយ https://",
   ],
   e_link_form: [
-    "Pick the room and the site, and paste a link that starts with https://",
+    "Choose the room and the site, and paste a link that starts with https://.",
     "ជ្រើសបន្ទប់ និងគេហទំព័រ ហើយបិទភ្ជាប់តំណដែលចាប់ផ្ដើមដោយ https://",
   ],
   // Step 5b (new): line names, thank-you, discount, guest history, review and quotes.
@@ -664,7 +669,7 @@ const TEXT = {
   dc_reason: ["Reason", "មូលហេតុ"],
   dc_b: ["Give the discount", "ផ្ដល់ការបញ្ចុះតម្លៃ"],
   dc_wrong: [
-    "Type an amount less than the stay and a reason.",
+    "Enter an amount less than the stay and a reason.",
     "វាយចំនួនទឹកប្រាក់តិចជាងតម្លៃស្នាក់នៅ និងមូលហេតុ។",
   ],
   dc_given: ["{0} off: {1}", "បញ្ចុះ {0}៖ {1}"],
@@ -723,11 +728,11 @@ const TEXT = {
   q_nights: ["Nights", "ចំនួនយប់"],
   q_b: ["Make the quote", "ធ្វើសម្រង់តម្លៃ"],
   q_wrong: [
-    "Pick the room, type the guest's name, 1 to 10 guests and the nights.",
+    "Choose the room, enter the guest's name, 1 to 10 guests and the nights.",
     "ជ្រើសបន្ទប់ វាយឈ្មោះភ្ញៀវ ភ្ញៀវ 1 ដល់ 10 នាក់ និងចំនួនយប់។",
   ],
   q_not_free: [
-    "That room cannot be booked for those nights. Pick another room or other days.",
+    "That room cannot be booked for those nights. Choose another room or other days.",
     "បន្ទប់នោះមិនអាចកក់សម្រាប់យប់ទាំងនោះបានទេ។ សូមជ្រើសបន្ទប់ ឬថ្ងៃផ្សេង។",
   ],
   q_none: ["No quotes yet.", "មិនទាន់មានសម្រង់តម្លៃទេ។"],

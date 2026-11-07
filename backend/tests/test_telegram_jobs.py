@@ -533,7 +533,7 @@ def test_send_job_sends_records_and_reports_fixed_codes() -> None:
         ("m4", "FAILED", "text_unknown", None),
     ]
     assert posts[0][0] == f"https://api.telegram.org/bot{TOKEN}/sendMessage"
-    assert posts[0][1]["text"].startswith("✅ The office app got your message")
+    assert posts[0][1]["text"].startswith("✅ The office app received your message")
 
 
 def test_bot_keys_are_read_only_when_they_look_like_keys(tmp_path: Path) -> None:

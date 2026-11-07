@@ -166,14 +166,14 @@ describe("Home", () => {
       "Paid for November",
       "Overdue",
       "Lease renewal",
-      "Waiting for approval",
+      "Approvals",
       "Meter readings missing",
-      "Letters due",
+      "Notices due",
     ]);
     expect(card(/Units occupied/).textContent).toContain(
       "1 reserved · 1 vacant",
     );
-    expect(card(/Waiting for approval/).textContent).toContain(
+    expect(card(/Approvals/).textContent).toContain(
       "1 to confirm · $5.00 money out",
     );
     expect(card(/Pending payment/).textContent).toContain(
@@ -187,13 +187,11 @@ describe("Home", () => {
     expect(card(/Lease renewal/).textContent).toContain(
       "End before 02/01/2027",
     );
-    expect(card(/Waiting for approval/).getAttribute("href")).toBe(
-      "#/approvals",
-    );
+    expect(card(/Approvals/).getAttribute("href")).toBe("#/approvals");
     expect(card(/Meter readings missing/).textContent).toContain(
       "Reading day 24/11/2026",
     );
-    expect(card(/Letters due/).getAttribute("href")).toBe("#/letters");
+    expect(card(/Notices due/).getAttribute("href")).toBe("#/letters");
     expect(
       screen.getByText(
         "Rent and Utility Invoices made on 25/10/2026 06:00 · ABA exchange rate updated on 03/11/2026 08:00 · Next Invoices: 25/11/2026",
@@ -225,8 +223,8 @@ describe("Home", () => {
     expect(rows.map((row) => row.querySelector("b")?.textContent)).toEqual([
       "INV260006: $210.00 not paid",
       "Day 20 letter due: U201",
-      "Refund waiting for approval",
-      "Deposit waiting for a decision: U305",
+      "Refund pending approval",
+      "Deposit pending a decision: U305",
       "Reservation for U406 ends",
     ]);
     expect(rows[0]?.textContent).toContain("Ouk Chanthy · U201 · Initial Rent");
@@ -243,13 +241,13 @@ describe("Home", () => {
     ).toBe(hashForPage("invoices", "inv:inv-6"));
     expect(
       within(list)
-        .getByRole("link", { name: "Open Letters: Day 20 letter due: U201" })
+        .getByRole("link", { name: "Open Notices: Day 20 letter due: U201" })
         .getAttribute("href"),
     ).toBe("#/letters");
     expect(
       within(list)
         .getByRole("link", {
-          name: "Open Reservation: Deposit waiting for a decision: U305",
+          name: "Open Reservation: Deposit pending a decision: U305",
         })
         .getAttribute("href"),
     ).toBe("#/reservations/res-305");
@@ -323,7 +321,7 @@ describe("Home", () => {
     );
     expect(
       await screen.findByText(
-        "Home could not be read just now. Check the connection and try again.",
+        "Home could not be loaded. Check the connection and try again.",
       ),
     ).toBeTruthy();
     fail = false;

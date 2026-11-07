@@ -1265,7 +1265,7 @@ describe("local sign-in", () => {
     fireEvent.change(screen.getByLabelText("New password"), {
       target: { value: "a long new password of mine" },
     });
-    fireEvent.change(screen.getByLabelText("Type the new password again"), {
+    fireEvent.change(screen.getByLabelText("Enter the new password again"), {
       target: { value: "a different long password" },
     });
     fireEvent.click(save);
@@ -1274,7 +1274,7 @@ describe("local sign-in", () => {
     ).toBeInTheDocument();
     expect(changePassword).not.toHaveBeenCalled();
 
-    fireEvent.change(screen.getByLabelText("Type the new password again"), {
+    fireEvent.change(screen.getByLabelText("Enter the new password again"), {
       target: { value: "a long new password of mine" },
     });
     fireEvent.click(save);
@@ -1287,7 +1287,7 @@ describe("local sign-in", () => {
     fireEvent.change(screen.getByLabelText("New password"), {
       target: { value: "a long new password of mine" },
     });
-    fireEvent.change(screen.getByLabelText("Type the new password again"), {
+    fireEvent.change(screen.getByLabelText("Enter the new password again"), {
       target: { value: "a long new password of mine" },
     });
     fireEvent.click(save);
@@ -1326,7 +1326,7 @@ describe("local sign-in", () => {
       fireEvent.change(await screen.findByLabelText("New password"), {
         target: { value: "a long new password of mine" },
       });
-      fireEvent.change(screen.getByLabelText("Type the new password again"), {
+      fireEvent.change(screen.getByLabelText("Enter the new password again"), {
         target: { value: "a long new password of mine" },
       });
       fireEvent.click(

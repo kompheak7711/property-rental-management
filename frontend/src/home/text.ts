@@ -13,7 +13,7 @@ const TEXT = {
   loading: ["Loading Home…", "កំពុងផ្ទុកទំព័រដើម…"],
   // new
   failed: [
-    "Home could not be read just now. Check the connection and try again.",
+    "Home could not be loaded. Check the connection and try again.",
     "មិនអាចអានទំព័រដើមបានទេឥឡូវនេះ។ សូមពិនិត្យការតភ្ជាប់ ហើយព្យាយាមម្តងទៀត។",
   ],
   // new
@@ -55,7 +55,7 @@ const TEXT = {
   k_over_s1: ["1 Invoice past the due date", "វិក្កយបត្រ 1 ហួសថ្ងៃកំណត់បង់"],
   n_lease: ["Lease renewal", "ការបន្តកិច្ចសន្យា"],
   n_lease_s: ["End before {0}", "ផុតកំណត់មុន {0}"],
-  n_appr: ["Waiting for approval", "រង់ចាំការអនុម័ត"],
+  n_appr: ["Approvals", "រង់ចាំការអនុម័ត"],
   n_appr_s: [
     "{0} to confirm · {1} money out",
     "{0} ត្រូវបញ្ជាក់ · ប្រាក់ចេញ {1}",
@@ -64,7 +64,7 @@ const TEXT = {
   n_appr_c: ["{0} to confirm", "{0} ត្រូវបញ្ជាក់"],
   n_read: ["Meter readings missing", "អំណានដែលខ្វះ"],
   n_read_s: ["Reading day {0}", "ថ្ងៃអាន {0}"],
-  n_letters: ["Letters due", "លិខិតត្រូវផ្តល់"],
+  n_letters: ["Notices due", "លិខិតត្រូវផ្តល់"],
   n_letters_s: ["Day-20 and day-30 letters", "លិខិតថ្ងៃទី២០ និងថ្ងៃទី៣០"],
   // DL-131 (mock-up round 32 A10); Khmer is new and needs the native check.
   n_problems: ["Problem reports", "របាយការណ៍បញ្ហា"],
@@ -97,14 +97,14 @@ const TEXT = {
   ],
   r_lease: ["Lease for {0} ends", "កិច្ចសន្យា {0} ផុតកំណត់"],
   r_lease_d: ["{0}. Ask about renewing.", "{0}។ សួរអំពីការបន្ត។"],
-  r_appr: ["{0} waiting for approval", "{0} រង់ចាំការអនុម័ត"],
+  r_appr: ["{0} pending approval", "{0} រង់ចាំការអនុម័ត"],
   r_letter: ["{0} letter due: {1}", "លិខិត{0} ត្រូវផ្តល់៖ {1}"],
   // new
   r_letter_d: ["{0} · {1} still owed", "{0} · {1} នៅជំពាក់"],
   day20: ["Day 20", "ថ្ងៃទី២០"],
   day30: ["Day 30", "ថ្ងៃទី៣០"],
   r_depdec: [
-    "Deposit waiting for a decision: {0}",
+    "Deposit pending a decision: {0}",
     "ប្រាក់កក់រង់ចាំការសម្រេច៖ {0}",
   ],
   // new
@@ -151,7 +151,7 @@ const TEXT = {
   ],
   // new
   job_rate_none: [
-    "The ABA exchange rate has not been read yet",
+    "The ABA exchange rate has not been loaded yet.",
     "មិនទាន់អានអត្រាប្តូរប្រាក់ ABA នៅឡើយ",
   ],
   job_next: ["Next Invoices: {0}", "វិក្កយបត្របន្ទាប់៖ {0}"],
@@ -160,7 +160,7 @@ const TEXT = {
   tip_read: ["Open meter readings", "បើកអំណាននាឡិកាស្ទង់"],
   tip_lease: ["Open Lease", "បើកកិច្ចសន្យា"],
   tip_appr: ["Open the draft", "បើកសេចក្តីព្រាង"],
-  tip_letter: ["Open Letters", "បើកលិខិត"],
+  tip_letter: ["Open Notices", "បើកលិខិត"],
   // UI v81 (design v81 Home): Owner money and Attendance.
   om_t: ["Owner money", "ប្រាក់ម្ចាស់"], // new
   om_only: ["Only the Owner sees this", "មានតែម្ចាស់ឃើញ"], // new

@@ -477,6 +477,7 @@ export function CheckOutCard({
                 dayText(today),
               )}
             </p>
+            <p className="ui-small">{st(language, "out_early_money")}</p>
           </div>
         </Dialog>
       )}

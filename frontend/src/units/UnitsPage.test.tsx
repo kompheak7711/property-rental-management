@@ -494,10 +494,10 @@ describe("Units list", () => {
     const card = (name: RegExp) => screen.getByRole("button", { name });
 
     expect(card(/^Occupied: 1/)).toBeInTheDocument();
-    expect(card(/^Not available: 1/)).toBeInTheDocument();
-    fireEvent.click(card(/^Not available/));
-    expect(card(/^Not available/)).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByText(/Showing: Not available\./)).toBeInTheDocument();
+    expect(card(/^Unavailable: 1/)).toBeInTheDocument();
+    fireEvent.click(card(/Unavailable/));
+    expect(card(/^Unavailable/)).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByText(/Showing: Unavailable\./)).toBeInTheDocument();
     expect(screen.getAllByRole("row")).toHaveLength(2);
     fireEvent.click(screen.getByRole("button", { name: "Show all" }));
     expect(screen.getAllByRole("row")).toHaveLength(5);
@@ -547,7 +547,7 @@ describe("Units list", () => {
     show(client);
     expect(
       await screen.findByText(
-        "The Units could not be read. Retry when the service is available.",
+        "The Units could not be loaded. Retry when the service is available.",
       ),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
@@ -839,7 +839,7 @@ describe("Unit page", () => {
 
     let view = await open("U201");
     expect(hrefs("New Lease")).toEqual(["#/leases/unit%3Aunit-U201"]);
-    expect(hrefs("Make Reservation")).toEqual([
+    expect(hrefs("New Reservation")).toEqual([
       "#/reservations/new%3Aunit-U201",
     ]);
     view.unmount();
@@ -882,7 +882,7 @@ describe("Unit page", () => {
       await screen.findByRole("button", { name: "Change status" }),
     );
     expect(screen.getByRole("dialog")).toHaveTextContent(
-      "This Unit has a signed Lease. Its status changes only through Move-out.",
+      "This Unit has a signed Lease. Its status changes only through a move-out.",
     );
     fireEvent.keyDown(document, { key: "Escape" });
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
@@ -1281,7 +1281,7 @@ describe("For rent (V1.1 rework part 1)", () => {
     if (details === null) throw new Error("no details card");
     expect(details).toHaveTextContent("For rentYes");
     expect(
-      screen.getByRole("link", { name: "Make Reservation" }),
+      screen.getByRole("link", { name: "New Reservation" }),
     ).toBeInTheDocument();
     fireEvent.click(within(details).getByRole("button", { name: "Change" }));
     const dialog = await screen.findByRole("dialog", {
@@ -1302,7 +1302,7 @@ describe("For rent (V1.1 rework part 1)", () => {
     await waitFor(() => {
       expect(details).toHaveTextContent("For rentNot for rent");
     });
-    expect(screen.queryByRole("link", { name: "Make Reservation" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "New Reservation" })).toBeNull();
     expect(screen.queryByRole("link", { name: "New Lease" })).toBeNull();
     expect(details).toHaveTextContent("it is left out of every renting screen");
     expect(screen.queryByRole("dialog")).toBeNull();

@@ -253,7 +253,7 @@ describe("V1-058 R5c-3 Payments list", () => {
       );
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Pick dates" }));
+    fireEvent.click(screen.getByRole("button", { name: "Custom range" }));
     fireEvent.change(screen.getByLabelText("From"), {
       target: { value: "20/10/2026" },
     });
@@ -585,7 +585,7 @@ describe("V1-058 R5c-3 review round 1", () => {
     expect(screen.getByRole("button", { name: "Reprint" })).toBeDisabled();
     expect(
       screen.getByText(
-        "The Customer names could not be read, so the Receipt cannot print yet.",
+        "The Customer names could not be loaded, so the Receipt cannot print yet.",
       ),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
