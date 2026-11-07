@@ -37,6 +37,7 @@ import {
   shortStaysApi as defaultShortStaysApi,
 } from "./shortStaysClient";
 import { hasText, st } from "./text";
+import { PageHead } from "../shell/pageHead";
 
 export interface ShortStaysPageProps {
   language: Language;
@@ -556,7 +557,7 @@ export function ShortStaysPage({
 
   return (
     <>
-      <div className="ui-head">
+      <PageHead>
         <p>{st(language, "sub")}</p>
         {may("short_stays.desk") && (
           <div className="ui-actions">
@@ -569,19 +570,25 @@ export function ShortStaysPage({
             </a>
           </div>
         )}
-      </div>
+      </PageHead>
       <div className="ui-filters">
-        <div aria-label={st(language, "tabs")} className="ui-seg" role="group">
+        {/* UI v81 (B4): the Short stays tabs are underlined tabs, like every page's tabs. */}
+        <div
+          aria-label={st(language, "tabs")}
+          className="ui-tabline"
+          role="tablist"
+        >
           {(may("short_stays.approve")
             ? (["cal", "list", "clean", "quotes", "report", "sites"] as const)
             : (["cal", "list", "clean", "quotes"] as const)
           ).map((value) => (
             <button
-              aria-pressed={tab === value}
+              aria-selected={tab === value}
               key={value}
               onClick={() => {
                 setTab(value);
               }}
+              role="tab"
               type="button"
             >
               {st(language, `tab_${value}`)}

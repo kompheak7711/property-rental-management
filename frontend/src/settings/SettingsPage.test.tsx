@@ -158,6 +158,7 @@ function show(
     capabilities = null as ReadonlySet<string> | null,
     language = "en" as "en" | "km",
     propertyId = "property-1",
+    mode = "settings" as "settings" | "access",
   } = {},
 ) {
   const api = { status: vi.fn(status) };
@@ -179,6 +180,7 @@ function show(
       rolesApi={rolesApiOf()}
       businessApi={businessApi}
       ratesApi={ratesApi}
+      mode={mode}
     />,
   );
   return api;
@@ -190,7 +192,7 @@ describe("Settings", () => {
     businessApi.property.load.mockClear();
     show(() => new Promise<HealthStatus>(() => undefined), { propertyId: "" });
     const note =
-      "No Property is open yet. On the Business tab, open “Earlier forms (English)”, type the Property identifier and press “Load business configuration”. Then every tab fills in.";
+      "No Property is open yet. In Settings, on the General tab, open “Earlier forms (English)”, enter the Property identifier and press “Load business configuration”. Then every tab fills in.";
     expect(await screen.findByText(note)).toBeInTheDocument();
     expect(screen.queryByText("Reading the business settings…")).toBeNull();
     expect(screen.getByText("Old business form")).toBeInTheDocument();
@@ -239,23 +241,23 @@ describe("Settings", () => {
     )
       .getAllByRole("link")
       .map((link) => [link.textContent, link.getAttribute("href")]);
+    // UI v81: General first; Rates split in two; Users and access is its own menu item.
     expect(tabs).toEqual([
-      ["Business", "#/settings/business"],
-      ["Rates and services", "#/settings/rates"],
+      ["General", "#/settings/business"],
+      ["Utility rates", "#/settings/rates"],
+      ["Monthly services", "#/settings/services"],
       ["Unit setup", "#/settings/units"],
-      ["Users and sign-in", "#/settings/users"],
     ]);
     // The first tab opens; a tab not rebuilt yet keeps its earlier forms, folded.
     expect(onShownTab("Old business form")).toBe(true);
     expect(onShownTab("Old account form")).toBe(false);
-    openTab("users");
-    expect(onShownTab("Old account form")).toBe(true);
-    expect(onShownTab("Old business form")).toBe(false);
+    openTab("services");
     expect(
       screen
-        .getByRole("link", { name: "Users and sign-in" })
+        .getByRole("link", { name: "Monthly services" })
         .getAttribute("aria-current"),
     ).toBe("page");
+    expect(onShownTab("Old business form")).toBe(false);
     // A tab the person may not use opens the first one instead.
     openTab("health");
     expect(onShownTab("Old business form")).toBe(true);
@@ -296,7 +298,7 @@ describe("Settings", () => {
     openTab("health");
     expect(
       await screen.findByText(
-        "System health could not be read just now. The app may still be working; try again.",
+        "System health could not be loaded. The app may still be working; try again.",
       ),
     ).toBeTruthy();
     expect(screen.queryByText("Needs attention")).toBeNull();
@@ -344,5 +346,31 @@ describe("Settings", () => {
     expect(
       screen.getByText("កំណត់ចំណាំទាំងនេះមកពីម៉ាស៊ីនមេជាភាសាអង់គ្លេស។"),
     ).toBeTruthy();
+  });
+
+  it("TEST-FE-1906 Users and access is its own page with Users, Roles, Sign-in and security and History; the earlier account forms show only there", () => {
+    window.location.hash = "#/access";
+    show(() => Promise.resolve(HEALTHY), {
+      capabilities: new Set(["identity.manage_access"]),
+      mode: "access",
+    });
+    const tabs = within(
+      screen.getByRole("tablist", { name: "Users and access sections" }),
+    )
+      .getAllByRole("tab")
+      .map((tab) => tab.textContent);
+    expect(tabs).toEqual(["Users", "Roles", "Sign-in and security", "History"]);
+    // The earlier forms are folded; only the Settings ones sit in a hidden part.
+    expect(screen.getByText("Old account form").closest("[hidden]")).toBeNull();
+    expect(
+      screen.getByText("Old business form").closest("[hidden]"),
+    ).not.toBeNull();
+    fireEvent.click(screen.getByRole("tab", { name: "History" }));
+    expect(window.location.hash).toBe("#/access?tab=history");
+    expect(
+      screen.getByText(
+        /The full list of access changes is in the earlier forms/,
+      ),
+    ).toBeInTheDocument();
   });
 });

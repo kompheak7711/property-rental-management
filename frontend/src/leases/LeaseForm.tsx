@@ -13,6 +13,7 @@
 // below it needs a Manager or the Owner and a reason. The Unit's required Services are ticked
 // and cannot be unticked.
 
+import { BackLink } from "../shell/backNav";
 import { FormEvent, ReactNode, useEffect, useRef, useState } from "react";
 
 import type { CustomerApi, CustomerListItem } from "../customerClient";
@@ -61,6 +62,7 @@ import {
   withRequired,
 } from "./leaseServices";
 import { lt } from "./text";
+import { PageHead } from "../shell/pageHead";
 
 export type LeaseFormMode =
   | { kind: "new" }
@@ -421,18 +423,7 @@ export function LeaseForm({
     if (!depositTyped) setDeposit(value);
   }, [walkIn, rentTyped, unitDefault, depositTyped]);
 
-  const back = (
-    <button
-      className="ui-crumb"
-      onClick={() => {
-        window.history.back();
-      }}
-      type="button"
-    >
-      <Icon name="back" small />
-      {lt(language, "back")}
-    </button>
-  );
+  const back = <BackLink language={language} parent="leases" />;
   const title =
     mode.kind === "renew"
       ? lt(language, "renew_title")
@@ -802,7 +793,7 @@ export function LeaseForm({
   return (
     <>
       {back}
-      <div className="ui-head">
+      <PageHead>
         <div>
           <h2>{title}</h2>
           <p>
@@ -813,7 +804,7 @@ export function LeaseForm({
                 : lt(language, "new_sub")}
           </p>
         </div>
-      </div>
+      </PageHead>
       <form className="ui-split ui-leaseform" noValidate onSubmit={check}>
         <section aria-labelledby="lease-form-terms" className="ui-card ui-form">
           <h2 id="lease-form-terms">{lt(language, "terms")}</h2>

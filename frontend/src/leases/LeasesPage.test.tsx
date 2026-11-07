@@ -584,9 +584,7 @@ describe("Lease page", () => {
     const depositClient = deposits();
     show(api({ get }), depositClient, new Set(["leases.read"]));
 
-    expect(
-      await screen.findByText(/could not be read just now/),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/could not be loaded/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
     expect(
       await screen.findByRole("heading", { name: "Lease · U101" }),
@@ -892,7 +890,7 @@ describe("Lease actions", () => {
       await within(dialog).findByRole("button", { name: "Try again" }),
     );
     expect(
-      await within(dialog).findByText(/The server refused this/),
+      await within(dialog).findByText(/This could not be saved/),
     ).toBeInTheDocument();
     expect(update.mock.calls[0]?.[1]).toMatchObject({
       start_date: "2026-12-10",
@@ -1105,7 +1103,9 @@ describe("Lease actions", () => {
       target: { value: "Deposit agreed again" },
     });
     fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
-    expect(dialog).toHaveTextContent("Type the Security Deposit, more than 0.");
+    expect(dialog).toHaveTextContent(
+      "Enter the Security Deposit, more than 0.",
+    );
     expect(update).not.toHaveBeenCalled();
     fireEvent.change(box, { target: { value: "450" } });
     fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
@@ -1211,7 +1211,7 @@ describe("Lease actions", () => {
     // Not known is never "none" on the page either.
     expect(
       await screen.findByText(
-        "The Security Deposit could not be read just now. Reload the page to see it.",
+        "The Security Deposit could not be loaded. Reload the page to see it.",
       ),
     ).toBeInTheDocument();
     expect(
@@ -2467,7 +2467,7 @@ describe("New Lease and Renew", () => {
     });
     // The Services could not be read: the draft waits, Retry reads them again.
     expect(
-      await screen.findByText(/The Services could not be read just now/),
+      await screen.findByText(/The Services could not be loaded/),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
     expect(
@@ -3246,7 +3246,7 @@ describe("New Lease and Renew", () => {
     const record = await screen.findByRole("dialog", {
       name: "Termination notice · U101",
     });
-    fireEvent.change(within(record).getByLabelText(/Letter number/), {
+    fireEvent.change(within(record).getByLabelText(/Notice number/), {
       target: { value: "TN-7" },
     });
     fireEvent.change(within(record).getByLabelText(/How it was given/), {
@@ -3433,7 +3433,7 @@ describe("New Lease and Renew", () => {
     const record = await screen.findByRole("dialog", {
       name: "Termination notice · U101",
     });
-    fireEvent.change(within(record).getByLabelText(/Letter number/), {
+    fireEvent.change(within(record).getByLabelText(/Notice number/), {
       target: { value: "TN-8" },
     });
     fireEvent.change(within(record).getByLabelText(/How it was given/), {
@@ -3453,7 +3453,7 @@ describe("New Lease and Renew", () => {
     });
     const [n1, n2] = recordNotice.mock.calls;
     expect(n2).toEqual(n1);
-    fireEvent.change(within(record).getByLabelText(/Letter number/), {
+    fireEvent.change(within(record).getByLabelText(/Notice number/), {
       target: { value: "TN-9" },
     });
     // The letter text follows the Lease end date until somebody writes it.
@@ -4029,7 +4029,7 @@ describe("Add occupant (DL-102)", () => {
     fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
     expect(
       await within(dialog).findByText(
-        "The server refused this. Nothing was saved. Check the details, or ask the Owner.",
+        "This could not be saved. Nothing was saved. Check the details, or ask the Owner.",
       ),
     ).toBeInTheDocument();
 
@@ -4050,7 +4050,7 @@ describe("Add occupant (DL-102)", () => {
     );
     expect(
       await screen.findByText(
-        "The Customers could not be read just now. Close and try again.",
+        "The Customers could not be loaded. Close and try again.",
       ),
     ).toBeInTheDocument();
   });

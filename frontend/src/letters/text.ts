@@ -3,21 +3,23 @@
 // "new" are not in the mock-up.
 
 import type { Language } from "../signInText";
+import { singular } from "../shell/plural";
 
 const TEXT = {
   sub: [
-    "Rent letters on day 20 and day 30, and Lease rule warnings",
+    "Rent arrears notices on day 20 and day 30, and Lease breach notices",
     "លិខិតថ្លៃឈ្នួលថ្ងៃទី២០ និងថ្ងៃទី៣០ និងការព្រមានអំពីវិន័យកិច្ចសន្យា",
   ],
   // new
   as_of: ["as of {0}", "គិតត្រឹម {0}"],
-  tab_rent: ["Rent letters", "លិខិតថ្លៃឈ្នួល"],
-  tab_warn: ["Lease rule warnings", "ការព្រមានវិន័យកិច្ចសន្យា"],
+  // UI v81 round 2: the design's names (sub-tabs and the C26 card). Khmer needs the native check.
+  tab_rent: ["Rent arrears notices", "សេចក្ដីជូនដំណឹងបំណុលថ្លៃឈ្នួល"],
+  tab_warn: ["Lease breach notices", "សេចក្ដីជូនដំណឹងរំលោភកិច្ចសន្យា"],
   // new
   loading: ["Loading the letters…", "កំពុងផ្ទុកលិខិត…"],
   // new
   failed: [
-    "The letters could not be read just now. Check the connection and try again.",
+    "The letters could not be loaded. Check the connection and try again.",
     "មិនអាចអានលិខិតបានទេឥឡូវនេះ។ សូមពិនិត្យការតភ្ជាប់ ហើយព្យាយាមម្តងទៀត។",
   ],
   retry: ["Retry", "ព្យាយាមម្តងទៀត"],
@@ -31,10 +33,10 @@ const TEXT = {
     "You are not allowed to see this list.",
     "អ្នកមិនត្រូវបានអនុញ្ញាតឱ្យមើលបញ្ជីនេះទេ។",
   ],
-  c_due: ["Letters due", "លិខិតត្រូវផ្តល់"],
+  c_due: ["Notices due", "លិខិតត្រូវផ្តល់"],
   c_due_s: ["Day 20 or day 30 passed", "ថ្ងៃទី២០ ឬទី៣០ បានកន្លង"],
   c_w20: ["Day-20 letter given", "បានផ្តល់លិខិតថ្ងៃទី២០"],
-  c_w20_s: ["Waiting for day 30", "រង់ចាំថ្ងៃទី៣០"],
+  c_w20_s: ["Pending day 30", "រង់ចាំថ្ងៃទី៣០"],
   c_w30: ["Day-30 letter given", "បានផ្តល់លិខិតថ្ងៃទី៣០"],
   c_w30_s: ["Termination may follow", "អាចបញ្ចប់កិច្ចសន្យាបន្ទាប់"],
   // new
@@ -45,14 +47,14 @@ const TEXT = {
     "Day 20 and day 30 have both passed and no letter is recorded yet.",
     "ថ្ងៃទី២០ និងទី៣០ បានកន្លងទាំងពីរ ហើយមិនទាន់កត់ត្រាលិខិតទេ។",
   ],
-  cases: ["Unpaid Rent after day 20", "ថ្លៃឈ្នួលមិនទាន់បង់ក្រោយថ្ងៃទី២០"],
+  cases: ["Rent arrears after day 20", "ប្រាក់ឈ្នួលជំពាក់ក្រោយថ្ងៃទី២០"],
   col_case: ["Unit and Customer", "បន្ទប់ និងអតិថិជន"],
   col_month: ["Rent month", "ខែថ្លៃឈ្នួល"],
   col_20: ["Day-20 letter", "លិខិតថ្ងៃទី២០"],
   col_30: ["Day-30 letter", "លិខិតថ្ងៃទី៣០"],
   col_next: ["Next step", "ជំហានបន្ទាប់"],
   // new: the mock-up's two letter columns share one, so the table fits an iPad
-  col_letters: ["Letters", "លិខិត"],
+  col_letters: ["Notices", "លិខិត"],
   dayn: ["Day {0}", "ថ្ងៃទី {0}"],
   due_date: ["Due Date {0}", "ថ្ងៃផុតកំណត់ {0}"],
   // new: the mock-up's "Rent still owed" column, as a line under the Customer
@@ -63,7 +65,7 @@ const TEXT = {
   rec: ["Record letter", "កត់ត្រាលិខិត"],
   wait30: ["Wait for day 30 ({0})", "រង់ចាំថ្ងៃទី៣០ ({0})"],
   term: ["Termination notice", "លិខិតបញ្ចប់កិច្ចសន្យា"],
-  mgr_badge: ["MANAGER", "អ្នកគ្រប់គ្រង"],
+  mgr_badge: ["Manager only", "សម្រាប់អ្នកគ្រប់គ្រងប៉ុណ្ណោះ"], // new
   // new
   no_step: ["Nothing to do now", "គ្មានអ្វីត្រូវធ្វើឥឡូវ"],
   none: [
@@ -82,7 +84,7 @@ const TEXT = {
   ],
   // new
   letters_failed: [
-    "The letters of {0} could not be read. Retry before recording one.",
+    "The letters of {0} could not be loaded. Retry before recording one.",
     "មិនអាចអានលិខិតរបស់ {0} បានទេ។ សូមព្យាយាមម្តងទៀត មុនកត់ត្រា។",
   ],
   d_t: ["Record a Rent letter · {0}", "កត់ត្រាលិខិតថ្លៃឈ្នួល · {0}"],
@@ -118,7 +120,7 @@ const TEXT = {
     "ឧទាហរណ៍៖ អ្នកជួលបានចុះហត្ថលេខាលើច្បាប់ចម្លងយើង ឬឈ្មោះសាក្សី។",
   ],
   d_detail_e: ["Write the details.", "សូមសរសេរព័ត៌មានលម្អិត។"],
-  d_no: ["Letter number", "លេខលិខិត"],
+  d_no: ["Notice number", "លេខលិខិត"],
   d_no_ph: [
     "The number written on the paper letter",
     "លេខដែលសរសេរលើលិខិតក្រដាស",
@@ -165,12 +167,12 @@ const TEXT = {
   lw_n: ["{0} of 3", "{0} ក្នុង ៣"],
   lw_new: ["Record warning", "កត់ត្រាការព្រមាន"],
   lw_none: [
-    "No Lease rule warnings recorded.",
+    "No Lease breach notices recorded.",
     "គ្មានការព្រមានវិន័យកិច្ចសន្យាដែលបានកត់ត្រាទេ។",
   ],
   // new
   lw_some_failed: [
-    "The warnings of {0} could not be read. Retry to see them.",
+    "The warnings of {0} could not be loaded. Retry to see them.",
     "មិនអាចអានការព្រមានរបស់ {0} បានទេ។ សូមព្យាយាមម្តងទៀត។",
   ],
   lw_d_t: ["Record a Lease rule warning", "កត់ត្រាការព្រមានវិន័យកិច្ចសន្យា"],
@@ -199,7 +201,7 @@ const TEXT = {
   ],
   // new
   lw_d_ctx_failed: [
-    "The next warning number could not be read. Close and try again.",
+    "The next warning number could not be loaded. Close and try again.",
     "មិនអាចអានលេខការព្រមានបន្ទាប់បានទេ។ សូមបិទ ហើយព្យាយាមម្តងទៀត។",
   ],
   lw_toast: [
@@ -225,8 +227,10 @@ export function ltr(
   key: LettersTextKey,
   ...values: (string | number)[]
 ): string {
-  return TEXT[key][language === "en" ? 0 : 1].replace(/\{(\d)\}/g, (_, n) =>
-    String(values[Number(n)] ?? ""),
+  return singular(
+    TEXT[key][language === "en" ? 0 : 1].replace(/\{(\d)\}/g, (_, n) =>
+      String(values[Number(n)] ?? ""),
+    ),
   );
 }
 

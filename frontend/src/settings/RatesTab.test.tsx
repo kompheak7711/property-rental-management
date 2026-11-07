@@ -314,7 +314,7 @@ describe("Settings: Rates and services", () => {
         "01/12/2024Letter under each door",
       ],
     ]);
-    const services = screen.getByRole("region", { name: "Monthly Services" });
+    const services = screen.getByRole("region", { name: "Monthly services" });
     expect(rowsOf(services)).toEqual([
       [
         "Trash Collectionប្រមូលសំរាម",
@@ -418,7 +418,7 @@ describe("Settings: Rates and services", () => {
     fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
     expect(
       await within(dialog).findByText(
-        "The server did not accept this. Check the values and try again.",
+        "This could not be saved. Check the values and try again.",
       ),
     ).toBeTruthy();
     fireEvent.change(within(dialog).getByLabelText(/^Rate per kWh/), {
@@ -795,10 +795,8 @@ describe("Settings: Rates and services", () => {
       within(types).queryByRole("button", { name: "Remove: Trash" }),
     ).toBeNull();
 
-    fireEvent.click(
-      within(types).getByRole("button", { name: "Add a Service type" }),
-    );
-    let dialog = screen.getByRole("dialog", { name: "Add a Service type" });
+    fireEvent.click(within(types).getByRole("button", { name: "Add a type" }));
+    let dialog = screen.getByRole("dialog", { name: "Add a type" });
     expect(
       within(dialog).getByRole<HTMLInputElement>("radio", {
         name: "Only one per Lease",
@@ -927,9 +925,7 @@ describe("Settings: Rates and services", () => {
       servicesOf(() => Promise.reject(new ServiceSettingsError("unknown"))),
     );
     expect(
-      await screen.findByText(
-        /Service names and types could not be read just now/,
-      ),
+      await screen.findByText(/Service names and types could not be loaded/),
     ).toBeTruthy();
     expect(screen.getByRole("region", { name: "Utility Rates" })).toBeTruthy();
     expect(

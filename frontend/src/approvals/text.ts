@@ -4,10 +4,11 @@
 
 import type { Language } from "../signInText";
 import type { WaitingDraft } from "./approvalsClient";
+import { singular } from "../shell/plural";
 
 const TEXT = {
   ap_sub: [
-    "Drafts move no money until the Owner or a Manager confirms them",
+    "Drafts move no money until the Owner or a Manager confirms them.",
     "សេចក្តីព្រាងមិនផ្លាស់ទីប្រាក់ទេ រហូតដល់ម្ចាស់ ឬអ្នកគ្រប់គ្រងបញ្ជាក់",
   ],
   as_of: ["As of {0}", "គិតត្រឹមម៉ោង {0}"],
@@ -15,7 +16,7 @@ const TEXT = {
   loading: ["Loading the drafts…", "កំពុងផ្ទុកសេចក្តីព្រាង…"],
   // new
   failed: [
-    "The drafts could not be read just now. Check the connection and try again.",
+    "The drafts could not be loaded. Check the connection and try again.",
     "មិនអាចអានសេចក្តីព្រាងបានទេឥឡូវនេះ។ សូមពិនិត្យការតភ្ជាប់ ហើយព្យាយាមម្តងទៀត។",
   ],
   // new
@@ -25,18 +26,18 @@ const TEXT = {
   ],
   retry: ["Retry", "ព្យាយាមម្តងទៀត"],
 
-  apc_wait: ["Waiting", "កំពុងរង់ចាំ"],
+  apc_wait: ["Pending approval", "កំពុងរង់ចាំ"],
   apc_wait_s: ["Drafts to confirm", "សេចក្តីព្រាងត្រូវបញ្ជាក់"],
-  apc_out: ["Money out", "ប្រាក់ចេញ"],
-  apc_out_s: ["Refunds waiting", "ការសងប្រាក់កំពុងរង់ចាំ"],
+  apc_out: ["Refunds pending", "ប្រាក់ចេញ"],
+  apc_out_s: ["Refunds pending approval", "ការសងប្រាក់កំពុងរង់ចាំ"],
   // new: a held-value refund gets its amount only at confirm.
   apc_out_unknown: [
-    "Refunds waiting · {0} worked out at confirm",
+    "Refunds pending approval · {0} calculated when confirmed",
     "ការសងប្រាក់កំពុងរង់ចាំ · {0} គណនាពេលបញ្ជាក់",
   ],
-  apc_kept: ["Deposits kept", "ប្រាក់កក់ដែលរក្សាទុក"],
-  apc_kept_s: ["Forfeitures waiting", "ការរឹបអូសកំពុងរង់ចាំ"],
-  apc_done: ["Decided today", "បានសម្រេចថ្ងៃនេះ"],
+  apc_kept: ["Deposit forfeitures pending", "ប្រាក់កក់ដែលរក្សាទុក"],
+  apc_kept_s: ["Forfeitures pending approval", "ការរឹបអូសកំពុងរង់ចាំ"],
+  apc_done: ["Processed today", "បានសម្រេចថ្ងៃនេះ"],
   apc_done_s: ["Confirmed or rejected", "បានបញ្ជាក់ ឬបដិសេធ"],
   ap_showing: ["Showing: {0}", "កំពុងបង្ហាញ៖ {0}"],
   pc_clear: ["Show all", "បង្ហាញទាំងអស់"],
@@ -47,15 +48,15 @@ const TEXT = {
   ap_col_amt: ["Amount", "ចំនួន"],
   col_status: ["Status", "ស្ថានភាព"],
   ap_open: ["Open", "បើក"],
-  ap_wait_chip: ["Waiting", "កំពុងរង់ចាំ"],
+  ap_wait_chip: ["Pending approval", "កំពុងរង់ចាំ"],
   ap_none: [
-    "Nothing is waiting. Every draft has been decided.",
+    "Nothing is pending. Every draft has been processed.",
     "គ្មានអ្វីរង់ចាំទេ។ សេចក្តីព្រាងទាំងអស់បានសម្រេចហើយ។",
   ],
-  ap_done_h: ["Decided today", "បានសម្រេចថ្ងៃនេះ"],
+  ap_done_h: ["Processed today", "បានសម្រេចថ្ងៃនេះ"],
   ap_done_none: ["Nothing decided yet today.", "មិនទាន់មានការសម្រេចថ្ងៃនេះទេ។"],
   ap_rule: [
-    "The person who prepared a draft may also confirm it only if they have approval rights. Both names are kept in History.",
+    "The person who prepared a draft may also confirm it only if they have approval rights. Both names are kept in the audit log.",
     "អ្នករៀបចំសេចក្តីព្រាងអាចបញ្ជាក់វាបាន លុះត្រាតែមានសិទ្ធិអនុម័ត។ ឈ្មោះទាំងពីរត្រូវរក្សាក្នុងប្រវត្តិ។",
   ],
   // new: the list shows the first 200 drafts, oldest first.
@@ -212,6 +213,25 @@ const TEXT = {
   ],
   cv_PAYMENT_MOVE: ["move payment", "ផ្ទេរការបង់ប្រាក់"],
   cv_other: ["other change", "ការផ្លាស់ប្តូរផ្សេង"],
+  // UI v81 (B4): the Approvals tabs. All new.
+  tab_label: ["What waits for approval", "អ្វីដែលរង់ចាំការអនុម័ត"], // new
+  tab_fin: ["Financial approvals", "ការអនុម័តហិរញ្ញវត្ថុ"], // new
+  tab_ss: ["Short-stay approvals", "ការអនុម័តការស្នាក់នៅខ្លី"], // new
+  ss_sub: [
+    "Damage charges on short stays wait for the Owner or a Manager. Open the booking to approve or refuse.",
+    "ថ្លៃខូចខាតលើការស្នាក់នៅខ្លី រង់ចាំម្ចាស់ ឬអ្នកគ្រប់គ្រង។ បើកការកក់ ដើម្បីអនុម័ត ឬបដិសេធ។",
+  ], // new
+  ss_loading: ["Loading the short stays…", "កំពុងផ្ទុកការស្នាក់នៅខ្លី…"], // new
+  ss_failed: [
+    "The short stays could not be loaded. Check the connection and try again.",
+    "មិនអាចផ្ទុកការស្នាក់នៅខ្លីបានទេ។ សូមពិនិត្យការតភ្ជាប់ ហើយព្យាយាមម្តងទៀត។",
+  ], // new
+  ss_none: ["No damage charge is waiting.", "គ្មានថ្លៃខូចខាតណាកំពុងរង់ចាំទេ។"], // new
+  ss_booking: ["Booking", "ការកក់"], // new
+  ss_unit: ["Unit", "បន្ទប់"], // new
+  ss_guest: ["Guest", "ភ្ញៀវ"], // new
+  ss_what: ["Damage", "ការខូចខាត"], // new
+  ss_amount: ["Amount", "ចំនួនទឹកប្រាក់"], // new
 } as const satisfies Record<string, readonly [string, string]>;
 
 export type ApprovalsTextKey = keyof typeof TEXT;
@@ -223,10 +243,12 @@ export function apt(
   ...values: (string | number)[]
 ): string {
   const text = TEXT[key][language === "km" ? 1 : 0];
-  return text.replace(/\{(\d+)\}/g, (match, index: string) => {
-    const value = values[Number(index)];
-    return value === undefined ? match : String(value);
-  });
+  return singular(
+    text.replace(/\{(\d+)\}/g, (match, index: string) => {
+      const value = values[Number(index)];
+      return value === undefined ? match : String(value);
+    }),
+  );
 }
 
 function correctionKey(variant: string | null): ApprovalsTextKey {

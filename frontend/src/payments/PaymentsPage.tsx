@@ -25,6 +25,7 @@ import { PaymentsList } from "./PaymentsList";
 import { ReceiptPage } from "./ReceiptPage";
 import { ReceivePayment } from "./ReceivePayment";
 import { pyt } from "./text";
+import { PageHead } from "../shell/pageHead";
 
 export interface PaymentsPageProps {
   language: Language;
@@ -157,7 +158,7 @@ export function PaymentsPage({
     );
 
   return (
-    <div className="ui-head">
+    <PageHead>
       <div>
         <h2>{pyt(language, "pay_title")}</h2>
       </div>
@@ -172,6 +173,6 @@ export function PaymentsPage({
           </a>
         </div>
       )}
-    </div>
+    </PageHead>
   );
 }

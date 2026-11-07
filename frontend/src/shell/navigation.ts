@@ -11,6 +11,7 @@ export type PageId =
   | "utilities"
   | "approvals"
   | "units"
+  | "inspections"
   | "problems"
   | "products"
   | "stock"
@@ -25,6 +26,7 @@ export type PageId =
   | "reports"
   | "history"
   | "settings"
+  | "access"
   | "exreqs"
   | "expenses"
   | "bills"
@@ -64,7 +66,8 @@ export type IconName =
   | "history"
   | "staff"
   | "settings"
-  | "send";
+  | "send"
+  | "clip";
 
 export interface MenuItem {
   /** The page the menu link opens; with tabs, the first tab. */
@@ -88,7 +91,7 @@ export interface MenuGroup {
 export const MENU: readonly MenuGroup[] = [
   { label: null, items: [{ page: "home", icon: "home" }] },
   {
-    label: ["Daily work", "ការងារប្រចាំថ្ងៃ"],
+    label: ["Operations", "ប្រតិបត្តិការ"],
     items: [
       { page: "payments", icon: "payments" },
       // V1.1 part 6 (DL-123): Quotations is a tab of Invoices.
@@ -98,16 +101,17 @@ export const MENU: readonly MenuGroup[] = [
     ],
   },
   {
-    // new
-    label: ["Tenants", "អ្នកជួល"],
+    // UI v81 (02/11 wording review): Tenants → Leasing.
+    label: ["Leasing", "ការជួល"],
     items: [
       {
         page: "reservations",
         icon: "calendar",
         // new
         label: ["Bookings", "ការកក់"],
-        // Telegram bots step 3a (DL-171): Visit requests from the Customer bot.
-        tabs: ["reservations", "visitreqs"],
+        // Telegram bots step 3a (DL-171): Visit requests from the Customer bot. UI v81 round 2:
+        // Viewing requests first, as in the design.
+        tabs: ["visitreqs", "reservations"],
       },
       // Daily and weekly rent (phase 6 step 2, mock-up round 28): Tenants › Short stays.
       { page: "shortstays", icon: "calendar" },
@@ -120,22 +124,25 @@ export const MENU: readonly MenuGroup[] = [
     ],
   },
   {
-    // new
-    label: ["Building", "អគារ"],
+    // UI v81: Building → Property.
+    label: ["Property", "អចលនទ្រព្យ"],
+    // UI v81 round 2 (owner 07/11/2026): the design's order, Inspections after Units.
     items: [
       { page: "units", icon: "units" },
+      { page: "inspections", icon: "clip" },
+      // V1.1 part 7 (DL-124): one list for Unit and Building problems.
+      { page: "problems", icon: "wrench" },
       // V1.1 part 4 (DL-121): Building › Products with its three tabs.
       {
         page: "products",
         icon: "box",
         tabs: ["products", "stock", "locations"],
       },
-      // V1.1 part 7 (DL-124): one list for Unit and Building problems.
-      { page: "problems", icon: "wrench" },
     ],
   },
   {
-    label: ["Office", "ការិយាល័យ"],
+    label: ["Administration", "រដ្ឋបាល"],
+    // UI v81 round 2: the design's order, Reports and the Audit log before Staff.
     items: [
       // General Ledger phase 6 step 6 (mock-up v76, Administration › Ledger): its tabs in the
       // mock-up's order. Every role sees Expense requests; the other tabs need ledger.read.
@@ -157,12 +164,15 @@ export const MENU: readonly MenuGroup[] = [
           "lclose",
         ],
       },
-      // HRIS phase 6 (mock-up v69, round 23): Employees and payroll with its tabs. Users and
-      // access stays in Settings › Users and sign-in for now.
+      { page: "reports", icon: "reports" },
+      { page: "history", icon: "history" },
+      // HRIS phase 6 (mock-up v69, round 23): the Employees, Loans, Payroll and Attendance tabs.
+      // UI v81 round 2 (owner 07/11/2026): the menu item is "Staff"; the Khmer word is new and
+      // needs the native check.
       {
         page: "employees",
         icon: "staff",
-        label: ["Employees and payroll", "បុគ្គលិក និងប្រាក់ខែ"],
+        label: ["Staff", "បុគ្គលិក"],
         tabs: ["employees", "loans", "payroll", "attendance"],
       },
       // Telegram bots step 2c (DL-128, mock-up round 29): Office › Telegram, with Contact office
@@ -173,8 +183,8 @@ export const MENU: readonly MenuGroup[] = [
         label: ["Telegram", "តេឡេក្រាម"],
         tabs: ["tglinks", "tgcontact", "tgfaq", "tghealth"],
       },
-      { page: "reports", icon: "reports" },
-      { page: "history", icon: "history" },
+      // UI v81 (B4): Users and access is its own menu item, moved out of Settings.
+      { page: "access", icon: "customers" },
       { page: "settings", icon: "settings" },
     ],
   },
@@ -188,26 +198,30 @@ const PAGE_NAMES: Record<PageId, readonly [string, string]> = {
   invoices: ["Invoices", "វិក្កយបត្រ"],
   quotations: ["Quotations", "សម្រង់តម្លៃ"],
   utilities: ["Utilities", "ទឹកភ្លើង"],
-  approvals: ["Waiting for approval", "រង់ចាំការអនុម័ត"],
+  approvals: ["Approvals", "ការអនុម័ត"],
   units: ["Units", "បន្ទប់"],
+  // UI v81 round 2 (design v81 menu); the Khmer word is new and needs the native check.
+  inspections: ["Inspections", "ការត្រួតពិនិត្យ"],
   problems: ["Problem reports", "របាយការណ៍បញ្ហា"],
   // new
   products: ["Products", "ផលិតផល"],
   // new
   stock: ["Stock movements", "ចលនាស្តុក"],
   // new
-  locations: ["Locations", "ទីតាំង"],
+  locations: ["Storage locations", "ទីតាំងស្តុក"],
   customers: ["Customers", "អតិថិជន"],
   reservations: ["Reservations", "ការកក់ទុក"],
-  visitreqs: ["Visit requests", "សំណើមកមើលបន្ទប់"],
+  visitreqs: ["Viewing requests", "សំណើមើលបន្ទប់"],
   // new
   shortstays: ["Short stays", "ការស្នាក់នៅខ្លី"],
   leases: ["Leases", "កិច្ចសន្យាជួល"],
-  letters: ["Letters", "លិខិត"],
-  moveout: ["Move-out", "ការចាកចេញ"],
+  letters: ["Notices", "សេចក្ដីជូនដំណឹង"],
+  moveout: ["Move-outs", "ការចាកចេញ"],
   reports: ["Reports", "របាយការណ៍"],
-  history: ["History", "ប្រវត្តិ"],
+  history: ["Audit log", "កំណត់ហេតុសវនកម្ម"],
   settings: ["Settings", "ការកំណត់"],
+  // new
+  access: ["Users and access", "អ្នកប្រើ និងសិទ្ធិ"],
   exreqs: ["Expense requests", "សំណើចំណាយ"],
   expenses: ["Expenses", "ចំណាយ"],
   bills: ["Supplier bills", "វិក្កយបត្រអ្នកផ្គត់ផ្គង់"],
@@ -250,6 +264,9 @@ const PAGE_NEEDS: Record<PageId, readonly string[] | null> = {
   utilities: ["utility.read"],
   approvals: ["financial.approve"],
   units: ["units.read"],
+  // UI v81 round 2: Inspections belong to the Units (Joint Inspections at move-in and move-out,
+  // Unit Checks during a Lease), so whoever reads Units sees the page.
+  inspections: ["units.read"],
   // V1.1 part 7 (DL-124).
   problems: ["problem_reports.read"],
   // V1.1 part 4 (DL-121): every Products tab reads with products.read.
@@ -270,11 +287,8 @@ const PAGE_NEEDS: Record<PageId, readonly string[] | null> = {
   reports: ["reports.read", "utility.read", "leases.read", "audit.view"],
   history: ["audit.view"],
   // V1-058 R7b: System health is a Settings tab for operations.status.read too.
-  settings: [
-    "settings.manage",
-    "identity.manage_access",
-    "operations.status.read",
-  ],
+  settings: ["settings.manage", "operations.status.read"],
+  access: ["identity.manage_access"],
   // General Ledger (owner plan 03/11/2026, rights table L1): Owner and Manager read the ledger.
   exreqs: ["expenses.request"],
   expenses: ["ledger.read"],
@@ -355,13 +369,13 @@ export function isPageId(value: string): value is PageId {
  * else.
  */
 export function pageFromHash(hash: string): PageId {
-  const name = hash.replace(/^#\/?/, "").split("/")[0] ?? "";
+  const name = stripQuery(hash).replace(/^#\/?/, "").split("/")[0] ?? "";
   return isPageId(name) ? name : "home";
 }
 
 /** V1-058 R2: the record an address opens inside its page ("#/units/<id>"), or null. */
 export function detailFromHash(hash: string): string | null {
-  const parts = hash.replace(/^#\/?/, "").split("/");
+  const parts = stripQuery(hash).replace(/^#\/?/, "").split("/");
   if (parts.length < 2 || !isPageId(parts[0] ?? "")) return null;
   let detail: string;
   try {
@@ -371,6 +385,19 @@ export function detailFromHash(hash: string): string | null {
     return null;
   }
   return detail === "" ? null : detail;
+}
+
+/** UI v81 (B2): an address may end with "?tab=<sub-tab>"; the page and record ignore it. */
+function stripQuery(hash: string): string {
+  const at = hash.indexOf("?");
+  return at < 0 ? hash : hash.slice(0, at);
+}
+
+/** UI v81 (B2): the sub-tab kept in the address ("#/settings?tab=rates"), or null. */
+export function subTabFromHash(hash: string): string | null {
+  const at = hash.indexOf("?");
+  if (at < 0) return null;
+  return new URLSearchParams(hash.slice(at + 1)).get("tab");
 }
 
 export function hashForPage(page: PageId, detail?: string): string {

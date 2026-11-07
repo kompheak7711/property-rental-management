@@ -4,6 +4,7 @@
 // say what was changed from it.
 
 import type { Language } from "../signInText";
+import { singular } from "../shell/plural";
 
 const TEXT = {
   // The list of reports.
@@ -118,7 +119,7 @@ const TEXT = {
   p_all: ["All", "ទាំងអស់"],
   p_month: ["This month", "ខែនេះ"],
   p_last: ["Last month", "ខែមុន"],
-  p_pick: ["Pick dates", "ជ្រើសថ្ងៃ"],
+  p_pick: ["Custom range", "ជ្រើសថ្ងៃ"],
   from: ["From", "ពី"],
   to: ["To", "ដល់"],
   show: ["Show", "បង្ហាញ"],
@@ -168,12 +169,12 @@ const TEXT = {
   loading: ["Reading the report…", "កំពុងអានរបាយការណ៍…"],
   // new
   failed: [
-    "The report could not be read just now. Check the connection and try again.",
+    "The report could not be loaded. Check the connection and try again.",
     "មិនអាចអានរបាយការណ៍បានទេឥឡូវនេះ។ សូមពិនិត្យការតភ្ជាប់ ហើយព្យាយាមម្តងទៀត។",
   ],
   // new
   more_failed: [
-    "More rows could not be read just now. Try again.",
+    "More rows could not be loaded. Try again.",
     "មិនអាចអានជួរបន្ថែមបានទេឥឡូវនេះ។ សូមព្យាយាមម្តងទៀត។",
   ],
   // new
@@ -291,7 +292,7 @@ const TEXT = {
   // new
   c_credit_applied: ["Credit applied", "ឥណទានបានប្រើ"],
   // new
-  c_deposits_kept: ["Deposits kept", "ប្រាក់កក់រក្សាទុក"],
+  c_deposits_kept: ["Deposits forfeited", "ប្រាក់កក់រក្សាទុក"],
   c_balance: ["Balance still owed", "សមតុល្យនៅជំពាក់"],
   c_unit_type: ["Unit Type", "ប្រភេទបន្ទប់"],
   c_rent: ["Monthly Rent", "ថ្លៃឈ្នួលប្រចាំខែ"],
@@ -455,7 +456,7 @@ const TEXT = {
   s_occupied: ["Occupied", "មានអ្នកជួល"],
   s_reserved: ["Reserved", "បានកក់"],
   s_vacant: ["Vacant", "ទំនេរ"],
-  s_not_available: ["Not available", "មិនអាចប្រើបាន"],
+  s_not_available: ["Unavailable", "មិនអាចប្រើបាន"],
   // new
   s_units: ["Units", "បន្ទប់"],
   // new
@@ -489,7 +490,7 @@ const TEXT = {
   s_events: ["Events", "ព្រឹត្តិការណ៍"],
   by_actor: ["By person", "តាមបុគ្គល"],
   by_kind: ["By action", "តាមសកម្មភាព"],
-  open_history: ["Open History", "បើកប្រវត្តិ"],
+  open_history: ["Open Audit log", "បើកប្រវត្តិ"],
   ch_audit_activity: ["Events per day", "ព្រឹត្តិការណ៍ក្នុងមួយថ្ងៃ"],
   // V1-060 B7: when the period has more days with events than the chart shows.
   ch_audit_last: [
@@ -517,7 +518,7 @@ const TEXT = {
     "ឯកសារនេះមានទិន្នន័យផ្ទាល់ខ្លួន (ឈ្មោះ បន្ទប់ លេខទូរស័ព្ទ)។ រក្សាក្នុងអាជីវកម្ម និងលុបពេលរួចរាល់។",
   ],
   ex_logged: [
-    "Every export is written to History with who, when and which filters. Small files are not kept; big files are kept 24 hours.",
+    "Every export is recorded in the audit log with who, when and which filters. Small files are not kept; big files are kept 24 hours.",
     "ការនាំចេញនីមួយៗ សរសេរក្នុងប្រវត្តិ ជាមួយអ្នកណា ពេលណា តម្រងអ្វី។ ឯកសារតូចមិនរក្សាទុក; ឯកសារធំរក្សា 24 ម៉ោង។",
   ],
   // new
@@ -529,7 +530,7 @@ const TEXT = {
   cancel: ["Cancel", "បោះបង់"],
   // new
   ex_saved: [
-    "{0} is ready. The export is written to History.",
+    "{0} is ready. The export is recorded in the audit log.",
     "{0} រួចរាល់។ ការនាំចេញត្រូវបានសរសេរក្នុងប្រវត្តិ។",
   ],
   // new
@@ -563,10 +564,12 @@ export function rpt(
   ...values: (string | number)[]
 ): string {
   const text = TEXT[key][language === "km" ? 1 : 0];
-  return text.replace(/\{(\d+)\}/g, (match, index: string) => {
-    const value = values[Number(index)];
-    return value === undefined ? match : String(value);
-  });
+  return singular(
+    text.replace(/\{(\d+)\}/g, (match, index: string) => {
+      const value = values[Number(index)];
+      return value === undefined ? match : String(value);
+    }),
+  );
 }
 
 /** Does a text key exist? For codes that come from the server, such as a status. */

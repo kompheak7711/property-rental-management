@@ -301,7 +301,7 @@ describe("Reservation page", () => {
     expect(box).toHaveValue(dayText(dayText(latest)));
     fireEvent.change(box, { target: { value: addDays(latest, 1) } });
     fireEvent.click(within(dialog).getByRole("button", { name: "Extend" }));
-    expect(within(dialog).getByText(/^Pick a date after/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/Choose a date after/)).toBeInTheDocument();
     expect(extend).not.toHaveBeenCalled();
 
     fireEvent.change(box, { target: { value: latest } });
@@ -430,9 +430,7 @@ describe("Reservation page when it cannot be read", () => {
       .mockResolvedValueOnce(fresh);
     show(api({ get }));
 
-    expect(
-      await screen.findByText(/could not be read just now/),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/could not be loaded/)).toBeInTheDocument();
     expect(screen.queryByText(/was not found/)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
     expect(
@@ -521,7 +519,7 @@ describe("Make Reservation on the list (V1-060 B7)", () => {
       />,
     );
     const dialog = await screen.findByRole("dialog", {
-      name: "Make Reservation",
+      name: "New Reservation",
     });
     expect(await within(dialog).findByLabelText("Unit")).toHaveValue("unit-2");
     fireEvent.change(within(dialog).getByLabelText("Customer"), {
@@ -535,7 +533,7 @@ describe("Make Reservation on the list (V1-060 B7)", () => {
     expect(
       await screen.findByRole("link", { name: "U102" }),
     ).toBeInTheDocument();
-    const still = screen.getByRole("dialog", { name: "Make Reservation" });
+    const still = screen.getByRole("dialog", { name: "New Reservation" });
     expect(within(still).getByLabelText("Customer")).toHaveValue(
       "customer-dara",
     );
@@ -620,7 +618,7 @@ describe("Make Reservation on the list (V1-060 B7)", () => {
       />,
     );
     const dialog = await screen.findByRole("dialog", {
-      name: "Make Reservation",
+      name: "New Reservation",
     });
     expect(await within(dialog).findByLabelText("Unit")).toHaveValue("unit-2");
     fireEvent.change(within(dialog).getByLabelText("Customer"), {
@@ -645,7 +643,7 @@ describe("Make Reservation on the list (V1-060 B7)", () => {
       within(dialog).getByRole("button", { name: "Save Reservation" }),
     );
     expect(
-      within(dialog).getByText(/Your rights could not be read just now/),
+      within(dialog).getByText(/Your rights could not be loaded/),
     ).toBeInTheDocument();
     expect(confirm).not.toHaveBeenCalled();
     await waitFor(() => {
@@ -722,11 +720,11 @@ describe("Make Reservation on the list (V1-060 B7)", () => {
     window.location.hash = "#/reservations/visit:vr-1";
     render(page(customers("012 800 200")));
     const dialog = await screen.findByRole("dialog", {
-      name: "Make Reservation",
+      name: "New Reservation",
     });
     expect(
       await within(dialog).findByText(
-        /From Visit request VR260001: Sokha Chan · \+85512800200/,
+        /From Viewing request VR260001: Sokha Chan · \+85512800200/,
       ),
     ).toBeInTheDocument();
     expect(
@@ -741,7 +739,7 @@ describe("Make Reservation on the list (V1-060 B7)", () => {
     window.location.hash = "#/reservations/visit:vr-1";
     render(page(customers("099 000 000")));
     const other = await screen.findByRole("dialog", {
-      name: "Make Reservation",
+      name: "New Reservation",
     });
     expect(
       await within(other).findByText(/No Customer has this phone yet./),

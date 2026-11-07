@@ -451,7 +451,7 @@ describe("Daily and weekly rent: Short stays", () => {
 
   it("TEST-FE-1601 lists bookings and opens one with its price lines and history", async () => {
     const { api } = show();
-    fireEvent.click(await screen.findByRole("button", { name: "Bookings" }));
+    fireEvent.click(await screen.findByRole("tab", { name: "Bookings" }));
     const row = await screen.findByRole("row", { name: /ST260001/ });
     expect(within(row).getByText("$60.90")).toBeInTheDocument();
     expect(within(row).getByText("3 nights")).toBeInTheDocument();
@@ -615,7 +615,7 @@ describe("Daily and weekly rent: Short stays", () => {
     await screen.findByLabelText(/^Full name/);
     fireEvent.click(screen.getByRole("button", { name: "Book" }));
     expect(
-      await screen.findAllByText("Type the guest's full name."),
+      await screen.findAllByText("Enter the guest's full name."),
     ).toHaveLength(2);
     fireEvent.change(screen.getByLabelText(/^Full name/), {
       target: { value: "Meas Rina" },
@@ -721,7 +721,9 @@ describe("Daily and weekly rent: Short stays", () => {
     fireEvent.click(screen.getByLabelText("Card hold"));
     const take = screen.getByRole("button", { name: "Take the deposit" });
     expect(take).toBeDisabled();
-    expect(screen.getByText("Never type the card number.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Never enter the card number."),
+    ).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText(/Hold reference/), {
       target: { value: " HOLD-7781 " },
     });
@@ -833,7 +835,7 @@ describe("Daily and weekly rent: Short stays", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: /Room check done/ }));
     expect(
-      screen.getByText("Type the cost in dollars, for example 80 or 80.50."),
+      screen.getByText("Enter the cost in dollars, for example 80 or 80.50."),
     ).toBeInTheDocument();
     expect(step).not.toHaveBeenCalled();
     fireEvent.change(screen.getByLabelText(/Cost to fix/), {
@@ -911,7 +913,7 @@ describe("Daily and weekly rent: Short stays", () => {
     });
     go("#/shortstays/st:b-1");
     // A refusal needs a reason.
-    fireEvent.click(await screen.findByRole("button", { name: "Refuse" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Reject" }));
     expect(screen.getByText("A refusal says why.")).toBeInTheDocument();
     expect(decide).not.toHaveBeenCalled();
     fireEvent.change(screen.getByPlaceholderText("Reason"), {
@@ -1088,7 +1090,7 @@ describe("Daily and weekly rent: Short stays", () => {
       api: fakeApi({ cleaning, finishTask }),
       capabilities: new Set([...DESK, "short_stays.housekeeping"]),
     });
-    fireEvent.click(await screen.findByRole("button", { name: "Cleaning" }));
+    fireEvent.click(await screen.findByRole("tab", { name: "Housekeeping" }));
     expect(await screen.findByText("Daily clean")).toBeInTheDocument();
     expect(cleaning).toHaveBeenCalledWith("p-1", "2026-11-04");
     expect(screen.getByText("2 to do")).toBeInTheDocument();
@@ -1220,7 +1222,7 @@ describe("Daily and weekly rent: Short stays", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Give credit" }));
     expect(
-      screen.getByText("Type an amount up to $60.90."),
+      screen.getByText("Enter an amount up to $60.90."),
     ).toBeInTheDocument();
     expect(step).not.toHaveBeenCalled();
     fireEvent.change(screen.getByLabelText(/Credit \(US\$\)/), {
@@ -1287,7 +1289,7 @@ describe("Daily and weekly rent: Short stays", () => {
     );
     // Without the credit right: no list of credits and no End credit.
     show({ api: fakeApi({ creditsDue }) });
-    fireEvent.click(await screen.findByRole("button", { name: "Bookings" }));
+    fireEvent.click(await screen.findByRole("tab", { name: "Bookings" }));
     await screen.findByRole("table");
     expect(creditsDue).not.toHaveBeenCalled();
     cleanup();
@@ -1299,7 +1301,7 @@ describe("Daily and weekly rent: Short stays", () => {
       }),
       capabilities: new Set([...DESK, "short_stays.credit"]),
     });
-    fireEvent.click(await screen.findByRole("button", { name: "Bookings" }));
+    fireEvent.click(await screen.findByRole("tab", { name: "Bookings" }));
     expect(
       await screen.findByText(
         "1 guest credit(s) passed the use-by day. Open each booking and end the credit.",
@@ -1441,9 +1443,7 @@ describe("Daily and weekly rent: Short stays", () => {
       api: fakeApi({ siteCalendars, saveSiteCalendar }),
       capabilities: new Set([...DESK, "short_stays.approve"]),
     });
-    fireEvent.click(
-      await screen.findByRole("button", { name: "Booking sites" }),
-    );
+    fireEvent.click(await screen.findByRole("tab", { name: "Booking sites" }));
     expect(
       await screen.findByText("The site answered 404"),
     ).toBeInTheDocument();
@@ -1451,7 +1451,7 @@ describe("Daily and weekly rent: Short stays", () => {
     fireEvent.click(screen.getByRole("button", { name: "Add link" }));
     expect(
       screen.getByText(
-        "Pick the room and the site, and paste a link that starts with https://",
+        "Choose the room and the site, and paste a link that starts with https://.",
       ),
     ).toBeInTheDocument();
     expect(saveSiteCalendar).not.toHaveBeenCalled();
@@ -1487,7 +1487,7 @@ describe("Daily and weekly rent: Short stays", () => {
   it("TEST-FE-1620 hides Booking sites without the approve right", async () => {
     show();
     expect(await screen.findByRole("table")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Booking sites" })).toBeNull();
+    expect(screen.queryByRole("tab", { name: "Booking sites" })).toBeNull();
   });
 
   it("TEST-FE-1621 warns that a booking site holds the nights, except for that site's own guest", async () => {
@@ -1563,7 +1563,7 @@ describe("Daily and weekly rent: Short stays", () => {
     });
     go("#/shortstays/st:b-1");
     expect(
-      await screen.findByText("1 stays done · 2 nights · $52.00 spent"),
+      await screen.findByText("1 stay done · 2 nights · $52.00 spent"),
     ).toBeInTheDocument();
     expect(screen.getByText("Returning guest")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "ST250009" })).toHaveAttribute(
@@ -1609,7 +1609,7 @@ describe("Daily and weekly rent: Short stays", () => {
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Give the discount" }));
     expect(
-      screen.getByText("Type an amount less than the stay and a reason."),
+      screen.getByText("Enter an amount less than the stay and a reason."),
     ).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Discount ($)"), {
       target: { value: "10" },
@@ -1679,12 +1679,12 @@ describe("Daily and weekly rent: Short stays", () => {
     const quotes = vi.fn(() => Promise.resolve([] as StayQuote[]));
     quotes.mockResolvedValueOnce([]).mockResolvedValue([made]);
     show({ api: fakeApi({ quote, quotes }) });
-    fireEvent.click(await screen.findByRole("button", { name: "Quotes" }));
+    fireEvent.click(await screen.findByRole("tab", { name: "Quotes" }));
     expect(await screen.findByText("No quotes yet.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Make the quote" }));
     expect(
       screen.getByText(
-        "Pick the room, type the guest's name, 1 to 10 guests and the nights.",
+        "Choose the room, enter the guest's name, 1 to 10 guests and the nights.",
       ),
     ).toBeInTheDocument();
     fireEvent.change(byId("sq-unit"), { target: { value: "u-503" } });
@@ -1766,12 +1766,10 @@ describe("Daily and weekly rent: Short stays", () => {
     const api = fakeApi({ complaint });
     show();
     expect(await screen.findByRole("table")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Weekly report" })).toBeNull();
+    expect(screen.queryByRole("tab", { name: "Weekly report" })).toBeNull();
     cleanup();
     show({ api, capabilities: new Set([...DESK, "short_stays.approve"]) });
-    fireEvent.click(
-      await screen.findByRole("button", { name: "Weekly report" }),
-    );
+    fireEvent.click(await screen.findByRole("tab", { name: "Weekly report" }));
     // Today is Wednesday 04/11: the week from Monday 02/11, no next week yet.
     expect(api.weekReport).toHaveBeenCalledWith("p-1", "2026-11-02");
     expect(
@@ -1803,9 +1801,7 @@ describe("Daily and weekly rent: Short stays", () => {
   it("TEST-FE-1605 speaks Khmer and hides New booking without the front-desk right", async () => {
     show({ capabilities: new Set(["short_stays.read"]), language: "km" });
     expect(await screen.findByRole("table")).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "ប្រតិទិន" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "ប្រតិទិន" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /ការកក់ថ្មី/ })).toBeNull();
     expect(screen.getAllByText("ទំនេរ").length).toBeGreaterThan(0);
   });
@@ -1954,7 +1950,7 @@ describe("Daily and weekly rent: Short stays", () => {
       target: { value: "m-aba" },
     });
     fireEvent.click(button);
-    expect(card.getByText("Type the reference.")).toBeInTheDocument();
+    expect(card.getByText("Enter the reference.")).toBeInTheDocument();
     expect(refund).not.toHaveBeenCalled();
     fireEvent.change(card.getByLabelText(/Reference/), {
       target: { value: "ABA 778899" },
@@ -1977,7 +1973,7 @@ describe("Daily and weekly rent: Short stays", () => {
       await screen.findByText(/Refund of \$46\.40 waits for approval\./),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: "Open Waiting for approval" }),
+      screen.getByRole("link", { name: "Open Approvals" }),
     ).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^Refund \$/ })).toBeNull();
   });

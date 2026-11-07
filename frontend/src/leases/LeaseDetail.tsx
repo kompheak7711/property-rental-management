@@ -4,6 +4,15 @@
 // with the next step; until then they stay in the earlier forms under the page.
 
 import { ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import {
+  LatestNote,
+  RecordViewPage,
+  ViewAllButton,
+  latestOf,
+  rvt,
+  useHashView,
+} from "../shell/recordViews";
+import { BackLink } from "../shell/backNav";
 
 import type { DepositApi, DepositResource } from "../depositClient";
 import {
@@ -21,7 +30,6 @@ import {
 } from "../shell/format";
 import { Icon } from "../shell/icons";
 import { hashForPage } from "../shell/navigation";
-import { openPageInAddress } from "../shell/useHashPage";
 import { Chip } from "../shell/ui";
 import type { Language } from "../signInText";
 import type { UnitApi } from "../unitClient";
@@ -59,6 +67,7 @@ import {
 import { ReceiveDepositDialog } from "./ReceiveDepositDialog";
 import { daysBetween, initialRent, kindOf } from "./leasesData";
 import { hasLeaseText, lt } from "./text";
+import { PageHead } from "../shell/pageHead";
 
 function Kv({ rows }: { rows: [string, ReactNode][] }) {
   return (
@@ -126,6 +135,7 @@ export function LeaseDetail({
   customerGate,
   unitApi,
 }: LeaseDetailProps) {
+  const view = useHashView();
   const [lease, setLease] = useState<LeaseResource | null>(null);
   const [timeline, setTimeline] = useState<LeaseTimelineEvent[]>([]);
   const [deposits, setDeposits] = useState<DepositsState>({
@@ -291,18 +301,7 @@ export function LeaseDetail({
     load();
   }, [load]);
 
-  const back = (
-    <button
-      className="ui-crumb"
-      onClick={() => {
-        openPageInAddress("leases");
-      }}
-      type="button"
-    >
-      <Icon name="back" small />
-      {lt(language, "back")}
-    </button>
-  );
+  const back = <BackLink language={language} parent="leases" />;
   const failure = loadFailed && (
     <div className="ui-notice warn" role="status">
       <Icon name="alert" />
@@ -517,13 +516,51 @@ export function LeaseDetail({
     ];
   }
 
+  if (view === "history") {
+    const name = lt(language, "title", lease.unit_number);
+    return (
+      <RecordViewPage
+        language={language}
+        parent="leases"
+        parentDetail={leaseId}
+        recordName={name}
+        title={rvt(language, "history_title", name)}
+      >
+        {historyIncomplete && (
+          <p className="ui-small ui-muted">
+            {lt(language, "history_incomplete")}
+          </p>
+        )}
+        {history.length === 0 ? (
+          <p className="ui-muted">{lt(language, "h_none")}</p>
+        ) : (
+          <ol className="ui-timeline">
+            {history.map((event) => (
+              <li key={event.event_id}>
+                <div>
+                  {eventName(language, event.event_kind)}
+                  {event.reason.trim() !== "" && (
+                    <span className="ui-sub2">{event.reason}</span>
+                  )}
+                  <small className="ui-num">
+                    {momentText(event.occurred_at)}
+                  </small>
+                </div>
+              </li>
+            ))}
+          </ol>
+        )}
+      </RecordViewPage>
+    );
+  }
+
   return (
     <>
       {back}
-      <div className="ui-head">
+      <PageHead>
         <div>
           <div className="ui-hrow">
-            <h2 className="ui-num">
+            <h2 className="ui-num" data-record-title="">
               {lt(language, "title", lease.unit_number)}
             </h2>
             <LeaseChip kind={kind} language={language} />
@@ -646,7 +683,7 @@ export function LeaseDetail({
             </a>
           )}
         </div>
-      </div>
+      </PageHead>
       {failure}
       {warning !== null && (
         <div className="ui-notice warn" role="alert">
@@ -1151,11 +1188,16 @@ export function LeaseDetail({
                 {lt(language, "history_incomplete")}
               </p>
             )}
+            <LatestNote
+              language={language}
+              shown={Math.min(5, history.length)}
+              total={history.length}
+            />
             {history.length === 0 ? (
               <p className="ui-muted">{lt(language, "h_none")}</p>
             ) : (
               <ol className="ui-timeline">
-                {history.map((event) => (
+                {latestOf(history).map((event) => (
                   <li key={event.event_id}>
                     <div>
                       {eventName(language, event.event_kind)}
@@ -1169,6 +1211,13 @@ export function LeaseDetail({
                   </li>
                 ))}
               </ol>
+            )}
+            {history.length > 5 && (
+              <ViewAllButton
+                label={rvt(language, "history_btn")}
+                total={history.length}
+                view="history"
+              />
             )}
           </section>
         </div>

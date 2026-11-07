@@ -3,6 +3,7 @@
 // Right: the Security Deposit with what happens to that money, and History.
 
 import { ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { BackLink } from "../shell/backNav";
 
 import {
   EARLIER_RESERVATION_RULES,
@@ -18,12 +19,12 @@ import {
 } from "../shell/format";
 import { Icon } from "../shell/icons";
 import { hashForPage } from "../shell/navigation";
-import { openPageInAddress } from "../shell/useHashPage";
 import type { Language } from "../signInText";
 import { CancelDialog, ExtendDialog } from "./ReservationDialogs";
 import { ReservationChip, leftText, resultText } from "./ReservationsList";
 import { daysLeft, percentText, suggestedDeposit } from "./reservationsData";
 import { rt, type ReservationTextKey } from "./text";
+import { PageHead } from "../shell/pageHead";
 
 function Kv({ rows }: { rows: [string, ReactNode][] }) {
   return (
@@ -164,18 +165,7 @@ export function ReservationDetail({
     load();
   }, [load]);
 
-  const back = (
-    <button
-      className="ui-crumb"
-      onClick={() => {
-        openPageInAddress("reservations");
-      }}
-      type="button"
-    >
-      <Icon name="back" small />
-      {rt(language, "back")}
-    </button>
-  );
+  const back = <BackLink language={language} parent="reservations" />;
 
   const failure = loadFailed && (
     <div className="ui-notice warn" role="status">
@@ -228,10 +218,10 @@ export function ReservationDetail({
   return (
     <>
       {back}
-      <div className="ui-head">
+      <PageHead>
         <div>
           <div className="ui-hrow">
-            <h2 className="ui-num">
+            <h2 className="ui-num" data-record-title="">
               {rt(language, "title", reservation.unit_number)}
             </h2>
             <ReservationChip language={language} status={reservation.status} />
@@ -298,7 +288,7 @@ export function ReservationDetail({
             </button>
           )}
         </div>
-      </div>
+      </PageHead>
       {failure}
       {active && left <= 7 && (
         <div className="ui-notice warn" role="status">

@@ -478,7 +478,7 @@ describe("HRIS phase 6 screens", () => {
     expect(within(table).queryByText("Sok Vanna")).toBeNull();
     expect(within(table).getByText("Telegram linked")).toBeInTheDocument();
     expect(within(table).getByText("$300.00")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Left" }));
+    fireEvent.click(screen.getByRole("button", { name: "Past employees" }));
     expect(
       within(screen.getByRole("table")).getByText("Sok Vanna"),
     ).toBeInTheDocument();
@@ -539,11 +539,11 @@ describe("HRIS phase 6 screens", () => {
         propertyId={PROPERTY}
       />,
     );
-    await screen.findByText(/Only people with See salaries/);
+    await screen.findByText(/Only users with the See salaries/);
     fireEvent.click(screen.getByRole("button", { name: "Set end date" }));
     const box = dialog();
     fireEvent.click(within(box).getByRole("button", { name: "Set end date" }));
-    expect(within(box).getByText("Say why.")).toBeInTheDocument();
+    expect(within(box).getByText("Enter a reason.")).toBeInTheDocument();
     expect(api.employeeStep).not.toHaveBeenCalled();
     fireEvent.change(within(box).getByLabelText(/Reason/), {
       target: { value: "Moves away" },
@@ -586,7 +586,7 @@ describe("HRIS phase 6 screens", () => {
       within(box).queryByLabelText("Authorizer (approves reports)"),
     ).toBeNull();
     fireEvent.click(within(box).getByRole("button", { name: "Link" }));
-    expect(within(box).getByText("Tick one or more.")).toBeInTheDocument();
+    expect(within(box).getByText("Select one or more.")).toBeInTheDocument();
     fireEvent.click(within(box).getByLabelText("Cleaner reports"));
     fireEvent.click(within(box).getByRole("button", { name: "Link" }));
     await screen.findByText("Chan Dara is linked to Telegram.");
@@ -600,12 +600,12 @@ describe("HRIS phase 6 screens", () => {
   it("TEST-FE-1303 a new salary loan shows the limit, and a refusal needs a reason", async () => {
     const api = fakeApi();
     render(<LoansPage active api={api} language="en" propertyId={PROPERTY} />);
-    expect(await screen.findByText("Waits for the Owner")).toBeInTheDocument();
-    expect(screen.getByText("Asked in Telegram")).toBeInTheDocument();
+    expect(await screen.findByText("Pending approval")).toBeInTheDocument();
+    expect(screen.getByText("Requested via Telegram")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Refuse" }));
     let box = dialog();
     fireEvent.click(within(box).getByRole("button", { name: "Refuse" }));
-    expect(within(box).getByText("Say why.")).toBeInTheDocument();
+    expect(within(box).getByText("Enter a reason.")).toBeInTheDocument();
     fireEvent.click(within(box).getByRole("button", { name: "Cancel" }));
     await waitFor(() => {
       expect(api.employees).toHaveBeenCalled();
@@ -624,7 +624,7 @@ describe("HRIS phase 6 screens", () => {
       target: { value: "Rent" },
     });
     fireEvent.click(
-      within(box).getByRole("button", { name: "Send to the Owner" }),
+      within(box).getByRole("button", { name: "Send for approval" }),
     );
     await screen.findByText("Salary loan for Chan Dara sent to the Owner.");
     expect(api.addLoan).toHaveBeenCalledWith(PROPERTY, {
@@ -645,7 +645,7 @@ describe("HRIS phase 6 screens", () => {
     );
     fireEvent.click(
       await screen.findByRole("button", {
-        name: "Make the list for October 2026",
+        name: "Create payroll for October 2026",
       }),
     );
     await screen.findByText(/Salaries for October 2026/);
@@ -653,7 +653,7 @@ describe("HRIS phase 6 screens", () => {
     expect(
       screen.getByRole("img", { name: "From attendance" }),
     ).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Add a line" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add item" }));
     const box = dialog();
     fireEvent.change(within(box).getByLabelText(/Amount/), {
       target: { value: "20" },
@@ -661,7 +661,7 @@ describe("HRIS phase 6 screens", () => {
     fireEvent.change(within(box).getByLabelText(/Reason/), {
       target: { value: "Extra work" },
     });
-    fireEvent.click(within(box).getByRole("button", { name: "Add a line" }));
+    fireEvent.click(within(box).getByRole("button", { name: "Add item" }));
     await screen.findByText("Line added.");
     expect(api.payrollStep).toHaveBeenCalledWith(PROPERTY, "run-1", {
       step: "ADD_LINE",
@@ -670,7 +670,7 @@ describe("HRIS phase 6 screens", () => {
       amount_usd_cents: 2_000,
       reason: "Extra work",
     });
-    fireEvent.click(screen.getByRole("button", { name: "Send to the Owner" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send for approval" }));
     await screen.findByText("Sent to the Owner.");
     expect(api.payrollStep).toHaveBeenLastCalledWith(PROPERTY, "run-1", {
       step: "SEND",
@@ -699,9 +699,9 @@ describe("HRIS phase 6 screens", () => {
       <PayrollPage active api={api} language="en" propertyId={PROPERTY} />,
     );
     expect(
-      await screen.findByText("1 people not marked paid yet"),
+      await screen.findByText("Not yet marked paid: 1"),
     ).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Add a line" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Add item" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Mark paid" }));
     const box = dialog();
     expect(
@@ -725,14 +725,14 @@ describe("HRIS phase 6 screens", () => {
       <AttendancePage active api={api} language="en" propertyId={PROPERTY} />,
     );
     expect(await screen.findByText("Late 20 min")).toBeInTheDocument();
-    expect(screen.getByText("Needs check")).toBeInTheDocument();
+    expect(screen.getByText("Needs review")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Accept" }));
     fireEvent.click(within(dialog()).getByRole("button", { name: "Accept" }));
     await screen.findByText("Accepted: Chan Dara, 06:50.");
     expect(api.acceptScan).toHaveBeenCalledWith(PROPERTY, "scan-1", null);
     fireEvent.click(screen.getByRole("button", { name: "Edit times" }));
     const box = dialog();
-    fireEvent.change(within(box).getByLabelText("Check-in"), {
+    fireEvent.change(within(box).getByLabelText("Clock-in"), {
       target: { value: "6:3o" },
     });
     fireEvent.change(within(box).getByLabelText(/Reason/), {
@@ -740,15 +740,15 @@ describe("HRIS phase 6 screens", () => {
     });
     fireEvent.click(within(box).getByRole("button", { name: "Save" }));
     expect(
-      within(box).getByText("Type the time like 07:05.", {
+      within(box).getByText("Enter a time, for example 07:05.", {
         selector: ".ui-error",
       }),
     ).toBeInTheDocument();
-    fireEvent.change(within(box).getByLabelText("Check-in"), {
+    fireEvent.change(within(box).getByLabelText("Clock-in"), {
       target: { value: "6:30" },
     });
     fireEvent.click(within(box).getByRole("button", { name: "Save" }));
-    await screen.findByText("Attendance fixed for Chan Dara.");
+    await screen.findByText("Attendance corrected for Chan Dara.");
     expect(api.enterDay).toHaveBeenCalledWith(PROPERTY, {
       employee_id: "emp-1",
       work_date: "2026-11-04",
@@ -767,7 +767,9 @@ describe("HRIS phase 6 screens", () => {
     );
     await screen.findByText("Late 20 min");
     fireEvent.click(screen.getByRole("button", { name: "Weekly plan" }));
-    expect(await screen.findByText("Fewer than 1 day off")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Too few days off (minimum 1)"),
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Plan · Chan Dara · 04/11/2026" }),
     ).toBeNull();
@@ -808,7 +810,7 @@ describe("HRIS phase 6 screens", () => {
     });
     // A cleaner works office hours with a usual day off, and picks no shift.
     expect(within(box).getByText(/Office hours: 7:00 to 11:00/)).toBeVisible();
-    expect(within(box).queryByLabelText(/Usual shift/)).toBeNull();
+    expect(within(box).queryByLabelText(/Regular shift/)).toBeNull();
     fireEvent.click(within(box).getByRole("button", { name: "Add employee" }));
     expect(
       await within(box).findByText(/Enter the ID type and number/),
@@ -818,9 +820,9 @@ describe("HRIS phase 6 screens", () => {
     fireEvent.change(within(box).getByLabelText(/^Job/), {
       target: { value: "job-2" },
     });
-    expect(within(box).queryByLabelText(/Usual day off/)).toBeNull();
-    expect(within(box).getByText(/2 days off a month/)).toBeVisible();
-    fireEvent.change(within(box).getByLabelText(/Usual shift/), {
+    expect(within(box).queryByLabelText(/Regular day off/)).toBeNull();
+    expect(within(box).getByText(/up to 2 per month/)).toBeVisible();
+    fireEvent.change(within(box).getByLabelText(/Regular shift/), {
       target: { value: "NIGHT" },
     });
     fireEvent.change(within(box).getByLabelText(/ID type/), {
@@ -873,7 +875,7 @@ describe("HRIS phase 6 screens", () => {
     expect(
       await within(box).findByText(/who left on 30\/06\/2026/),
     ).toBeVisible();
-    fireEvent.click(within(box).getByLabelText(/Hire again/));
+    fireEvent.click(within(box).getByLabelText(/Rehire/));
     fireEvent.click(within(box).getByRole("button", { name: "Add employee" }));
     await screen.findByText("Employee Keo Sophea added.");
     expect(api.addEmployee).toHaveBeenLastCalledWith(
@@ -920,7 +922,9 @@ describe("HRIS phase 6 screens", () => {
     fireEvent.click(screen.getByRole("button", { name: "Weekly plan" }));
     // Owner 06/11/2026: the caretaker takes 2 days off a month on request, with no weekly
     // warning; the screen shows each month's count against the 2.
-    expect(await screen.findAllByText("Fewer than 1 day off")).toHaveLength(1);
+    expect(
+      await screen.findAllByText("Too few days off (minimum 1)"),
+    ).toHaveLength(1);
     const caretakerRow = screen.getByRole("row", { name: /Sample Caretaker/ });
     expect(within(caretakerRow).queryByText("Fewer than 1 day off")).toBeNull();
     expect(within(caretakerRow).getByText(/3 of 2 days off/)).toBeVisible();
@@ -929,7 +933,7 @@ describe("HRIS phase 6 screens", () => {
     );
     const box = dialog();
     expect(
-      within(box).getByLabelText("Office hours 7:00-11:00, 13:00-17:00"),
+      within(box).getByLabelText("Office hours (7:00–11:00, 13:00–17:00)"),
     ).toBeChecked();
     expect(within(box).queryByLabelText("Morning shift")).toBeNull();
   });
@@ -946,7 +950,7 @@ describe("HRIS phase 6 screens", () => {
     expect(api.decideOvertime).toHaveBeenCalledWith(PROPERTY, "ot-1", {
       decision: "APPROVED",
     });
-    fireEvent.click(screen.getByRole("button", { name: "QR places" }));
+    fireEvent.click(screen.getByRole("button", { name: "QR locations" }));
     fireEvent.click(await screen.findByRole("button", { name: "Set pin" }));
     let box = dialog();
     fireEvent.change(within(box).getByLabelText("Map pin"), {
@@ -954,7 +958,7 @@ describe("HRIS phase 6 screens", () => {
     });
     fireEvent.click(within(box).getByRole("button", { name: "Save" }));
     expect(
-      within(box).getByText(/Type two numbers with a comma/),
+      within(box).getByText(/Enter two numbers separated by a comma/),
     ).toBeInTheDocument();
     fireEvent.change(within(box).getByLabelText("Map pin"), {
       target: { value: "11.6045, 104.8902" },
@@ -965,9 +969,11 @@ describe("HRIS phase 6 screens", () => {
       latitude: 11.6045,
       longitude: 104.8902,
     });
-    fireEvent.click(screen.getByRole("button", { name: "Make QR" }));
+    fireEvent.click(screen.getByRole("button", { name: "Create QR code" }));
     box = dialog();
-    fireEvent.click(within(box).getByRole("button", { name: "Make QR" }));
+    fireEvent.click(
+      within(box).getByRole("button", { name: "Create QR code" }),
+    );
     expect(
       await screen.findByText(/the new QR code is QR-CODE-1/),
     ).toBeInTheDocument();
@@ -975,13 +981,13 @@ describe("HRIS phase 6 screens", () => {
 
   it("TEST-FE-1309 says why a command was refused: no right, someone else's change, or the server's words", () => {
     expect(failureText("en", new HrError(403, "x"))).toBe(
-      "You do not have the right to do this.",
+      "You do not have permission to do this.",
     );
     expect(failureText("en", new HrError(412, null))).toBe(
-      "Someone else changed this. Open it again.",
+      "Someone else changed this. Reload it and try again.",
     );
     expect(failureText("en", new HrError(422, "Say why"))).toBe(
-      "The app refused this: Say why",
+      "This could not be saved: Say why",
     );
     expect(failureText("en", new HrError(503, "down"))).toBe(
       "This was not saved. Try again.",

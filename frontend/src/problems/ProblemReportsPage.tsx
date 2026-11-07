@@ -28,6 +28,7 @@ import {
   problemsApi as defaultProblemsApi,
 } from "./problemsClient";
 import { pt } from "./text";
+import { PageHead } from "../shell/pageHead";
 
 export interface ProblemReportsPageProps {
   language: Language;
@@ -224,15 +225,35 @@ export function ProblemReportsPage({
       />
     );
   }
+  // UI v81 (B4): the list and the Monthly report are two tabs of one page.
+  const views = may("problem_reports.plan") && (
+    <nav aria-label={pt(language, "views")} className="ui-tabline">
+      <a
+        aria-current={detail === "month" ? undefined : "page"}
+        href={hashForPage("problems")}
+      >
+        {pt(language, "v_list")}
+      </a>
+      <a
+        aria-current={detail === "month" ? "page" : undefined}
+        href={hashForPage("problems", "month")}
+      >
+        {pt(language, "m_title")}
+      </a>
+    </nav>
+  );
   if (detail === "month" && may("problem_reports.plan")) {
     return (
-      <MonthlyReport
-        api={api}
-        key={propertyId}
-        language={language}
-        now={now}
-        propertyId={propertyId}
-      />
+      <>
+        {views}
+        <MonthlyReport
+          api={api}
+          key={propertyId}
+          language={language}
+          now={now}
+          propertyId={propertyId}
+        />
+      </>
     );
   }
   const saved = (made: ProblemReport) => {
@@ -333,17 +354,12 @@ export function ProblemReportsPage({
 
   return (
     <>
+      {views}
       {failure}
-      <div className="ui-head">
+      <PageHead>
         <p>{pt(language, "sub")}</p>
-        {(may("problem_reports.plan") || may("problem_reports.add")) && (
+        {may("problem_reports.add") && (
           <div className="ui-actions">
-            {may("problem_reports.plan") && (
-              <a className="ui-btn" href={hashForPage("problems", "month")}>
-                <Icon name="reports" />
-                {pt(language, "m_title")}
-              </a>
-            )}
             {may("problem_reports.add") && (
               <a
                 className="ui-btn primary"
@@ -355,7 +371,7 @@ export function ProblemReportsPage({
             )}
           </div>
         )}
-      </div>
+      </PageHead>
       <div className="ui-filters">
         <div aria-label={pt(language, "tabs")} className="ui-seg" role="group">
           {(["open", "urgent", "late", "done"] as const).map((value) => (

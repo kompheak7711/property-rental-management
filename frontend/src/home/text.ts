@@ -3,16 +3,19 @@
 // in the mock-up.
 
 import type { Language } from "../signInText";
+import { singular } from "../shell/plural";
 
 const TEXT = {
   as_of: ["As of {0}", "គិតត្រឹមម៉ោង {0}"],
+  // UI v81 round 2: the head line "CHETANA Residence · Tuesday 03/11/2026 · As of 10:30".
+  property: ["CHETANA Residence", "CHETANA Residence"],
   qa_record: ["Receive payment", "ទទួលការបង់ប្រាក់"],
   qa_readings: ["Enter meter readings", "បញ្ចូលអំណាននាឡិកាស្ទង់"],
   // new
   loading: ["Loading Home…", "កំពុងផ្ទុកទំព័រដើម…"],
   // new
   failed: [
-    "Home could not be read just now. Check the connection and try again.",
+    "Home could not be loaded. Check the connection and try again.",
     "មិនអាចអានទំព័រដើមបានទេឥឡូវនេះ។ សូមពិនិត្យការតភ្ជាប់ ហើយព្យាយាមម្តងទៀត។",
   ],
   // new
@@ -22,14 +25,15 @@ const TEXT = {
   ],
   retry: ["Retry", "ព្យាយាមម្តងទៀត"],
 
-  k_occ: ["Units occupied", "បន្ទប់មានអ្នកជួល"],
+  // UI v81 round 2 (design v81 i18n25): the card names of the design.
+  k_occ: ["Occupancy", "អត្រាស្នាក់នៅ"],
   k_occ_s: ["{0} reserved · {1} vacant", "បានកក់ {0} · ទំនេរ {1}"],
   k_pend: ["Pending payment", "ប្រាក់មិនទាន់បង់"],
   k_pend_s: ["{0} Invoices not fully paid", "វិក្កយបត្រ {0} មិនទាន់បង់គ្រប់"],
   // new
   k_pend_s1: ["1 Invoice not fully paid", "វិក្កយបត្រ 1 មិនទាន់បង់គ្រប់"],
-  k_paid: ["Paid for {0}", "បានបង់សម្រាប់ខែ{0}"],
-  k_paid_s: ["{0}% of {1} billed", "{0}% នៃ {1} ដែលបានចេញ"],
+  k_paid: ["Paid this month", "បានបង់ខែនេះ"],
+  k_paid_s: ["{0}% of {1} due in {2}", "{0}% នៃ {1} ដល់កំណត់ក្នុង {2}"],
   // new
   k_paid_none: [
     "Nothing billed for this month yet",
@@ -52,25 +56,36 @@ const TEXT = {
   ],
   // new
   k_over_s1: ["1 Invoice past the due date", "វិក្កយបត្រ 1 ហួសថ្ងៃកំណត់បង់"],
-  n_lease: ["Lease renewal", "ការបន្តកិច្ចសន្យា"],
+  n_lease: ["Leases ending soon", "កិច្ចសន្យាជិតផុតកំណត់"],
   n_lease_s: ["End before {0}", "ផុតកំណត់មុន {0}"],
-  n_appr: ["Waiting for approval", "រង់ចាំការអនុម័ត"],
+  n_appr: ["Approvals", "រង់ចាំការអនុម័ត"],
+  // "Refunds pending" is the approved word for money out (docs/ui-audit/04_GLOSSARY.md).
   n_appr_s: [
-    "{0} to confirm · {1} money out",
-    "{0} ត្រូវបញ្ជាក់ · ប្រាក់ចេញ {1}",
+    "{0} to confirm · Refunds pending {1}",
+    "{0} ត្រូវបញ្ជាក់ · ការសងប្រាក់កំពុងរង់ចាំ {1}",
   ],
   // new
   n_appr_c: ["{0} to confirm", "{0} ត្រូវបញ្ជាក់"],
   n_read: ["Meter readings missing", "អំណានដែលខ្វះ"],
   n_read_s: ["Reading day {0}", "ថ្ងៃអាន {0}"],
-  n_letters: ["Letters due", "លិខិតត្រូវផ្តល់"],
-  n_letters_s: ["Day-20 and day-30 letters", "លិខិតថ្ងៃទី២០ និងថ្ងៃទី៣០"],
+  n_letters: ["Notices due", "លិខិតត្រូវផ្តល់"],
+  // Owner 07/11/2026: "notices", not "letters". Khmer is new and needs the native check.
+  n_letters_s: [
+    "Day-20 and day-30 notices",
+    "សេចក្ដីជូនដំណឹងថ្ងៃទី២០ និងថ្ងៃទី៣០",
+  ],
   // DL-131 (mock-up round 32 A10); Khmer is new and needs the native check.
   n_problems: ["Problem reports", "របាយការណ៍បញ្ហា"],
+  // Design v81 i18n13 (Viewing requests waiting on Home). Khmer from the design.
+  n_vr: ["Viewing requests waiting", "សំណើមើលបន្ទប់កំពុងរង់ចាំ"],
+  n_vr_s: [
+    "{0} late · {1} visits this week",
+    "{0} យឺត · {1} ការមកមើលសប្តាហ៍នេះ",
+  ],
   n_problems_s: ["{0} urgent · {1} late", "{0} បន្ទាន់ · {1} យឺត"],
   n_costs: ["Repair costs to check", "ថ្លៃជួសជុលត្រូវពិនិត្យ"],
 
-  todo_t: ["What to do", "អ្វីដែលត្រូវធ្វើ"],
+  todo_t: ["Tasks", "ការងារត្រូវធ្វើ"],
   todo_sum: [
     "{0} overdue, {1} for today, {2} this week. Do them from the top down.",
     "ហួសកំណត់ {0} · ថ្ងៃនេះ {1} · សប្តាហ៍នេះ {2}។ ធ្វើពីលើចុះក្រោម។",
@@ -96,14 +111,14 @@ const TEXT = {
   ],
   r_lease: ["Lease for {0} ends", "កិច្ចសន្យា {0} ផុតកំណត់"],
   r_lease_d: ["{0}. Ask about renewing.", "{0}។ សួរអំពីការបន្ត។"],
-  r_appr: ["{0} waiting for approval", "{0} រង់ចាំការអនុម័ត"],
+  r_appr: ["{0} pending approval", "{0} រង់ចាំការអនុម័ត"],
   r_letter: ["{0} letter due: {1}", "លិខិត{0} ត្រូវផ្តល់៖ {1}"],
   // new
   r_letter_d: ["{0} · {1} still owed", "{0} · {1} នៅជំពាក់"],
   day20: ["Day 20", "ថ្ងៃទី២០"],
   day30: ["Day 30", "ថ្ងៃទី៣០"],
   r_depdec: [
-    "Deposit waiting for a decision: {0}",
+    "Deposit pending a decision: {0}",
     "ប្រាក់កក់រង់ចាំការសម្រេច៖ {0}",
   ],
   // new
@@ -150,7 +165,7 @@ const TEXT = {
   ],
   // new
   job_rate_none: [
-    "The ABA exchange rate has not been read yet",
+    "The ABA exchange rate has not been loaded yet.",
     "មិនទាន់អានអត្រាប្តូរប្រាក់ ABA នៅឡើយ",
   ],
   job_next: ["Next Invoices: {0}", "វិក្កយបត្របន្ទាប់៖ {0}"],
@@ -159,7 +174,27 @@ const TEXT = {
   tip_read: ["Open meter readings", "បើកអំណាននាឡិកាស្ទង់"],
   tip_lease: ["Open Lease", "បើកកិច្ចសន្យា"],
   tip_appr: ["Open the draft", "បើកសេចក្តីព្រាង"],
-  tip_letter: ["Open Letters", "បើកលិខិត"],
+  tip_letter: ["Open Notices", "បើកលិខិត"],
+  // UI v81 (design v81 Home): Owner money and Attendance.
+  om_t: ["Owner money", "ប្រាក់ម្ចាស់"], // new
+  om_only: ["Only the Owner sees this", "មានតែម្ចាស់ឃើញ"], // new
+  om_cash: ["Cash and bank today", "សាច់ប្រាក់ និងធនាគារថ្ងៃនេះ"], // new
+  om_cash_s: ["Opens the Balance sheet", "បើកតារាងតុល្យការ"], // new
+  om_owe: ["Customers owe", "អតិថិជនជំពាក់"], // new
+  om_owe_s: ["Opens Accounts receivable aging", "បើកអាយុបំណុលអតិថិជន"], // new
+  om_over: ["Owed over 30 days", "ជំពាក់លើស ៣០ ថ្ងៃ"], // new
+  om_spent: ["Spent this month", "ចំណាយខែនេះ"], // new
+  om_spent_s: ["Budget {0}", "ថវិកា {0}"], // new
+  om_nobudget: ["No budget for this month", "គ្មានថវិកាសម្រាប់ខែនេះ"], // new
+  om_profit: ["Profit this year", "ចំណេញឆ្នាំនេះ"], // new
+  om_profit_s: ["{0} so far", "{0} រហូតមកដល់ពេលនេះ"], // new
+  at_t: ["Attendance needs attention", "វត្តមានត្រូវយកចិត្តទុកដាក់"], // new
+  at_n: [
+    "{0} to check: Needs check {1}, No check-out {2}.",
+    "{0} ត្រូវពិនិត្យ៖ ត្រូវពិនិត្យ {1} គ្មានការចុះចេញ {2}។",
+  ], // new
+  at_0: ["Nothing to check today.", "ថ្ងៃនេះគ្មានអ្វីត្រូវពិនិត្យ។"], // new
+  at_open: ["Open the daily sheet", "បើកតារាងប្រចាំថ្ងៃ"], // new
 } as const satisfies Record<string, readonly [string, string]>;
 
 export type HomeTextKey = keyof typeof TEXT;
@@ -170,10 +205,12 @@ export function hmt(
   ...values: (string | number)[]
 ): string {
   const text = TEXT[key][language === "en" ? 0 : 1];
-  return text.replace(/\{(\d+)\}/g, (match, index: string) => {
-    const value = values[Number(index)];
-    return value === undefined ? match : String(value);
-  });
+  return singular(
+    text.replace(/\{(\d+)\}/g, (match, index: string) => {
+      const value = values[Number(index)];
+      return value === undefined ? match : String(value);
+    }),
+  );
 }
 
 const WEEKDAYS = {

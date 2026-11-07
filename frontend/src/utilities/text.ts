@@ -3,6 +3,7 @@
 // marked "new" are not in the mock-up.
 
 import type { Language } from "../signInText";
+import { singular } from "../shell/plural";
 
 const TEXT = {
   sub: ["Meter readings and meters", "អំណាន និងនាឡិកាស្ទង់"],
@@ -12,7 +13,7 @@ const TEXT = {
   loading: ["Loading the meters…", "កំពុងផ្ទុកនាឡិកាស្ទង់…"],
   // new
   failed: [
-    "The meters could not be read just now. Check the connection and try again.",
+    "The meters could not be loaded. Check the connection and try again.",
     "មិនអាចអាននាឡិកាស្ទង់បានទេឥឡូវនេះ។ សូមពិនិត្យការតភ្ជាប់ ហើយព្យាយាមម្តងទៀត។",
   ],
   retry: ["Retry", "ព្យាយាមម្តងទៀត"],
@@ -23,20 +24,20 @@ const TEXT = {
   ],
   // new
   failed_units: [
-    "The meters of {0} could not be read. Try again.",
+    "The meters of {0} could not be loaded. Try again.",
     "មិនអាចអាននាឡិកាស្ទង់របស់ {0} បានទេ។ សូមព្យាយាមម្តងទៀត។",
   ],
   unit: ["Unit", "បន្ទប់"],
   all_units: ["All Units", "គ្រប់បន្ទប់"],
   unit_bad: [
-    'No Unit "{0}". Type a Unit number such as {1}, or clear the box to see all Units.',
+    'No Unit "{0}". Enter a Unit number such as {1}, or clear the box to see all Units.',
     'គ្មានបន្ទប់ "{0}"។ វាយលេខបន្ទប់ដូចជា {1} ឬលុបប្រអប់ ដើម្បីមើលគ្រប់បន្ទប់។',
   ],
   period: ["Month", "ខែ"],
   p_all: ["All", "ទាំងអស់"],
   p_month: ["This month", "ខែនេះ"],
   p_six: ["6 months", "6 ខែ"],
-  p_pick: ["Pick a month", "ជ្រើសខែ"],
+  p_pick: ["Choose month", "ជ្រើសខែ"],
   meter_kind: ["Meter", "នាឡិកាស្ទង់"],
   ELECTRICITY: ["Electricity", "អគ្គិសនី"],
   WATER: ["Water", "ទឹក"],
@@ -65,7 +66,7 @@ const TEXT = {
   ],
   // new
   before_day: [
-    "Reading day is {0}. The list to type the readings opens that day.",
+    "Reading day is {0}. The list to enter the readings opens that day.",
     "ថ្ងៃអានគឺ {0}។ បញ្ជីសម្រាប់វាយអំណានបើកនៅថ្ងៃនោះ។",
   ],
   col_unit_meter: ["Unit · Meter", "បន្ទប់ · នាឡិកាស្ទង់"],
@@ -121,7 +122,7 @@ const TEXT = {
   ],
   // new
   refused: [
-    "The reading was refused. It may be lower than a reading already saved, or dated before the meter was put in.",
+    "The reading could not be saved. It may be lower than a reading already saved, or dated before the meter was put in.",
     "អំណានត្រូវបានបដិសេធ។ វាអាចទាបជាងអំណានដែលបានរក្សាទុករួច ឬមុនថ្ងៃដាក់នាឡិកាស្ទង់។",
   ],
   // new
@@ -236,7 +237,7 @@ const TEXT = {
   mt_new_day: ["Put in on", "ដាក់ថ្ងៃ"],
   // changed: V1 has no estimate screen yet.
   mt_replace_c: [
-    "{0} stops on the day the new meter is put in. It stays in the history with all its readings. Use from the day after the last good reading until the new meter starts is estimated from earlier months. This is saved in History.",
+    "{0} stops on the day the new meter is put in. It stays in the history with all its readings. Use from the day after the last good reading until the new meter starts is estimated from earlier months. This is saved in the audit log.",
     "{0} ឈប់នៅថ្ងៃដាក់នាឡិកាស្ទង់ថ្មី។ វានៅក្នុងប្រវត្តិ ជាមួយអំណានទាំងអស់។ ការប្រើតាំងពីថ្ងៃបន្ទាប់ពីអំណានល្អចុងក្រោយ រហូតនាឡិកាស្ទង់ថ្មីចាប់ផ្តើម ត្រូវប៉ាន់ស្មានពីខែមុនៗ។ ការនេះរក្សាទុកក្នុងប្រវត្តិ។",
   ],
   mt_replace_done: ["{0} replaced by {1}.", "បានប្តូរ {0} ដោយ {1}។"],
@@ -337,7 +338,7 @@ const TEXT = {
   im_e_type: ["Choose an .xlsx or .csv file.", "សូមជ្រើសឯកសារ .xlsx ឬ .csv។"],
   // new
   im_e_read: [
-    "This file could not be read. Save it again as .xlsx or .csv and try again.",
+    "This file could not be loaded. Save it again as .xlsx or .csv and try again.",
     "មិនអាចអានឯកសារនេះបានទេ។ សូមរក្សាទុកម្តងទៀតជា .xlsx ឬ .csv ហើយព្យាយាមម្តងទៀត។",
   ],
   // new
@@ -373,7 +374,7 @@ const TEXT = {
     "{0} readings. {1} are ready. {2} need fixing.",
     "អំណាន {0}។ {1} រួចរាល់។ {2} ត្រូវកែ។",
   ],
-  im_e_empty: ["Empty. Type the reading.", "ទទេ។ សូមវាយអំណាន។"],
+  im_e_empty: ["Empty. Enter the reading.", "ទទេ។ សូមវាយអំណាន។"],
   im_e_lower: ["Lower than previous", "ទាបជាងអំណានមុន"],
   im_e_broken: [
     "Meter broken. Replace it first.",
@@ -406,7 +407,7 @@ const TEXT = {
     "ខូចគឺ yes ដូច្នេះទុកអំណានទទេ។",
   ],
   im_broken: [
-    "Broken: mark the meter and make a Problem report",
+    "Broken: mark the meter and create a Problem report.",
     "ខូច៖ សម្គាល់នាឡិកាស្ទង់ ហើយធ្វើរបាយការណ៍បញ្ហា",
   ],
   im_broken_done: [
@@ -449,7 +450,7 @@ const TEXT = {
     "មិនបញ្ជាក់អ្វីទេ រហូតដល់អំណានទាំងអស់ត្រឹមត្រូវ។",
   ],
   im_note: [
-    "Each reading is checked again when it is saved, the same as typing it in. This is saved in History.",
+    "Each reading is checked again when it is saved, the same as typing it in. This is saved in the audit log.",
     "អំណាននីមួយៗត្រូវពិនិត្យម្តងទៀតពេលរក្សាទុក ដូចការវាយបញ្ចូល។ ការនេះរក្សាទុកក្នុងប្រវត្តិ។",
   ],
   // changed: the mock-up sentence about acting as the Manager is left out
@@ -484,12 +485,12 @@ const TEXT = {
   ],
   // new
   im_r_refused: [
-    "Refused. It may be lower than a reading already saved.",
+    "Not saved. It may be lower than a reading already saved.",
     "ត្រូវបានបដិសេធ។ វាអាចទាបជាងអំណានដែលបានរក្សាទុករួច។",
   ],
   // new
   im_r_failed: [
-    "Not saved. Type it on the screen.",
+    "Not saved. Enter it on the screen.",
     "មិនបានរក្សាទុក។ សូមវាយវាលើអេក្រង់។",
   ],
   required: ["Required", "ត្រូវការ"],
@@ -502,14 +503,14 @@ const TEXT = {
   sb_open: ["Check readings", "ពិនិត្យអំណាន"],
   sb_title: ["Readings from the Staff bot", "អំណានពីបូតបុគ្គលិក"],
   sb_sent: ["Sent by {0}, read on {1}", "ផ្ញើដោយ {0} អានថ្ងៃ {1}"],
-  sb_pick: ["Pick", "ជ្រើស"],
+  sb_pick: ["Choose", "ជ្រើស"],
   sb_lower: ["Lower than previous", "ទាបជាងអំណានមុន"],
   sb_high: [
     "Electricity more than 300 kWh above previous",
     "ភ្លើងលើសអំណានមុនជាង 300 kWh",
   ],
   sb_already: [
-    "A reading is already saved for that day",
+    "A reading is already saved for that day.",
     "មានអំណានរក្សាទុករួចសម្រាប់ថ្ងៃនោះ",
   ],
   sb_note: [
@@ -547,10 +548,12 @@ export function utt(
   ...values: (string | number)[]
 ): string {
   const text = TEXT[key][language === "en" ? 0 : 1];
-  return text.replace(/\{(\d+)\}/g, (match, index: string) => {
-    const value = values[Number(index)];
-    return value === undefined ? match : String(value);
-  });
+  return singular(
+    text.replace(/\{(\d+)\}/g, (match, index: string) => {
+      const value = values[Number(index)];
+      return value === undefined ? match : String(value);
+    }),
+  );
 }
 
 const MONTHS = {

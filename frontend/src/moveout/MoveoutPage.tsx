@@ -5,6 +5,7 @@
 // Settlement apart (the server has no read of it), so "To confirm" and "Closed" come later.
 
 import "../shell/screens.css";
+import { BackLink } from "../shell/backNav";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -83,6 +84,7 @@ import { Kv, type Mark, Step } from "./parts";
 import { type SettlementState, readSettlement } from "./settlement";
 import { SettlementStep } from "./SettlementStep";
 import { conditionText, mt } from "./text";
+import { PageHead } from "../shell/pageHead";
 
 const STEP_CHIPS: Record<MoveOutStep, [Tone, ShellIcon]> = {
   soon: ["warn", "clock"],
@@ -323,9 +325,9 @@ function MoveoutList({
           <p>{mt(language, "settle_failed")}</p>
         </div>
       )}
-      <div className="ui-head">
+      <PageHead>
         <p>{mt(language, "sub")}</p>
-      </div>
+      </PageHead>
       <div className="ui-kpis">
         {cards.map(([value, icon, tone]) => (
           <CountCard
@@ -802,18 +804,7 @@ function MoveoutDetail({
     };
   }, [problemsApi, propertyId, seesProblems, loads]);
 
-  const back = (
-    <button
-      className="ui-crumb"
-      onClick={() => {
-        openPageInAddress("moveout");
-      }}
-      type="button"
-    >
-      <Icon name="back" small />
-      {mt(language, "back")}
-    </button>
-  );
+  const back = <BackLink language={language} parent="moveout" />;
   const failure = loadFailed && (
     <div className="ui-notice warn" role="status">
       <Icon name="alert" />
@@ -1167,10 +1158,10 @@ function MoveoutDetail({
           <p>{mt(language, renewed ? "renewed_note" : "not_yet_note")}</p>
         </div>
       )}
-      <div className="ui-head">
+      <PageHead>
         <div>
           <div className="ui-hrow">
-            <h2 className="ui-num">
+            <h2 className="ui-num" data-record-title="">
               {mt(language, "moveout_of", lease.unit_number)}
             </h2>
             {step !== null && <MoveOutChip language={language} step={step} />}
@@ -1192,7 +1183,7 @@ function MoveoutDetail({
             {mt(language, "open_unit")}
           </a>
         </div>
-      </div>
+      </PageHead>
       <div className="ui-split">
         <div className="ui-stack">
           <section aria-labelledby="mo-steps" className="ui-card">

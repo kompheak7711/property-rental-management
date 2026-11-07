@@ -50,6 +50,7 @@ import {
   businessSettingsApi as businessSettingsClient,
 } from "./settings/businessSettingsClient";
 import { UnitApi, unitApi as defaultUnitApi } from "./unitClient";
+import { type SearchSources, TopSearch } from "./shell/TopSearch";
 import {
   CustomerManagement,
   CustomerReconciliationRequirement,
@@ -138,6 +139,7 @@ import {
 import { type Language, storeLanguage, storedLanguage } from "./signInText";
 import { AppShell } from "./shell/AppShell";
 import { NoAccess, PropertyNeeded } from "./shell/pages";
+import { InspectionsPage } from "./inspections/InspectionsPage";
 import { openPageInAddress, useHashPage } from "./shell/useHashPage";
 import type { CustomerCommandGate } from "./customers/commands";
 import { CustomersPage } from "./customers/CustomersPage";
@@ -180,7 +182,10 @@ import {
 } from "./telegram/TelegramPages";
 import type { TelegramApi } from "./telegram/telegramClient";
 import { ShortStaysPage } from "./shortstays/ShortStaysPage";
-import type { ShortStaysApi } from "./shortstays/shortStaysClient";
+import {
+  type ShortStaysApi,
+  shortStaysApi as defaultShortStaysApi,
+} from "./shortstays/shortStaysClient";
 import type { QuotationsApi } from "./quotations/quotationsClient";
 import type { ProductsApi } from "./products/productsClient";
 import { type ActorAccessApi, actorAccessApi } from "./shell/accessClient";
@@ -1651,6 +1656,25 @@ export function App({
   };
   const allowed = pageAllowed(page, capabilities);
   const shown = (candidate: PageId) => candidate === page && allowed;
+  // UI v81: the top-bar search reads only what the person may read (the server checks again).
+  const searchSources: SearchSources = {
+    ...(pageAllowed("customers", capabilities)
+      ? {
+          customers: (property: string, query: string) =>
+            (customerApi ?? defaultCustomerApi)
+              .list(property, { query })
+              .then((found) => found.items),
+        }
+      : {}),
+    ...(pageAllowed("units", capabilities)
+      ? {
+          units: (property: string) =>
+            (unitApi ?? defaultUnitApi)
+              .list(property)
+              .then((found) => found.items),
+        }
+      : {}),
+  };
 
   return (
     <AppShell
@@ -1660,7 +1684,8 @@ export function App({
       environment={environment}
       language={language}
       notice={
-        notice !== null && (
+        notice !== null &&
+        notice !== "" && (
           <p className="global-status" role="status">
             {notice}
           </p>
@@ -1670,6 +1695,13 @@ export function App({
       onLanguageChange={changeLanguage}
       onSignOut={handleLogout}
       page={page}
+      search={
+        <TopSearch
+          language={language}
+          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
+          sources={searchSources}
+        />
+      }
       signOutDisabled={isSubmitting}
     >
       {!allowed && <NoAccess language={language} />}
@@ -1682,6 +1714,8 @@ export function App({
           capabilities={capabilities}
           homeApi={homeApi}
           language={language}
+          attendanceApi={hrApi}
+          ledgerApi={generalLedgerApi}
           problemsApi={problemsApi}
           propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
         />
@@ -1815,6 +1849,7 @@ export function App({
           decisionApi={draftDecisionApi}
           language={language}
           propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
+          shortStaysApi={shortStaysApi ?? defaultShortStaysApi}
         />
       </div>
       <div className="shell-page" data-page="units" hidden={!shown("units")}>
@@ -1829,6 +1864,13 @@ export function App({
           unitApi={unitApi ?? defaultUnitApi}
           utilityApi={utilityApi}
         />
+      </div>
+      <div
+        className="shell-page"
+        data-page="inspections"
+        hidden={!shown("inspections")}
+      >
+        <InspectionsPage active={shown("inspections")} language={language} />
       </div>
       <div
         className="shell-page"
@@ -2599,10 +2641,13 @@ export function App({
       <div
         className="shell-page"
         data-page="settings"
-        hidden={!shown("settings")}
+        hidden={!shown("settings") && !shown("access")}
       >
+        {/* UI v81: Users and access is its own menu item, drawn by the same component so the
+            earlier forms are mounted once. */}
         <SettingsPage
-          active={shown("settings")}
+          active={shown("settings") || shown("access")}
+          mode={shown("access") ? "access" : "settings"}
           propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
           unitApi={unitApi ?? defaultUnitApi}
           capabilities={capabilities}

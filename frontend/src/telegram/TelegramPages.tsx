@@ -45,6 +45,7 @@ import {
 } from "./telegramClient";
 import { openPageInAddress } from "../shell/useHashPage";
 import { hasText, type TelegramTextKey, tt } from "./text";
+import { PageHead } from "../shell/pageHead";
 
 export interface TelegramPageProps {
   language: Language;
@@ -187,9 +188,9 @@ export function LinkedTenantsPage({
   if (propertyId === "") return <NoProperty language={language} />;
 
   const head = (
-    <div className="ui-head">
+    <PageHead>
       <p>{tt(language, "links_sub")}</p>
-    </div>
+    </PageHead>
   );
   if (page.data === null)
     return (
@@ -550,12 +551,12 @@ export function TelegramHealthPage({
   if (propertyId === "") return <NoProperty language={language} />;
 
   const head = (
-    <div className="ui-head">
+    <PageHead>
       <p>{tt(language, "h_sub")}</p>
       <span className="ui-muted">
         <Icon name="lock" small /> {tt(language, "h_lock")}
       </span>
-    </div>
+    </PageHead>
   );
   if (page.data === null)
     return (
@@ -863,9 +864,9 @@ export function ContactOfficePage({
   if (propertyId === "") return <NoProperty language={language} />;
 
   const head = (
-    <div className="ui-head">
+    <PageHead>
       <p>{tt(language, "contact_sub")}</p>
-    </div>
+    </PageHead>
   );
   if (page.data === null)
     return (
@@ -1188,7 +1189,7 @@ export function FaqPageView({
   if (propertyId === "") return <NoProperty language={language} />;
   const edit = holds(capabilities, FAQ) && page.data?.can_edit === true;
   const head = (
-    <div className="ui-head">
+    <PageHead>
       <p>{tt(language, "faq_sub")}</p>
       {edit && (
         <button
@@ -1203,7 +1204,7 @@ export function FaqPageView({
           <Icon name="plus" small /> {tt(language, "faq_new")}
         </button>
       )}
-    </div>
+    </PageHead>
   );
   if (page.data === null)
     return (
@@ -1946,9 +1947,9 @@ export function VisitRequestsPageView({
   const [failure, setFailure] = useState<string | null>(null);
   if (propertyId === "") return <NoProperty language={language} />;
   const head = (
-    <div className="ui-head">
+    <PageHead>
       <p>{tt(language, "vr_sub")}</p>
-    </div>
+    </PageHead>
   );
   if (page.data === null)
     return (

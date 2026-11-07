@@ -5,6 +5,7 @@
 // page is open. Export makes a spreadsheet or a PDF through the V1-057 export, which writes its
 // own History row.
 
+import { BackLink } from "../shell/backNav";
 import "../shell/screens.css";
 import "./reports.css";
 
@@ -64,6 +65,7 @@ import {
 } from "./reportsData";
 import { rpt } from "./text";
 import { TotalsContent } from "./TotalsView";
+import { PageHead } from "../shell/pageHead";
 
 export interface ReportApi {
   totals: (
@@ -232,9 +234,9 @@ function ReportsList({
   ] as const;
   return (
     <>
-      <div className="ui-head">
+      <PageHead>
         <p>{rpt(language, "rp_sub")}</p>
-      </div>
+      </PageHead>
       {allowed.length === 0 && (
         <div className="ui-notice warn" role="note">
           <Icon name="lock" />
@@ -453,11 +455,8 @@ function ReportView({
 
   const head = (
     <>
-      <a className="ui-crumb" href={hashForPage("reports")}>
-        <Icon name="back" small />
-        {rpt(language, "back")}
-      </a>
-      <div className="ui-head">
+      <BackLink language={language} parent="reports" />
+      <PageHead>
         <div>
           <div className="ui-hrow">
             <h2>{name}</h2>
@@ -469,7 +468,7 @@ function ReportView({
           </div>
           <p>{rpt(language, `d_${def.key}`)}</p>
         </div>
-      </div>
+      </PageHead>
     </>
   );
 

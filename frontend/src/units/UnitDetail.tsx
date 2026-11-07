@@ -6,6 +6,15 @@
 // Lease and Open Reservation open that record, not the list.
 
 import { ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import {
+  LatestNote,
+  RecordViewPage,
+  ViewAllButton,
+  latestOf,
+  rvt,
+  useHashView,
+} from "../shell/recordViews";
+import { BackLink } from "../shell/backNav";
 
 import type { LeaseApi, LeaseResource } from "../leaseClient";
 import type { ProductsApi } from "../products/productsClient";
@@ -19,7 +28,6 @@ import {
 } from "../shell/format";
 import { Icon } from "../shell/icons";
 import { hashForPage } from "../shell/navigation";
-import { openPageInAddress } from "../shell/useHashPage";
 import { Chip, type Tone } from "../shell/ui";
 import type { Language } from "../signInText";
 import {
@@ -36,6 +44,7 @@ import { UnitChip, floorText } from "./UnitsList";
 import { ut } from "./text";
 import { type UtilityPricesApi, UnitUtilitiesCard } from "./UtilityPrices";
 import { itemName, typeName } from "./unitsData";
+import { PageHead } from "../shell/pageHead";
 
 type LeaseKind = "current" | "draft" | "ended" | "terminated" | "cancelled";
 
@@ -236,6 +245,7 @@ export function UnitDetail({
   productsApi,
 }: UnitDetailProps) {
   const khmer = language === "km";
+  const view = useHashView();
   const [unit, setUnit] = useState<UnitResource | null>(null);
   const [missing, setMissing] = useState(false);
   const [events, setEvents] = useState<UnitTimelineEvent[]>([]);
@@ -276,18 +286,7 @@ export function UnitDetail({
     load();
   }, [load]);
 
-  const back = (
-    <button
-      className="ui-crumb"
-      onClick={() => {
-        openPageInAddress("units");
-      }}
-      type="button"
-    >
-      <Icon name="back" small />
-      {ut(language, "back")}
-    </button>
-  );
+  const back = <BackLink language={language} parent="units" />;
 
   if (missing) {
     return (
@@ -474,13 +473,41 @@ export function UnitDetail({
 
   const history = historyLines(language, events, leases ?? [], reservation);
 
+  if (view === "history")
+    return (
+      <RecordViewPage
+        language={language}
+        parent="units"
+        parentDetail={unitId}
+        recordName={unit.unit_number}
+        title={rvt(language, "history_title", unit.unit_number)}
+      >
+        {history.length === 0 ? (
+          <p className="ui-small ui-muted">{ut(language, "history_none")}</p>
+        ) : (
+          <ol className="ui-timeline">
+            {history.map((line, index) => (
+              <li key={`${line.at}-${String(index)}`}>
+                <div>
+                  {line.text}
+                  <small className="ui-num">{when(line.at)}</small>
+                </div>
+              </li>
+            ))}
+          </ol>
+        )}
+      </RecordViewPage>
+    );
+
   return (
     <>
       {back}
-      <div className="ui-head">
+      <PageHead>
         <div>
           <div className="ui-hrow">
-            <h2 className="ui-num">{unit.unit_number}</h2>
+            <h2 className="ui-num" data-record-title="">
+              {unit.unit_number}
+            </h2>
             <UnitChip language={language} status={unit.status} />
             {!forRent && <Chip tone="neutral">{ut(language, "fr_no")}</Chip>}
           </div>
@@ -571,7 +598,7 @@ export function UnitDetail({
             </>
           )}
         </div>
-      </div>
+      </PageHead>
       {warning !== null && (
         <div className="ui-notice warn" role="alert">
           <Icon name="alert" />
@@ -739,13 +766,18 @@ export function UnitDetail({
           </section>
           <section aria-labelledby="unit-history" className="ui-card">
             <h2 id="unit-history">{ut(language, "history")}</h2>
+            <LatestNote
+              language={language}
+              shown={Math.min(5, history.length)}
+              total={history.length}
+            />
             {history.length === 0 ? (
               <p className="ui-small ui-muted">
                 {ut(language, "history_none")}
               </p>
             ) : (
               <ol className="ui-timeline">
-                {history.map((line, index) => (
+                {latestOf(history).map((line, index) => (
                   <li key={`${line.at}-${String(index)}`}>
                     <div>
                       {line.text}
@@ -754,6 +786,13 @@ export function UnitDetail({
                   </li>
                 ))}
               </ol>
+            )}
+            {history.length > 5 && (
+              <ViewAllButton
+                label={rvt(language, "history_btn")}
+                total={history.length}
+                view="history"
+              />
             )}
           </section>
         </div>

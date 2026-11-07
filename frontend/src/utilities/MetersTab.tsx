@@ -4,6 +4,7 @@
 // meter need utility_meters.manage (Owner and Manager by default) and are hidden from others.
 // A meter is never deleted.
 
+import { BackLink } from "../shell/backNav";
 import { useRef, useState, type FormEvent, type ReactNode } from "react";
 
 import {
@@ -409,10 +410,12 @@ export function MeterDetail({
     null,
   );
   const back = (
-    <a className="ui-crumb" href={hashForPage("utilities", "meters")}>
-      <Icon name="back" small />
-      {utt(language, "back")}
-    </a>
+    <BackLink
+      language={language}
+      parent="utilities"
+      parentDetail="meters"
+      parentLabel={utt(language, "tab_meters")}
+    />
   );
   const meter = data.meters.find((item) => item.id === meterId);
   if (meter === undefined) {
@@ -490,7 +493,9 @@ export function MeterDetail({
     <>
       {back}
       <div className="ui-hrow">
-        <h2 className="ui-num">{meter.serial_number}</h2>
+        <h2 className="ui-num" data-record-title="">
+          {meter.serial_number}
+        </h2>
         <StateChip language={language} meter={meter} />
         {canManage && meter.current && readings.length > 0 && (
           <div className="ui-actions">

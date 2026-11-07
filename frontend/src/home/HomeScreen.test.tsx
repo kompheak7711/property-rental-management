@@ -151,49 +151,47 @@ const card = (name: RegExp) => {
 };
 
 describe("Home", () => {
-  it("TEST-FE-928 shows the eight cards in the mock-up order with their notes and links, and the head buttons", async () => {
+  it("TEST-FE-928 shows the eight cards in the design order with their notes and links, and the head line and buttons", async () => {
     const { api } = show(() => Promise.resolve(PAGE));
     expect(await screen.findByText("21 / 23")).toBeTruthy();
     expect(api.home).toHaveBeenCalledWith("property-1");
-    expect(screen.getByText("Tuesday 03/11/2026 · As of 10:30")).toBeTruthy();
+    expect(
+      screen.getByText("CHETANA Residence · Tuesday 03/11/2026 · As of 10:30"),
+    ).toBeTruthy();
 
     const labels = Array.from(
       document.querySelectorAll(".ui-home-kpi .ui-kpi-label"),
     ).map((element) => element.textContent);
     expect(labels).toEqual([
-      "Units occupied",
+      "Occupancy",
       "Pending payment",
-      "Paid for November",
+      "Paid this month",
       "Overdue",
-      "Lease renewal",
-      "Waiting for approval",
+      "Leases ending soon",
+      "Approvals",
       "Meter readings missing",
-      "Letters due",
+      "Notices due",
     ]);
-    expect(card(/Units occupied/).textContent).toContain(
-      "1 reserved · 1 vacant",
-    );
-    expect(card(/Waiting for approval/).textContent).toContain(
-      "1 to confirm · $5.00 money out",
+    expect(card(/Occupancy/).textContent).toContain("1 reserved · 1 vacant");
+    expect(card(/Approvals/).textContent).toContain(
+      "1 to confirm · Refunds pending $5.00",
     );
     expect(card(/Pending payment/).textContent).toContain(
       "$6,091.2533 Invoices not fully paid",
     );
-    // Paid for this month counts Invoices due this month: 371,620 of 911,125 is 40.8%.
-    expect(card(/Paid for November/).textContent).toContain(
-      "$3,716.2040% of $9,111.25 billed",
+    // Paid this month counts Invoices due this month: 371,620 of 911,125 is 40.8%.
+    expect(card(/Paid this month/).textContent).toContain(
+      "$3,716.2040% of $9,111.25 due in November",
     );
     expect(card(/Overdue/).getAttribute("href")).toBe("#/invoices");
-    expect(card(/Lease renewal/).textContent).toContain(
+    expect(card(/Leases ending soon/).textContent).toContain(
       "End before 02/01/2027",
     );
-    expect(card(/Waiting for approval/).getAttribute("href")).toBe(
-      "#/approvals",
-    );
+    expect(card(/Approvals/).getAttribute("href")).toBe("#/approvals");
     expect(card(/Meter readings missing/).textContent).toContain(
       "Reading day 24/11/2026",
     );
-    expect(card(/Letters due/).getAttribute("href")).toBe("#/letters");
+    expect(card(/Notices due/).getAttribute("href")).toBe("#/letters");
     expect(
       screen.getByText(
         "Rent and Utility Invoices made on 25/10/2026 06:00 · ABA exchange rate updated on 03/11/2026 08:00 · Next Invoices: 25/11/2026",
@@ -212,9 +210,61 @@ describe("Home", () => {
     ).toBe("#/utilities");
   });
 
+  it("TEST-FE-1912 (UI v81 round 2) adds the Viewing requests waiting card before Problem reports, in the design's order, for a person who may read them", async () => {
+    const problemsApi = {
+      summary: vi.fn().mockResolvedValue({
+        open: 4,
+        urgent: 1,
+        late: 0,
+        costs_to_check: [],
+      }),
+    };
+    const visitsApi = {
+      visitRequests: vi.fn().mockResolvedValue({
+        today: "2026-11-03",
+        requests: [
+          { status: "NEW", late: true, visit_local: null },
+          { status: "NEW", late: false, visit_local: "2026-11-05T10:00" },
+          { status: "CONTACTED", late: false, visit_local: "2026-11-07T15:00" },
+          { status: "CLOSED", late: false, visit_local: "2026-10-20T15:00" },
+        ],
+      }),
+    };
+    render(
+      <HomeScreen
+        active
+        capabilities={
+          new Set([
+            "reports.home",
+            "problem_reports.read",
+            "visit_requests.read",
+          ])
+        }
+        homeApi={{ home: vi.fn(() => Promise.resolve(PAGE)) }}
+        language="en"
+        problemsApi={problemsApi as never}
+        propertyId="property-1"
+        visitsApi={visitsApi}
+      />,
+    );
+    expect(await screen.findByText("Viewing requests waiting")).toBeTruthy();
+    expect(visitsApi.visitRequests).toHaveBeenCalledWith("property-1");
+    const labels = Array.from(
+      document.querySelectorAll(".ui-home-kpi .ui-kpi-label"),
+    ).map((element) => element.textContent);
+    expect(labels.slice(-2)).toEqual([
+      "Viewing requests waiting",
+      "Problem reports",
+    ]);
+    const visits = card(/Viewing requests waiting/);
+    expect(visits.textContent).toContain("21 late · 2 visits this week");
+    expect(visits.getAttribute("href")).toBe("#/visitreqs");
+    expect(visits.className).toContain("err");
+  });
+
   it("TEST-FE-929 lists what to do by group, top down (a wait that began earlier is for today), with dates, late or ago words and a named link for each row; Later folds", async () => {
     show(() => Promise.resolve(PAGE));
-    const list = await screen.findByRole("region", { name: "What to do" });
+    const list = await screen.findByRole("region", { name: "Tasks" });
     expect(
       within(list).getByText(
         "2 overdue, 2 for today, 1 this week. Do them from the top down.",
@@ -225,8 +275,8 @@ describe("Home", () => {
     expect(rows.map((row) => row.querySelector("b")?.textContent)).toEqual([
       "INV260006: $210.00 not paid",
       "Day 20 letter due: U201",
-      "Refund waiting for approval",
-      "Deposit waiting for a decision: U305",
+      "Refund pending approval",
+      "Deposit pending a decision: U305",
       "Reservation for U406 ends",
     ]);
     expect(rows[0]?.textContent).toContain("Ouk Chanthy · U201 · Initial Rent");
@@ -243,13 +293,13 @@ describe("Home", () => {
     ).toBe(hashForPage("invoices", "inv:inv-6"));
     expect(
       within(list)
-        .getByRole("link", { name: "Open Letters: Day 20 letter due: U201" })
+        .getByRole("link", { name: "Open Notices: Day 20 letter due: U201" })
         .getAttribute("href"),
     ).toBe("#/letters");
     expect(
       within(list)
         .getByRole("link", {
-          name: "Open Reservation: Deposit waiting for a decision: U305",
+          name: "Open Reservation: Deposit pending a decision: U305",
         })
         .getAttribute("href"),
     ).toBe("#/reservations/res-305");
@@ -323,7 +373,7 @@ describe("Home", () => {
     );
     expect(
       await screen.findByText(
-        "Home could not be read just now. Check the connection and try again.",
+        "Home could not be loaded. Check the connection and try again.",
       ),
     ).toBeTruthy();
     fail = false;
@@ -342,11 +392,13 @@ describe("Home", () => {
     cleanup();
 
     show(() => Promise.resolve(PAGE), { language: "km" });
-    expect(await screen.findByText("បន្ទប់មានអ្នកជួល")).toBeTruthy();
-    expect(screen.getByText("អ្វីដែលត្រូវធ្វើ")).toBeTruthy();
+    expect(await screen.findByText("អត្រាស្នាក់នៅ")).toBeTruthy();
+    expect(screen.getByText("ការងារត្រូវធ្វើ")).toBeTruthy();
+    // "Paid this month" names the month in the note: "{0}% of {1} due in វិច្ឆិកា".
     await waitFor(() => {
-      expect(screen.getByText("បានបង់សម្រាប់ខែវិច្ឆិកា")).toBeTruthy();
+      expect(screen.getByText("បានបង់ខែនេះ")).toBeTruthy();
     });
+    expect(screen.getByText(/ដល់កំណត់ក្នុង វិច្ឆិកា/)).toBeTruthy();
   });
 
   it("TEST-FE-1294 the Problem reports card shows open, urgent and late to a person who may read them; a Manager who checks repair costs sees each cost still waiting with a link; a person without the right reads nothing", async () => {

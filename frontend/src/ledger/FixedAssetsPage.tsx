@@ -38,6 +38,7 @@ import {
   useBusy,
 } from "./SpendingPage";
 import { lt, monthLabel } from "./text";
+import { PageHead } from "../shell/pageHead";
 
 export interface FixedAssetsPageProps {
   language: Language;
@@ -94,7 +95,7 @@ export function FixedAssetsPage({
     <>
       <Done text={done} />
       <section aria-labelledby="fa-title" className="ui-card">
-        <div className="ui-head">
+        <PageHead>
           <div>
             <h2 id="fa-title">{lt(language, "fa_t")}</h2>
             <p>{lt(language, "fa_sub")}</p>
@@ -113,7 +114,7 @@ export function FixedAssetsPage({
               {lt(language, "fa_new")}
             </button>
           )}
-        </div>
+        </PageHead>
       </section>
       {data === null ? (
         <Waiting

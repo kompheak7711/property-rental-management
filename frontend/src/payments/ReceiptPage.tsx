@@ -23,6 +23,7 @@ import type { PaymentsApi, ReceiptView } from "./paymentsClient";
 import { PaymentChip } from "./PaymentsList";
 import { ReceiptDocument } from "./ReceiptDocument";
 import { pyt } from "./text";
+import { PageHead } from "../shell/pageHead";
 
 /** Prints only the Receipt sheet (invoiceDocument.css) on A5 paper, then the page is as before.
  * The A5 page size is added only while printing, because the sheet prints out of the page flow
@@ -297,10 +298,10 @@ export function ReceiptPage({
   return (
     <>
       {back}
-      <div className="ui-head">
+      <PageHead>
         <div>
           <div className="ui-hrow">
-            <h2 className="ui-num">
+            <h2 className="ui-num" data-record-title="">
               {pyt(language, "rc_title", receipt.receiptNumber ?? "—")}
             </h2>
             <PaymentChip
@@ -342,7 +343,7 @@ export function ReceiptPage({
             </button>
           )}
         </div>
-      </div>
+      </PageHead>
       {namesFailed && (
         <div className="ui-notice warn" role="status">
           <Icon name="alert" />

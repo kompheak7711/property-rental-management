@@ -4,17 +4,18 @@
 // (docs/001 §89): the money is the Security Deposit from the first day.
 
 import type { Language } from "../signInText";
+import { singular } from "../shell/plural";
 
 const TEXT = {
   sub: [
     "{0} Reservations · a Unit held for a Customer until the Lease is signed",
     "ការកក់ {0} · បន្ទប់ដែលរក្សាទុកសម្រាប់អតិថិជន រហូតដល់ចុះហត្ថលេខាកិច្ចសន្យា",
   ],
-  make: ["Make Reservation", "ធ្វើការកក់"],
+  make: ["New Reservation", "ធ្វើការកក់"],
   loading: ["Loading the Reservations…", "កំពុងផ្ទុកការកក់…"],
   // new
   failed: [
-    "The Reservations could not be read. Retry when the service is available.",
+    "The Reservations could not be loaded. Retry when the service is available.",
     "មិនអាចអានការកក់បានទេ។ សូមព្យាយាមម្តងទៀតពេលសេវាអាចប្រើបាន។",
   ],
   retry: ["Retry", "ព្យាយាមម្តងទៀត"],
@@ -157,7 +158,7 @@ const TEXT = {
   latest: ["Latest possible date: {0}", "កាលបរិច្ឆេទចុងក្រោយបំផុត៖ {0}"],
   new_date: ["New expiration date", "កាលបរិច្ឆេទផុតកំណត់ថ្មី"],
   e_date: [
-    "Pick a date after {0} and not later than {1}.",
+    "Choose a date after {0} and not later than {1}.",
     "សូមជ្រើសកាលបរិច្ឆេទក្រោយ {0} និងមិនលើស {1}។",
   ],
   memo_optional: ["Memo (optional)", "កំណត់ចំណាំ (ជម្រើស)"],
@@ -194,7 +195,7 @@ const TEXT = {
   ],
   left_now: ["Now: {0}.", "ឥឡូវ៖ {0}។"],
   load_failed: [
-    "The Reservation could not be read just now. Check the connection and try again.",
+    "The Reservation could not be loaded. Check the connection and try again.",
     "មិនអាចអានការកក់បានទេឥឡូវនេះ។ សូមពិនិត្យការតភ្ជាប់ ហើយព្យាយាមម្តងទៀត។",
   ],
   keep: ["Keep the Reservation", "រក្សាការកក់"],
@@ -219,7 +220,7 @@ const TEXT = {
   ],
   saved_cancel: ["The Reservation was cancelled.", "ការកក់ត្រូវបានលុបចោល។"],
   // V1-060 B6: Make Reservation in the new design (owner 27/10/2026).
-  mk_title: ["Make Reservation", "ធ្វើការកក់"],
+  mk_title: ["New Reservation", "ធ្វើការកក់"],
   mk_unit: ["Unit", "បន្ទប់"],
   mk_choose_unit: ["Choose a vacant Unit", "ជ្រើសរើសបន្ទប់ទំនេរ"],
   mk_no_units: ["No Unit is vacant now.", "ឥឡូវនេះមិនមានបន្ទប់ទំនេរទេ។"],
@@ -228,7 +229,7 @@ const TEXT = {
   mk_new_customer: ["New Customer", "អតិថិជនថ្មី"],
   // Telegram step 3c (DL-173): Make Reservation from a Visit request. New Khmer.
   mk_visit_from: [
-    "From Visit request {0}: {1} · {2}",
+    "From Viewing request {0}: {1} · {2}",
     "ពីសំណើមកមើលបន្ទប់ {0}៖ {1} · {2}",
   ],
   mk_visit_found: [
@@ -271,21 +272,21 @@ const TEXT = {
   mk_save: ["Save Reservation", "រក្សាទុកការកក់"],
   mk_err_unit: ["Choose a Unit.", "សូមជ្រើសរើសបន្ទប់។"],
   mk_err_customer: ["Choose a Customer.", "សូមជ្រើសរើសអតិថិជន។"],
-  mk_err_date: ["Type a real day.", "សូមវាយថ្ងៃដែលត្រឹមត្រូវ។"],
+  mk_err_date: ["Enter a valid date.", "សូមវាយថ្ងៃដែលត្រឹមត្រូវ។"],
   mk_err_expires: [
-    "Pick a day after the Reservation Date, at most {0} days later.",
+    "Choose a day after the Reservation Date, at most {0} days later.",
     "សូមជ្រើសរើសថ្ងៃបន្ទាប់ពីថ្ងៃកក់ យូរបំផុត {0} ថ្ងៃក្រោយ។",
   ],
   mk_err_rent: [
-    "Type the Rent, such as 450.00.",
+    "Enter the Rent, such as 450.00.",
     "សូមវាយថ្លៃឈ្នួល ដូចជា 450.00។",
   ],
   mk_err_required: [
-    "Type the full Security Deposit; it cannot be less than what is received now.",
+    "Enter the full Security Deposit; it cannot be less than what is received now.",
     "សូមវាយប្រាក់កក់សុវត្ថិភាពពេញ វាមិនអាចតិចជាងប្រាក់ដែលទទួលបានឥឡូវនេះទេ។",
   ],
   mk_err_received: [
-    "Type the amount received now.",
+    "Enter the amount received now.",
     "សូមវាយចំនួនដែលទទួលបានឥឡូវនេះ។",
   ],
   mk_err_reason: [
@@ -299,7 +300,7 @@ const TEXT = {
   ],
   // V1-060 B7: said before any money is taken, while this person's rights are not known.
   mk_err_rights: [
-    "Your rights could not be read just now, so less than the suggested {0} cannot be checked before the money is taken. Reload the page, or receive at least {0}.",
+    "Your rights could not be loaded, so less than the suggested {0} cannot be checked before the money is taken. Reload the page, or receive at least {0}.",
     "មិនអាចអានសិទ្ធិរបស់អ្នកបានទេឥឡូវនេះ ដូច្នេះមិនអាចពិនិត្យចំនួនតិចជាងការណែនាំ {0} មុនពេលទទួលប្រាក់បានទេ។ សូមផ្ទុកទំព័រឡើងវិញ ឬទទួលយ៉ាងហោចណាស់ {0}។",
   ],
   mk_conflict: [
@@ -324,7 +325,7 @@ const TEXT = {
     "ថ្លៃឈ្នួលទាបជាងថ្លៃលំនាំដើម {0} របស់បន្ទប់នេះ។ មានតែអ្នកគ្រប់គ្រង ឬម្ចាស់ប៉ុណ្ណោះដែលអាចយល់ព្រមថ្លៃទាបជាងនេះ។",
   ],
   mk_err_rent_rights: [
-    "Your rights could not be read just now, so a Rent below {0} cannot be checked before the money is taken. Reload the page, or agree at least {0}.",
+    "Your rights could not be loaded, so a Rent below {0} cannot be checked before the money is taken. Reload the page, or agree at least {0}.",
     "មិនអាចអានសិទ្ធិរបស់អ្នកបានទេឥឡូវនេះ ដូច្នេះមិនអាចពិនិត្យថ្លៃទាបជាង {0} មុនពេលទទួលប្រាក់បានទេ។ សូមផ្ទុកទំព័រឡើងវិញ ឬយល់ព្រមយ៉ាងហោចណាស់ {0}។",
   ],
   mk_rent_reason: [
@@ -345,7 +346,9 @@ export function rt(
   key: ReservationTextKey,
   ...values: (string | number)[]
 ): string {
-  return TEXT[key][language === "en" ? 0 : 1].replace(/\{(\d)\}/g, (_, n) =>
-    String(values[Number(n)] ?? ""),
+  return singular(
+    TEXT[key][language === "en" ? 0 : 1].replace(/\{(\d)\}/g, (_, n) =>
+      String(values[Number(n)] ?? ""),
+    ),
   );
 }

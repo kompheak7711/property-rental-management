@@ -6,6 +6,7 @@
 // Unit and the text come from the finding and the source is Inspection.
 
 import { type FormEvent, useCallback, useEffect, useState } from "react";
+import { BackLink } from "../shell/backNav";
 
 import { Icon } from "../shell/icons";
 import { dayText } from "../shell/format";
@@ -56,18 +57,7 @@ function Missing({
 }
 
 function BackToList({ language }: { language: Language }) {
-  return (
-    <button
-      className="ui-crumb"
-      onClick={() => {
-        openPageInAddress("problems");
-      }}
-      type="button"
-    >
-      <Icon name="back" small />
-      {pt(language, "back")}
-    </button>
-  );
+  return <BackLink language={language} parent="problems" />;
 }
 
 /** DL-132: reads the finding, then opens the form filled from it. */

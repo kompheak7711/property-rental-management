@@ -3,13 +3,14 @@
 // the mock-up.
 
 import type { Language } from "../signInText";
+import { singular } from "../shell/plural";
 
 const TEXT = {
   sub: ["{0} Units at CHETANA Residence", "បន្ទប់ {0} នៅ CHETANA Residence"],
   loading: ["Loading the Units…", "កំពុងផ្ទុកបន្ទប់…"],
   // new
   failed: [
-    "The Units could not be read. Retry when the service is available.",
+    "The Units could not be loaded. Retry when the service is available.",
     "មិនអាចអានបន្ទប់បានទេ។ សូមព្យាយាមម្តងទៀតពេលសេវាអាចប្រើបាន។",
   ],
   // new
@@ -21,7 +22,7 @@ const TEXT = {
   ],
   // new
   lists_failed: [
-    "The Settings lists could not be read, so Units cannot be added or changed now.",
+    "The Settings lists could not be loaded, so Units cannot be added or changed now.",
     "មិនអាចអានបញ្ជីការកំណត់បានទេ ដូច្នេះមិនអាចបន្ថែម ឬកែបន្ទប់បានឥឡូវនេះ។",
   ],
   // new
@@ -44,7 +45,7 @@ const TEXT = {
   ],
   c_vacant: ["Vacant", "ទំនេរ"],
   c_vacant_s: ["Ready to reserve or lease", "រួចរាល់សម្រាប់កក់ ឬជួល"],
-  c_na: ["Not available", "មិនអាចប្រើបាន"],
+  c_na: ["Unavailable", "មិនអាចប្រើបាន"],
   c_na_s: [
     "Cleaning, maintenance or out of service",
     "កំពុងសម្អាត ជួសជុល ឬឈប់ប្រើ",
@@ -72,7 +73,7 @@ const TEXT = {
     "This Unit was not found. Go back to the Units list.",
     "រកមិនឃើញបន្ទប់នេះទេ។ ត្រឡប់ទៅបញ្ជីបន្ទប់។",
   ],
-  make_reservation: ["Make Reservation", "ធ្វើការកក់"],
+  make_reservation: ["New Reservation", "ធ្វើការកក់"],
   new_lease: ["New Lease", "កិច្ចសន្យាថ្មី"],
   new_lease_from_res: ["New Lease from Reservation", "កិច្ចសន្យាថ្មីពីការកក់"],
   open_lease: ["Open Lease", "បើកកិច្ចសន្យា"],
@@ -116,7 +117,7 @@ const TEXT = {
   ],
   uf_add: ["Add", "បន្ថែម"],
   uf_note: [
-    "Each feature can be 1 to 9. A shop or office lists only what it has, for example Main room ×1. New features are added in Settings → Unit setup. Every change is kept in History.",
+    "Each feature can be 1 to 9. A shop or office lists only what it has, for example Main room ×1. New features are added in Settings → Unit setup. Every change is kept in the audit log.",
     "លក្ខណៈនីមួយៗអាចមានពី ១ ដល់ ៩។ ហាង ឬការិយាល័យ បង្ហាញតែអ្វីដែលវាមាន ឧទាហរណ៍ បន្ទប់ធំ ×១។ លក្ខណៈថ្មីត្រូវបន្ថែមនៅក្នុង ការកំណត់ → ការរៀបចំបន្ទប់។ ការផ្លាស់ប្តូរនីមួយៗត្រូវបានរក្សាក្នុងប្រវត្តិ។",
   ],
   uf_saved: [
@@ -218,7 +219,7 @@ const TEXT = {
     "បន្ទប់ {0} បានរក្សាទុក ប៉ុន្តែថ្លៃឈ្នួល និងសេវាមិនទាន់រក្សាទុកទេ។ សូមកំណត់វានៅទំព័របន្ទប់ ដោយចុច ប្តូរ។",
   ],
   edit_note: [
-    "Changes are dated and kept in History. The Unit number cannot change.",
+    "Changes are dated and kept in the audit log. The Unit number cannot change.",
     "ការផ្លាស់ប្តូរមានកាលបរិច្ឆេទ និងរក្សាទុកក្នុងប្រវត្តិ។ លេខបន្ទប់មិនអាចប្តូរបានទេ។",
   ],
   save: ["Save", "រក្សាទុក"],
@@ -242,7 +243,7 @@ const TEXT = {
     "ការផ្លាស់ប្តូរមិនត្រូវបានរក្សាទុកទេ។ សូមព្យាយាមម្តងទៀតពេលសេវាអាចប្រើបាន។",
   ],
   blocked_lease: [
-    "This Unit has a signed Lease. Its status changes only through Move-out.",
+    "This Unit has a signed Lease. Its status changes only through a move-out.",
     "បន្ទប់នេះមានកិច្ចសន្យាបានចុះហត្ថលេខា។ ស្ថានភាពប្តូរបានតែតាមរយៈការចាកចេញប៉ុណ្ណោះ។",
   ],
   blocked_res: [
@@ -288,7 +289,7 @@ const TEXT = {
     "គណនីរបស់អ្នកមិនអាចអានទឹកភ្លើងបានទេ។",
   ],
   u_failed: [
-    "The Utility prices could not be read. Open this page again later.",
+    "The Utility prices could not be loaded. Open this page again later.",
     "មិនអាចអានតម្លៃទឹកភ្លើងបានទេ។ សូមបើកទំព័រនេះម្តងទៀតពេលក្រោយ។",
   ],
   u_settings: [
@@ -328,7 +329,7 @@ const TEXT = {
     "បន្ទប់មួយអាចតម្រូវសេវាបានច្រើនបំផុត 20។",
   ],
   rt_services_failed: [
-    "The Services could not be read, so this cannot be saved now. Open it again later.",
+    "The Services could not be loaded, so this cannot be saved now. Open it again later.",
     "មិនអាចអានសេវាបានទេ ដូច្នេះមិនអាចរក្សាទុកបានឥឡូវនេះ។ សូមបើកម្តងទៀតពេលក្រោយ។",
   ],
   rt_no_property_services: [
@@ -400,7 +401,9 @@ export function ut(
   key: UnitTextKey,
   ...values: (string | number)[]
 ): string {
-  return TEXT[key][language === "en" ? 0 : 1].replace(/\{(\d)\}/g, (_, n) =>
-    String(values[Number(n)] ?? ""),
+  return singular(
+    TEXT[key][language === "en" ? 0 : 1].replace(/\{(\d)\}/g, (_, n) =>
+      String(values[Number(n)] ?? ""),
+    ),
   );
 }

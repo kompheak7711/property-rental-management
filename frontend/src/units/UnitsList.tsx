@@ -20,6 +20,7 @@ import {
   reservationFor,
   typeName,
 } from "./unitsData";
+import { PageHead } from "../shell/pageHead";
 
 const STATUS_CHIPS: Record<UnitStatus, [Tone, ShellIcon | undefined]> = {
   OCCUPIED: ["ok", "check"],
@@ -107,7 +108,7 @@ export function UnitsList({
 
   return (
     <>
-      <div className="ui-head">
+      <PageHead>
         <p>{ut(language, "sub", data.units.length)}</p>
         {onNewUnit !== null && (
           <div className="ui-actions">
@@ -121,7 +122,7 @@ export function UnitsList({
             </button>
           </div>
         )}
-      </div>
+      </PageHead>
       <div className="ui-filters">
         <div aria-label={ut(language, "floor")} className="ui-seg" role="group">
           {["all", ...floors].map((value) => (

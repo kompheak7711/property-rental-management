@@ -21,8 +21,9 @@ import {
 import { momentText, usdFromCents } from "../shell/format";
 import { Icon } from "../shell/icons";
 import { hashForPage } from "../shell/navigation";
-import { Chip, CountCard, Dialog } from "../shell/ui";
+import { Chip, CountCard, Dialog, SubTabPanel, SubTabs } from "../shell/ui";
 import { serverWords } from "../shell/serverText";
+import type { ShortStaysApi } from "../shortstays/shortStaysClient";
 import type { Language } from "../signInText";
 import {
   type ApprovalsApi,
@@ -30,7 +31,13 @@ import {
   type WaitingDraft,
   type WaitingPage,
 } from "./approvalsClient";
+import {
+  SHORT_STAYS_APPROVE,
+  ShortStayApprovals,
+  useWaitingDamages,
+} from "./ShortStayApprovals";
 import { apt, draftEffect, draftLabel } from "./text";
+import { PageHead } from "../shell/pageHead";
 
 export const FINANCIAL_APPROVE = "financial.approve";
 
@@ -49,6 +56,8 @@ export interface ApprovalsPageProps {
   capabilities: ReadonlySet<string> | null;
   /** The person signed in: the one who prepared a draft may withdraw it. */
   actorId: string | null;
+  /** UI v81: the booking list for the Short-stay approvals tab; left out, the tab is not shown. */
+  shortStaysApi?: Pick<ShortStaysApi, "list">;
 }
 
 type Filter = "all" | "wait" | "out" | "kept" | "done";
@@ -255,7 +264,56 @@ function ReasonDialog({
   );
 }
 
-export function ApprovalsPage({
+/**
+ * UI v81 (B4, design v81): Approvals with one tab per kind. Financial approvals is the page it
+ * was; Short-stay approvals shows only to a person with short_stays.approve.
+ */
+export function ApprovalsPage(props: ApprovalsPageProps) {
+  const { language, propertyId, active, capabilities, shortStaysApi } = props;
+  const mayShortStays =
+    shortStaysApi !== undefined &&
+    (capabilities === null || capabilities.has(SHORT_STAYS_APPROVE));
+  const [tab, setTab] = useState(() =>
+    new URLSearchParams(window.location.hash.split("?")[1] ?? "").get("tab") ===
+    "shortstays"
+      ? "shortstays"
+      : "financial",
+  );
+  const damages = useWaitingDamages(
+    mayShortStays ? shortStaysApi : undefined,
+    propertyId,
+    active,
+  );
+  if (!mayShortStays) return <FinancialApprovals {...props} />;
+  const shown = tab === "shortstays" ? "shortstays" : "financial";
+  return (
+    <>
+      <SubTabs
+        current={shown}
+        idPrefix="approvals-tab"
+        label={apt(language, "tab_label")}
+        onChange={setTab}
+        tabs={[
+          { id: "financial", label: apt(language, "tab_fin") },
+          {
+            id: "shortstays",
+            label: apt(language, "tab_ss"),
+            count: Array.isArray(damages) ? damages.length : undefined,
+          },
+        ]}
+      />
+      <SubTabPanel id={shown} idPrefix="approvals-tab">
+        {shown === "financial" ? (
+          <FinancialApprovals {...props} />
+        ) : (
+          <ShortStayApprovals found={damages} language={language} />
+        )}
+      </SubTabPanel>
+    </>
+  );
+}
+
+function FinancialApprovals({
   language,
   propertyId,
   active,
@@ -322,7 +380,7 @@ export function ApprovalsPage({
   if (propertyId === "") return null;
 
   const head = (
-    <div className="ui-head">
+    <PageHead>
       <p>
         {apt(language, "ap_sub")}
         {page !== null && readAt !== "" && (
@@ -332,7 +390,7 @@ export function ApprovalsPage({
           </span>
         )}
       </p>
-    </div>
+    </PageHead>
   );
 
   if (failure !== null) {

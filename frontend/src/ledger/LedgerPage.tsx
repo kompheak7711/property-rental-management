@@ -43,6 +43,7 @@ import {
   monthLabel,
   typeName,
 } from "./text";
+import { PageHead } from "../shell/pageHead";
 
 export type LedgerTab = "journal" | "needscheck" | "chart" | "statements";
 
@@ -290,7 +291,7 @@ function JournalTab({
                 <th scope="col">{lt(language, "no")}</th>
                 <th scope="col">{lt(language, "date")}</th>
                 <th scope="col">{lt(language, "what")}</th>
-                <th scope="col">{lt(language, "from")}</th>
+                <th scope="col">{lt(language, "source")}</th>
                 <th className="r" scope="col">
                   {lt(language, "amount")}
                 </th>
@@ -428,7 +429,7 @@ function EntryDetail({
           {data.description}
         </p>
         <p className="pad">
-          {lt(language, "from")}:{" "}
+          {lt(language, "source")}:{" "}
           {data.reverses !== null ? (
             <>
               {lt(language, "rev_of", "")}
@@ -1178,7 +1179,7 @@ function ChartTab({
   return (
     <>
       <section aria-labelledby="chart-title" className="ui-card">
-        <div className="ui-head">
+        <PageHead>
           <div>
             <h2 id="chart-title">{lt(language, "a_title")}</h2>
             <p className="ui-muted">{lt(language, "a_sub")}</p>
@@ -1189,7 +1190,7 @@ function ChartTab({
               {lt(language, "ob_t")}
             </a>
           </span>
-        </div>
+        </PageHead>
       </section>
       {ACCOUNT_TYPES.map((type) => {
         const accounts = data.accounts.filter(
@@ -1592,7 +1593,7 @@ function StatementsTab({
   return (
     <>
       <section aria-labelledby="statements-title" className="ui-card">
-        <div className="ui-head">
+        <PageHead>
           <div>
             <h2 id="statements-title">{lt(language, "r_title")}</h2>
             <p>{lt(language, "r_sub")}</p>
@@ -1623,7 +1624,7 @@ function StatementsTab({
               </button>
             </span>
           )}
-        </div>
+        </PageHead>
         <div
           aria-label={lt(language, "r_title")}
           className="ui-seg"

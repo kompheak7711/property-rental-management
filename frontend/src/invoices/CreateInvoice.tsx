@@ -8,6 +8,7 @@
 // after an unknown result is saved once. Edit items ("#/invoices/edit:<id>") changes the items of
 // such a Draft with the reason for the change; an item that stays the same keeps its charge.
 
+import { BackLink } from "../shell/backNav";
 import {
   type FormEvent,
   type ReactNode,
@@ -32,6 +33,7 @@ import { Chip, Dialog } from "../shell/ui";
 import type { Language } from "../signInText";
 import { type InvoicesData, centsOf } from "./invoicesData";
 import { ivt, type InvoicesTextKey } from "./text";
+import { PageHead } from "../shell/pageHead";
 
 /** At most 20 items on one Invoice, each a whole quantity from 1 to 9999 (owner, DL-103). */
 export const MAX_ITEMS = 20;
@@ -239,16 +241,11 @@ function EditItems({
   }, [load]);
 
   const toInvoice = (
-    <button
-      className="ui-crumb"
-      onClick={() => {
-        openPageInAddress("invoices", false, `inv:${editId}`);
-      }}
-      type="button"
-    >
-      <Icon name="back" small />
-      {ivt(language, "ni_back_one")}
-    </button>
+    <BackLink
+      language={language}
+      parent="invoices"
+      parentDetail={`inv:${editId}`}
+    />
   );
   if (failed)
     return (
@@ -513,22 +510,12 @@ function ItemsForm({
   const backToList = () => {
     openPageInAddress("invoices");
   };
-  const back = editing ? (
-    <button
-      className="ui-crumb"
-      onClick={() => {
-        openPageInAddress("invoices", false, `inv:${invoice.id}`);
-      }}
-      type="button"
-    >
-      <Icon name="back" small />
-      {ivt(language, "ni_back_one")}
-    </button>
-  ) : (
-    <button className="ui-crumb" onClick={backToList} type="button">
-      <Icon name="back" small />
-      {ivt(language, "back")}
-    </button>
+  const back = (
+    <BackLink
+      language={language}
+      parent="invoices"
+      parentDetail={editing ? `inv:${invoice.id}` : undefined}
+    />
   );
 
   if (done !== null) {
@@ -767,12 +754,12 @@ function ItemsForm({
   return (
     <>
       {back}
-      <div className="ui-head">
+      <PageHead>
         <div>
           <h2>{ivt(language, editing ? "ni_edit_t" : "ni_btn")}</h2>
           <p>{ivt(language, editing ? "ni_edit_intro" : "ni_intro")}</p>
         </div>
-      </div>
+      </PageHead>
       {changed && (
         <div className="ui-notice warn" role="status">
           <Icon name="alert" />

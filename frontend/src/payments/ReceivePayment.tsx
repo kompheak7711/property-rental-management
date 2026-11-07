@@ -13,6 +13,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { BackLink } from "../shell/backNav";
 
 import type { InvoicesData } from "../invoices/invoicesData";
 import { centsOf, payerIds } from "../invoices/invoicesData";
@@ -20,7 +21,6 @@ import { InvoiceClientError } from "../invoiceClient";
 import { dayText, usdFromCents } from "../shell/format";
 import { Icon } from "../shell/icons";
 import { hashForPage } from "../shell/navigation";
-import { openPageInAddress } from "../shell/useHashPage";
 import { useLeaveGuard } from "../shell/leaveGuard";
 import { Dialog } from "../shell/ui";
 import type { Language } from "../signInText";
@@ -39,6 +39,7 @@ import type {
   ReceiveResult,
 } from "./paymentsClient";
 import { pyt, type PaymentsTextKey } from "./text";
+import { PageHead } from "../shell/pageHead";
 
 type Field = "cust" | "amt" | "method" | "when" | "ref" | "payfor";
 type Currency = "USD" | "KHR";
@@ -654,22 +655,13 @@ export function ReceivePayment({
 
   return (
     <>
-      <button
-        className="ui-crumb"
-        onClick={() => {
-          openPageInAddress("payments");
-        }}
-        type="button"
-      >
-        <Icon name="back" small />
-        {pyt(language, "back")}
-      </button>
-      <div className="ui-head">
+      <BackLink language={language} parent="payments" />
+      <PageHead>
         <div>
           <h2>{pyt(language, "rp_title")}</h2>
           <p>{pyt(language, "rp_intro")}</p>
         </div>
-      </div>
+      </PageHead>
       <div className="ui-split ui-split-form">
         <form
           aria-label={pyt(language, "rp_title")}

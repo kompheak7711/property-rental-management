@@ -47,7 +47,8 @@
   justify-content: space-between;
 }
 
-.ui-head p {
+.ui-head p,
+.ui-sub {
   margin: 0;
   color: var(--text-2);
 }
@@ -331,10 +332,41 @@
   font: inherit;
 }
 
+/* UI v81 round 2 (owner 07/11/2026, responsive rule): a card grid never leaves one card alone
+   in a row. Twelve columns; four cards per row, and the last rows are balanced by the number of
+   cards: 5 = 3 + 2, 7 = 4 + 3, 9 = 3 + 3 + 3, 10 = 4 + 3 + 3, 11 = 4 + 4 + 3, 13 = 4 + 3 + 3 + 3.
+   One to three cards stretch to fill the row. */
 .ui-kpis {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: 14px;
+}
+
+.ui-kpis > * {
+  grid-column: span 3;
+}
+
+.ui-kpis:has(> :nth-child(1):last-child) > * {
+  grid-column: span 12;
+}
+
+.ui-kpis:has(> :nth-child(2):last-child) > * {
+  grid-column: span 6;
+}
+
+.ui-kpis:has(> :nth-child(3):last-child) > *,
+.ui-kpis:has(> :nth-child(6):last-child) > *,
+.ui-kpis:has(> :nth-child(9):last-child) > *,
+.ui-kpis:has(> :nth-child(5):last-child) > :nth-child(-n + 3),
+.ui-kpis:has(> :nth-child(7):last-child) > :nth-child(n + 5),
+.ui-kpis:has(> :nth-child(10):last-child) > :nth-child(n + 5),
+.ui-kpis:has(> :nth-child(11):last-child) > :nth-child(n + 9),
+.ui-kpis:has(> :nth-child(13):last-child) > :nth-child(n + 5) {
+  grid-column: span 4;
+}
+
+.ui-kpis:has(> :nth-child(5):last-child) > :nth-child(n + 4) {
+  grid-column: span 6;
 }
 
 .ui-kpi {
@@ -793,9 +825,18 @@ table.ui-table a.ui-no {
   .ui-split {
     grid-template-columns: minmax(0, 1fr);
   }
+}
 
-  .ui-kpis {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+/* Two cards per row on a narrow screen (design app.css, 900px); an odd last card fills the row. */
+@media (max-width: 900px) {
+  .ui-kpis > *,
+  .ui-kpis:has(> :nth-child(n):last-child) > * {
+    grid-column: span 6;
+  }
+
+  .ui-kpis > :nth-child(odd):last-child,
+  .ui-kpis:has(> :nth-child(n):last-child) > :nth-child(odd):last-child {
+    grid-column: span 12;
   }
 }
 
@@ -2515,4 +2556,384 @@ a.ui-kpi.ui-home-kpi {
 }
 .ui-qlines li .ui-sub2 {
   display: block;
+}
+
+/* ---------- UI v81 (B2, owner task 07/11/2026): shared parts ---------- */
+
+/* Add and Edit forms open as a drawer from the right; a full-screen sheet on a phone. */
+.ui-drawer-back {
+  place-items: stretch end;
+  padding: 0;
+}
+
+.ui-dlg.ui-drawer {
+  align-content: start;
+  width: min(560px, 100%);
+  height: 100dvh;
+  max-height: 100dvh;
+  padding: 24px;
+  border-radius: 12px 0 0 12px;
+}
+
+.ui-dlg.ui-drawer.wide {
+  width: min(820px, 100%);
+}
+
+.ui-dlg.ui-drawer .ui-dlg-buttons {
+  position: sticky;
+  bottom: -24px;
+  margin: 0 -24px -24px;
+  padding: 12px 24px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+@media (max-width: 640px) {
+  .ui-dlg.ui-drawer,
+  .ui-dlg.ui-drawer.wide {
+    width: 100%;
+    padding: 16px;
+    border-radius: 0;
+  }
+
+  .ui-dlg.ui-drawer .ui-dlg-buttons {
+    bottom: -16px;
+    margin: 0 -16px -16px;
+    padding: 12px 16px;
+  }
+}
+
+.ui-discard {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid var(--warn);
+  border-radius: var(--radius);
+  background: var(--warn-bg);
+}
+
+.ui-discard p {
+  flex: 1 1 160px;
+  margin: 0;
+  font-weight: 600;
+}
+
+/* Sub-tabs: pills on a wide screen, one scrolling row on a phone. */
+.ui-subtabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 16px;
+}
+
+.ui-subtabs [role="tab"] {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.ui-subtabs [role="tab"]:hover {
+  background: var(--hover);
+}
+
+.ui-subtabs [role="tab"][aria-selected="true"] {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.ui-subtab-count {
+  min-width: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--sunken);
+  color: var(--text);
+  font-size: 0.8125rem;
+  line-height: 24px;
+  text-align: center;
+}
+
+.ui-subtabs [aria-selected="true"] .ui-subtab-count {
+  background: var(--surface);
+  color: var(--text);
+}
+
+@media (max-width: 640px) {
+  .ui-subtabs {
+    flex-wrap: nowrap;
+    margin-right: -16px;
+    margin-left: -16px;
+    padding: 0 16px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .ui-subtabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .ui-subtabs [role="tab"] {
+    flex: 0 0 auto;
+  }
+}
+
+/* Panel header: title, one line, and the "+ Add" button. */
+.ui-panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin: 0 0 16px;
+}
+
+.ui-panel-head h2 {
+  margin: 0;
+  color: var(--heading);
+  font-size: 1.25rem;
+}
+
+.ui-panel-sub {
+  margin: 4px 0 0;
+  color: var(--text-2);
+}
+
+.ui-panel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Empty state: a heading, one line and an action. */
+.ui-empty-state {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  padding: 32px 16px;
+  color: var(--text-2);
+  text-align: center;
+}
+
+.ui-empty-state p {
+  margin: 0;
+}
+
+.ui-empty-title {
+  color: var(--text);
+  font-weight: 700;
+}
+
+/* The column choice above a table. */
+.ui-coltoggle {
+  position: relative;
+}
+
+.ui-coltoggle > summary {
+  list-style: none;
+}
+
+.ui-coltoggle-list {
+  position: absolute;
+  z-index: 5;
+  right: 0;
+  display: grid;
+  gap: 8px;
+  min-width: 200px;
+  margin-top: 8px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+/* Skeleton while data loads. */
+.ui-skeleton {
+  display: grid;
+  gap: 10px;
+  padding: 16px 0;
+}
+
+.ui-skeleton-line {
+  height: 14px;
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    var(--sunken),
+    var(--hover),
+    var(--sunken)
+  );
+  background-size: 200% 100%;
+  animation: ui-skeleton 1.2s ease-in-out infinite;
+}
+
+.ui-skeleton-line:nth-child(3n + 2) {
+  width: 80%;
+}
+
+.ui-skeleton-line:nth-child(3n) {
+  width: 60%;
+}
+
+@keyframes ui-skeleton {
+  from {
+    background-position: 200% 0;
+  }
+
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-skeleton-line {
+    animation: none;
+  }
+}
+
+/* UI v81: a role hint sits beside its button, never inside it. */
+.ui-role-hint {
+  align-self: center;
+  margin-left: 4px;
+}
+
+/* UI v81 (B4): a count on a chosen (dark) filter button stays readable. */
+.ui-seg button[aria-pressed="true"] .ui-muted,
+.ui-seg button[aria-pressed="true"] .ui-num,
+.ui-seg button[aria-pressed="true"] small {
+  color: inherit;
+}
+
+.ui-seg button[aria-pressed="true"] .ui-count,
+.ui-seg button[aria-pressed="true"] .ui-chip {
+  background: var(--surface);
+  color: var(--text);
+}
+
+/* UI v81 (B4): underlined tabs drawn inside a page (Short stays, Problem reports). */
+.ui-tabline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.ui-tabline [role="tab"],
+.ui-tabline > a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: none;
+  color: var(--text-2);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ui-tabline [role="tab"][aria-selected="true"],
+.ui-tabline > a[aria-current="page"] {
+  border-bottom-color: var(--primary);
+  color: var(--heading);
+}
+
+@media (max-width: 640px) {
+  .ui-tabline {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .ui-tabline [role="tab"],
+  .ui-tabline > a {
+    flex: none;
+  }
+}
+
+/* UI v81 (B4): Document numbering fits its card: names wrap, numbers stay on one line. */
+table.ui-numbering {
+  font-size: 0.875rem;
+}
+
+table.ui-numbering th,
+table.ui-numbering td {
+  padding: 8px 10px;
+}
+
+table.ui-numbering .ui-btn.link {
+  min-height: 0;
+  padding: 0;
+  text-align: left;
+  white-space: normal;
+}
+
+table.ui-numbering td.ui-num {
+  white-space: nowrap;
+}
+
+/* UI v81 round 2: the Attendance card on Home is one row (design app31 .hm31r): the icon, the
+   words, the button; it wraps on a narrow screen. */
+.ui-attrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+.ui-attrow > div {
+  flex: 1 1 14rem;
+  min-width: 0;
+}
+.ui-attrow h2,
+.ui-attrow p {
+  margin: 0;
+}
+.ui-attrow p {
+  margin-top: 2px;
+}
+.ui-attic {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+.ui-attic.warn {
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+.ui-attic.ok {
+  background: var(--ok-bg);
+  color: var(--ok);
+}
+
+/* UI v81 round 2: Property › Inspections, the two places of today's inspection work. */
+.ui-insp-list {
+  display: grid;
+  gap: 12px;
+}
+.ui-insp-list li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  align-items: center;
+  justify-content: space-between;
+}
+.ui-insp-list li > span {
+  flex: 1 1 18rem;
 }

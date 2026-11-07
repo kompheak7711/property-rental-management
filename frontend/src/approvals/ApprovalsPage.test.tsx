@@ -192,10 +192,10 @@ describe("Waiting for approval", () => {
       .getAllByRole("button", { pressed: false })
       .map((button) => button.getAttribute("aria-label"));
     expect(cards).toEqual([
-      "Waiting: 4. Drafts to confirm",
-      "Money out: $200.00. Refunds waiting",
-      "Deposits kept: $400.00. Forfeitures waiting",
-      "Decided today: 1. Confirmed or rejected",
+      "Pending approval: 4. Drafts to confirm",
+      "Refunds pending: $200.00. Refunds pending approval",
+      "Deposit forfeitures pending: $400.00. Forfeitures pending approval",
+      "Processed today: 1. Confirmed or rejected",
     ]);
     expect(rowLabels()).toEqual([
       "Refund: Reservation Deposit",
@@ -211,22 +211,26 @@ describe("Waiting for approval", () => {
     expect(first.textContent).toContain("Long Sreyneang");
     expect(first.textContent).toContain("Sok Dara02/11/2026 09:15");
     expect(first.textContent).toContain("$200.00");
-    expect(first.textContent).toContain("Waiting");
+    expect(first.textContent).toContain("Pending approval");
 
-    fireEvent.click(screen.getByRole("button", { name: /^Deposits kept:/ }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /^Deposit forfeitures pending:/ }),
+    );
     expect(rowLabels()).toEqual(["Keep: Security Deposit"]);
-    expect(screen.getByText(/Showing: Deposits kept/)).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: /^Decided today:/ }));
+    expect(
+      screen.getByText(/Showing: Deposit forfeitures pending/),
+    ).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /^Processed today:/ }));
     expect(rowLabels()).toEqual(["Refund: Customer Credit"]);
     fireEvent.click(screen.getByRole("button", { name: "Show all" }));
     expect(rowLabels()).toHaveLength(4);
 
     expect(
       screen.getByText(
-        "The person who prepared a draft may also confirm it only if they have approval rights. Both names are kept in History.",
+        "The person who prepared a draft may also confirm it only if they have approval rights. Both names are kept in the audit log.",
       ),
     ).toBeTruthy();
-    const done = screen.getByRole("region", { name: "Decided today" });
+    const done = screen.getByRole("region", { name: "Processed today" });
     expect(done.textContent).toContain(
       "Refund: Customer Credit · U406 · Tep Sreymom",
     );
@@ -401,14 +405,14 @@ describe("Waiting for approval", () => {
     );
     expect(
       await screen.findByText(
-        "The drafts could not be read just now. Check the connection and try again.",
+        "The drafts could not be loaded. Check the connection and try again.",
       ),
     ).toBeTruthy();
     fail = false;
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
     expect(
       await screen.findByText(
-        "Nothing is waiting. Every draft has been decided.",
+        "Nothing is pending. Every draft has been processed.",
       ),
     ).toBeTruthy();
     expect(screen.getAllByText("Nothing decided yet today.")).toHaveLength(1);
@@ -506,8 +510,10 @@ describe("Waiting for approval", () => {
     ).toBeTruthy();
     expect(
       screen
-        .getByRole("button", { name: /^Money out:/ })
+        .getByRole("button", { name: /^Refunds pending:/ })
         .getAttribute("aria-label"),
-    ).toBe("Money out: $200.00. Refunds waiting · 1 worked out at confirm");
+    ).toBe(
+      "Refunds pending: $200.00. Refunds pending approval · 1 calculated when confirmed",
+    );
   });
 });

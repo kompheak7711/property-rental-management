@@ -346,6 +346,13 @@ function fakeApi(extra: Partial<TelegramApi> = {}): TelegramApi {
 const MANAGER = new Set(["telegram.read", "telegram.operate"]);
 const READER = new Set(["telegram.read"]);
 
+/** UI v81: Spam and Block both ask "Reason"; pick the field by its id. */
+function fieldById(fields: HTMLElement[], id: string): HTMLElement {
+  const field = fields.find((entry) => entry.id === id);
+  if (field === undefined) throw new Error(`no field ${id}`);
+  return field;
+}
+
 describe("Office › Telegram", () => {
   it("TEST-FE-1500 Linked tenants lists the links in force, the link tries that did not match with tries left or blocked until, and the ended links with why", async () => {
     const api = fakeApi();
@@ -364,15 +371,15 @@ describe("Office › Telegram", () => {
     expect(row.textContent).toContain("601");
     expect(row.textContent).toContain("30/06/2027");
     expect(
-      screen.getByText("Link tries that did not match: 2 Telegram accounts."),
+      screen.getByText("Failed link attempts: 2 Telegram accounts."),
     ).toBeTruthy();
     const tries = screen.getByRole("region", {
-      name: "Link tries that did not match",
+      name: "Failed link attempts",
     });
-    expect(within(tries).getByText("3 tries left")).toBeTruthy();
+    expect(within(tries).getByText("3 attempts left")).toBeTruthy();
     expect(within(tries).getByText(/^Blocked until 05\/11\/2026/)).toBeTruthy();
     expect(tries.textContent).toContain(
-      "5 failed tries block linking for 24 hours",
+      "5 failed attempts, linking is blocked for 24 hours",
     );
     const ended = screen.getByRole("region", { name: "Ended links" });
     expect(within(ended).getByText("The Lease ended")).toBeTruthy();
@@ -439,7 +446,7 @@ describe("Office › Telegram", () => {
       }),
     );
     await screen.findByText(
-      "This link has already ended. The list is read again.",
+      "This link has already ended. The list has been refreshed.",
     );
     await waitFor(() => {
       expect(late.links).toHaveBeenCalledTimes(2);
@@ -474,13 +481,13 @@ describe("Office › Telegram", () => {
     expect(within(tenant).getByText("Problem")).toBeTruthy();
     expect(within(bots).getAllByText("Working")).toHaveLength(2);
     expect(within(bots).getAllByText("Never").length).toBeGreaterThan(0);
-    expect(screen.getByText("4 items saved")).toBeTruthy();
+    expect(screen.getByText("4 received")).toBeTruthy();
     const cards = screen.getAllByRole("listitem");
     expect(cards.map((card) => card.textContent)).toEqual([
-      expect.stringContaining("Last relay pull") as string,
-      "Waiting to send1The app tries again by itself",
+      expect.stringContaining("Last message check") as string,
+      "Waiting to send1The app retries automatically",
       "Failed to send0Failing for 12 hours or more",
-      "Not pulled after 7 days0The relay deletes them; check if above 0",
+      "Not received within 7 days0These messages are deleted and lost. This should be 0.",
     ]);
     const outbox = screen.getByRole("region", {
       name: "Messages not sent yet",
@@ -489,17 +496,19 @@ describe("Office › Telegram", () => {
     expect(waiting.textContent).toContain(
       "Telegram asked the app to slow down",
     );
-    expect(waiting.textContent).toContain("The app tries again");
+    expect(waiting.textContent).toContain("Retrying");
     const old = within(outbox).getByRole("row", { name: /Keo Vannak, 101/ });
     expect(old.textContent).toContain("The person blocked the bot");
     expect(old.textContent).toContain("Stopped after 7 days");
-    const pulls = screen.getByRole("region", { name: "Last relay pulls" });
+    const pulls = screen.getByRole("region", { name: "Recent message checks" });
     expect(
       within(pulls).getByText(
-        "The relay did not answer; tried again next minute",
+        "The message server did not respond. The app tried again a minute later.",
       ),
     ).toBeTruthy();
-    expect(screen.getByText(/No bot keys are ever shown here/)).toBeTruthy();
+    expect(
+      screen.getByText(/Bot access keys are never shown here/),
+    ).toBeTruthy();
     expect(document.body.textContent).not.toMatch(/\d{6,}:[A-Za-z0-9_-]{20,}/);
   });
 
@@ -542,7 +551,7 @@ describe("Office › Telegram", () => {
       />,
     );
     fireEvent.click(await screen.findByRole("button", { name: "Retry" }));
-    await screen.findByText(/This message was already sent again/);
+    await screen.findByText(/This message was already resent /);
     await waitFor(() => {
       expect(refused.health).toHaveBeenCalledTimes(2);
     });
@@ -658,7 +667,9 @@ describe("Office › Telegram", () => {
     const dialog = screen.getByRole("dialog");
     expect(dialog.textContent).toContain("Sent by the Tenant bot.");
     fireEvent.click(within(dialog).getByRole("button", { name: "Send" }));
-    expect(within(dialog).getByText("Please write this.")).toBeTruthy();
+    expect(
+      within(dialog).getByText("Type a message or note first."),
+    ).toBeTruthy();
     expect(api.answer).not.toHaveBeenCalled();
     fireEvent.change(within(dialog).getByLabelText(/Your reply/), {
       target: { value: "  We will call you at 10:00. " },
@@ -697,7 +708,7 @@ describe("Office › Telegram", () => {
     );
     fireEvent.click(within(phoned).getByRole("button", { name: "Save" }));
     await screen.findByText(
-      "Someone already answered this message. The list was read again.",
+      "This message has already been answered. The list has been refreshed.",
     );
     await waitFor(() => {
       expect(late.contact).toHaveBeenCalledTimes(2);
@@ -742,9 +753,11 @@ describe("Office › Telegram", () => {
       target: { value: " How do I pay? " },
     });
     fireEvent.click(
-      within(fresh).getByRole("button", { name: "Send to the Owner" }),
+      within(fresh).getByRole("button", { name: "Send for approval" }),
     );
-    expect(within(fresh).getAllByText("Please write this.")).toHaveLength(3);
+    expect(
+      within(fresh).getAllByText("Type a message or note first."),
+    ).toHaveLength(3);
     expect(api.saveFaq).not.toHaveBeenCalled();
     fireEvent.change(within(fresh).getByLabelText(/Who sees it/), {
       target: { value: "TENANT" },
@@ -759,7 +772,7 @@ describe("Office › Telegram", () => {
       target: { value: "សាច់ប្រាក់ ABA ឬ KHQR។" },
     });
     fireEvent.click(
-      within(fresh).getByRole("button", { name: "Send to the Owner" }),
+      within(fresh).getByRole("button", { name: "Send for approval" }),
     );
     await screen.findByText("Question 2: sent to the Owner to approve.");
     expect(api.saveFaq).toHaveBeenCalledWith("prop-1", null, {
@@ -942,7 +955,7 @@ describe("Office › Telegram", () => {
       />,
     );
     expect(await screen.findByText("VR260001")).toBeTruthy();
-    expect(screen.getByText("1 requests")).toBeTruthy();
+    expect(screen.getByText("1 request")).toBeTruthy();
     expect(screen.getAllByText("Sokha Chan")).toHaveLength(2);
     expect(screen.getByText("sokha@example.com")).toBeTruthy();
     expect(screen.getByText("2 bedrooms")).toBeTruthy();
@@ -951,8 +964,8 @@ describe("Office › Telegram", () => {
     expect(screen.getByText("A high floor, please.")).toBeTruthy();
     expect(screen.getByText("New")).toBeTruthy();
     // The second ask joins the first and keeps its place.
-    expect(screen.getByText("joins VR260001")).toBeTruthy();
-    expect(screen.getByText("Joined")).toBeTruthy();
+    expect(screen.getByText("merged with VR260001")).toBeTruthy();
+    expect(screen.getByText("Merged")).toBeTruthy();
     expect(screen.getByText("WhatsApp")).toBeTruthy();
     expect(screen.getByText("move in Later")).toBeTruthy();
     expect(screen.getByText("No day yet")).toBeTruthy();
@@ -1051,36 +1064,38 @@ describe("Office › Telegram", () => {
       />,
     );
     expect(
-      await screen.findByRole("button", { name: /^Late: 1\./ }),
+      await screen.findByRole("button", { name: /^Response overdue: 1\./ }),
     ).toBeTruthy();
     expect(
-      screen.getByRole("button", { name: /^Waiting now: 1\./ }),
+      screen.getByRole("button", { name: /^Awaiting first contact: 1\./ }),
     ).toBeTruthy();
     expect(
-      screen.getByRole("button", { name: /^Visits booked: 1\./ }),
+      screen.getByRole("button", { name: /^Viewings booked: 1\./ }),
     ).toBeTruthy();
     expect(screen.getByRole("button", { name: /^Mine: 1\./ })).toBeTruthy();
     expect(screen.getByText("3 h 5 min")).toBeTruthy();
-    expect(screen.getAllByText("Late").length).toBeGreaterThan(1);
+    expect(screen.getAllByText("Overdue").length).toBeGreaterThan(0);
     // The words go in the customer's language (Khmer here), with the day and the address.
-    const box = screen.getByRole("region", { name: "Send by hand today" });
-    expect(within(box).getByText("Visit confirmation")).toBeTruthy();
+    const box = screen.getByRole("region", { name: "Send manually today" });
+    expect(within(box).getByText("Viewing confirmation")).toBeTruthy();
     expect(
       within(box).getByText(/ថ្ងៃ៖ ថ្ងៃសៅរ៍ 07\/11\/2026 ម៉ោង 09:00/),
     ).toBeTruthy();
     expect(within(box).getByText(/Near Camko Roundabout/)).toBeTruthy();
-    fireEvent.click(within(box).getByRole("button", { name: "Mark sent" }));
+    fireEvent.click(within(box).getByRole("button", { name: "Mark as sent" }));
     await waitFor(() => {
       expect(
-        screen.queryByRole("region", { name: "Send by hand today" }),
+        screen.queryByRole("region", { name: "Send manually today" }),
       ).toBeNull();
     });
     expect(visitStep).toHaveBeenCalledWith("prop-1", "vr-3", "sent", {
       what: "CONFIRMATION",
     });
     // A card shows only its requests.
-    fireEvent.click(screen.getByRole("button", { name: /^Late: 1\./ }));
-    expect(screen.getByText("Showing: Late")).toBeTruthy();
+    fireEvent.click(
+      screen.getByRole("button", { name: /^Response overdue: 1\./ }),
+    );
+    expect(screen.getByText("Showing: Response overdue")).toBeTruthy();
     expect(screen.queryByText("VR260003")).toBeNull();
   });
 
@@ -1148,11 +1163,11 @@ describe("Office › Telegram", () => {
     expect(within(dialog).queryByText("Record a call")).toBeNull();
     expect(within(dialog).queryByText("Manager")).toBeNull();
     fireEvent.click(
-      await within(dialog).findByRole("button", { name: "Take" }),
+      await within(dialog).findByRole("button", { name: "Assign to me" }),
     );
     expect(await within(dialog).findByText("Saved.")).toBeTruthy();
     expect(visitStep).toHaveBeenLastCalledWith("prop-1", "vr-1", "take", {});
-    expect(within(dialog).getByText("Dara took it")).toBeTruthy();
+    expect(within(dialog).getByText("Assigned to Dara")).toBeTruthy();
     expect(
       within(dialog).getByText(/Call: answered · Wants Monday/),
     ).toBeTruthy();
@@ -1172,9 +1187,11 @@ describe("Office › Telegram", () => {
     fireEvent.change(within(dialog).getByLabelText("Day"), {
       target: { value: "2026-11-08" },
     });
-    fireEvent.click(within(dialog).getByRole("button", { name: "Book visit" }));
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Book viewing" }),
+    );
     expect(
-      within(dialog).getByText("Choose a day from today, not a Sunday."),
+      within(dialog).getByText("Choose today or a later day, except Sunday."),
     ).toBeTruthy();
     fireEvent.change(within(dialog).getByLabelText("Day"), {
       target: { value: "2026-11-09" },
@@ -1182,10 +1199,12 @@ describe("Office › Telegram", () => {
     fireEvent.change(within(dialog).getByLabelText("Time"), {
       target: { value: "14:30" },
     });
-    fireEvent.change(within(dialog).getByLabelText("Shows the Unit"), {
+    fireEvent.change(within(dialog).getByLabelText("Shown by"), {
       target: { value: "boss-1" },
     });
-    fireEvent.click(within(dialog).getByRole("button", { name: "Book visit" }));
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Book viewing" }),
+    );
     await waitFor(() => {
       expect(visitStep).toHaveBeenLastCalledWith("prop-1", "vr-1", "book", {
         visit_at: "2026-11-09T14:30",
@@ -1245,21 +1264,24 @@ describe("Office › Telegram", () => {
     );
     const boss = await screen.findByRole("dialog");
     expect(await within(boss).findByText("Manager")).toBeTruthy();
-    fireEvent.change(within(boss).getByLabelText("Give to"), {
+    fireEvent.change(within(boss).getByLabelText("Assign to"), {
       target: { value: "boss-1" },
     });
-    fireEvent.click(within(boss).getByRole("button", { name: "Give to" }));
+    fireEvent.click(within(boss).getByRole("button", { name: "Assign to" }));
     await waitFor(() => {
       expect(bossStep).toHaveBeenLastCalledWith("prop-1", "vr-1", "give", {
         staff_id: "boss-1",
       });
     });
-    fireEvent.click(within(boss).getByRole("button", { name: "Mark Spam" }));
+    fireEvent.click(within(boss).getByRole("button", { name: "Mark as spam" }));
     expect(within(boss).getByText("Write a note.")).toBeTruthy();
-    fireEvent.change(within(boss).getByLabelText("Why Spam"), {
-      target: { value: " Advert " },
-    });
-    fireEvent.click(within(boss).getByRole("button", { name: "Mark Spam" }));
+    fireEvent.change(
+      fieldById(within(boss).getAllByLabelText("Reason"), "vr-spam"),
+      {
+        target: { value: " Advert " },
+      },
+    );
+    fireEvent.click(within(boss).getByRole("button", { name: "Mark as spam" }));
     await waitFor(() => {
       expect(bossStep).toHaveBeenLastCalledWith("prop-1", "vr-1", "spam", {
         note: "Advert",
@@ -1284,7 +1306,7 @@ describe("Office › Telegram", () => {
     );
     expect(
       await screen.findByText(
-        "Dara has this request. Only Dara or a Manager can work on it.",
+        "This request is assigned to Dara. Only Dara or a Manager can update it.",
       ),
     ).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Answered" })).toBeNull();
@@ -1385,7 +1407,9 @@ describe("Office › Telegram", () => {
       }),
     );
     expect(within(dialog).getByText("Write a note.")).toBeTruthy();
-    fireEvent.change(within(dialog).getByLabelText("Why block"), {
+    // UI v81: Spam and Block both ask "Reason".
+    const reasons = within(dialog).getAllByLabelText("Reason");
+    fireEvent.change(fieldById(reasons, "vr-block"), {
       target: { value: "Adverts" },
     });
     fireEvent.click(
@@ -1411,7 +1435,7 @@ describe("Office › Telegram", () => {
       );
     });
     fireEvent.click(
-      within(dialog).getByRole("button", { name: "Make Reservation" }),
+      within(dialog).getByRole("button", { name: "New Reservation" }),
     );
     expect(decodeURIComponent(window.location.hash)).toBe(
       "#/reservations/visit:vr-1",
@@ -1445,7 +1469,7 @@ describe("Office › Telegram", () => {
       await screen.findByRole("button", { name: "Open VR260001" }),
     );
     const done = await screen.findByRole("dialog");
-    expect(await within(done).findByText("Became Reservation")).toBeTruthy();
+    expect(await within(done).findByText("Reserved")).toBeTruthy();
     expect(
       within(done).getByRole("link", { name: "Open the Reservation" }),
     ).toHaveAttribute("href", "#/reservations/res-9");
@@ -1455,7 +1479,7 @@ describe("Office › Telegram", () => {
       ),
     ).toBeTruthy();
     expect(
-      within(done).queryByRole("button", { name: "Make Reservation" }),
+      within(done).queryByRole("button", { name: "New Reservation" }),
     ).toBeNull();
     expect(within(done).queryByText("Record a call")).toBeNull();
   });

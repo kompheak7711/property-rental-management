@@ -59,26 +59,34 @@ describe("V1-058 R1 app shell", () => {
       "Payments",
       "Invoices",
       "Utilities",
-      "Waiting for approval",
+      "Approvals",
       "Bookings",
       "Short stays",
       "Leases",
       "Customers",
       "Units",
-      "Products",
+      // UI v81 round 2 (owner 07/11/2026): Inspections after Units; the menu order of design v81.
+      "Inspections",
       "Problem reports",
+      "Products",
       "Ledger",
-      // HRIS phase 6: Employees and payroll in Office, after Ledger.
-      "Employees and payroll",
-      "Telegram",
       "Reports",
-      "History",
+      "Audit log",
+      // Owner 07/11/2026: "Staff", not "Employees and payroll".
+      "Staff",
+      "Telegram",
+      "Users and access",
       "Settings",
     ]);
-    for (const group of ["Daily work", "Tenants", "Building", "Office"]) {
+    for (const group of [
+      "Operations",
+      "Leasing",
+      "Property",
+      "Administration",
+    ]) {
       expect(within(menu).getByText(group)).toBeInTheDocument();
     }
-    expect(MENU.flatMap((group) => group.items)).toHaveLength(18);
+    expect(MENU.flatMap((group) => group.items)).toHaveLength(20);
   });
 
   it("TEST-FE-802 marks only the open page in the menu and names the work area after it", () => {
@@ -180,11 +188,13 @@ describe("V1-058 R1 app shell", () => {
       ["Home", "#/home"],
       ["Leases", "#/moveout"],
       ["Units", "#/units"],
+      // UI v81 round 2: Inspections opens with units.read.
+      ["Inspections", "#/inspections"],
       // audit.view reads the Audit activity report (V1-060 B6).
       ["Reports", "#/reports"],
-      ["History", "#/history"],
+      ["Audit log", "#/history"],
     ]);
-    expect(within(menu).queryByText("Daily work")).not.toBeInTheDocument();
+    expect(within(menu).queryByText("Operations")).not.toBeInTheDocument();
     // One allowed tab: no tab bar.
     expect(
       screen.queryByRole("navigation", { name: "Leases" }),
@@ -246,7 +256,8 @@ describe("V1-058 R1 app shell", () => {
       "aria-current",
       "page",
     );
-    expect(screen.getByRole("main")).toHaveAccessibleName("Leases");
+    // UI v81 round 2: the title is the open tab's name; the tab bar is named after the menu item.
+    expect(screen.getByRole("main")).toHaveAccessibleName("Notices");
     const tabs = screen.getByRole("navigation", { name: "Leases" });
     expect(
       within(tabs)
@@ -254,16 +265,16 @@ describe("V1-058 R1 app shell", () => {
         .map((link) => [link.textContent, link.getAttribute("href")]),
     ).toEqual([
       ["Leases", "#/leases"],
-      ["Letters", "#/letters"],
-      ["Move-out", "#/moveout"],
+      ["Notices", "#/letters"],
+      ["Move-outs", "#/moveout"],
     ]);
-    expect(within(tabs).getByRole("link", { name: "Letters" })).toHaveAttribute(
+    expect(within(tabs).getByRole("link", { name: "Notices" })).toHaveAttribute(
       "aria-current",
       "page",
     );
     cleanup();
     renderShell("reservations");
-    expect(screen.getByRole("main")).toHaveAccessibleName("Bookings");
+    expect(screen.getByRole("main")).toHaveAccessibleName("Reservations");
     // Telegram bots step 3a (DL-171): Bookings has the Visit requests tab now.
     const bookings = screen.getByRole("navigation", { name: "Bookings" });
     expect(
@@ -271,8 +282,8 @@ describe("V1-058 R1 app shell", () => {
         .getAllByRole("link")
         .map((link) => [link.textContent, link.getAttribute("href")]),
     ).toEqual([
+      ["Viewing requests", "#/visitreqs"],
       ["Reservations", "#/reservations"],
-      ["Visit requests", "#/visitreqs"],
     ]);
   });
 

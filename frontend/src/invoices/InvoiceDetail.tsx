@@ -6,6 +6,7 @@
 // a Draft made with Create Invoice again (DL-103).
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { BackLink } from "../shell/backNav";
 
 import {
   InvoiceClientError,
@@ -17,7 +18,6 @@ import type { LateChargeCard, PaymentsApi } from "../payments/paymentsClient";
 import { dayText, momentText, usdFromCents } from "../shell/format";
 import { Icon } from "../shell/icons";
 import { hashForPage } from "../shell/navigation";
-import { openPageInAddress } from "../shell/useHashPage";
 import type { Language } from "../signInText";
 import { AdjustDialog, VoidDialog } from "./ChangeDialogs";
 import { editableItems } from "./CreateInvoice";
@@ -35,6 +35,7 @@ import {
   unitOf,
 } from "./invoicesData";
 import { invoiceType, ivt } from "./text";
+import { PageHead } from "../shell/pageHead";
 
 function textOf(value: JsonValue | undefined): string | null {
   return typeof value === "string" && value.trim() !== "" ? value : null;
@@ -310,18 +311,7 @@ export function InvoiceDetail({
     loadLate();
   }, [loadLate]);
 
-  const back = (
-    <button
-      className="ui-crumb"
-      onClick={() => {
-        openPageInAddress("invoices");
-      }}
-      type="button"
-    >
-      <Icon name="back" small />
-      {ivt(language, "back")}
-    </button>
-  );
+  const back = <BackLink language={language} parent="invoices" />;
 
   if (invoice === null) {
     return (
@@ -389,10 +379,10 @@ export function InvoiceDetail({
   return (
     <>
       {back}
-      <div className="ui-head">
+      <PageHead>
         <div>
           <div className="ui-hrow">
-            <h2 className="ui-num">
+            <h2 className="ui-num" data-record-title="">
               {state === "draft"
                 ? ivt(language, "ni_draft_no")
                 : invoice.invoice_number}
@@ -471,7 +461,7 @@ export function InvoiceDetail({
             </button>
           )}
         </div>
-      </div>
+      </PageHead>
       {notice !== null && (
         <div
           className={

@@ -4,6 +4,7 @@
 // never above the list price, and a lower price needs its reason. "#/quotations/new:<id>"
 // starts from another Quotation: a waiting one is replaced by the new version (same Customer).
 
+import { BackLink } from "../shell/backNav";
 import {
   type FormEvent,
   type ReactNode,
@@ -30,6 +31,7 @@ import {
   type QuotationsApi,
 } from "./quotationsClient";
 import { qt, type QuotationsTextKey } from "./text";
+import { PageHead } from "../shell/pageHead";
 
 /** At most 20 lines on one Quotation, each a whole quantity from 1 to 999 (DB-QT-001). */
 const MAX_LINES = 20;
@@ -184,17 +186,11 @@ export function NewQuotationForm({
   }, [load]);
 
   const back = (
-    <button
-      className="ui-crumb"
-      onClick={() => {
-        if (fromId === null) openPageInAddress("quotations");
-        else openPageInAddress("quotations", false, `qt:${fromId}`);
-      }}
-      type="button"
-    >
-      <Icon name="back" small />
-      {qt(language, "back")}
-    </button>
+    <BackLink
+      language={language}
+      parent="quotations"
+      parentDetail={fromId === null ? undefined : `qt:${fromId}`}
+    />
   );
   if (failed)
     return (
@@ -404,7 +400,7 @@ function Form({
   return (
     <>
       {back}
-      <div className="ui-head">
+      <PageHead>
         <div>
           <h2>
             {replacing !== null
@@ -413,7 +409,7 @@ function Form({
           </h2>
           <p>{qt(language, replacing !== null ? "new_ver_h" : "new_sub")}</p>
         </div>
-      </div>
+      </PageHead>
       <div className="ui-split ui-split-wide">
         <form
           aria-label={qt(language, "new_t")}

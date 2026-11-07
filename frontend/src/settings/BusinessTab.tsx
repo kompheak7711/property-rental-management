@@ -55,7 +55,7 @@ import {
   ruleValueInput,
   ruleValueText,
 } from "./businessSettingsClient";
-import { type SettingsTextKey, sst } from "./text";
+import { type SettingsTextKey, hasSettingsText, sst } from "./text";
 
 export interface BusinessApi {
   property: PropertyConfigurationApi;
@@ -187,22 +187,12 @@ function nameOf(
 }
 
 function documentName(language: Language, type: string): string {
+  // UI v81 (B4): a document type with no name of its own still shows words, never its code.
   const key = `nr_${type}`;
-  return key in NUMBER_NAMES ? sst(language, key as SettingsTextKey) : type;
+  if (hasSettingsText(key)) return sst(language, key);
+  const words = type.toLowerCase().replace(/_/g, " ");
+  return words.charAt(0).toUpperCase() + words.slice(1);
 }
-
-const NUMBER_NAMES: Record<string, true> = {
-  nr_INVOICE: true,
-  nr_RECEIPT: true,
-  nr_REFUND: true,
-  nr_JOURNAL_ENTRY: true,
-  nr_EXPENSE_REQUEST: true,
-  nr_EXPENSE: true,
-  nr_SUPPLIER_BILL: true,
-  nr_ADJUSTING_ENTRY: true,
-  nr_FIXED_ASSET: true,
-  nr_MONEY_MOVEMENT: true,
-};
 
 /** The number the next document gets with these letters. */
 function nextWith(number: NumberRule, letters: string): string {
@@ -650,7 +640,7 @@ export function BusinessTab({
           <Card id="biz-numbers" title={sst(language, "nr_title")}>
             <p className="ui-small ui-muted">{sst(language, "nr21_sub")}</p>
             <div className="ui-tablewrap">
-              <table className="ui-table fit">
+              <table className="ui-table fit ui-numbering">
                 <thead>
                   <tr>
                     <th scope="col">{sst(language, "nr_doc")}</th>

@@ -412,17 +412,33 @@ html[lang="km"] .shell-group-label {
   font-weight: 500;
 }
 
+/* UI v81 round 2: the design's views are wide (#view.wide), so the work area has no largest
+   width; forms keep their own (.ui-form, .ui-split-form). */
 .shell-view {
   display: grid;
   align-content: start;
   gap: 22px;
   width: 100%;
-  max-width: 1280px;
+  min-width: 0;
   padding: 24px 24px 64px;
 }
 
 .shell-view:focus {
   outline: none;
+}
+
+/* UI v81 round 2: the design's head row (app.css .head): the title with its sub-line on the
+   left, the page's buttons on the right; the buttons wrap under on a narrow screen. */
+.shell-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.shell-head-text {
+  min-width: 0;
 }
 
 .shell-head h1 {
@@ -431,6 +447,16 @@ html[lang="km"] .shell-group-label {
   font-size: 1.75rem;
   font-weight: 600;
   line-height: 1.25;
+}
+
+.shell-head-sub:empty,
+.shell-head-actions:empty {
+  display: none;
+}
+
+.shell-head-sub > * {
+  margin: 2px 0 0;
+  color: var(--text-2);
 }
 
 html[lang="km"] .shell-head h1 {
@@ -675,4 +701,88 @@ a.shell-me-text[aria-current="page"] b {
   border-color: rgb(242 238 229 / 40%);
   background: transparent;
   color: var(--nav-text);
+}
+
+/* UI v81: the top-bar search. */
+.shell-search {
+  position: relative;
+  display: flex;
+  flex: 1 1 260px;
+  align-items: center;
+  gap: 8px;
+  max-width: 420px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-2);
+}
+
+.shell-search input {
+  flex: 1;
+  min-width: 0;
+  min-height: 40px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  outline: none;
+}
+
+.shell-search:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 25%, transparent);
+}
+
+.shell-search-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  left: 0;
+  z-index: 30;
+  margin: 0;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 12%);
+  list-style: none;
+}
+
+.shell-search-list [role="option"] {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 8px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.shell-search-list [role="option"] small {
+  margin-left: auto;
+}
+
+.shell-search-list [aria-selected="true"],
+.shell-search-list [role="option"]:hover {
+  background: var(--hover);
+}
+
+.shell-search-note {
+  padding: 12px;
+  color: var(--text-2);
+}
+
+@media (max-width: 640px) {
+  .shell-topbar {
+    flex-wrap: wrap;
+  }
+
+  .shell-search {
+    flex-basis: 100%;
+    order: 10;
+    max-width: none;
+  }
 }

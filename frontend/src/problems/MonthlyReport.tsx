@@ -5,11 +5,11 @@
 // Needs "Plan repairs" (problem_reports.plan); the server checks it again.
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { BackLink } from "../shell/backNav";
 
 import { todayInPhnomPenh, usdFromCents } from "../shell/format";
 import { Icon } from "../shell/icons";
 import { hashForPage } from "../shell/navigation";
-import { openPageInAddress } from "../shell/useHashPage";
 import type { Language } from "../signInText";
 import { monthText } from "../utilities/text";
 import { typeIcon } from "./ProblemReportsPage";
@@ -21,6 +21,7 @@ import {
 } from "./problemsClient";
 import { costText } from "./RepairCost";
 import { pt } from "./text";
+import { PageHead } from "../shell/pageHead";
 
 /** The last 12 months, newest first, as "yyyy-mm". */
 export function lastMonths(today: string): string[] {
@@ -100,18 +101,7 @@ export function MonthlyReport({
     load();
   }, [load]);
 
-  const back = (
-    <button
-      className="ui-crumb"
-      onClick={() => {
-        openPageInAddress("problems");
-      }}
-      type="button"
-    >
-      <Icon name="back" small />
-      {pt(language, "back")}
-    </button>
-  );
+  const back = <BackLink language={language} parent="problems" />;
 
   const costTable = (
     id: string,
@@ -162,7 +152,7 @@ export function MonthlyReport({
   return (
     <>
       {back}
-      <div className="ui-head">
+      <PageHead>
         <div>
           <h2>{pt(language, "m_title")}</h2>
           <p>{pt(language, "m_sub")}</p>
@@ -184,7 +174,7 @@ export function MonthlyReport({
             ))}
           </select>
         </div>
-      </div>
+      </PageHead>
       {problem !== null && (
         <div className="ui-notice warn" role="status">
           <Icon name="alert" />
