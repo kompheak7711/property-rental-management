@@ -12,7 +12,7 @@
 #   4. points each bot at the relay;
 #   5. finds the Property, the Owner account and the Staff bot's service actor, and writes the
 #      operations file the bot jobs read.
-# After it, "Start test app.command" also runs the bot jobs every minute.
+# After it, "Start test app.command" also runs the bot jobs every 10 seconds.
 #
 # No key, token or password is printed, passed as a command argument or written outside
 # .local/telegram. Running it again keeps what is already there and only redoes the rest.
