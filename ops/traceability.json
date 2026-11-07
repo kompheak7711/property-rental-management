@@ -65534,6 +65534,16 @@
       "test_path": "backend/tests/test_local_run_scripts.py",
       "status": "implemented",
       "notes": "Telegram bots on the Mac test run: tokens are typed with echo off and reach Telegram and Cloudflare only through standard input; the bot jobs read the database address from its file; the setup refuses to run without Terminal."
+    },
+    {
+      "test_id": "test_the_office_names_itself_to_the_relay",
+      "upstream_ids": [
+        "DL-125"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_jobs.py",
+      "status": "implemented",
+      "notes": "Telegram relay: the office calls the relay with its own User-Agent, because Cloudflare refuses Python's default name with 403 (owner's Mac test run 07/11/2026)."
     }
   ]
 }
