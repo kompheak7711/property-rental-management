@@ -186,6 +186,14 @@ async function sealedItems(env: ReturnType<typeof testEnv>) {
   return opened;
 }
 
+test("the scrambled code is the office's (backend tests/test_telegram_offline.py)", async () => {
+  assert.equal(
+    await linkCode(LINK_KEY, "+85512345678", "Unit 305", "s:dara kim"),
+    "fdfb978fb36198ac88c66beaa0b94a1d",
+  );
+  assert.equal(await linkCode("short", "+85512345678", "305", "s:x"), null);
+});
+
 test("phone numbers, Units and names are compared as the office does", () => {
   assert.equal(phoneE164("012 345 678"), "+85512345678");
   assert.equal(phoneE164("+855 12 345 678"), "+85512345678");
