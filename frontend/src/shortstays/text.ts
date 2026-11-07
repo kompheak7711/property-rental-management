@@ -270,6 +270,14 @@ const TEXT = {
     "បន្ទប់កំពុងសម្អាតរហូតដល់ពិនិត្យបន្ទប់រួច។",
   ],
   out_b: ["Check out", "ចេញ"],
+  // UI v81 (owner 07/11): Check out before the booked check-out day.
+  out_early_t: ["Not the check-out date", "មិនមែនថ្ងៃចេញទេ"], // new
+  out_early_b: [
+    "{0} is booked until {1} ({2} nights). Today is {3}. Check out now only if the guest is really leaving today.",
+    "{0} បានកក់រហូតដល់ {1} ({2} យប់)។ ថ្ងៃនេះ {3}។ ចុះចេញឥឡូវ លុះត្រាតែភ្ញៀវពិតជាចាកចេញថ្ងៃនេះ។",
+  ], // new
+  out_early_ok: ["Check out early", "ចុះចេញមុនថ្ងៃ"], // new
+  out_early_keep: ["Keep the stay", "រក្សាការស្នាក់នៅ"], // new
   room_t: ["Room check", "ពិនិត្យបន្ទប់"],
   room_due: ["Room check due on {0}.", "ត្រូវពិនិត្យបន្ទប់នៅថ្ងៃ {0}។"],
   room_done: ["Room checked {0}.", "បានពិនិត្យបន្ទប់ {0}។"],

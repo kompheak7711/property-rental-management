@@ -12,13 +12,24 @@ import type {
 } from "../customerClient";
 import {
   type CustomerLedgerApi,
+  type LedgerCursor,
+  type LedgerHistory,
   type LedgerPosition,
+  type LedgerSnapshot,
   ledgerMoney,
 } from "../customerLedgerClient";
 import type { LeaseResource } from "../leaseClient";
 import { dayText, momentText, todayInPhnomPenh } from "../shell/format";
 import { Icon } from "../shell/icons";
 import { hashForPage } from "../shell/navigation";
+import {
+  LatestNote,
+  RecordViewPage,
+  ViewAllButton,
+  latestOf,
+  rvt,
+  useHashView,
+} from "../shell/recordViews";
 import { Chip, type Tone } from "../shell/ui";
 import type { Language } from "../signInText";
 import { DeactivateDialog, EditContactDialog } from "./CustomerDialogs";
@@ -109,6 +120,11 @@ export function CustomerDetail({
   const [position, setPosition] = useState<LedgerPosition | null | undefined>(
     undefined,
   );
+  // UI v81 (owner 07/11): the Customer's Receipts, newest first; null when they could not be read.
+  const [receipts, setReceipts] = useState<
+    readonly LedgerHistory[] | null | undefined
+  >(undefined);
+  const view = useHashView();
   const [dialog, setDialog] = useState<"edit" | "deactivate" | null>(null);
   const [notice, setNotice] = useState<string | null>(firstNotice);
   const [warning, setWarning] = useState<string | null>(null);
@@ -143,6 +159,37 @@ export function CustomerDetail({
       .catch(() => {
         if (operation === sequence.current) setPosition(null);
       });
+    // The ledger reads oldest first: read the Receipt lines page by page (at most 1,000).
+    void (async () => {
+      const scope = { actorId, propertyId, signal: controller.signal };
+      const found: LedgerHistory[] = [];
+      let cursor: LedgerCursor | null = null;
+      let snapshot: LedgerSnapshot | undefined;
+      for (let page = 0; page < 10; page += 1) {
+        const reply = await ledgerApi.read(
+          {
+            section: "history",
+            customerId,
+            limit: 100,
+            filters: { kind: "PAYMENT_RECEIVED" },
+            ...(cursor === null ? {} : { cursor, snapshot }),
+          },
+          scope,
+        );
+        if (reply.section !== "history") return null;
+        found.push(...reply.items);
+        snapshot = reply.snapshot;
+        cursor = reply.nextCursor;
+        if (cursor === null) break;
+      }
+      return found.reverse();
+    })()
+      .then((rows) => {
+        if (operation === sequence.current) setReceipts(rows);
+      })
+      .catch(() => {
+        if (operation === sequence.current) setReceipts(null);
+      });
     return () => {
       controller.abort();
     };
@@ -151,6 +198,7 @@ export function CustomerDetail({
   useEffect(() => {
     setCustomer(null);
     setPosition(undefined);
+    setReceipts(undefined);
     return load();
   }, [load]);
 
@@ -204,6 +252,56 @@ export function CustomerDetail({
       <b className="ui-num">{unitNumber}</b>
     );
   const pet = position?.pet_deposit_usd_cents ?? "0";
+  const historyRows = [...customer.audit_history].sort((left, right) =>
+    right.occurred_at.localeCompare(left.occurred_at),
+  );
+  if (view === "history" || view === "receipts") {
+    const name = customer.legal_name;
+    return (
+      <RecordViewPage
+        language={language}
+        parent="customers"
+        parentDetail={customerId}
+        recordName={name}
+        title={rvt(
+          language,
+          view === "history" ? "history_title" : "receipts_title",
+          name,
+        )}
+      >
+        {view === "receipts" ? (
+          receipts === undefined ? (
+            <p className="ui-small ui-muted" role="status">
+              {ct(language, "loading")}
+            </p>
+          ) : receipts === null ? (
+            <p className="ui-small ui-muted">
+              {ct(language, "receipts_unknown")}
+            </p>
+          ) : receipts.length === 0 ? (
+            <p className="ui-small ui-muted">{ct(language, "receipts_none")}</p>
+          ) : (
+            <ReceiptList rows={receipts} />
+          )
+        ) : historyRows.length === 0 ? (
+          <p className="ui-small ui-muted">{ct(language, "history_none")}</p>
+        ) : (
+          <ol className="ui-timeline">
+            {historyRows.map((event) => (
+              <li key={event.event_id}>
+                <div>
+                  {historyText(language, event)}
+                  <small className="ui-num">
+                    {momentText(event.occurred_at)}
+                  </small>
+                </div>
+              </li>
+            ))}
+          </ol>
+        )}
+      </RecordViewPage>
+    );
+  }
 
   return (
     <>
@@ -389,6 +487,19 @@ export function CustomerDetail({
               <h2 id="customer-ledger">{ct(language, "ledger")}</h2>
               <Chip tone="neutral">{ct(language, "readonly")}</Chip>
             </div>
+            {/* UI v81 (owner 07/11): the statement shows only the balance due here. */}
+            {position !== undefined && position !== null && (
+              <Kv
+                rows={[
+                  [
+                    rvt(language, "balance_due"),
+                    <b className="ui-num">
+                      {ledgerMoney(position.total_owed_usd_cents)}
+                    </b>,
+                  ],
+                ]}
+              />
+            )}
             <p className="ui-small">{ct(language, "ledger_note")}</p>
             {onOpenLedger !== null && position !== null && (
               <div className="ui-qa">
@@ -399,7 +510,8 @@ export function CustomerDetail({
                   }}
                   type="button"
                 >
-                  {ct(language, "open_ledger")}
+                  <Icon name="list" small />
+                  {rvt(language, "statement_btn")}
                 </button>
               </div>
             )}
@@ -464,23 +576,48 @@ export function CustomerDetail({
               />
             )}
           </section>
-          <section aria-labelledby="customer-invoices" className="ui-card">
-            <h2 id="customer-invoices">
-              {ct(language, "open_invoices")} · {ct(language, "receipts")}
-            </h2>
-            <p className="ui-small ui-muted">
-              {ct(language, "invoices_later")}
-            </p>
+          <section aria-labelledby="customer-receipts" className="ui-card">
+            <h2 id="customer-receipts">{ct(language, "receipts")}</h2>
+            {receipts === undefined ? (
+              <p className="ui-small ui-muted" role="status">
+                {ct(language, "loading")}
+              </p>
+            ) : receipts === null ? (
+              <p className="ui-small ui-muted">
+                {ct(language, "receipts_unknown")}
+              </p>
+            ) : receipts.length === 0 ? (
+              <p className="ui-small ui-muted">
+                {ct(language, "receipts_none")}
+              </p>
+            ) : (
+              <>
+                <ReceiptList rows={latestOf(receipts)} />
+                {receipts.length > 5 && (
+                  <ViewAllButton
+                    icon="payments"
+                    label={rvt(language, "receipts_btn")}
+                    total={receipts.length}
+                    view="receipts"
+                  />
+                )}
+              </>
+            )}
           </section>
           <section aria-labelledby="customer-history" className="ui-card">
             <h2 id="customer-history">{ct(language, "history")}</h2>
-            {customer.audit_history.length === 0 ? (
+            <LatestNote
+              language={language}
+              shown={Math.min(5, historyRows.length)}
+              total={historyRows.length}
+            />
+            {historyRows.length === 0 ? (
               <p className="ui-small ui-muted">
                 {ct(language, "history_none")}
               </p>
             ) : (
               <ol className="ui-timeline">
-                {customer.audit_history.map((event) => (
+                {latestOf(historyRows).map((event) => (
                   <li key={event.event_id}>
                     <div>
                       {historyText(language, event)}
@@ -491,6 +628,13 @@ export function CustomerDetail({
                   </li>
                 ))}
               </ol>
+            )}
+            {historyRows.length > 5 && (
+              <ViewAllButton
+                label={rvt(language, "history_btn")}
+                total={historyRows.length}
+                view="history"
+              />
             )}
           </section>
         </div>
@@ -542,5 +686,33 @@ export function CustomerDetail({
         />
       )}
     </>
+  );
+}
+
+/** UI v81: Receipt lines from the Customer's ledger, newest first; each opens its Receipt. */
+function ReceiptList({ rows }: { rows: readonly LedgerHistory[] }) {
+  return (
+    <ul className="ui-apps">
+      {rows.map((row) => (
+        <li key={row.event_id}>
+          <span>
+            {row.payment_id !== null ? (
+              <a
+                className="ui-no ui-num"
+                href={hashForPage("payments", `receipt:${row.payment_id}`)}
+              >
+                {row.source_reference ?? row.payment_id}
+              </a>
+            ) : (
+              <span className="ui-num">{row.source_reference ?? "—"}</span>
+            )}
+            <small className="ui-num">{dayText(row.business_date)}</small>
+          </span>
+          <b className="ui-num">
+            {ledgerMoney(row.recorded_amount_usd_cents ?? "0")}
+          </b>
+        </li>
+      ))}
+    </ul>
   );
 }

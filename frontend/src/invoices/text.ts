@@ -517,8 +517,9 @@ const TEXT = {
     "ថ្លៃដាច់ដោយឡែក ត្រូវបង់ភ្លាម។ វាមិនមែនជាវិក្កយបត្រ ហើយមិនប្តូរ {0} ទេ។",
   ],
   lt_pay: ["Receive payment", "ទទួលការបង់ប្រាក់"],
-  lt_fix: ["Reduce or waive", "កាត់បន្ថយ ឬលើកលែង"],
-  mgr_badge: ["MANAGER", "អ្នកគ្រប់គ្រង"],
+  // UI v81 (owner 07/11): short button caption; the role shows beside it.
+  lt_fix: ["Adjust charge", "កែថ្លៃ"], // new
+  mgr_badge: ["Manager only", "សម្រាប់អ្នកគ្រប់គ្រងប៉ុណ្ណោះ"], // new
   // new
   lt_locked: [
     "Only a Manager or the Owner can do this.",

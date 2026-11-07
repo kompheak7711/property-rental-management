@@ -324,7 +324,9 @@ describe("Letters page (V1-058 R3)", () => {
     const notice = within(u103).getByRole("link", {
       name: /Termination notice/,
     });
-    expect(notice.textContent).toContain("MANAGER");
+    // UI v81: the role is a hint beside the button, not inside it.
+    expect(notice.textContent).not.toContain("Manager only");
+    expect(within(u103).getByText("Manager only")).toBeTruthy();
     expect(notice.getAttribute("href")).toBe("#/leases/terminate%3Alease-U103");
 
     // A card filters the table.

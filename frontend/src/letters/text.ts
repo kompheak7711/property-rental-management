@@ -63,7 +63,7 @@ const TEXT = {
   rec: ["Record letter", "កត់ត្រាលិខិត"],
   wait30: ["Wait for day 30 ({0})", "រង់ចាំថ្ងៃទី៣០ ({0})"],
   term: ["Termination notice", "លិខិតបញ្ចប់កិច្ចសន្យា"],
-  mgr_badge: ["MANAGER", "អ្នកគ្រប់គ្រង"],
+  mgr_badge: ["Manager only", "សម្រាប់អ្នកគ្រប់គ្រងប៉ុណ្ណោះ"], // new
   // new
   no_step: ["Nothing to do now", "គ្មានអ្វីត្រូវធ្វើឥឡូវ"],
   none: [

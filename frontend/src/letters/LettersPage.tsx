@@ -460,19 +460,22 @@ function RentLettersTab({
                           )
                         ) : a.serious_default_recorded ? (
                           canTerminate && row.lease !== undefined ? (
-                            <a
-                              className="ui-btn ui-btn-wrap"
-                              href={hashForPage(
-                                "leases",
-                                `terminate:${row.lease.lease_id}`,
-                              )}
-                            >
-                              <Icon name="x" />
-                              {ltr(language, "term")}
-                              <span className="ui-badge">
+                            <>
+                              <a
+                                className="ui-btn ui-btn-wrap"
+                                href={hashForPage(
+                                  "leases",
+                                  `terminate:${row.lease.lease_id}`,
+                                )}
+                              >
+                                <Icon name="x" />
+                                {ltr(language, "term")}
+                              </a>
+                              {/* UI v81: the role is a hint beside the button. */}
+                              <span className="ui-small ui-muted ui-role-hint">
                                 {ltr(language, "mgr_badge")}
                               </span>
-                            </a>
+                            </>
                           ) : (
                             <span className="ui-small ui-muted">
                               {ltr(language, "no_step")}

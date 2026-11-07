@@ -2761,3 +2761,9 @@ a.ui-kpi.ui-home-kpi {
     animation: none;
   }
 }
+
+/* UI v81: a role hint sits beside its button, never inside it. */
+.ui-role-hint {
+  align-self: center;
+  margin-left: 4px;
+}

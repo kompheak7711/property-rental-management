@@ -163,6 +163,11 @@ const TEXT = {
     "Each unpaid Invoice and the latest Receipts show here when Invoices and Payments are rebuilt (step R5).",
     "វិក្កយបត្រមិនទាន់បង់នីមួយៗ និងបង្កាន់ដៃចុងក្រោយនឹងបង្ហាញនៅទីនេះ ពេលរៀបចំវិក្កយបត្រ និងការបង់ប្រាក់ឡើងវិញ (ជំហាន R5)។",
   ],
+  receipts_none: ["No Receipts yet.", "មិនទាន់មានបង្កាន់ដៃទេ។"], // new
+  receipts_unknown: [
+    "The Receipts could not be read. Try again later.",
+    "មិនអាចអានបង្កាន់ដៃបានទេ។ សូមព្យាយាមម្តងទៀតពេលក្រោយ។",
+  ], // new
   history: ["History", "ប្រវត្តិ"],
   // new
   history_none: ["No history yet.", "មិនទាន់មានប្រវត្តិ។"],

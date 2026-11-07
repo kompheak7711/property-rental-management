@@ -12,7 +12,7 @@ import { DateInput } from "../shell/DateInput";
 import { dayText, momentText, usdFromCents } from "../shell/format";
 import { Icon } from "../shell/icons";
 import { hashForPage } from "../shell/navigation";
-import { Chip, type Tone } from "../shell/ui";
+import { Chip, Dialog, type Tone } from "../shell/ui";
 import type { Language } from "../signInText";
 import {
   addDays,
@@ -414,11 +414,17 @@ export function CheckInCard({
 export function CheckOutCard({
   language,
   booking,
+  today,
   may,
   busy,
   onStep,
 }: StepsProps) {
+  // UI v81 (owner 07/11): Check out before the booked check-out day asks first.
+  const [early, setEarly] = useState(false);
   if (booking.status !== "CHECKED_IN") return null;
+  const checkOut = () => {
+    onStep("check-out", { version: booking.version });
+  };
   return (
     <section aria-labelledby="ss-out" className="ui-card">
       <h2 id="ss-out">{st(language, "out_t")}</h2>
@@ -429,7 +435,8 @@ export function CheckOutCard({
             className="ui-btn primary"
             disabled={busy}
             onClick={() => {
-              onStep("check-out", { version: booking.version });
+              if (today < booking.check_out_on) setEarly(true);
+              else checkOut();
             }}
             type="button"
           >
@@ -437,6 +444,41 @@ export function CheckOutCard({
             {st(language, "out_b")}
           </button>
         </div>
+      )}
+      {early && (
+        <Dialog
+          actions={
+            <button
+              className="ui-btn danger"
+              onClick={() => {
+                setEarly(false);
+                checkOut();
+              }}
+              type="button"
+            >
+              {st(language, "out_early_ok")}
+            </button>
+          }
+          closeLabel={st(language, "out_early_keep")}
+          onClose={() => {
+            setEarly(false);
+          }}
+          title={st(language, "out_early_t")}
+        >
+          <div className="ui-notice warn" role="note">
+            <Icon name="alert" />
+            <p>
+              {st(
+                language,
+                "out_early_b",
+                booking.unit_number,
+                dayText(booking.check_out_on),
+                String(booking.nights),
+                dayText(today),
+              )}
+            </p>
+          </div>
+        </Dialog>
       )}
     </section>
   );
