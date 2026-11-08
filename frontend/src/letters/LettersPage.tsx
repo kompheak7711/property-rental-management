@@ -7,7 +7,7 @@ import "../shell/screens.css";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { LeaseApi, LeaseResource } from "../leaseClient";
-import { loadLeasesData } from "../leases/leasesData";
+import { leaseNo, loadLeasesData } from "../leases/leasesData";
 import { dayText, todayInPhnomPenh, usdFromCents } from "../shell/format";
 import { Icon } from "../shell/icons";
 import { hashForPage } from "../shell/navigation";
@@ -637,7 +637,7 @@ function WarningsTab({
                           className="ui-no ui-num"
                           href={hashForPage("leases", lease.lease_id)}
                         >
-                          {ltr(language, "lease_name", lease.unit_number)}
+                          {ltr(language, "lease_name", leaseNo(lease))}
                         </a>
                         <span className="ui-sub2">
                           {lease.primary_tenant_name}

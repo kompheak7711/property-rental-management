@@ -924,6 +924,13 @@ table.ui-table a.ui-no {
   overflow-wrap: anywhere;
 }
 
+/* Owner 08/11/2026: amounts, dates and words in a value list use the design's weight (600).
+   A <b> or <strong> inside a value took the browser's "bolder" and came out heavier than the
+   design; it now keeps the value's weight on every page. A total sets its own weight. */
+.shell-view dd :where(b, strong) {
+  font-weight: inherit;
+}
+
 .ui-kv dd.note {
   grid-column: 2;
   margin-top: -4px;
@@ -1129,6 +1136,8 @@ table.ui-table a.ui-no {
 
 .ui-fact b {
   font-size: 1.05rem;
+  /* Design v81 .facts b: the figures in a facts row are 600, not bold. */
+  font-weight: 600;
 }
 
 .ui-grp h4 {

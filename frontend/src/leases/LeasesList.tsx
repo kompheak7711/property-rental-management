@@ -18,6 +18,7 @@ import {
   cardsOf,
   endingLimit,
   kindOf,
+  leaseNo,
   renewedIds,
   sortLeases,
 } from "./leasesData";
@@ -150,7 +151,7 @@ export function LeasesList({
               <table className="ui-table">
                 <thead>
                   <tr>
-                    <th scope="col">{lt(language, "unit")}</th>
+                    <th scope="col">{lt(language, "col_lease")}</th>
                     <th scope="col">{lt(language, "primary")}</th>
                     <th scope="col">{lt(language, "period")}</th>
                     <th className="r" scope="col">
@@ -197,7 +198,7 @@ export function LeasesList({
                               open(id);
                             }}
                           >
-                            {lease.unit_number}
+                            {leaseNo(lease)}
                           </a>
                         </td>
                         <td>

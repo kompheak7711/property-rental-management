@@ -1234,4 +1234,24 @@ describe("Invoices page (V1-058 R5)", () => {
     expect(screen.queryByRole("button", { name: "Adjust" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Void" })).toBeNull();
   });
+
+  it("TEST-FE-1924 Owner 08/11/2026: the Invoice page names its Lease by the Lease number", async () => {
+    const numbered = {
+      ...lease("lease-101", "U101", "cust-sok", "Sok Dara"),
+      lease_number: "U101L0026",
+    };
+    show({
+      leases: {
+        list: vi
+          .fn()
+          .mockResolvedValue({ items: [numbered], next_cursor: null }),
+      },
+    });
+    fireEvent.click(await screen.findByRole("link", { name: "INV260001" }));
+    expect(
+      (
+        await screen.findByRole("link", { name: "Open Lease U101L0026" })
+      ).getAttribute("href"),
+    ).toBe("#/leases/lease-101");
+  });
 });

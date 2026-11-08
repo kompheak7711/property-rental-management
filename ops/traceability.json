@@ -65716,16 +65716,6 @@
       "notes": "UI v81 round 3 Home Tasks cards: the card named in the address (#/home?tasks=later) opens at once; with nothing overdue no list is open and the Overdue count is not red."
     },
     {
-      "test_id": "TEST-FE-1916",
-      "upstream_ids": [
-        "UI-008"
-      ],
-      "test_level": "UI component",
-      "test_path": "frontend/src/shell/tableFit.test.ts",
-      "status": "implemented",
-      "notes": "UI v81 round 3 list pages: the main table's scrolling area is planned from the screen (fit on a desktop, page scroll with stuck headings on a phone or a short screen, plain when the table is wider than its box), the main table is the visible one with the most rows, a record page is left alone, and the scroll place is kept for Back."
-    },
-    {
       "test_id": "test_the_office_names_itself_to_the_relay",
       "upstream_ids": [
         "DL-125"
@@ -65997,16 +65987,6 @@
       "notes": "UI v81 pilot, Lease page Customer card: the Primary Tenant with the Lease status, the phone, Paid on time (x of y Invoices), the Customer Credit and the Unpaid Invoices from one ledger line scoped to the Property, and Open Customer; without the Customers right no link, and a client without the ledger or reports says the rows could not be read."
     },
     {
-      "test_id": "TEST-FE-1922",
-      "upstream_ids": [
-        "UI-008"
-      ],
-      "test_level": "E2E",
-      "test_path": "frontend/e2e/screens.spec.ts",
-      "status": "implemented",
-      "notes": "UI v81 screen checks (owner 08/11/2026 06:55 point 4): every screen of e2e/screens.ts at 390, 768, 1366 x 768, 1440 x 900 and 1920 x 1080 against the built app with replayed server answers; fails on horizontal page overflow, a button, link or tab under 44 x 44 px, colour contrast under 4.5:1 (axe-core), cut-off text, a role badge inside a button, a card alone in a grid row on a desktop, and two stacked tables. Runs in CI (job screens)."
-    },
-    {
       "test_id": "test_the_customer_paid_on_time_needs_invoices_read_and_gives_the_two_counts",
       "upstream_ids": [
         "UI-008"
@@ -66015,6 +65995,76 @@
       "test_path": "backend/tests/test_reports_api.py",
       "status": "implemented",
       "notes": "UI v81 pilot: GET /properties/{id}/customers/{id}/paid-on-time needs a session and invoices.read, gives on_time and invoice_count, refuses query parameters and a bad id, and is never cached. The database function app.customer_paid_on_time (migration 20270711_362) is checked in test_reports_home_migration.py."
+    },
+    {
+      "test_id": "test_a_drafted_lease_gets_the_next_number_and_the_read_names_the_person",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_lease_number_migration.py",
+      "status": "implemented",
+      "notes": "UI v81 (owner 08/11/2026 08:14, migration 20270712_363): a Lease drafted through the API gets its Property's next running number with the Unit number in front (U101L0026); the Lease read carries lease_number, and the History step of the draft names the person (actor_name from the user account) with no subject."
+    },
+    {
+      "test_id": "test_a_lease_number_is_written_once_and_the_counter_only_moves_up_by_one",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_lease_number_migration.py",
+      "status": "implemented",
+      "notes": "UI v81 (migration 20270712_363): a Lease number cannot be changed or deleted, and a Property's counter cannot jump; each is refused by the database as an integrity violation."
+    },
+    {
+      "test_id": "test_the_runtime_role_reads_the_numbers_but_cannot_write_them",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_lease_number_migration.py",
+      "status": "implemented",
+      "notes": "UI v81 (migration 20270712_363): the runtime role may read Lease numbers but may not add one or read the counters; only the database trigger writes them."
+    },
+    {
+      "test_id": "TEST-FE-1923",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/leases/LeasesPage.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 (owner 08/11/2026 08:14): the Lease page title and the Leases list show the Lease number (U101L0026), a Lease read without one names its Unit; the History names the person of each step (Draft made by ..., Signed by ... with Recorded by ...), and the History (n) button shows even with two steps."
+    },
+    {
+      "test_id": "TEST-FE-1924",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/invoices/InvoicesPage.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 (owner 08/11/2026 08:14): the Invoice page's Open Lease button names the Lease number and opens the Lease."
+    },
+    {
+      "test_id": "test_the_birthdays_list_needs_customers_read_and_lists_the_rows",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_reports_api.py",
+      "status": "implemented",
+      "notes": "UI v81 round 4: GET /properties/{id}/birthdays needs a session and customers.read, lists each Customer's next birthday with the role and the Unit, refuses query parameters, is never cached, and still answers when the store is down."
+    },
+    {
+      "test_id": "test_the_birthdays_read_and_the_paid_on_time_and_birthdays_cards",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_reports_home_migration.py",
+      "status": "implemented",
+      "notes": "UI v81 round 4 and pilot (migrations 20270710_361 and 20270711_362): on PostgreSQL the Primary Tenant of a running Lease with a date of birth is listed with the Unit and the next birthday, in date order (29 February falls on 28 February in other years); customer_paid_on_time gives two counts; both refuse another Property; Home shows the Paid on time and Birthdays cards only with their sections."
     }
   ]
 }

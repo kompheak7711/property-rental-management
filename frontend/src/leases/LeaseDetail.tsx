@@ -73,6 +73,7 @@ import {
   initialPeriodEnd,
   initialRent,
   kindOf,
+  leaseNo,
 } from "./leasesData";
 import { hasLeaseText, lt } from "./text";
 import {
@@ -95,6 +96,48 @@ function Kv({ rows }: { rows: [string, ReactNode][] }) {
         </div>
       ))}
     </dl>
+  );
+}
+
+/**
+ * One step of the Lease History (owner 08/11/2026): the step with the person's name, as in
+ * design v81 ("Draft made by Chan Sophea", "Signed by Keo Vannak"), the note under it, then the
+ * time. A Signer step names the Customer too; the person who recorded it goes under it.
+ */
+function HistoryStep({
+  event,
+  language,
+}: {
+  event: LeaseTimelineEvent;
+  language: Language;
+}) {
+  const what = eventName(language, event.event_kind);
+  const actor = event.actor_name ?? null;
+  const subject = event.subject_name ?? null;
+  const signed = event.event_kind === "lease.signer.sign" && subject !== null;
+  const title = signed
+    ? lt(language, "h_signed_by", subject)
+    : actor === null
+      ? what
+      : lt(language, "h_by", what, actor);
+  const lines = [
+    ...(signed && actor !== null
+      ? [lt(language, "h_recorded_by", actor)]
+      : !signed && subject !== null
+        ? [subject]
+        : []),
+    ...(event.reason.trim() === "" ? [] : [event.reason]),
+  ];
+  return (
+    <div>
+      {title}
+      {lines.map((line, index) => (
+        <span className="ui-sub2" key={index}>
+          {line}
+        </span>
+      ))}
+      <small className="ui-num">{momentText(event.occurred_at)}</small>
+    </div>
   );
 }
 
@@ -167,6 +210,8 @@ export function LeaseDetail({
   });
   const [missing, setMissing] = useState(false);
   const [successorId, setSuccessorId] = useState<string | null>(null);
+  // UI v81 (owner 08/11/2026): the Lease before and after this one, read for their numbers.
+  const [linked, setLinked] = useState<Record<string, LeaseResource>>({});
   const [historyIncomplete, setHistoryIncomplete] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
   const [dialog, setDialog] = useState<
@@ -325,6 +370,23 @@ export function LeaseDetail({
     load();
   }, [load]);
 
+  const predecessorId = lease?.predecessor_lease_id ?? null;
+  useEffect(() => {
+    let live = true;
+    for (const id of [predecessorId, successorId]) {
+      if (id === null) continue;
+      void Promise.resolve()
+        .then(() => api.get(id))
+        .then((found) => {
+          if (live) setLinked((previous) => ({ ...previous, [id]: found }));
+        })
+        .catch(() => undefined);
+    }
+    return () => {
+      live = false;
+    };
+  }, [api, predecessorId, successorId]);
+
   const back = <BackLink language={language} parent="leases" />;
   const failure = loadFailed && (
     <div className="ui-notice warn" role="status">
@@ -469,6 +531,15 @@ export function LeaseDetail({
       {lt(language, "from_to", dayText(from), dayText(to))}
     </span>
   );
+  /** The period of a linked Lease (design v81 "Renewal of"), once it is read. */
+  const linkedPeriod = (id: string) => {
+    const other = linked[id];
+    return other === undefined ? undefined : (
+      <span className="ui-num">
+        {dayText(other.start_date)} – {dayText(other.end_date)}
+      </span>
+    );
+  };
 
   // Letters opens "#/leases/terminate:<id>"; once the dialog is done a reload shows the Lease.
   function leaveTerminateAddress() {
@@ -545,7 +616,7 @@ export function LeaseDetail({
   }
 
   if (view === "history") {
-    const name = lt(language, "title", lease.unit_number);
+    const name = lt(language, "title", leaseNo(lease));
     return (
       <RecordViewPage
         language={language}
@@ -565,15 +636,7 @@ export function LeaseDetail({
           <ol className="ui-timeline">
             {history.map((event) => (
               <li key={event.event_id}>
-                <div>
-                  {eventName(language, event.event_kind)}
-                  {event.reason.trim() !== "" && (
-                    <span className="ui-sub2">{event.reason}</span>
-                  )}
-                  <small className="ui-num">
-                    {momentText(event.occurred_at)}
-                  </small>
-                </div>
+                <HistoryStep event={event} language={language} />
               </li>
             ))}
           </ol>
@@ -710,7 +773,7 @@ export function LeaseDetail({
             )}
           </>
         }
-        title={lt(language, "title", lease.unit_number)}
+        title={lt(language, "title", leaseNo(lease))}
       />
       {failure}
       {warning !== null && (
@@ -850,15 +913,18 @@ export function LeaseDetail({
                           label: lt(language, "renewal_of"),
                           value: (
                             <a
-                              className="ui-no"
+                              className="ui-no ui-num"
                               href={hashForPage(
                                 "leases",
                                 lease.predecessor_lease_id,
                               )}
                             >
-                              {lt(language, "title", lease.unit_number)}
+                              {leaseNo(
+                                linked[lease.predecessor_lease_id] ?? lease,
+                              )}
                             </a>
                           ),
+                          note: linkedPeriod(lease.predecessor_lease_id),
                         },
                       ]
                     : []),
@@ -869,12 +935,13 @@ export function LeaseDetail({
                           label: lt(language, "renewed_by"),
                           value: (
                             <a
-                              className="ui-no"
+                              className="ui-no ui-num"
                               href={hashForPage("leases", successorId)}
                             >
-                              {lt(language, "title", lease.unit_number)}
+                              {leaseNo(linked[successorId] ?? lease)}
                             </a>
                           ),
+                          note: linkedPeriod(successorId),
                         },
                       ]
                     : []),
@@ -1275,20 +1342,13 @@ export function LeaseDetail({
                 <ol className="ui-timeline">
                   {latestOf(history).map((event) => (
                     <li key={event.event_id}>
-                      <div>
-                        {eventName(language, event.event_kind)}
-                        {event.reason.trim() !== "" && (
-                          <span className="ui-sub2">{event.reason}</span>
-                        )}
-                        <small className="ui-num">
-                          {momentText(event.occurred_at)}
-                        </small>
-                      </div>
+                      <HistoryStep event={event} language={language} />
                     </li>
                   ))}
                 </ol>
               )}
-              {history.length > 5 && (
+              {/* Owner 08/11/2026: the History button is always there, with its count. */}
+              {history.length > 0 && (
                 <ViewAllButton
                   label={rvt(language, "history_btn")}
                   total={history.length}

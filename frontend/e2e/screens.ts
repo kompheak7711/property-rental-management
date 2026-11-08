@@ -18,7 +18,7 @@ export const SCREENS: readonly Screen[] = [
     name: "lease-details",
     hash: "#/leases/7510dfbf-1307-4e67-a858-88ea6fe623fa",
     fixture: "pilot",
-    ready: "Lease · U206",
+    ready: "Lease · U206L0022",
   },
   {
     name: "new-lease",

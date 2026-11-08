@@ -415,7 +415,8 @@ describe("Leases list", () => {
         .getAllByRole("columnheader")
         .map((cell) => cell.textContent),
     ).toEqual([
-      "Unit",
+      // UI v81 (owner 08/11/2026): the first column names the Lease by its number.
+      "Lease",
       "Primary Tenant",
       "Period",
       "Monthly Rent",
@@ -4068,5 +4069,77 @@ describe("Add occupant (DL-102)", () => {
         "The Customers could not be loaded. Close and try again.",
       ),
     ).toBeInTheDocument();
+  });
+
+  it("TEST-FE-1923 Owner 08/11/2026: the Lease number is in the title and the list, the History names the person of each step, and the History button shows even with two steps", async () => {
+    window.location.hash = "#/leases/lease-U101";
+    const numbered = lease("U101", {
+      lease_number: "U101L0026",
+      timeline: [
+        {
+          event_id: "event-1",
+          event_kind: "lease.draft",
+          occurred_at: "2026-02-20T03:00:00Z",
+          reason: "New Lease",
+          actor_id: "actor-1",
+          actor_name: "Chan Sophea",
+          subject_name: null,
+          source_reference: null,
+          source_href: null,
+        },
+        {
+          event_id: "event-2",
+          event_kind: "lease.signer.sign",
+          occurred_at: "2026-03-01T03:00:00Z",
+          reason: "",
+          actor_id: "actor-2",
+          actor_name: "Chan Dara",
+          subject_name: "Keo Vannak",
+          source_reference: null,
+          source_href: null,
+        },
+      ],
+    });
+    show(
+      api({
+        get: vi.fn().mockResolvedValue(numbered),
+        list: vi.fn().mockResolvedValue({
+          items: [numbered, lease("U102")],
+          next_cursor: null,
+          can_create: true,
+        }),
+      }),
+    );
+
+    expect(
+      await screen.findByRole("heading", { name: "Lease · U101L0026" }),
+    ).toBeInTheDocument();
+    const history = screen.getByRole("region", { name: "History" });
+    const steps = within(history).getAllByRole("listitem");
+    expect(steps).toHaveLength(2);
+    expect(steps[0]).toHaveTextContent(
+      "Signed by Keo VannakRecorded by Chan Dara",
+    );
+    expect(steps[1]).toHaveTextContent("Draft made by Chan SopheaNew Lease");
+    expect(
+      within(history).getByRole("button", { name: /^History/ }),
+    ).toHaveTextContent("History (2)");
+
+    cleanup();
+    window.location.hash = "#/leases";
+    show(
+      api({
+        list: vi.fn().mockResolvedValue({
+          items: [numbered, lease("U102")],
+          next_cursor: null,
+          can_create: true,
+        }),
+      }),
+    );
+    expect(
+      await screen.findByRole("link", { name: "U101L0026" }),
+    ).toHaveAttribute("href", "#/leases/lease-U101");
+    // A Lease read without a number still names its Unit.
+    expect(screen.getByRole("link", { name: "U102" })).toBeInTheDocument();
   });
 });

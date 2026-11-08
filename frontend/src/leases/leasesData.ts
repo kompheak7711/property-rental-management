@@ -227,4 +227,13 @@ export function initialPeriodEnd(start: string, initial: InitialRent): string {
   return last.toISOString().slice(0, 10);
 }
 
+/** The Lease's name: its Lease number (U101L0026), or the Unit number for a Lease read before
+ *  the numbers came (owner 08/11/2026). */
+export function leaseNo(lease: {
+  lease_number?: string | null;
+  unit_number: string;
+}): string {
+  return lease.lease_number ?? lease.unit_number;
+}
+
 export { addDays, daysBetween };

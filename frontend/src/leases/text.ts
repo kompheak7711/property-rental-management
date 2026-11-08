@@ -328,6 +328,12 @@ const TEXT = {
   ],
   // new
   e_other: ["Lease event", "ព្រឹត្តិការណ៍កិច្ចសន្យា"],
+  // UI v81 (owner 08/11/2026): History names the person of every step.
+  h_by: ["{0} by {1}", "{0} ដោយ {1}"], // new
+  // UI v81 (owner 08/11/2026): the Leases list names each Lease by its number.
+  col_lease: ["Lease", "កិច្ចសន្យា"], // new
+  h_signed_by: ["Signed by {0}", "បានចុះហត្ថលេខាដោយ {0}"], // new
+  h_recorded_by: ["Recorded by {0}", "កត់ត្រាដោយ {0}"], // new
   // new
   records: ["Earlier Lease forms", "ទម្រង់កិច្ចសន្យាពីមុន"],
   // new

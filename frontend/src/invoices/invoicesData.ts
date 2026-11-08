@@ -19,6 +19,8 @@ export interface InvoicesData {
   phones: ReadonlyMap<string, string>;
   /** Lease id → Unit number. */
   leaseUnits: ReadonlyMap<string, string>;
+  /** Lease id → Lease number (U101L0026), where the Lease has one. */
+  leaseNumbers?: ReadonlyMap<string, string>;
   /** Customer id → the Unit of their newest signed Lease, for an Invoice with no Lease. */
   customerUnits: ReadonlyMap<string, string>;
   /** Customer id → their newest signed Lease, which a one-time charge is billed under. */
@@ -87,6 +89,7 @@ export async function loadInvoicesData(
       phones.set(customer.customer_id, customer.phone_number);
   }
   const leaseUnits = new Map<string, string>();
+  const leaseNumbers = new Map<string, string>();
   const customerUnits = new Map<string, string>();
   const customerLeases = new Map<string, string>();
   // Oldest first, so the newest signed Lease of a Customer is the one kept.
@@ -95,6 +98,8 @@ export async function loadInvoicesData(
   );
   for (const lease of byStart) {
     leaseUnits.set(lease.lease_id, lease.unit_number);
+    if (lease.lease_number)
+      leaseNumbers.set(lease.lease_id, lease.lease_number);
     if (!names.has(lease.primary_tenant_id))
       names.set(lease.primary_tenant_id, lease.primary_tenant_name);
     if (lease.status !== "DRAFTED" && lease.status !== "CANCELLED") {
@@ -107,6 +112,7 @@ export async function loadInvoicesData(
     names,
     phones,
     leaseUnits,
+    leaseNumbers,
     customerUnits,
     customerLeases,
     capabilities,

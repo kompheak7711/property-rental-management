@@ -437,3 +437,46 @@ First run on the pilot: the Back link (38 px tall), the inline links (39 px) and
 1. Lease number: the design shows "Lease · U101L0026"; the app has no Lease number. Should Leases get a document number (prefix, numbering rule), or does the title stay "Lease · <Unit>"?
 2. Print Lease for a signed Lease: which document should print (the signed agreement, the draft form, or nothing)?
 3. History names: should the Lease timeline name the person who did each step ("Signed by Keo Vannak")? The timeline read has no actor name today.
+
+## Round 5b (owner 08/11/2026 08:14): pilot approved, two fixes and three answers
+
+The owner approved the pilot with two fixes and answered the three open questions. No design change.
+
+### Fixes
+
+| Fix | What changed | Where |
+|---|---|---|
+| History button | The "History (n)" button is always at the bottom of the History card, also with 5 steps or fewer; it opens the full History | Lease page (the other pages get it in their module batch) |
+| Font weight | A `<b>` or `<strong>` inside a value took the browser's "bolder" (900 on a 600 value), so amounts, dates, the "Then…" text and "Received" were heavier than the design. One shared rule now keeps the value's weight (600, design `.kv2 dd`) on every page; the figures in a facts row are 600 as in design `.facts b`. Measured on the Lease page: Initial Rent, Due date, Then and Received are 600, the same as the design | `screens.css` (shared, every page) |
+
+### Answers
+
+| Question | Owner's answer | What was built |
+|---|---|---|
+| Lease number | Unit + "L" + 4-digit running number (U101L0026); existing Leases numbered by Start Date; shown in the title, on the Leases list, and on Notices and Invoices where a Lease is named; a new migration that only adds the number | **Migration 20270712_363** (see below). The Lease read has `lease_number`. Shown in the Lease title and its windows (Sign, Edit, Cancel, Move-in, Receive deposit, Terminate, Print draft), the Leases list (column "Lease"), Renewal of / Renewed by, the Notices pages, and the Invoice page's "Open Lease U101L0026" button. A Lease read without a number still names its Unit |
+| Print Lease | It will print the signed agreement with the Lease's details; the agreement text is still with the lawyer, so do not build it now | Not built; the button stays out. **Open question: waiting for the final agreement text** |
+| History names | Name the person for every step ("Draft made by Chan Sophea", "Signed by Keo Vannak"), from the name already stored with each step, on every page's History | Lease History done: each step reads "<step> by <name>"; a Signer's signature reads "Signed by <Signer>" with "Recorded by <name>" under it. The name is the user account's display name stored for the person who did the step; nothing is copied or changed. The other pages get the names in their module batch |
+
+### Migration 20270712_363 (the only data change of this round)
+
+- New table `app.lease_numbers` (Lease, Property, running number, Lease number, time given). Append-only: a change, a delete or a truncate is refused.
+- New table `app.lease_number_counters`, one row per Property. It only moves up by one.
+- An AFTER INSERT trigger on `app.leases` gives each new Lease the next number of its Property when it is drafted. Two drafts at the same time never share a number (the counter row is locked).
+- The Leases already recorded were numbered once, per Property, in order of Start Date, then the day they were drafted. No existing row of any table is changed.
+- The number is written once: a Unit renamed later keeps the old number on its earlier Leases. A cancelled draft keeps its number, so the numbers may have gaps.
+- The app's own database role may read the numbers but not write them or read the counters. The migration cannot be rolled back (forward-only).
+- Decision log: DL-220 (wording sent for a separate docs change).
+
+### Sheets
+
+The Lease sheets were made again at all five sizes (390, 768, 1366 × 768, 1440 × 900, 1920 × 1080): `/mnt/project-files/ui-design/pilot-sheets/sheet-lease-<width>.png` and `sheet-newlease-<width>.png`. Both pages pass the screen check at all five sizes.
+
+Lease details, differences left after this round:
+
+| Part | Design v81 | App | Why |
+|---|---|---|---|
+| Title | "Lease · U101L0026" | "Lease · U206L0022" (the sample Lease) | Same rule; different sample |
+| Print Lease | A button | No button | Owner 08/11: waiting for the final agreement text |
+| History lines | "Signed by Keo Vannak." with the time | "Signed by Keo Vannak", "Recorded by …" and the note under it, then the time | The note (reason) the person wrote is kept |
+
+Tests: TEST-FE-1923 (Lease number in the title and list, History names, History button with two steps), TEST-FE-1924 (Invoice page Open Lease with the number); backend `test_lease_number_migration.py` (the next number and the names in the read; written once; the counter moves by one; the app role reads only).

@@ -32,7 +32,7 @@ def actor(*capabilities: str, property_id: uuid.UUID = PROPERTY) -> Authenticate
 
 class FakeStore:
     def __init__(self, fail: bool = False) -> None:
-        self.calls: list[tuple[uuid.UUID, uuid.UUID, tuple[str, ...]]] = []
+        self.calls: list[tuple[uuid.UUID, uuid.UUID, tuple[object, ...]]] = []
         self.fail = fail
 
     def home_page(

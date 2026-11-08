@@ -457,6 +457,8 @@ const TEXT = {
   // new
   void_done: ["The Invoice is void.", "វិក្កយបត្រទុកជាមោឃៈហើយ។"],
   open_lease: ["Open Lease", "បើកកិច្ចសន្យា"],
+  // UI v81 (owner 08/11/2026): the Lease number where a Lease is named.
+  open_lease_no: ["Open Lease {0}", "បើកកិច្ចសន្យា {0}"],
   // new
   all_for: ["All Invoices for {0}", "វិក្កយបត្រទាំងអស់សម្រាប់ {0}"],
   // new

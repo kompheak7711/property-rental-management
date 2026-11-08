@@ -341,6 +341,10 @@ export function InvoiceDetail({
   const state = stateOf(invoice, today);
   const name = data?.names.get(invoice.customer_id) ?? null;
   const unit = data === null ? "" : unitOf(data, invoice);
+  const leaseNumber =
+    invoice.lease_id === null
+      ? undefined
+      : data?.leaseNumbers?.get(invoice.lease_id);
   const owed = Math.max(0, cents(invoice.outstanding_balance));
   const history: [string, string][] = [];
   const made =
@@ -644,7 +648,9 @@ export function InvoiceDetail({
                   className="ui-btn"
                   href={hashForPage("leases", invoice.lease_id)}
                 >
-                  {ivt(language, "open_lease")}
+                  {leaseNumber === undefined
+                    ? ivt(language, "open_lease")
+                    : ivt(language, "open_lease_no", leaseNumber)}
                 </a>
               )}
               <a
