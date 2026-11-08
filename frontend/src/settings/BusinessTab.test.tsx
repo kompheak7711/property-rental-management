@@ -258,6 +258,10 @@ function show(api = apiOf(), language: "en" | "km" = "en") {
 }
 
 const card = (name: string) => screen.getByRole("region", { name });
+/** UI v81 round 4: opens a sub-tab of the Business tab (its pill shows the row count too). */
+const openSub = (name: string) => {
+  fireEvent.click(screen.getByRole("tab", { name: new RegExp(`^${name}`) }));
+};
 const pairs = (region: HTMLElement) =>
   Array.from(region.querySelectorAll("dt")).map(
     (term) =>
@@ -287,28 +291,38 @@ describe("Settings: Business", () => {
       "Address: Street 271, Phnom Penh",
       "Rentable Units: 2Counted from the Units list each time. Never entered.",
     ]);
-    expect(pairs(card("General"))).toEqual([
-      "Business name: Not givenCan differ from the property name.",
+    expect(pairs(card("Business"))).toEqual([
+      "Business name: Not setCan differ from the property name.",
     ]);
+    // UI v81 round 4: the tables sit on their own sub-tabs; the pills count their rows.
+    expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual([
+      "General",
+      "Business rules4",
+      "Invoice types2",
+      "Document numbering2",
+    ]);
+    openSub("Business rules");
     const rules = card("Business rules");
     expect(
       rowsOf(within(rules).getByRole("table", { name: "Billing" })),
     ).toEqual([
       "Other Invoices due | 7 days after issue | — | Edit",
-      "Meters read on Not used yet | Day 24 | 01/01/2026 | Edit",
+      "Meters read on Not in use | 24th of each month | 01/01/2026 | Edit",
       "Late-payment charge | 10%From 01/12/2026: 5% | 01/01/2026 | Edit",
     ]);
     expect(
       rowsOf(within(rules).getByRole("table", { name: "Prices" })),
     ).toEqual([
-      "Round prices up to Not used yet | $0.10 | 01/01/2026 | Edit",
-      "Highest mark-up Not used yet | Not set | — | Edit",
+      "Round prices up to Not in use | $0.10 | 01/01/2026 | Edit",
+      "Highest mark-up Not in use | Not set | — | Edit",
     ]);
     expect(within(rules).queryByRole("table", { name: "Ledger" })).toBeNull();
+    openSub("Invoice types");
     expect(rowsOf(within(card("Invoice types")).getByRole("table"))).toEqual([
       "First Rent | Yes | Change",
       "Utilities | No | Change",
     ]);
+    openSub("General");
     const methods = card("Payment Methods");
     expect(
       within(methods)
@@ -327,6 +341,7 @@ describe("Settings: Business", () => {
       "Time zone: Asia/Phnom_Penh (UTC+7), from the business location (Cambodia)Due dates, expiry and reading days use Phnom Penh time.",
       "Screen language: Chosen on each phone or iPad; the browser remembers it",
     ]);
+    openSub("Document numbering");
     expect(
       rowsOf(within(card("Document numbering")).getByRole("table")),
     ).toEqual([
@@ -365,7 +380,7 @@ describe("Settings: Business", () => {
     });
     expect(api.property.load).toHaveBeenCalledTimes(2);
 
-    fireEvent.click(screen.getByRole("button", { name: "Edit: General" }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit: Business" }));
     dialog = screen.getByRole("dialog", { name: "Edit business" });
     fireEvent.change(within(dialog).getByLabelText("Business name"), {
       target: { value: " CHETANA Co. " },
@@ -458,12 +473,15 @@ describe("Settings: Business", () => {
     cleanup();
 
     show(apiOf(), "km");
+    await screen.findByRole("region", { name: "អចលនទ្រព្យ" });
+    openSub("ច្បាប់អាជីវកម្ម");
     expect(
-      await screen.findByRole("region", { name: "ច្បាប់អាជីវកម្ម" }),
+      screen.getByRole("region", { name: "ច្បាប់អាជីវកម្ម" }),
     ).toBeTruthy();
     expect(screen.getAllByText("មិនទាន់ប្រើ").length).toBe(3);
+    expect(screen.getByText("ថ្ងៃទី 24 នៃខែនីមួយៗ")).toBeTruthy();
+    openSub("ប្រភេទវិក្កយបត្រ");
     expect(screen.getByText("ថ្លៃឈ្នួលដំបូង")).toBeTruthy();
-    expect(screen.getByText("ថ្ងៃទី 24")).toBeTruthy();
     cleanup();
 
     let fail = true;
@@ -572,8 +590,10 @@ describe("Settings: Business", () => {
 
   it("TEST-FE-1135 a business rule change needs a value that fits, a start day today or later and a reason, shows the history, and a day already used says so; Add rule makes a code from the English name and starts Not used yet", async () => {
     const api = show();
+    await screen.findByRole("region", { name: "Property" });
+    openSub("Business rules");
     fireEvent.click(
-      await screen.findByRole("button", { name: "Edit: Late-payment charge" }),
+      screen.getByRole("button", { name: "Edit: Late-payment charge" }),
     );
     let dialog = screen.getByRole("dialog", {
       name: "Change: Late-payment charge",
@@ -665,9 +685,9 @@ describe("Settings: Business", () => {
 
   it("TEST-FE-1136 late payment for an Invoice type changes with a reason; new letters for a document must be 2 to 5 capitals no other document uses and show the next number", async () => {
     const api = show();
-    fireEvent.click(
-      await screen.findByRole("button", { name: "Change: First Rent" }),
-    );
+    await screen.findByRole("region", { name: "Property" });
+    openSub("Invoice types");
+    fireEvent.click(screen.getByRole("button", { name: "Change: First Rent" }));
     let dialog = screen.getByRole("dialog", {
       name: "Late payment: First Rent",
     });
@@ -689,11 +709,12 @@ describe("Settings: Business", () => {
       "Paid at signing",
     );
 
+    openSub("Document numbering");
     fireEvent.click(
-      screen.getByRole("button", { name: "Change the letters for Receipt" }),
+      screen.getByRole("button", { name: "Change the prefix for Receipt" }),
     );
     dialog = screen.getByRole("dialog", {
-      name: "Change the letters for Receipt",
+      name: "Change the prefix for Receipt",
     });
     const letters = within(dialog).getByLabelText(/Prefix/);
     fireEvent.change(letters, { target: { value: "INV" } });
@@ -720,7 +741,9 @@ describe("Settings: Business", () => {
 
   it("TEST-FE-1138 the days after issue for other Invoices show with the Billing rules and keep the V1 setting: whole days 1 to 90 with a reason, at the Property's version", async () => {
     const api = show();
-    const billing = await screen.findByRole("table", { name: "Billing" });
+    await screen.findByRole("region", { name: "Property" });
+    openSub("Business rules");
+    const billing = screen.getByRole("table", { name: "Billing" });
     expect(api.dueDays.get).toHaveBeenCalledWith("property-1");
     expect(within(billing).getByText("7 days after issue")).toBeTruthy();
     fireEvent.click(

@@ -62,7 +62,19 @@ class FakeStore:
         property_id: uuid.UUID,
         extra: Sequence[object] = (),
     ) -> list[dict[str, object]]:
-        raise AssertionError("not used")
+        # UI v81 round 4: the Birthdays list (migration 20270710_361).
+        assert read == "customer_birthdays" and extra == ()
+        self.calls.append((actor.actor_id, property_id, ("customer_birthdays",)))
+        return [
+            {
+                "customer_id": "c1",
+                "customer_name": "Sok Dara",
+                "role": "PRIMARY",
+                "unit_id": "u1",
+                "unit_number": "A-101",
+                "birthday": "2026-10-27",
+            }
+        ]
 
     def units(self, property_id: uuid.UUID) -> list[dict[str, object]]:
         raise AssertionError("not used")
@@ -107,3 +119,30 @@ def test_the_home_page_refuses_query_text_and_reports_a_store_failure() -> None:
     person = actor("units.read")
     assert client(person, FakeStore()).get(f"{PATH}?units=all").status_code == 422
     assert client(person, FakeStore(fail=True)).get(PATH).status_code == 503
+
+
+def test_the_birthdays_list_needs_customers_read_and_lists_the_rows() -> None:
+    """UI v81 round 4 (owner 08/11/2026): the Customers page Birthdays tab."""
+    store = FakeStore()
+    path = f"/api/v1/properties/{PROPERTY}/birthdays"
+    assert client(None, store).get(path).status_code == 401
+    assert client(actor("leases.read"), store).get(path).status_code == 403
+    assert store.calls == []
+    answer = client(actor("customers.read"), store).get(path)
+    assert answer.status_code == 200
+    assert answer.headers["Cache-Control"] == "private, no-store"
+    assert answer.json()["data"] == {
+        "items": [
+            {
+                "customer_id": "c1",
+                "customer_name": "Sok Dara",
+                "role": "PRIMARY",
+                "unit_id": "u1",
+                "unit_number": "A-101",
+                "birthday": "2026-10-27",
+            }
+        ]
+    }
+    assert store.calls == [(store.calls[0][0], PROPERTY, ("customer_birthdays",))]
+    assert client(actor("customers.read"), store).get(f"{path}?x=1").status_code == 422
+    assert client(actor("customers.read"), FakeStore(fail=True)).get(path).status_code == 200

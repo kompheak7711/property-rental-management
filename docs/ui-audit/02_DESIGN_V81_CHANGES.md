@@ -346,3 +346,23 @@ Source files `round4-source/i18n45.js` and `round4-source/app45.js`; the mock-up
 | `er_c_owed` | "Staff reimbursements due" → "Owed to staff" (Khmer unchanged) | The long word "reimbursements" needed 3 lines in a phone card |
 | Viewing requests | The "Messages to send manually" box folds to one line with its count (open by a tap) | It took a third of a 768 px screen above the list |
 | Tabs on phones | Table column headings stay on one line under 1024 px (the box scrolls sideways) | Headings wrapped to 3 lines at 390 px |
+
+## Round 4 (owner 08/11/2026 05:43): changed in the design
+
+Source files `round4-source/i18n46.js` and `round4-source/app46.js`; the mock-up was rebuilt and republished at the same address (v8).
+
+| What | Round 4 | Why |
+|---|---|---|
+| `se_tab_biz` | General → Business (as in v80) | Owner A1: the first Settings tab no longer clashes with the sub-tab "General" |
+| `se20_biz` | General → Business | Owner A1: the card with the business name |
+| Settings › Business sub-tabs | General · Business rules · Problem types · Document numbering, set by name (no longer split by "is it a table"). Payment methods is back in General | Owner A1, A2 |
+| Settings › General grid | Property, Business, Riel exchange rate, App preferences, Payment methods: 2 cards per row from 1024 px, 1 below; cards in a row share a height | Owner A2 |
+| Settings table sub-tabs | A table sub-tab takes the full content width (no two-column split, no empty half). The list-page rule applies: the page fits the screen and the table scrolls in its own area; Business rules (one small table per area) scrolls as one panel | Owner A3 |
+| Settings › Utility rates, Monthly services | One sub-tab per table (Utility Rates · Move-out cleaning rates; Monthly services · Monthly service types) | Owner A4: the same rule for every Settings tab with more than one table |
+| Settings › System health | The one card takes the full width | No empty half (A3) |
+| Hidden sub-tab panels | A hidden panel is really hidden (`[role=tabpanel][hidden]{display:none}`): the card's `display:grid` had overridden `hidden`, so every panel showed at once | Found while checking A3; this is why Document numbering sat alone on the right |
+| Home | No line under the title ("CHETANA Residence · date · As of") and no line under "Tasks" | Owner B6, B7 |
+| Menu tags | The "V1.1" tags go. "Later" marks a tab that is not built in the app yet: Viewing dashboard, Field reports, Guests (Short stays) | Owner D14 |
+| Menu › Settings | Settings shows its tabs as sub-items (Business · Utility rates · Monthly services · Unit setup · System health) in the open menu and in the rail fly-out, with the current tab highlighted | Owner D14: every page with tabs shows them in the menu |
+| Menu › Inspections | One tab is no tab: no "⌄" in the menu and no one-tab bar in the page | Owner D14: pages without tabs have no "⌄" |
+| Version line | "Design v81 round 4 · 08/11/2026" | |

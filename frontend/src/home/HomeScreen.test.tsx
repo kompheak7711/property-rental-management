@@ -53,6 +53,9 @@ const PAGE: HomePage = {
     },
     meter_readings_missing: { count: 15, reading_date: "2026-11-24" },
     letters_due: { count: 1, day_20: 1, day_30: 0 },
+    // UI v81 round 4
+    birthdays: { count: 3, from: "2026-11-03", to: "2026-11-10" },
+    paid_on_time: { on_time: 95, invoice_count: 120 },
   },
   todo: [
     {
@@ -155,9 +158,8 @@ describe("Home", () => {
     const { api } = show(() => Promise.resolve(PAGE));
     expect(await screen.findByText("21 / 23")).toBeTruthy();
     expect(api.home).toHaveBeenCalledWith("property-1");
-    expect(
-      screen.getByText("CHETANA Residence · Tuesday 03/11/2026 · As of 10:30"),
-    ).toBeTruthy();
+    // UI v81 round 4 (owner 08/11/2026): no line under the title any more.
+    expect(screen.queryByText(/As of 10:30/)).toBeNull();
 
     const labels = Array.from(
       document.querySelectorAll(".ui-home-kpi .ui-kpi-label"),
@@ -171,7 +173,16 @@ describe("Home", () => {
       "Approvals",
       "Meter readings missing",
       "Notices due",
+      "Birthdays",
+      "Paid on time",
     ]);
+    expect(card(/Birthdays/).textContent).toContain("3Today to 10/11/2026");
+    // The Customers page Birthdays tab comes with the Customers batch; until then the card opens
+    // the Customers list.
+    expect(card(/Birthdays/).getAttribute("href")).toBe("#/customers");
+    expect(card(/Paid on time/).textContent).toContain(
+      "79%95 of 120 Invoices, last 12 months",
+    );
     expect(card(/Occupancy/).textContent).toContain("1 reserved · 1 vacant");
     expect(card(/Approvals/).textContent).toContain(
       "1 to confirm · Refunds pending $5.00",
@@ -252,9 +263,12 @@ describe("Home", () => {
     const labels = Array.from(
       document.querySelectorAll(".ui-home-kpi .ui-kpi-label"),
     ).map((element) => element.textContent);
-    expect(labels.slice(-2)).toEqual([
+    // UI v81 round 4: Birthdays and Paid on time come last.
+    expect(labels.slice(-4)).toEqual([
       "Viewing requests waiting",
       "Problem reports",
+      "Birthdays",
+      "Paid on time",
     ]);
     const visits = card(/Viewing requests waiting/);
     expect(visits.textContent).toContain("21 late · 2 visits this week");
@@ -266,11 +280,8 @@ describe("Home", () => {
     window.history.replaceState(null, "", "#/home");
     show(() => Promise.resolve(PAGE));
     const list = await screen.findByRole("region", { name: "Tasks" });
-    expect(
-      within(list).getByText(
-        "2 overdue, 2 for today, 1 this week. Do them from the top down.",
-      ),
-    ).toBeTruthy();
+    // UI v81 round 4 (owner 08/11/2026): no summary line under "Tasks".
+    expect(within(list).queryByText(/Do them from the top down/)).toBeNull();
     const taskCard = (name: RegExp) =>
       within(list).getByRole("button", { name });
     const titles = () =>
@@ -427,11 +438,7 @@ describe("Home", () => {
     expect(screen.queryByText("Pending payment")).toBeNull();
     expect(screen.getByText("Nothing overdue")).toBeTruthy();
     expect(screen.getAllByText("Nothing here")).toHaveLength(3);
-    expect(
-      screen.getByText(
-        "0 overdue, 0 for today, 0 this week. Do them from the top down.",
-      ),
-    ).toBeTruthy();
+    expect(screen.queryByText(/Do them from the top down/)).toBeNull();
     expect(
       screen.getByText(
         "No billing run has finished yet · Next Invoices: 25/11/2026",

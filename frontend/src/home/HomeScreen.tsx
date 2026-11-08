@@ -32,7 +32,7 @@ import {
   problemsApi as defaultProblemsApi,
 } from "../problems/problemsClient";
 import { costText } from "../problems/RepairCost";
-import { type HomeTextKey, hmt, weekdayText } from "./text";
+import { type HomeTextKey, hmt } from "./text";
 import { type HrApi, hrApi as defaultHrApi } from "../hr/hrClient";
 import {
   type LedgerApi,
@@ -277,6 +277,7 @@ function Card({
   value,
   note,
   page,
+  tab,
   meter,
   empty,
 }: {
@@ -286,6 +287,8 @@ function Card({
   value: string;
   note: string;
   page: PageId;
+  /** UI v81 round 4: the sub-tab of that page the card opens ("?tab="). */
+  tab?: string;
   /** 0 to 100 for the bar under the note; none when the card has no bar. */
   /** "blank" keeps the room of a bar, so the values of the first row stay level. */
   meter?: number | "blank";
@@ -294,7 +297,11 @@ function Card({
   return (
     <a
       className={`ui-kpi ui-home-kpi ${empty ? "none" : tone}`}
-      href={hashForPage(page)}
+      href={
+        tab === undefined
+          ? hashForPage(page)
+          : `${hashForPage(page)}?tab=${encodeURIComponent(tab)}`
+      }
     >
       <span className="ui-kpi-label">
         <span className="ui-kpi-icon">
@@ -503,6 +510,46 @@ function Cards({
   }
   if (extra !== null && extra !== undefined)
     shown.push(<Fragment key="problems">{extra}</Fragment>);
+  // UI v81 round 4 (owner 08/11/2026): Birthdays and Paid on time, last, as in the design.
+  const birthdays = cards.birthdays;
+  if (birthdays !== undefined) {
+    shown.push(
+      <Card
+        empty={birthdays.count === 0}
+        icon="customers"
+        key="birthdays"
+        label={hmt(language, "n_bday")}
+        note={hmt(language, "n_week_s", dayText(birthdays.to))}
+        page="customers"
+        tone="info"
+        value={String(birthdays.count)}
+      />,
+    );
+  }
+  const onTime = cards.paid_on_time;
+  if (onTime !== undefined) {
+    const percent =
+      onTime.invoice_count > 0
+        ? Math.floor((onTime.on_time * 100) / onTime.invoice_count)
+        : null;
+    shown.push(
+      <Card
+        empty={percent === null}
+        icon="check"
+        key="ontime"
+        label={hmt(language, "n_ontime")}
+        meter={percent ?? "blank"}
+        note={
+          percent === null
+            ? hmt(language, "n_ontime_none")
+            : hmt(language, "n_ontime_s", onTime.on_time, onTime.invoice_count)
+        }
+        page="customers"
+        tone="ok"
+        value={percent === null ? "—" : `${String(percent)}%`}
+      />,
+    );
+  }
   if (shown.length === 0) return null;
   return <div className="ui-kpis ui-home-kpis">{shown}</div>;
 }
@@ -649,17 +696,9 @@ function TodoList({ language, page }: { language: Language; page: HomePage }) {
   const openItems = open === undefined ? [] : inGroup(open.group);
   return (
     <section aria-labelledby="home-todo" className="ui-card ui-todo-card">
+      {/* UI v81 round 4 (owner 08/11/2026): no summary line; the four cards say it. */}
       <header>
         <h2 id="home-todo">{hmt(language, "todo_t")}</h2>
-        <p className="ui-muted ui-small">
-          {hmt(
-            language,
-            "todo_sum",
-            counts.overdue,
-            counts.today,
-            counts.this_week,
-          )}
-        </p>
       </header>
       <div
         aria-label={hmt(language, "todo_t")}
@@ -869,27 +908,8 @@ export function HomeScreen({
 
   if (propertyId === "") return null;
 
-  // UI v81 round 2: the design's head row, "CHETANA Residence · Tuesday 03/11/2026 · As of
-  // 10:30" under the title and the two buttons beside it.
-  const head = (
-    <PageHead
-      actions={actions}
-      active={active}
-      sub={
-        page !== null ? (
-          <p className="ui-sub ui-num">
-            {[
-              hmt(language, "property"),
-              `${weekdayText(language, page.business_date)} ${dayText(page.business_date)}`,
-              hmt(language, "as_of", momentText(page.as_of).slice(11)),
-            ].join(" · ")}
-          </p>
-        ) : (
-          <p className="ui-sub">{hmt(language, "property")}</p>
-        )
-      }
-    />
-  );
+  // UI v81 round 4 (owner 08/11/2026): no line under the title; only the two buttons beside it.
+  const head = <PageHead actions={actions} active={active} />;
 
   if (failure !== null) {
     return (

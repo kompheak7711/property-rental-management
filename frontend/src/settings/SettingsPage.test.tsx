@@ -192,7 +192,7 @@ describe("Settings", () => {
     businessApi.property.load.mockClear();
     show(() => new Promise<HealthStatus>(() => undefined), { propertyId: "" });
     const note =
-      "No Property is open yet. In Settings, on the General tab, open “Earlier forms (English)”, enter the Property identifier and press “Load business configuration”. Then every tab fills in.";
+      "No Property is open yet. On the Business tab, open “Earlier forms (English)”, enter the Property identifier and press “Load business configuration”. Then every tab fills in.";
     expect(await screen.findByText(note)).toBeInTheDocument();
     expect(screen.queryByText("Reading the business settings…")).toBeNull();
     expect(screen.getByText("Old business form")).toBeInTheDocument();
@@ -241,9 +241,10 @@ describe("Settings", () => {
     )
       .getAllByRole("link")
       .map((link) => [link.textContent, link.getAttribute("href")]);
-    // UI v81: General first; Rates split in two; Users and access is its own menu item.
+    // UI v81: Business first (round 4: "Business" again, so it does not clash with its General
+    // sub-tab); Rates split in two; Users and access is its own menu item.
     expect(tabs).toEqual([
-      ["General", "#/settings/business"],
+      ["Business", "#/settings/business"],
       ["Utility rates", "#/settings/rates"],
       ["Monthly services", "#/settings/services"],
       ["Unit setup", "#/settings/units"],

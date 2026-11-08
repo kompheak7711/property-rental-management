@@ -1,6 +1,8 @@
 // V1-058 R7b-4, reworked in V1.1 part 2 (DL-118, mock-up rounds 20-25): Settings → Business.
-// One column of cards (Property, Business, Business rules, Invoice types, Payment Methods, the
-// riel rate, App preferences) with Document numbering on the right. Every value comes from the
+// UI v81 round 4 (owner 08/11/2026): four sub-tabs, kept in the address ("?tab="): General (the
+// Property, Business, riel rate, App preferences and Payment Methods cards, two per row from
+// 1024 px), Business rules, Invoice types and Document numbering, each table the full width of the
+// page. Every value comes from the
 // server: the business rules keep their history and start on a chosen day, the numbering shows
 // the next number, and an Invoice type says whether it gets the late-payment charge. The time
 // zone is fixed from the business location (Cambodia).
@@ -36,7 +38,7 @@ import {
 import { DateInput, parseDay } from "../shell/DateInput";
 import { dayText, momentText } from "../shell/format";
 import { Icon } from "../shell/icons";
-import { Chip, Dialog } from "../shell/ui";
+import { Chip, Dialog, SubTabPanel, SubTabs, useSubTab } from "../shell/ui";
 import type { Language } from "../signInText";
 import type { UnitApi } from "../unitClient";
 import { allPages } from "../units/unitsData";
@@ -199,6 +201,19 @@ function nextWith(number: NumberRule, letters: string): string {
   return letters + number.next_number.slice(number.letters.length);
 }
 
+/** UI v81 round 4: the sub-tabs of Settings › Business. */
+export type BusinessSubTab = "general" | "rules" | "types" | "numbering";
+const BUSINESS_SUBTABS: readonly {
+  id: BusinessSubTab;
+  label: SettingsTextKey;
+}[] = [
+  { id: "general", label: "bz_general" },
+  { id: "rules", label: "br_title" },
+  { id: "types", label: "it_title" },
+  { id: "numbering", label: "nr_title" },
+];
+const BUSINESS_SUBTAB_IDS = BUSINESS_SUBTABS.map((item) => item.id);
+
 export function BusinessTab({
   language,
   propertyId,
@@ -217,6 +232,10 @@ export function BusinessTab({
   const [problem, setProblem] = useState<string | null>(null);
   const [toast, setToast] = useState<{ ok: boolean; text: string } | null>(
     null,
+  );
+  const [tab, setTab] = useSubTab<BusinessSubTab>(
+    BUSINESS_SUBTAB_IDS,
+    "general",
   );
   const shownProperty = useRef(propertyId);
   const sequence = useRef(0);
@@ -404,284 +423,323 @@ export function BusinessTab({
           </div>
         )}
       </div>
-      <div className="ui-split">
-        <div className="ui-stack">
-          <Card
-            action={editButton(
-              "se_edit",
-              { kind: "property" },
-              sst(language, "se_prop"),
-            )}
-            id="biz-property"
-            title={sst(language, "se_prop")}
-          >
-            <Rows
-              rows={[
-                [sst(language, "se_prop_name"), property.name],
-                [sst(language, "se20_desc"), property.description ?? notGiven],
-                [sst(language, "address"), property.address_text ?? notGiven],
-                [
-                  sst(language, "se20_units"),
-                  <>
-                    <span className="ui-num">{units ?? "—"}</span>
-                    <span className="ui-sub2">
-                      {sst(language, "se20_units_n")}
-                    </span>
-                  </>,
-                ],
-              ]}
-            />
-          </Card>
-          <Card
-            action={editButton(
-              "se_edit",
-              { kind: "business" },
-              sst(language, "se20_biz"),
-            )}
-            id="biz-business"
-            title={sst(language, "se20_biz")}
-          >
-            <Rows
-              rows={[
-                [
-                  sst(language, "se20_biz_name"),
-                  <>
-                    {property.business_name ?? notGiven}
-                    <span className="ui-sub2">
-                      {sst(language, "se20_biz_n")}
-                    </span>
-                  </>,
-                ],
-              ]}
-            />
-          </Card>
-          <Card
-            action={editButton(
-              "br_add",
-              { kind: "add-rule" },
-              sst(language, "br_title"),
-            )}
-            id="biz-rules"
-            title={sst(language, "br_title")}
-          >
-            <p className="ui-small ui-muted">{sst(language, "br_sub")}</p>
-            {areas.map((area) => (
-              <RulesTable
-                area={area}
-                first={
-                  area === "BILLING" ? (
-                    <tr>
-                      <td>{sst(language, "se_misc_due")}</td>
-                      <td className="ui-num">
-                        {sst(
-                          language,
-                          "cal_misc_v",
-                          dueDays.one_time_charge_due_days,
-                        )}
-                      </td>
-                      <td className="ui-num">—</td>
-                      <td>
-                        <button
-                          aria-label={`${sst(language, "se_edit")}: ${sst(language, "se_misc_due")}`}
-                          className="ui-btn link"
-                          onClick={() => {
-                            openWith({ kind: "days" });
-                          }}
-                          type="button"
-                        >
-                          {sst(language, "se_edit")}
-                        </button>
-                      </td>
-                    </tr>
-                  ) : undefined
-                }
-                key={area}
-                language={language}
-                onEdit={(rule) => {
-                  openWith({ kind: "rule", rule });
-                }}
-                rules={rules.rules.filter((rule) => rule.area === area)}
-              />
-            ))}
-          </Card>
-          <Card id="biz-types" title={sst(language, "it_title")}>
-            <p className="ui-small ui-muted">{sst(language, "it_sub")}</p>
-            <div className="ui-tablewrap">
-              <table className="ui-table fit">
-                <thead>
-                  <tr>
-                    <th scope="col">{sst(language, "it_type")}</th>
-                    <th scope="col">{sst(language, "it_late")}</th>
-                    <th scope="col">
-                      <span className="ui-sr">
-                        {sst(language, "it_change")}
+      <SubTabs
+        current={tab}
+        idPrefix="business"
+        label={sst(language, "bz_tabs")}
+        onChange={(id) => {
+          setTab(id as BusinessSubTab);
+        }}
+        tabs={BUSINESS_SUBTABS.map((item) => ({
+          id: item.id,
+          label: sst(language, item.label),
+          count:
+            item.id === "rules"
+              ? rules.rules.length
+              : item.id === "types"
+                ? types.length
+                : item.id === "numbering"
+                  ? numbers.length
+                  : undefined,
+        }))}
+      />
+      <SubTabPanel id={tab} idPrefix="business">
+        <div className={tab === "general" ? "ui-grid2" : "ui-stack"}>
+          {tab === "general" && (
+            <Card
+              action={editButton(
+                "se_edit",
+                { kind: "property" },
+                sst(language, "se_prop"),
+              )}
+              id="biz-property"
+              title={sst(language, "se_prop")}
+            >
+              <Rows
+                rows={[
+                  [sst(language, "se_prop_name"), property.name],
+                  [
+                    sst(language, "se20_desc"),
+                    property.description ?? notGiven,
+                  ],
+                  [sst(language, "address"), property.address_text ?? notGiven],
+                  [
+                    sst(language, "se20_units"),
+                    <>
+                      <span className="ui-num">{units ?? "—"}</span>
+                      <span className="ui-sub2">
+                        {sst(language, "se20_units_n")}
                       </span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {types.map((type) => (
-                    <tr key={type.code}>
-                      <td>{nameOf(language, type)}</td>
-                      <td>
-                        {type.late_payment ? (
-                          <Chip icon="check" tone="ok">
-                            {sst(language, "yes")}
-                          </Chip>
-                        ) : (
-                          <Chip tone="neutral">{sst(language, "no")}</Chip>
-                        )}
-                      </td>
-                      <td>
-                        <button
-                          aria-label={`${sst(language, "it_change")}: ${nameOf(language, type)}`}
-                          className="ui-btn link"
-                          onClick={() => {
-                            openWith({ kind: "type", type });
-                          }}
-                          type="button"
-                        >
-                          {sst(language, "it_change")}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Card>
-          <Card
-            action={editButton(
-              "pm_add",
-              { kind: "method", method: null },
-              sst(language, "se_methods"),
-            )}
-            id="biz-methods"
-            title={sst(language, "se_methods")}
-          >
-            <ul className="ui-apps">
-              {methods.map((method) => (
-                <li key={method.code}>
-                  <span>
-                    {method.display_name}
-                    <small className="ui-num" lang="en">
-                      {method.code}
-                    </small>
-                  </span>
-                  <span className="ui-actions">
-                    {method.accepted ? (
-                      <Chip icon="check" tone="ok">
-                        {sst(language, "se_active")}
-                      </Chip>
-                    ) : (
-                      <Chip tone="neutral">{sst(language, "pm_off")}</Chip>
-                    )}
-                    <button
-                      aria-label={`${sst(language, "se_edit")}: ${method.display_name}`}
-                      className="ui-btn link"
-                      onClick={() => {
-                        openWith({ kind: "method", method });
-                      }}
-                      type="button"
-                    >
-                      {sst(language, "se_edit")}
-                    </button>
-                  </span>
-                </li>
-              ))}
-            </ul>
-            <p className="ui-small ui-muted">{sst(language, "pm_note")}</p>
-          </Card>
-          <Card id="biz-fx" title={sst(language, "se_fx")}>
-            {rate === undefined ? (
-              <p className="ui-muted">{sst(language, "fx_cannot")}</p>
-            ) : rate === null ? (
-              <p className="ui-muted">{sst(language, "fx_none")}</p>
-            ) : (
-              <>
-                <p className="ui-num">
-                  <b>
+                    </>,
+                  ],
+                ]}
+              />
+            </Card>
+          )}
+          {tab === "general" && (
+            <Card
+              action={editButton(
+                "se_edit",
+                { kind: "business" },
+                sst(language, "se20_biz"),
+              )}
+              id="biz-business"
+              title={sst(language, "se20_biz")}
+            >
+              <Rows
+                rows={[
+                  [
+                    sst(language, "se20_biz_name"),
+                    <>
+                      {property.business_name ?? notGiven}
+                      <span className="ui-sub2">
+                        {sst(language, "se20_biz_n")}
+                      </span>
+                    </>,
+                  ],
+                ]}
+              />
+            </Card>
+          )}
+          {tab === "general" && (
+            <Card id="biz-fx" title={sst(language, "se_fx")}>
+              {rate === undefined ? (
+                <p className="ui-muted">{sst(language, "fx_cannot")}</p>
+              ) : rate === null ? (
+                <p className="ui-muted">{sst(language, "fx_none")}</p>
+              ) : (
+                <>
+                  <p className="ui-num">
+                    <b>
+                      {sst(
+                        language,
+                        "fx_last",
+                        rielText(rate.system_rate_khr_per_usd),
+                      )}
+                    </b>
+                  </p>
+                  <p className="ui-small ui-muted">
                     {sst(
                       language,
-                      "fx_last",
-                      rielText(rate.system_rate_khr_per_usd),
+                      rate.rate_source === "ABA_AUTOMATIC"
+                        ? "fx_auto"
+                        : "fx_hand_v",
+                      momentText(rate.applicable_at),
                     )}
-                  </b>
-                </p>
-                <p className="ui-small ui-muted">
-                  {sst(
-                    language,
-                    rate.rate_source === "ABA_AUTOMATIC"
-                      ? "fx_auto"
-                      : "fx_hand_v",
-                    momentText(rate.applicable_at),
-                  )}
-                </p>
-              </>
-            )}
-            <p className="ui-small ui-muted">{sst(language, "fx_note")}</p>
-          </Card>
-          <Card id="biz-app" title={sst(language, "se20_app")}>
-            <Rows
-              rows={[
-                [
-                  sst(language, "se_tz"),
-                  <>
-                    <span>{sst(language, "se20_tz_v")}</span>
-                    <span className="ui-sub2">{sst(language, "se_tz_n")}</span>
-                  </>,
-                ],
-                [sst(language, "se_lang"), sst(language, "se20_lang_v")],
-              ]}
-            />
-          </Card>
-        </div>
-        <div className="ui-stack">
-          <Card id="biz-numbers" title={sst(language, "nr_title")}>
-            <p className="ui-small ui-muted">{sst(language, "nr21_sub")}</p>
-            <div className="ui-tablewrap">
-              <table className="ui-table fit ui-numbering">
-                <thead>
-                  <tr>
-                    <th scope="col">{sst(language, "nr_doc")}</th>
-                    <th scope="col">{sst(language, "nr_fmt")}</th>
-                    <th scope="col">{sst(language, "nr_next")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {numbers.map((number) => (
-                    <tr key={number.document_type}>
-                      <td>
-                        <button
-                          aria-label={sst(
+                  </p>
+                </>
+              )}
+              <p className="ui-small ui-muted">{sst(language, "fx_note")}</p>
+            </Card>
+          )}
+          {tab === "general" && (
+            <Card id="biz-app" title={sst(language, "se20_app")}>
+              <Rows
+                rows={[
+                  [
+                    sst(language, "se_tz"),
+                    <>
+                      <span>{sst(language, "se20_tz_v")}</span>
+                      <span className="ui-sub2">
+                        {sst(language, "se_tz_n")}
+                      </span>
+                    </>,
+                  ],
+                  [sst(language, "se_lang"), sst(language, "se20_lang_v")],
+                ]}
+              />
+            </Card>
+          )}
+          {tab === "general" && (
+            <Card
+              action={editButton(
+                "pm_add",
+                { kind: "method", method: null },
+                sst(language, "se_methods"),
+              )}
+              id="biz-methods"
+              title={sst(language, "se_methods")}
+            >
+              <ul className="ui-apps">
+                {methods.map((method) => (
+                  <li key={method.code}>
+                    <span>
+                      {method.display_name}
+                      <small className="ui-num" lang="en">
+                        {method.code}
+                      </small>
+                    </span>
+                    <span className="ui-actions">
+                      {method.accepted ? (
+                        <Chip icon="check" tone="ok">
+                          {sst(language, "se_active")}
+                        </Chip>
+                      ) : (
+                        <Chip tone="neutral">{sst(language, "pm_off")}</Chip>
+                      )}
+                      <button
+                        aria-label={`${sst(language, "se_edit")}: ${method.display_name}`}
+                        className="ui-btn link"
+                        onClick={() => {
+                          openWith({ kind: "method", method });
+                        }}
+                        type="button"
+                      >
+                        {sst(language, "se_edit")}
+                      </button>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <p className="ui-small ui-muted">{sst(language, "pm_note")}</p>
+            </Card>
+          )}
+          {tab === "rules" && (
+            <Card
+              action={editButton(
+                "br_add",
+                { kind: "add-rule" },
+                sst(language, "br_title"),
+              )}
+              id="biz-rules"
+              title={sst(language, "br_title")}
+            >
+              <p className="ui-small ui-muted">{sst(language, "br_sub")}</p>
+              {areas.map((area) => (
+                <RulesTable
+                  area={area}
+                  first={
+                    area === "BILLING" ? (
+                      <tr>
+                        <td>{sst(language, "se_misc_due")}</td>
+                        <td className="ui-num">
+                          {sst(
                             language,
-                            "nr_edit_t",
-                            documentName(language, number.document_type),
+                            "cal_misc_v",
+                            dueDays.one_time_charge_due_days,
                           )}
-                          className="ui-btn link"
-                          onClick={() => {
-                            openWith({ kind: "letters", number });
-                          }}
-                          type="button"
-                        >
-                          {documentName(language, number.document_type)}
-                        </button>
-                      </td>
-                      <td className="ui-num" lang="en">
-                        {number.format}
-                      </td>
-                      <td className="ui-num" lang="en">
-                        {number.next_number}
-                      </td>
+                        </td>
+                        <td className="ui-num">—</td>
+                        <td>
+                          <button
+                            aria-label={`${sst(language, "se_edit")}: ${sst(language, "se_misc_due")}`}
+                            className="ui-btn link"
+                            onClick={() => {
+                              openWith({ kind: "days" });
+                            }}
+                            type="button"
+                          >
+                            {sst(language, "se_edit")}
+                          </button>
+                        </td>
+                      </tr>
+                    ) : undefined
+                  }
+                  key={area}
+                  language={language}
+                  onEdit={(rule) => {
+                    openWith({ kind: "rule", rule });
+                  }}
+                  rules={rules.rules.filter((rule) => rule.area === area)}
+                />
+              ))}
+            </Card>
+          )}
+          {tab === "types" && (
+            <Card id="biz-types" title={sst(language, "it_title")}>
+              <p className="ui-small ui-muted">{sst(language, "it_sub")}</p>
+              <div className="ui-tablewrap">
+                <table className="ui-table fit">
+                  <thead>
+                    <tr>
+                      <th scope="col">{sst(language, "it_type")}</th>
+                      <th scope="col">{sst(language, "it_late")}</th>
+                      <th scope="col">
+                        <span className="ui-sr">
+                          {sst(language, "it_change")}
+                        </span>
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <p className="ui-small ui-muted">{sst(language, "nr_note")}</p>
-          </Card>
+                  </thead>
+                  <tbody>
+                    {types.map((type) => (
+                      <tr key={type.code}>
+                        <td>{nameOf(language, type)}</td>
+                        <td>
+                          {type.late_payment ? (
+                            <Chip icon="check" tone="ok">
+                              {sst(language, "yes")}
+                            </Chip>
+                          ) : (
+                            <Chip tone="neutral">{sst(language, "no")}</Chip>
+                          )}
+                        </td>
+                        <td>
+                          <button
+                            aria-label={`${sst(language, "it_change")}: ${nameOf(language, type)}`}
+                            className="ui-btn link"
+                            onClick={() => {
+                              openWith({ kind: "type", type });
+                            }}
+                            type="button"
+                          >
+                            {sst(language, "it_change")}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          )}
+          {tab === "numbering" && (
+            <Card id="biz-numbers" title={sst(language, "nr_title")}>
+              <p className="ui-small ui-muted">{sst(language, "nr21_sub")}</p>
+              <div className="ui-tablewrap">
+                <table className="ui-table fit ui-numbering">
+                  <thead>
+                    <tr>
+                      <th scope="col">{sst(language, "nr_doc")}</th>
+                      <th scope="col">{sst(language, "nr_fmt")}</th>
+                      <th scope="col">{sst(language, "nr_next")}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {numbers.map((number) => (
+                      <tr key={number.document_type}>
+                        <td>
+                          <button
+                            aria-label={sst(
+                              language,
+                              "nr_edit_t",
+                              documentName(language, number.document_type),
+                            )}
+                            className="ui-btn link"
+                            onClick={() => {
+                              openWith({ kind: "letters", number });
+                            }}
+                            type="button"
+                          >
+                            {documentName(language, number.document_type)}
+                          </button>
+                        </td>
+                        <td className="ui-num" lang="en">
+                          {number.format}
+                        </td>
+                        <td className="ui-num" lang="en">
+                          {number.next_number}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="ui-small ui-muted">{sst(language, "nr_note")}</p>
+            </Card>
+          )}
         </div>
-      </div>
+      </SubTabPanel>
 
       {open?.kind === "property" && (
         <PropertyDialog

@@ -84,12 +84,20 @@ const TEXT = {
   ],
   n_problems_s: ["{0} urgent · {1} late", "{0} បន្ទាន់ · {1} យឺត"],
   n_costs: ["Repair costs to check", "ថ្លៃជួសជុលត្រូវពិនិត្យ"],
+  // UI v81 round 4 (owner 08/11/2026): the Birthdays and Paid on time cards (design i18n).
+  n_bday: ["Birthdays", "ថ្ងៃកំណើត"],
+  n_week_s: ["Today to {0}", "ថ្ងៃនេះ ដល់ {0}"],
+  n_ontime: ["Paid on time", "បង់ទាន់ពេល"],
+  n_ontime_s: [
+    "{0} of {1} Invoices, last 12 months",
+    "{0} ក្នុងចំណោម {1} វិក្កយបត្រ 12 ខែចុងក្រោយ",
+  ],
+  n_ontime_none: [
+    "No Invoice was due in the last 12 months",
+    "គ្មានវិក្កយបត្រដល់កំណត់ក្នុង 12 ខែចុងក្រោយ",
+  ],
 
   todo_t: ["Tasks", "ការងារត្រូវធ្វើ"],
-  todo_sum: [
-    "{0} overdue, {1} for today, {2} this week. Do them from the top down.",
-    "ហួសកំណត់ {0} · ថ្ងៃនេះ {1} · សប្តាហ៍នេះ {2}។ ធ្វើពីលើចុះក្រោម។",
-  ],
   g_overdue: ["Overdue", "ហួសកំណត់"],
   g_today: ["Today", "ថ្ងៃនេះ"],
   g_this_week: ["This week", "សប្តាហ៍នេះ"],

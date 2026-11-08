@@ -13,7 +13,7 @@
 // with a record, "#/invoices/<id>") and dialogs are left alone. Nothing here changes what a page
 // shows: only sizes, classes and scroll positions.
 
-import { detailFromHash } from "./navigation";
+import { detailFromHash, pageFromHash } from "./navigation";
 
 export const FIT_MIN_WIDTH = 1024;
 export const FIT_MIN_HEIGHT = 700;
@@ -105,7 +105,10 @@ function writeSaved(key: string, value: SavedScroll): void {
 
 /** The page's main table box, or null when the page has none to fit. */
 export function mainTableBox(root: ParentNode): HTMLElement | null {
-  if (detailFromHash(window.location.hash) !== null) return null;
+  // UI v81 round 4: a Settings address names a tab ("#/settings/business"), not a record.
+  const hash = window.location.hash;
+  if (pageFromHash(hash) !== "settings" && detailFromHash(hash) !== null)
+    return null;
   const boxes = Array.from(
     root.querySelectorAll<HTMLElement>(".ui-tablewrap"),
   ).filter(
@@ -116,7 +119,15 @@ export function mainTableBox(root: ParentNode): HTMLElement | null {
   );
   if (boxes.length === 0) return null;
   const rows = (box: HTMLElement) => box.querySelectorAll("tbody tr").length;
-  return boxes.reduce((best, box) => (rows(box) > rows(best) ? box : best));
+  const best = boxes.reduce((best, box) =>
+    rows(box) > rows(best) ? box : best,
+  );
+  // UI v81 round 4 (owner 08/11/2026): a card that holds several tables (the Business rules by
+  // group) scrolls as one area, so every group stays reachable.
+  const card = best.closest<HTMLElement>(".ui-card");
+  if (card !== null && card.querySelectorAll(".ui-tablewrap").length > 1)
+    return card;
+  return best;
 }
 
 /**

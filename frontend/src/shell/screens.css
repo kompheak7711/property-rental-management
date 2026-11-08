@@ -635,6 +635,32 @@
   overflow: visible;
 }
 
+/* UI v81 round 4 (owner 08/11/2026): a card that holds several tables (the Business rules by
+   group) scrolls as one area, so every group stays reachable. */
+.ui-card.ui-tscroll {
+  display: block;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.ui-card.ui-tscroll > * + * {
+  margin-top: 12px;
+}
+
+body.ui-fit.ui-short .ui-card.ui-tscroll > * + * {
+  margin-top: 10px;
+}
+
+/* UI v81 round 4: a table's group name (the Business rules "Billing") sits on the left, over its
+   first column. */
+.ui-table caption {
+  padding: 4px 14px 8px;
+  color: var(--heading);
+  font-weight: 600;
+  text-align: start;
+  caption-side: top;
+}
+
 /* A card's hidden overflow would push the sticky headings down by the top bar's height. */
 .ui-card:has(> .ui-tablewrap.ui-tflow) {
   overflow: visible;
@@ -846,6 +872,26 @@ table.ui-table a.ui-no {
   gap: 16px;
   align-content: start;
   min-width: 0;
+}
+
+/* UI v81 round 4 (owner 08/11/2026): the General sub-tab of Settings › Business. Two cards per
+   row from 1024 px, one below; the cards in a row share their height. */
+.ui-grid2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: stretch;
+}
+
+.ui-grid2 > .ui-card {
+  box-sizing: border-box;
+  height: 100%;
+}
+
+@media (max-width: 1023px) {
+  .ui-grid2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 /* UI v81 round 3: under 1024 px the two columns stack, so a rules table never widens the page. */

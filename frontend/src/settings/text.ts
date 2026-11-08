@@ -16,7 +16,13 @@ const TEXT = {
   ],
   tabs: ["Settings tabs", "ផ្ទាំងការកំណត់"],
   // UI v81: General first; Rates split into Utility rates and Monthly services.
-  se_tab_biz: ["General", "ទូទៅ"], // new
+  se_tab_biz: ["Business", "អាជីវកម្ម"], // UI v81 round 4: "Business" again, so it does not clash with the General sub-tab
+  // UI v81 round 4 (owner 08/11/2026): the sub-tabs of Settings › Business, Utility rates and
+  // Monthly services (one per table), kept in the address ("?tab=").
+  bz_tabs: ["Sections of Business", "ផ្នែកនៃអាជីវកម្ម"],
+  bz_general: ["General", "ទូទៅ"],
+  rt_tabs: ["Sections of Utility rates", "ផ្នែកនៃអត្រាទឹកភ្លើង"],
+  sv_tabs: ["Sections of Monthly services", "ផ្នែកនៃសេវាប្រចាំខែ"],
   se_tab_rates: ["Utility rates", "អត្រាទឹកភ្លើង"], // new
   se_tab_msvc: ["Monthly services", "សេវាប្រចាំខែ"], // new
   se_tab_units: ["Unit setup", "ការរៀបចំបន្ទប់"],
@@ -41,8 +47,8 @@ const TEXT = {
   // V1-061 Fix 4 (owner bug list 29/10/2026): the tabs waited forever with no Property open.
   // UI v81: the Business tab is called General now. // new
   no_property: [
-    "No Property is open yet. In Settings, on the General tab, open “Earlier forms (English)”, enter the Property identifier and press “Load business configuration”. Then every tab fills in.",
-    "មិនទាន់មានអគារបើកនៅឡើយទេ។ នៅក្នុងការកំណត់ ផ្ទាំងទូទៅ សូមបើក “ទម្រង់មុន (អង់គ្លេស)” វាយលេខសម្គាល់អគារ ហើយចុច “Load business configuration”។ បន្ទាប់មក ផ្ទាំងទាំងអស់នឹងបង្ហាញព័ត៌មាន។",
+    "No Property is open yet. On the Business tab, open “Earlier forms (English)”, enter the Property identifier and press “Load business configuration”. Then every tab fills in.",
+    "មិនទាន់មានអគារបើកនៅឡើយទេ។ នៅផ្ទាំងអាជីវកម្ម សូមបើក “ទម្រង់មុន (អង់គ្លេស)” វាយលេខសម្គាល់អគារ ហើយចុច “Load business configuration”។ បន្ទាប់មក ផ្ទាំងទាំងអស់នឹងបង្ហាញព័ត៌មាន។",
   ],
   // new
   earlier_note: [
@@ -509,7 +515,7 @@ const TEXT = {
   // new
   address: ["Address", "អាសយដ្ឋាន"],
   // new
-  no_address: ["Not given", "មិនទាន់ផ្តល់"],
+  no_address: ["Not set", "មិនទាន់កំណត់"], // UI v81 round 4: "Not set" everywhere
   se_units: ["Units", "បន្ទប់"],
   se_tz: ["Time zone", "ល្វែងម៉ោង"],
   se_tz_n: [
@@ -637,7 +643,7 @@ const TEXT = {
   ],
   ro_kind: ["Kind", "ប្រភេទ"],
   ro_rate: ["Rate", "អត្រា"],
-  ro_since: ["Since", "ចាប់ពី"],
+  ro_since: ["Effective from", "មានប្រសិទ្ធភាពពី"], // UI v81 round 4
   ro_until: ["Until", "ដល់"],
   // new: the server keeps when and how the tenants were told.
   ro_told: ["Tenants told", "ជូនដំណឹងអ្នកជួល"],
@@ -886,7 +892,7 @@ const TEXT = {
     "Counted from the Units list each time. Never entered.",
     "រាប់ពីបញ្ជីបន្ទប់រាល់ពេល។ មិនវាយទេ។",
   ],
-  se20_biz: ["General", "ទូទៅ"], // new (UI v81 round 2): the design's card name
+  se20_biz: ["Business", "អាជីវកម្ម"], // UI v81 round 4: the card with the business name is "Business"
   se20_biz_name: ["Business name", "ឈ្មោះអាជីវកម្ម"],
   se20_biz_n: [
     "Can differ from the property name.",
@@ -910,9 +916,9 @@ const TEXT = {
   br_add: ["Add rule", "បន្ថែមច្បាប់"],
   br_rule: ["Rule", "ច្បាប់"],
   br_value: ["Value", "តម្លៃ"],
-  br_since: ["Since", "ចាប់ពី"],
+  br_since: ["Effective from", "មានប្រសិទ្ធភាពពី"], // UI v81 round 4
   br_notset: ["Not set", "មិនទាន់កំណត់"],
-  br_unused: ["Not used yet", "មិនទាន់ប្រើ"],
+  br_unused: ["Not in use", "មិនទាន់ប្រើ"], // UI v81 round 4 (owner 08/11/2026)
   br_unused_s: [
     "The app is not built to use this rule yet. It needs a small program change first.",
     "កម្មវិធីមិនទាន់ប្រើច្បាប់នេះទេ។ ត្រូវការការកែកម្មវិធីតិចតួចជាមុន។",
@@ -954,7 +960,7 @@ const TEXT = {
   br_area: ["Group", "ក្រុម"],
   br_e_name: ["Enter the rule name.", "សូមវាយឈ្មោះច្បាប់។"],
   br_add_note: [
-    'A new rule shows "Not used yet" until the app is built to use it.',
+    'A new rule shows "Not in use" until the app is built to use it.',
     'ច្បាប់ថ្មីបង្ហាញ "មិនទាន់ប្រើ" រហូតដល់កម្មវិធីត្រូវបានធ្វើឱ្យប្រើវា។',
   ],
   br_added: ["Rule added: {0}", "បានបន្ថែមច្បាប់៖ {0}"],
@@ -1018,18 +1024,18 @@ const TEXT = {
   it_same: ["Nothing changed.", "គ្មានអ្វីប្ដូរទេ។"],
   nr_title: ["Document numbering", "លេខរៀងឯកសារ"],
   nr21_sub: [
-    "One row for each kind of document and year. Tap a document to change its letters.",
-    "មួយជួរសម្រាប់ឯកសារនីមួយៗ និងឆ្នាំនីមួយៗ។ ចុចលើឯកសារ ដើម្បីប្ដូរអក្សររបស់វា។",
+    "One row for each kind of document and year. Choose a document to change its prefix.",
+    "មួយជួរសម្រាប់ឯកសារនីមួយៗ និងឆ្នាំនីមួយៗ។ ជ្រើសឯកសារ ដើម្បីប្ដូរបុព្វបទរបស់វា។",
   ],
   nr_doc: ["Document", "ឯកសារ"],
   nr_fmt: ["Format", "ទម្រង់"],
   nr_next: ["Next number", "លេខបន្ទាប់"],
   nr_note: [
-    "The app locks the row while it takes a number, so two documents never get the same one. A change of letters is used for new numbers only; printed numbers never change.",
-    "កម្មវិធីចាក់សោជួរ ពេលយកលេខ ដូច្នេះឯកសារពីរមិនបានលេខដូចគ្នាទេ។ ការប្តូរអក្សរប្រើសម្រាប់លេខថ្មីប៉ុណ្ណោះ; លេខដែលបោះពុម្ពរួចមិនប្តូរទេ។",
+    "The app locks the row while it takes a number, so two documents never get the same one. A change of prefix is used for new numbers only; printed numbers never change.",
+    "កម្មវិធីចាក់សោជួរ ពេលយកលេខ ដូច្នេះឯកសារពីរមិនបានលេខដូចគ្នាទេ។ ការប្តូរបុព្វបទប្រើសម្រាប់លេខថ្មីប៉ុណ្ណោះ; លេខដែលបោះពុម្ពរួចមិនប្តូរទេ។",
   ],
-  nr_edit_t: ["Change the letters for {0}", "ប្តូរអក្សរសម្រាប់ {0}"],
-  nr_letters: ["Prefix", "អក្សរ"],
+  nr_edit_t: ["Change the prefix for {0}", "ប្តូរបុព្វបទសម្រាប់ {0}"],
+  nr_letters: ["Prefix", "បុព្វបទ"],
   nr_e: [
     "Use 2 to 5 capital letters that no other document uses.",
     "ប្រើអក្សរធំ 2 ដល់ 5 ដែលឯកសារផ្សេងមិនប្រើ។",

@@ -56,6 +56,8 @@ HOME_SECTIONS: Final[Mapping[str, tuple[str, ...]]] = {
     "readings": ("utility.read",),
     "letters": ("rent_nonpayment.read",),
     "settlements": ("final_settlements.prepare", "financial.approve"),
+    # UI v81 round 4 (owner 08/11/2026): the Birthdays card (migration 20270710_361).
+    "birthdays": ("customers.read",),
 }
 TODO_GROUPS: Final = ("overdue", "today", "this_week", "later")
 # Items dated by when a wait began (not a due day) stay under Today while they wait; the screen
@@ -135,6 +137,7 @@ REPORT_READS: Final = frozenset(
         "report_income_facts",
         "report_payment_facts",
         "report_utility_facts",
+        "customer_birthdays",
         *REGISTER_READS.values(),
     }
 )
@@ -300,6 +303,14 @@ class ReportService:
             raise ReportForbiddenError("Home page needs a read right")
         page = self.store.home_page(report_actor(actor), property_id, sections)
         return {**group_home_page(page), "sections": list(sections)}
+
+    def birthdays(self, actor: AuthenticatedActor, property_id: UUID) -> dict[str, object]:
+        """UI v81 round 4: the coming birthdays of the Primary Tenants and Occupants of active
+        Leases, for the Customers page (migration 20270710_361). Never the year or the age."""
+        if not has_capability(actor, "customers.read", property_id):
+            raise ReportForbiddenError("Birthdays need customers.read")
+        rows = self.store.rows("customer_birthdays", report_actor(actor), property_id)
+        return {"items": rows}
 
     def totals(
         self,

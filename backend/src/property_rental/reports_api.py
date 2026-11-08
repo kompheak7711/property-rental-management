@@ -145,6 +145,17 @@ def create_reports_router(
         "/properties/{property_id}/reports/totals/{report}",
         summary="A Totals by Unit and month report",
     )
+    @router.get(
+        "/properties/{property_id}/birthdays",
+        summary="The coming birthdays of the tenants and occupants of active Leases",
+    )
+    def birthdays(property_id: UUID, request: Request, response: Response) -> dict[str, object]:
+        _no_query(request)
+        actor = _actor(request, resolver)
+        page = _call(lambda: service.birthdays(actor, property_id))
+        response.headers["Cache-Control"] = "private, no-store"
+        return {"data": page, "meta": {"request_id": request.state.request_id}}
+
     def totals(
         property_id: UUID,
         report: TotalsReport,

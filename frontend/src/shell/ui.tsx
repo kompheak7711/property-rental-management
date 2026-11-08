@@ -442,6 +442,30 @@ export function SubTabPanel({
   );
 }
 
+/**
+ * UI v81 round 4 (owner 08/11/2026): the sub-tab shown, from "?tab=" in the address, following
+ * it when the address changes (the menu's sub-items link to "#/page?tab=<id>"). `set` changes it
+ * from the sub-tab row (which writes the address itself).
+ */
+export function useSubTab<T extends string>(
+  ids: readonly T[],
+  fallback: T,
+): [T, (next: T) => void] {
+  const read = () => subTabFromAddress(ids, fallback) as T;
+  const [tab, setTab] = useState<T>(read);
+  const key = ids.join("|");
+  useEffect(() => {
+    const follow = () => {
+      setTab(subTabFromAddress(ids, fallback) as T);
+    };
+    window.addEventListener("hashchange", follow);
+    return () => {
+      window.removeEventListener("hashchange", follow);
+    };
+  }, [key, fallback]);
+  return [tab, setTab];
+}
+
 /** UI v81 (B2): the sub-tab in the address when the page opens, if it is one of `ids`. */
 export function subTabFromAddress(
   ids: readonly string[],

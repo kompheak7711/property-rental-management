@@ -27,7 +27,7 @@ import { DateInput, isDay } from "../shell/DateInput";
 import { dayText, todayInPhnomPenh, usdFromCents } from "../shell/format";
 import { Icon } from "../shell/icons";
 import { hashForPage } from "../shell/navigation";
-import { Chip, Dialog } from "../shell/ui";
+import { Chip, Dialog, SubTabs, useSubTab } from "../shell/ui";
 import type { Language } from "../signInText";
 import { Problem } from "./BusinessTab";
 import { CleaningRatesCard } from "./CleaningRates";
@@ -169,6 +169,11 @@ export function utilityRows(
   );
 }
 
+/** UI v81 round 4: the sub-tabs of Utility rates and of Monthly services; no part shows all. */
+type RatesSubTab = "utility" | "cleaning" | "services" | "types";
+const UTILITY_SUBTABS: readonly RatesSubTab[] = ["utility", "cleaning"];
+const SERVICE_SUBTABS: readonly RatesSubTab[] = ["services", "types"];
+
 export function RatesTab({
   language,
   propertyId,
@@ -193,6 +198,11 @@ export function RatesTab({
   today?: string;
 }) {
   const today = fixedToday ?? todayInPhnomPenh();
+  // UI v81 round 4 (owner 08/11/2026): one sub-tab per table, kept in the address ("?tab=").
+  const [sub, setSub] = useSubTab<RatesSubTab>(
+    part === "services" ? SERVICE_SUBTABS : UTILITY_SUBTABS,
+    part === "services" ? "services" : "utility",
+  );
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   // "failed": the rates still show, but Services cannot be added or changed.
   const [settings, setSettings] = useState<ServiceSettings | "failed" | null>(
@@ -438,6 +448,48 @@ export function RatesTab({
   const typeOf = new Map(
     (ready?.service_types ?? []).map((item) => [item.service_type_id, item]),
   );
+  const showUtility =
+    part !== "services" && (part === undefined || sub === "utility");
+  const showCleaning =
+    part !== "services" && (part === undefined || sub === "cleaning");
+  const showServices =
+    part !== "utility" && (part === undefined || sub === "services");
+  const showTypes =
+    part !== "utility" && (part === undefined || sub === "types");
+  const subTabs =
+    part === undefined ? null : (
+      <SubTabs
+        current={sub}
+        idPrefix={part === "services" ? "services" : "rates"}
+        label={sst(language, part === "services" ? "sv_tabs" : "rt_tabs")}
+        onChange={(id) => {
+          setSub(id as RatesSubTab);
+        }}
+        tabs={
+          part === "services"
+            ? [
+                {
+                  id: "services",
+                  label: sst(language, "se_svc"),
+                  count: services.length,
+                },
+                {
+                  id: "types",
+                  label: sst(language, "st_title"),
+                  count: ready?.service_types.length,
+                },
+              ]
+            : [
+                {
+                  id: "utility",
+                  label: sst(language, "se_util"),
+                  count: utilityRates.length,
+                },
+                { id: "cleaning", label: sst(language, "cl_title") },
+              ]
+        }
+      />
+    );
   const history = [...serviceRates].sort(
     (a, b) =>
       serviceName(a.property_service_id).localeCompare(
@@ -455,8 +507,22 @@ export function RatesTab({
           </div>
         )}
       </div>
-      <div className="ui-stack">
-        {part !== "services" && (
+      {subTabs}
+      <div
+        aria-labelledby={
+          part === undefined
+            ? undefined
+            : `${part === "services" ? "services" : "rates"}-${sub}`
+        }
+        className="ui-stack"
+        id={
+          part === undefined
+            ? undefined
+            : `${part === "services" ? "services" : "rates"}-panel-${sub}`
+        }
+        role={part === undefined ? undefined : "tabpanel"}
+      >
+        {showUtility && (
           <>
             <section aria-labelledby="rates-utility" className="ui-card pad0">
               <header className="ui-chead pad">
@@ -532,17 +598,20 @@ export function RatesTab({
                 <span>{sst(language, "se_util_n")}</span>
               </div>
             </section>
-            {/* UI v81 round 2: the Move-out cleaning rates sit under Utility rates, as in the design. */}
-            <CleaningRatesCard
-              active={active}
-              api={cleaning}
-              language={language}
-              propertyId={propertyId}
-            />
           </>
         )}
+        {/* UI v81 round 2: the Move-out cleaning rates sit under Utility rates, as in the design;
+            round 4: on their own sub-tab. */}
+        {showCleaning && (
+          <CleaningRatesCard
+            active={active}
+            api={cleaning}
+            language={language}
+            propertyId={propertyId}
+          />
+        )}
 
-        {part !== "utility" && (
+        {showServices && (
           <>
             <section aria-labelledby="rates-services" className="ui-card pad0">
               <header className="ui-chead pad">
@@ -736,7 +805,28 @@ export function RatesTab({
                 <span>{sst(language, "se_svc_n")}</span>
               </div>
             </section>
-
+            {/* V1.1 part 6 (DL-123): the Regular services are Service products now. */}
+            <div className="ui-notice" role="note">
+              <Icon name="info" />
+              <p>
+                {sst(language, "rs_moved")}{" "}
+                <a href={hashForPage("products")}>
+                  {sst(language, "rs_moved_go")}
+                </a>
+              </p>
+            </div>
+          </>
+        )}
+        {showTypes && (
+          <>
+            {part === "services" && ready === null && (
+              <p className="ui-muted" role="status">
+                {sst(
+                  language,
+                  settings === "failed" ? "sv_read_failed" : "rates_loading",
+                )}
+              </p>
+            )}
             {ready !== null && (
               <ServiceTypesCard
                 language={language}
@@ -753,16 +843,6 @@ export function RatesTab({
                 types={ready.service_types}
               />
             )}
-            {/* V1.1 part 6 (DL-123): the Regular services are Service products now. */}
-            <div className="ui-notice" role="note">
-              <Icon name="info" />
-              <p>
-                {sst(language, "rs_moved")}{" "}
-                <a href={hashForPage("products")}>
-                  {sst(language, "rs_moved_go")}
-                </a>
-              </p>
-            </div>
           </>
         )}
       </div>
