@@ -5931,7 +5931,7 @@ Added by DL-210 (migration `20270708_380`, forward-only). No new table.
 - `app.telegram_tenant_form_data` now also gives each linked tenant's Unit number (`data.unit`).
 - `app.telegram_staff_urgent_alert` (trigger) queues nothing when `prm.relay_alerted` is `on` for the change (a report the relay already alerted).
 
-## DB-TG-017 — Invoices and a reminder to linked tenants (DL-211)
+## DB-TG-018 — Invoices and a reminder to linked tenants (DL-211)
 
 Added by DL-211 (migration `20270709_381`, forward-only).
 
@@ -5941,6 +5941,6 @@ Added by DL-211 (migration `20270709_381`, forward-only).
 - `app.telegram_invoices_page(property, actor)` (`telegram.read`): the Invoices issued in the last 45 days with their Unit, Customer, due date, amount still to pay, each tenant it was queued for with the send state, and when the reminder was queued; `rules` gives `remind_days` 3 and `days` 45.
 - Internal, not granted: `app.telegram_usd`, `app.telegram_invoice_details`, `app.telegram_invoice_to_pay`, `app.telegram_invoice_people`, `app.telegram_queue_invoice`.
 
-## DB-TG-018 — The Unit key drops a "U" before the number (DL-212)
+## DB-TG-019 — The Unit key drops a "U" before the number (DL-212)
 
 Added by DL-212 (migration `20270710_382`, forward-only). No new table. `app.tenant_unit_key(text)` also drops a leading "U" before a digit, after "Unit", "Room", "No.", "#" and "បន្ទប់": "U302" and "302" give the same key "302".

@@ -2915,7 +2915,7 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **(E) In the app.** Office › Telegram › Linked tenants shows "Invoices on Telegram": the Invoices issued in the last 45 days, who got each one (sent, waiting, not delivered) and when the reminder went, and how many reached nobody ("Give a paper copy").
 - **(F) Not in this step.** The Invoice as a PDF: the PDF library on the office computer does not join Khmer letters correctly, so a PDF with Khmer names would be wrong. It comes with the ABA KHQR step, which redesigns the printed Invoice. No new package.
 - **Open:** the native Khmer check of the new texts; the PDF with the ABA KHQR.
-- **Built:** migration `20270709_381` (DB-TG-017), API-TG-008, `frontend/src/telegram/TelegramPages.tsx`.
+- **Built:** migration `20270709_381` (DB-TG-018), API-TG-008, `frontend/src/telegram/TelegramPages.tsx`.
 - **Links:** DL-125, DL-126, DL-210.
 - **Decision date:** 2026-11-08.
 
@@ -2925,6 +2925,6 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **Status:** `BUILT ON BRANCH claude/telegram-invoices; WAITS FOR THE OWNER'S OK TO MERGE`
 - **Source:** the owner's test on 8 Nov 2026: the Units are numbered "U302", and linking with "302" was refused. Tenants will type the number they know.
 - **Decision:** when the Tenant bot compares the Unit a tenant typed with the Lease's Unit, a "U" right before a digit is dropped, after the words already dropped ("Unit", "Room", "No.", "#", "បន្ទប់"). "U302", "u 302", "302", "Unit 302" and "Room U302" are the same Unit; "UB12" stays "UB12". The office (`app.tenant_unit_key`) and the relay (`unitKey` in `relay/src/offline.ts`) use the same rule. The name and phone checks do not change, and the bot still never says which part was wrong.
-- **Built:** migration `20270710_382` (DB-TG-018), `relay/src/offline.ts`.
+- **Built:** migration `20270710_382` (DB-TG-019), `relay/src/offline.ts`.
 - **Links:** DL-126, DL-210.
 - **Decision date:** 2026-11-08.

@@ -65801,7 +65801,7 @@
       "test_id": "test_an_issued_invoice_goes_to_the_linked_tenant_once",
       "upstream_ids": [
         "DL-211",
-        "DB-TG-017"
+        "DB-TG-018"
       ],
       "test_level": "integration",
       "test_path": "backend/tests/test_telegram_tenant_invoices_migration.py",
@@ -65812,7 +65812,7 @@
       "test_id": "test_a_draft_is_never_sent",
       "upstream_ids": [
         "DL-211",
-        "DB-TG-017"
+        "DB-TG-018"
       ],
       "test_level": "integration",
       "test_path": "backend/tests/test_telegram_tenant_invoices_migration.py",
@@ -65823,7 +65823,7 @@
       "test_id": "test_the_reminder_goes_once_3_days_before_the_due_date",
       "upstream_ids": [
         "DL-211",
-        "DB-TG-017"
+        "DB-TG-018"
       ],
       "test_level": "integration",
       "test_path": "backend/tests/test_telegram_tenant_invoices_migration.py",
@@ -65834,7 +65834,7 @@
       "test_id": "test_a_reminder_waits_for_an_invoice_due_later",
       "upstream_ids": [
         "DL-211",
-        "DB-TG-017"
+        "DB-TG-018"
       ],
       "test_level": "integration",
       "test_path": "backend/tests/test_telegram_tenant_invoices_migration.py",
@@ -65845,7 +65845,7 @@
       "test_id": "test_the_invoice_list_and_reminders_need_the_telegram_rights",
       "upstream_ids": [
         "DL-211",
-        "DB-TG-017"
+        "DB-TG-018"
       ],
       "test_level": "integration",
       "test_path": "backend/tests/test_telegram_tenant_invoices_migration.py",
@@ -65877,7 +65877,7 @@
       "test_id": "test_a_typed_unit_number_finds_a_unit_numbered_with_u",
       "upstream_ids": [
         "DL-212",
-        "DB-TG-018"
+        "DB-TG-019"
       ],
       "test_level": "integration",
       "test_path": "backend/tests/test_telegram_tenant_offline_migration.py",
