@@ -20,12 +20,16 @@ export interface PageHeadSlots {
   page: string | null;
   sub: HTMLElement | null;
   actions: HTMLElement | null;
+  /** UI v81 shared layouts: a page's own PageHeader takes the head; the shell then draws no
+   *  page title and no tab bar while that page is on screen. */
+  ownHead: (owned: boolean) => void;
 }
 
 export const PageHeadContext = createContext<PageHeadSlots>({
   page: null,
   sub: null,
   actions: null,
+  ownHead: () => undefined,
 });
 
 function present(node: ReactNode): boolean {

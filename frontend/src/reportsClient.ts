@@ -75,6 +75,12 @@ export interface BirthdayRow {
   birthday: string;
 }
 
+/** UI v81 pilot: one Customer's "Paid on time" (migration 20270711_362). */
+export interface PaidOnTime {
+  on_time: number;
+  invoice_count: number;
+}
+
 export interface BirthdaysPage {
   items: BirthdayRow[];
 }
@@ -615,6 +621,16 @@ function homePage(data: Record<string, unknown>): HomePage {
   return data as unknown as HomePage;
 }
 
+function paidOnTime(data: Record<string, unknown>): PaidOnTime {
+  if (
+    typeof data.on_time !== "number" ||
+    typeof data.invoice_count !== "number"
+  ) {
+    throw new ReportsUnavailableError();
+  }
+  return { on_time: data.on_time, invoice_count: data.invoice_count };
+}
+
 function birthdaysPage(data: Record<string, unknown>): BirthdaysPage {
   if (
     !Array.isArray(data.items) ||
@@ -689,6 +705,16 @@ export const reportsApi = {
     birthdaysPage(
       await read(
         `/api/v1/properties/${encodeURIComponent(propertyId)}/birthdays`,
+      ),
+    ),
+  // UI v81 pilot: the Lease page's Customer card (invoices.read).
+  customerPaidOnTime: async (
+    propertyId: string,
+    customerId: string,
+  ): Promise<PaidOnTime> =>
+    paidOnTime(
+      await read(
+        `/api/v1/properties/${encodeURIComponent(propertyId)}/customers/${encodeURIComponent(customerId)}/paid-on-time`,
       ),
     ),
   totals: async (

@@ -23,7 +23,10 @@ export type ShellIcon =
   | "print"
   | "lock"
   | "forward"
-  | "userplus";
+  | "userplus"
+  // UI v81 shared layouts: the Lease page's Customer card and the Renew button.
+  | "phone"
+  | "pen";
 
 const PATHS: Record<ShellIcon, string[]> = {
   home: ["M3 10.5 12 3l9 7.5", "M5 9.5V21h14V9.5", "M10 21v-6h4v6"],
@@ -39,6 +42,10 @@ const PATHS: Record<ShellIcon, string[]> = {
   ],
   meter: ["M12 5a8 8 0 1 1 0 16 8 8 0 0 1 0-16z", "M12 13l3.5-3.5", "M8 18h8"],
   check: ["m5 12.5 4.5 4.5L19 7.5"],
+  phone: [
+    "M5 4h3.5l1.5 4-2 1.5a10 10 0 0 0 6.5 6.5L16 14l4 1.5V19a1.5 1.5 0 0 1-1.6 1.5A16.5 16.5 0 0 1 3.5 5.6 1.5 1.5 0 0 1 5 4z",
+  ],
+  pen: ["M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z", "M14 20h6"],
   units: [
     "M6 21V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v17",
     "M3.5 21h17",

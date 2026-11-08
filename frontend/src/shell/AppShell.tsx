@@ -123,8 +123,11 @@ export function AppShell({
   // UI v81 round 2: the page's sub-line and buttons sit in the head row, as in the design.
   const [headSub, setHeadSub] = useState<HTMLElement | null>(null);
   const [headActions, setHeadActions] = useState<HTMLElement | null>(null);
+  // UI v81 shared layouts: a page drawn with PageHeader (a record or a form) takes the head;
+  // the shell then draws no page title and no tab bar while that page is on screen.
+  const [ownHead, setOwnHead] = useState(false);
   const slots: PageHeadSlots = useMemo(
-    () => ({ page, sub: headSub, actions: headActions }),
+    () => ({ page, sub: headSub, actions: headActions, ownHead: setOwnHead }),
     [page, headSub, headActions],
   );
 
@@ -349,14 +352,16 @@ export function AppShell({
           ref={view}
           tabIndex={-1}
         >
-          <div className="shell-head">
-            <div className="shell-head-text">
-              <h1 id="page-title">{title}</h1>
-              <div className="shell-head-sub" ref={setHeadSub} />
+          {!ownHead && (
+            <div className="shell-head">
+              <div className="shell-head-text">
+                <h1 id="page-title">{title}</h1>
+                <div className="shell-head-sub" ref={setHeadSub} />
+              </div>
+              <div className="shell-head-actions" ref={setHeadActions} />
             </div>
-            <div className="shell-head-actions" ref={setHeadActions} />
-          </div>
-          {tabs.length > 1 && (
+          )}
+          {!ownHead && tabs.length > 1 && (
             <nav aria-label={tabsName} className="shell-tabs">
               {tabs.map((tab) => (
                 <a

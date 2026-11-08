@@ -68,7 +68,6 @@ import {
   ReservationApi,
   reservationApi as reservationClient,
 } from "./reservationClient";
-import { LeaseManagement } from "./LeaseManagement";
 import { LeasesPage } from "./leases/LeasesPage";
 import { LettersPage } from "./letters/LettersPage";
 import {
@@ -82,7 +81,6 @@ import {
   moveOutApi as moveOutClient,
 } from "./moveout/moveoutClient";
 import { mt } from "./moveout/text";
-import { lt } from "./leases/text";
 import { LeaseApi, leaseApi as leaseClient } from "./leaseClient";
 import { DepositManagement } from "./DepositManagement";
 import { DepositApi, depositApi as depositClient } from "./depositClient";
@@ -2330,20 +2328,10 @@ export function App({
           reservationApi={reservationApi}
           unitApi={unitApi ?? defaultUnitApi}
           lettersApi={lettersApi}
+          ledgerApi={ledgerApi ?? customerLedgerClient}
+          actorId={sessionActorId ?? undefined}
+          reports={reportsApi}
         />
-        {/* V1-058 R3: the Lease actions stay in the earlier English forms, folded, until
-            the next step moves them into the design. */}
-        <details className="ui-records">
-          <summary lang={language}>
-            <span className="ui-records-title">{lt(language, "records")}</span>
-            <span className="ui-small ui-muted">
-              {lt(language, "records_note")}
-            </span>
-          </summary>
-          <div lang="en">
-            <LeaseManagement api={leaseApi} />
-          </div>
-        </details>
       </div>
       <div
         className="shell-page"

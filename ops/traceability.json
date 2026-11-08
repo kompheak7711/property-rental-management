@@ -65945,6 +65945,76 @@
       "test_path": "backend/tests/test_telegram_tenant_offline_migration.py",
       "status": "implemented",
       "notes": "Tenant bot linking: U302, 302, Room u302 and Unit 302 give the same Unit key; UB12 keeps its letters."
+    },
+    {
+      "test_id": "TEST-FE-1917",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shell/layouts.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 shared layouts (owner 08/11/2026 06:55 point 1) PageHeader: the Back link on top, then the title with its status badge and one-line summary on the left and the buttons on the right; \"Manager only\" is text beside a button, never inside one."
+    },
+    {
+      "test_id": "TEST-FE-1918",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shell/layouts.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 shared layouts: a page's PageHeader takes the shell's head (one page title at a time) only while its page box is on screen, and gives it back when it goes; a hidden page's header stays quiet."
+    },
+    {
+      "test_id": "TEST-FE-1919",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shell/layouts.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 shared layouts: without a shell page box (a page on its own, as in tests) PageHeader draws the head in place and claims nothing."
+    },
+    {
+      "test_id": "TEST-FE-1920",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shell/layouts.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 shared layouts: DetailLayout (main and side columns), FormLayout (one form around the fields and the side panel, submit works), FieldGrid with FullRow, and FactList (a term over each value, the note only where given)."
+    },
+    {
+      "test_id": "TEST-FE-1921",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/leases/LeaseCustomerCard.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 pilot, Lease page Customer card: the Primary Tenant with the Lease status, the phone, Paid on time (x of y Invoices), the Customer Credit and the Unpaid Invoices from one ledger line scoped to the Property, and Open Customer; without the Customers right no link, and a client without the ledger or reports says the rows could not be read."
+    },
+    {
+      "test_id": "TEST-FE-1922",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "E2E",
+      "test_path": "frontend/e2e/screens.spec.ts",
+      "status": "implemented",
+      "notes": "UI v81 screen checks (owner 08/11/2026 06:55 point 4): every screen of e2e/screens.ts at 390, 768, 1366 x 768, 1440 x 900 and 1920 x 1080 against the built app with replayed server answers; fails on horizontal page overflow, a button, link or tab under 44 x 44 px, colour contrast under 4.5:1 (axe-core), cut-off text, a role badge inside a button, a card alone in a grid row on a desktop, and two stacked tables. Runs in CI (job screens)."
+    },
+    {
+      "test_id": "test_the_customer_paid_on_time_needs_invoices_read_and_gives_the_two_counts",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_reports_api.py",
+      "status": "implemented",
+      "notes": "UI v81 pilot: GET /properties/{id}/customers/{id}/paid-on-time needs a session and invoices.read, gives on_time and invoice_count, refuses query parameters and a bad id, and is never cached. The database function app.customer_paid_on_time (migration 20270711_362) is checked in test_reports_home_migration.py."
     }
   ]
 }

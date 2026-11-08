@@ -1,6 +1,6 @@
 // V1-058 R3: the Leases page of the rebuilt app. "#/leases" shows the list; "#/leases/<Lease
-// id>" shows the Lease page. New Lease and the Lease actions stay in the earlier forms that App
-// shows under this page until the next step moves them into the design.
+// id>" shows the Lease page and "#/leases/new" the New Lease form (UI v81 pilot: both on the
+// shared layouts; the earlier English forms are no longer shown under this page).
 
 import "../shell/screens.css";
 
@@ -29,6 +29,8 @@ import {
   loadLeasesData,
 } from "./leasesData";
 import type { PaymentsApi } from "../payments/paymentsClient";
+import type { CustomerLedgerApi } from "../customerLedgerClient";
+import type { reportsApi } from "../reportsClient";
 import type { SettlementApi } from "../settlementClient";
 import type { SigningApi } from "./SignLeaseDialog";
 import { lt } from "./text";
@@ -57,6 +59,10 @@ export interface LeasesPageProps {
   settlementApi?: SigningApi &
     Pick<SettlementApi, "planSecurityDeposit" | "receiveSecurityDeposit">;
   paymentsApi?: PaymentsApi;
+  /** UI v81 pilot: the Lease page's Customer card (the ledger position and "Paid on time"). */
+  ledgerApi?: Pick<CustomerLedgerApi, "read">;
+  actorId?: string;
+  reports?: Pick<typeof reportsApi, "customerPaidOnTime">;
 }
 
 export function LeasesPage({
@@ -76,6 +82,9 @@ export function LeasesPage({
   customerGate,
   settlementApi,
   paymentsApi,
+  ledgerApi,
+  actorId,
+  reports,
 }: LeasesPageProps) {
   const detail = useHashDetail("leases");
   const [data, setData] = useState<LeasesData | null>(null);
@@ -182,6 +191,9 @@ export function LeasesPage({
         paymentsApi={paymentsApi}
         settlementApi={settlementApi}
         unitApi={unitApi}
+        ledgerApi={ledgerApi}
+        actorId={actorId}
+        reports={reports}
       />
     );
   }

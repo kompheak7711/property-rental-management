@@ -79,6 +79,9 @@
   align-items: center;
   justify-self: start;
   gap: 6px;
+  /* 44 px tall to press (the owner's 44 × 44 rule); the margin gives most of it back. */
+  min-height: 44px;
+  margin: -8px 0 -4px;
   padding: 6px 0;
   border: 0;
   background: none;
@@ -134,8 +137,10 @@
 }
 
 .ui-btn.link {
-  min-height: 0;
-  padding: 4px;
+  /* Still 44 px tall to press; the margin keeps the line as short as before. */
+  min-height: 44px;
+  margin: -6px 0;
+  padding: 4px 6px;
   border: 0;
   background: none;
   box-shadow: none;
@@ -3299,4 +3304,299 @@ table.ui-numbering td.ui-num {
 }
 .ui-insp-list li > span {
   flex: 1 1 18rem;
+}
+
+/* ---------- UI v81 shared layouts (owner 08/11/2026 06:55; shell/layouts.tsx) ---------- */
+
+/* PageHeader: the Back link on its own line, then the title with its status chip and one-line
+   summary on the left and the buttons on the right (design v81 .head). The buttons wrap under
+   the title on a narrow screen. */
+.ui-pagehead {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.ui-pagehead-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  align-items: flex-end;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.ui-pagehead-text {
+  min-width: 0;
+}
+
+.ui-pagehead-title {
+  margin: 0;
+  color: var(--heading);
+  font-size: 1.75rem;
+  font-weight: 600;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+html[lang="km"] .ui-pagehead-title {
+  line-height: 1.5;
+}
+
+.ui-pagehead-sub {
+  margin: 2px 0 0;
+  color: var(--text-2);
+}
+
+.ui-pagehead-actions {
+  align-items: center;
+}
+
+/* "Manager only" as text beside a button, never inside it. */
+.ui-only {
+  align-self: center;
+  color: var(--text-2);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 639px) {
+  .ui-pagehead-title {
+    font-size: 1.45rem;
+  }
+}
+
+/* DetailLayout: two columns, about 60 / 40 (design v81 .split), one column under 1024 px. */
+.ui-detail {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 1023px) {
+  .ui-detail {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* FormLayout: the fields on the left, the summary panel on the right, which stays in view
+   while the fields scroll (under the sticky top bar). One column under 1024 px. */
+.ui-formlayout {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 20px;
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .ui-formlayout-side {
+    position: sticky;
+    top: calc(var(--ui-top, 0px) + 16px);
+  }
+}
+
+@media (max-width: 1023px) {
+  .ui-formlayout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* The fields of a form card: two short fields per row, one per row on a phone (design .row2). */
+.ui-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.ui-fields > .ui-span2 {
+  display: grid;
+  gap: 16px;
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+@media (max-width: 639px) {
+  .ui-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* A money box: the "$" in its own box before the number (design .money). */
+.ui-cash {
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.ui-cash-cur {
+  display: grid;
+  flex: none;
+  place-items: center;
+  min-width: 52px;
+  border: 1px solid var(--border-strong);
+  border-right: 0;
+  border-radius: 8px 0 0 8px;
+  background: var(--sunken);
+  color: var(--heading);
+  font-weight: 700;
+}
+
+.shell-view .ui-cash input,
+.ui-cash input {
+  min-width: 0;
+  border-radius: 0 8px 8px 0;
+  font-family: var(--font-num);
+  font-size: 1.05rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* The facts of a record in columns (design .facts): a small label over each value. */
+.ui-factlist {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 14px 18px;
+  margin: 0;
+}
+
+.ui-factlist > div {
+  display: grid;
+  gap: 2px;
+  align-content: start;
+  min-width: 0;
+}
+
+.ui-factlist dt {
+  color: var(--text-2);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+html[lang="km"] .ui-factlist dt {
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.ui-factlist dd {
+  min-width: 0;
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.ui-factlist dd.ui-factlist-note {
+  color: var(--text-2);
+  font-size: 0.86rem;
+  font-weight: 400;
+}
+
+/* The Customer card of a record (design .who, .kv2.cu, .well.cu-open). */
+.ui-who {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  min-width: 0;
+}
+
+.ui-who-av {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--sunken);
+  color: var(--heading);
+  font: 700 1.05rem/1 var(--font-num);
+}
+
+.ui-who-name {
+  color: var(--heading);
+  font-size: 1.15rem;
+}
+
+.ui-who p {
+  margin: 2px 0 0;
+}
+
+.ui-kv2 {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px 16px;
+  margin: 0;
+}
+
+.ui-kv2 dt {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  color: var(--text-2);
+}
+
+.ui-kv2 dd {
+  min-width: 0;
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.ui-kv2 dd.note {
+  grid-column: 1 / -1;
+  margin-top: -6px;
+  color: var(--text-2);
+  font-size: 0.8rem;
+  font-weight: 400;
+  text-align: left;
+}
+
+.ui-well {
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: var(--sunken);
+}
+
+.ui-well .line {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ui-well .line b:first-child {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  color: var(--text-2);
+}
+
+.ui-well.owed .line b:first-child {
+  color: var(--warn);
+}
+
+/* A link in running text keeps its place in the line but can be pressed on a 44 px tall and
+   wide area (the owner's 44 × 44 rule): the padding grows the target, the margins give the
+   space back. */
+.shell-view a.ui-no,
+.shell-view .ui-factlist a,
+.shell-view .ui-line a,
+.shell-view .ui-kv a {
+  padding: 13px 6px;
+  margin: -13px -6px;
+}
+
+/* The numbered next steps of a form's side panel (design ul.steps). */
+.ui-next {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 20px;
 }

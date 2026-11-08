@@ -666,3 +666,7 @@ The counts below are rows fully on screen when the page opens, measured on the r
 
 - Comparison sheets (design beside app, every screen, every size): `/mnt/project-files/ui-audit/round3/` (`<screen>-<size>.jpg`, design on the left, app on the right).
 - In the repository: `docs/ui-audit/screenshots/round3/` holds Home at the five sizes (design and app) and the main list pages at 1366 × 768 and 1440 × 900, with a README.
+
+## 7. Automatic check from round 5 (08/11/2026)
+
+The measurements of section 1 are now a Playwright test, `frontend/e2e/screens.spec.ts` (TEST-FE-1922), run by `npm run screens` and by the CI job `screens`. It opens every screen listed in `frontend/e2e/screens.ts` at the five sizes against the built app with replayed server answers and fails on horizontal overflow, a target under 44 × 44 px, contrast under 4.5:1, cut-off text, a role badge inside a button, a lone card in a desktop grid row and two stacked tables. Screens join the list as they move onto the shared layouts; the pilot (Lease details, New Lease) is in. The result per screen is in `02_DESIGN_V81_CHANGES.md`, round 5.

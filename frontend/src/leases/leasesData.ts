@@ -217,4 +217,14 @@ export function initialRent(start: string, rent: number): InitialRent {
   };
 }
 
+/** The last day the Initial Rent covers: the end of the Start Date's month, or of the next
+ *  month when the whole next month is billed with it (design v81 "Period" row). */
+export function initialPeriodEnd(start: string, initial: InitialRent): string {
+  const [year, month] = start.split("-").map(Number) as [number, number];
+  const last = new Date(
+    Date.UTC(year, initial.nextMonth > 0 ? month + 1 : month, 0),
+  );
+  return last.toISOString().slice(0, 10);
+}
+
 export { addDays, daysBetween };

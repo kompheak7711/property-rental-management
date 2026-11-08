@@ -366,3 +366,74 @@ Source files `round4-source/i18n46.js` and `round4-source/app46.js`; the mock-up
 | Menu › Settings | Settings shows its tabs as sub-items (Business · Utility rates · Monthly services · Unit setup · System health) in the open menu and in the rail fly-out, with the current tab highlighted | Owner D14: every page with tabs shows them in the menu |
 | Menu › Inspections | One tab is no tab: no "⌄" in the menu and no one-tab bar in the page | Owner D14: pages without tabs have no "⌄" |
 | Version line | "Design v81 round 4 · 08/11/2026" | |
+
+## Round 5 (owner 08/11/2026 06:55): shared layouts and the Lease pilot
+
+No design change. The app got the shared layouts and the two pilot pages; everything else waits for the owner's approval of the pilot.
+
+### Shared layouts (`frontend/src/shell/layouts.tsx`, styles at the end of `screens.css`)
+
+| Layout | Rule |
+|---|---|
+| PageHeader | Back link on top; title (number font for a document number) + status badge + one-line summary on the left; the buttons on the right. "Manager only" is `RightNote` text beside a button, never inside it. While the page is on screen the shell draws no page title and no tab bar: the page's header is the head |
+| DetailLayout | Two columns, 3fr / 2fr (about 60 / 40), one column under 1024 px |
+| FormLayout | One form: the fields card on the left, the summary panel on the right, which stays in view while scrolling (sticky from 1024 px). `FieldGrid` puts two short fields per row on a desktop and one on a phone (under 640 px); `FullRow` takes the whole row |
+| FactList | The record's facts in columns (design `.facts`): a small label over each value, a note under it, as many columns as fit (170 px each) |
+| CardGrid, ListLayout | The round 3 rules (balanced card rows; the table scrolls, the top stays) |
+
+### Pilot: Lease details and New Lease
+
+Sheets (design left, app right) at 390, 768, 1366 × 768 and 1920 × 1080: `/mnt/project-files/ui-design/pilot-sheets/sheet-lease-<width>.png` and `sheet-newlease-<width>.png`.
+
+Lease details, every difference from the design:
+
+| Part | Design v81 | App | Fixed or why |
+|---|---|---|---|
+| Back link | "Back to Home" (the sample came from Home) | "Back to Leases" (names the page the person came from) | Same shared Back link |
+| Title | "Lease · U101L0026" | "Lease · U206" | The app has no Lease number (the Lease read carries none). **Open question** |
+| Buttons | Renew · Terminate Lease · Manager only · Print Lease | Renew · Terminate Lease · Manager only | "Print Lease" for a signed Lease does not exist in the app (only "Print draft" for a draft). **Open question**: which document prints for a signed Lease? |
+| Tabs | None on the record page | None (the Leases / Notices / Move-outs tabs are gone from the record page) | Fixed |
+| Lease card | Unit, Primary tenant, Start date, End date, Monthly rent, then Signed on, Renewal of | Same facts in the same order (`FactList`), Renewal of / Renewed by when the Lease has one | Fixed. The unit type and floor under Unit and the phone under Primary tenant are not in the Lease read; the phone is in the Customer card |
+| Notes under the Lease card | One sentence | Same sentence; a signed Lease that is not moved in also keeps the app's next-step line under the header ("Signed, Unit is Occupied. Record the move-in…") | Kept: it says what to do next; the design sample is after move-in |
+| Signers | Name + role on one line, "Signed <date>" under, chip "Signed" | Name, role under, chip "Signed <date>" | Kept: same facts, the date in the chip |
+| Occupants | "Moved in <date>" | "Moves in with the Lease…" until the move-in is recorded | State of the sample Lease |
+| Rent and services | Rows Initial Rent · Period · Due date · Then · Services | Same rows (Initial Rent with the pro-rata formula as its note; Period = Start Date to the end of the first billed month; Due date with the Start Date + 5 days note; Services with "Billed on the Rent Invoice each month.") | Fixed |
+| Deposits | Required / Received / Balance due, "Received in full.", two plain notes | Same; "Outstanding" is now "Balance due"; the long note is plain text, no longer a blue box | Fixed |
+| Customer card | Under Deposits: avatar, name, status chip, "Primary Tenant · Unit · type", Phone, Paid on time + note, Customer Credit, Unpaid Invoices (highlighted when owed), Open Customer | Same (new card; Paid on time from migration 20270711_362; Credit and Unpaid Invoices from the Customer's ledger position). The role line has no unit type (not in the Lease read) | Fixed |
+| History | Events name the person ("Signed by Keo Vannak."), "History (4)" button | The app's event names ("Lease signed") with their note; the History button appears when there are more than five events | Kept: the timeline read has no actor name. **Open question** if the owner wants names |
+| Layout at 390 and 768 | One column: Lease, Signers, Occupants, Rent and services, Deposits, Customer, History; buttons wrap under the title | Same order and wrapping | Fixed |
+| Layout at 1366 and 1920 | Two columns about 60 / 40; five facts in a row at 1920 | Same | Fixed |
+
+New Lease, every difference from the design:
+
+| Part | Design v81 | App | Fixed or why |
+|---|---|---|---|
+| Header | Back link, "New Lease", one sentence | Same (the Back link names the page the person came from) | Fixed |
+| Rows | Unit + Primary Tenant; Other Signers + Other occupants; Start Date + End Date; Monthly Rent + Security Deposit; pet tick; Services; Save as draft · Cancel | Same rows (`FieldGrid`), "Required" / "Optional" marks and the help texts as in the design | Fixed |
+| Other Signers, Other occupants | Free text ("Names separated by commas") | Customer pickers ("Add a Customer…") | Kept: the app records Customers, not names (a Signer is a Customer) |
+| Primary Tenant | A select | A select with a button to add a new Customer | Kept: an app function the design left out |
+| Dates | Plain fields | Fields with a calendar button | Kept: the app's date field |
+| End Date default | One year (02/11/2027 for 03/11/2026) | The app's existing rule (30/11/2027 for 08/11/2026) | Kept: not a layout matter; unchanged |
+| Services | A radio list of the Property's Services | The same list when Services exist; "No Services are set up in Settings yet." and a "+ New Service" button when none | State of the review data |
+| Right column | "What will be billed" + "Next step" (4 bullets), stays in view while scrolling | Same (`FormLayout` side panel) | Fixed |
+| Layout at 390 and 768 | One column, one field per row, the side panels under the form | Same | Fixed |
+| Layout at 1366 and 1920 | Two columns, two fields per row, no empty half page | Same | Fixed |
+
+### Automatic checks (owner point 4)
+
+`frontend/e2e/screens.spec.ts` (Playwright, `npm run screens`, CI job `screens`): every screen in `frontend/e2e/screens.ts` at 390 × 844, 768 × 1024, 1366 × 768, 1440 × 900 and 1920 × 1080 against the built app, with the server answers replayed from `frontend/e2e/fixtures/<name>.har.json` (recorded once with `node e2e/record.mjs`; no database and no API in CI). The check fails on horizontal page overflow, a button, link or tab under 44 × 44 px, colour contrast under 4.5:1 (axe-core), cut-off text or numbers, a role badge inside a button, a card alone in a grid row on a desktop, and two stacked tables. The screenshots of every screen and size go to `frontend/e2e/results/shots/`.
+
+First run on the pilot: the Back link (38 px tall), the inline links (39 px) and "Open Customer" (32 px) failed the 44 px rule and were fixed in the shared styles (`.ui-crumb`, the inline-link rule, `.ui-btn.link`); everything else passed. Both pilot pages pass at all five sizes.
+
+### Other changes in this round
+
+- Lease page texts: "Outstanding" → "Balance due"; "Terminate" → "Terminate Lease"; "Save draft" → "Save as draft"; the New Lease help texts as in the design.
+- The "Earlier forms" box under Leases is gone (the other pages keep theirs until their batch).
+- New read `GET /api/v1/properties/{id}/customers/{id}/paid-on-time` (invoices.read; migration 20270711_362, function `app.customer_paid_on_time`): one Customer's Invoices of the last 12 months paid by their Due Date.
+- Shared hit areas: the Back link, inline links and text buttons are 44 px tall to press without changing the lines around them.
+
+### Open questions (for the owner)
+
+1. Lease number: the design shows "Lease · U101L0026"; the app has no Lease number. Should Leases get a document number (prefix, numbering rule), or does the title stay "Lease · <Unit>"?
+2. Print Lease for a signed Lease: which document should print (the signed agreement, the draft form, or nothing)?
+3. History names: should the Lease timeline name the person who did each step ("Signed by Keo Vannak")? The timeline read has no actor name today.

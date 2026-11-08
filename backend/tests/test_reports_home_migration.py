@@ -250,10 +250,22 @@ def test_the_birthdays_read_and_the_paid_on_time_and_birthdays_cards(
             " app.birthday_in_year(DATE '2000-02-29',2028)"
         ).fetchone()
         assert leap == (date(2027, 2, 28), date(2028, 2, 29))
+        # UI v81 pilot (migration 20270711_362): the same rule for one Customer, as two counts.
+        counts = connection.execute(
+            "SELECT on_time,invoice_count FROM app.customer_paid_on_time(%s,%s,%s::uuid[],%s)",
+            (actor, prop, [prop], customer),
+        ).fetchall()
+        assert len(counts) == 1 and 0 <= counts[0][0] <= counts[0][1]
         with pytest.raises(psycopg.errors.InsufficientPrivilege):
             connection.execute(
                 "SELECT * FROM app.customer_birthdays(%s,%s,%s::uuid[])",
                 (actor, prop, [uuid.uuid4()]),
+            )
+        connection.rollback()
+        with pytest.raises(psycopg.errors.InsufficientPrivilege):
+            connection.execute(
+                "SELECT * FROM app.customer_paid_on_time(%s,%s,%s::uuid[],%s)",
+                (actor, prop, [uuid.uuid4()], customer),
             )
     page = home(runtime_database_url(), actor, prop, ["invoices", "birthdays"])
     assert set(page["cards"]["paid_on_time"]) == {"on_time", "invoice_count"}

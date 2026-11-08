@@ -215,6 +215,8 @@ const TEXT = {
     "វិក្កយបត្រថ្លៃឈ្នួលនៅថ្ងៃទី 25 រៀងរាល់ខែ ត្រូវបង់ត្រឹមថ្ងៃទី 5។ គ្មានអ្វីបន្ទាប់ពីថ្ងៃបញ្ចប់ បើគ្មានការបន្តបានចុះហត្ថលេខា។",
   ],
   services: ["Services", "សេវា"],
+  // UI v81 pilot: the design's "Due date" row of the Rent and services card.
+  due_t: ["Due date", "ថ្ងៃផុតកំណត់"],
   services_note: [
     "Billed on the Rent Invoice each month.",
     "គិតលើវិក្កយបត្រថ្លៃឈ្នួលរៀងរាល់ខែ។",
@@ -230,7 +232,8 @@ const TEXT = {
   dep_pet: ["Pet Deposit", "ប្រាក់កក់សត្វចិញ្ចឹម"],
   dep_req: ["Required", "តម្រូវ"],
   dep_rcv: ["Received", "បានទទួល"],
-  dep_out: ["Outstanding", "នៅសល់"],
+  // UI v81 pilot (owner 08/11/2026): "Outstanding" reads "Balance due".
+  dep_out: ["Balance due", "សមតុល្យត្រូវបង់"],
   dep_rest_due: [
     "{0} due by {1}, with the Initial Rent.",
     "{0} ត្រូវបង់ត្រឹម {1} ជាមួយថ្លៃឈ្នួលដំបូង។",
@@ -474,8 +477,8 @@ const TEXT = {
   renew_title: ["Renew Lease", "បន្តកិច្ចសន្យា"],
   // new
   new_sub: [
-    "A draft first; it is signed when every Signer has signed the paper Lease.",
-    "ជាសេចក្តីព្រាងសិន វាចុះហត្ថលេខាពេលអ្នកចុះហត្ថលេខាទាំងអស់បានចុះលើក្រដាស។",
+    "Draft the Lease, then sign it when every Signer has signed the paper.",
+    "ព្រាងកិច្ចសន្យាសិន រួចចុះហត្ថលេខាពេលអ្នកចុះហត្ថលេខាទាំងអស់បានចុះលើក្រដាស។",
   ],
   // new
   from_booking: [
@@ -497,8 +500,8 @@ const TEXT = {
   choose_unit: ["Choose a Unit", "ជ្រើសបន្ទប់"],
   // new
   unit_help: [
-    "Vacant, cleaning or maintenance Units. A Reserved Unit gets its Lease from its Booking.",
-    "បន្ទប់ទំនេរ កំពុងសម្អាត ឬកំពុងជួសជុល។ បន្ទប់ដែលបានកក់ ទទួលកិច្ចសន្យាពីការកក់របស់វា។",
+    "Vacant Units, Units being cleaned or maintained, and the Unit of an active Reservation.",
+    "បន្ទប់ទំនេរ បន្ទប់កំពុងសម្អាត ឬជួសជុល និងបន្ទប់នៃការកក់ដែលកំពុងដំណើរការ។",
   ],
   // new
   choose_customer: ["Choose a Customer", "ជ្រើសអតិថិជន"],
@@ -511,8 +514,8 @@ const TEXT = {
   remove: ["Remove {0}", "ដក {0}"],
   // new
   end_help: [
-    "Filled in as one year, to the last day of a month.",
-    "បំពេញជាមួយឆ្នាំ ដល់ថ្ងៃចុងក្រោយនៃខែ។",
+    "Filled in as one year. Change it if the agreement differs.",
+    "បំពេញជាមួយឆ្នាំ។ ប្តូរវាប្រសិនបើកិច្ចព្រមព្រៀងខុសគ្នា។",
   ],
   pet_ok: ["A pet is approved", "សត្វចិញ្ចឹមត្រូវបានអនុញ្ញាត"],
   // new
@@ -592,7 +595,7 @@ const TEXT = {
   ],
   confirm_no_services: ["No Services.", "គ្មានសេវា។"],
   // new
-  save_draft: ["Save draft", "រក្សាទុកសេចក្តីព្រាង"],
+  save_draft: ["Save as draft", "រក្សាទុកជាសេចក្តីព្រាង"],
   preview: ["What will be billed", "អ្វីដែលនឹងចេញវិក្កយបត្រ"],
   // new
   preview_wait: [
@@ -672,7 +675,7 @@ const TEXT = {
     "ម៉ាស៊ីនមេបានបដិសេធសេចក្តីព្រាង។ កិច្ចសន្យាផ្សេងប្រហែលគ្របដណ្តប់បន្ទប់នេះសម្រាប់ថ្ងៃទាំងនេះរួចហើយ ឬព័ត៌មានមិនត្រូវតាមច្បាប់។ គ្មានអ្វីបន្ថែមត្រូវបានរក្សាទុកទេ។",
   ],
   // Terminate dialog (mock-up i18n3.js "tg_"; lines marked new are not in the mock-up)
-  terminate: ["Terminate", "បញ្ចប់កិច្ចសន្យា"],
+  terminate: ["Terminate Lease", "បញ្ចប់កិច្ចសន្យា"],
   tg_t: ["Terminate the Lease · {0}", "បញ្ចប់កិច្ចសន្យា · {0}"],
   tg_ground: ["Ground", "មូលដ្ឋាន"],
   tg_EARLY: ["Customer leaves early", "អតិថិជនចាកចេញមុនកំណត់"],
@@ -918,8 +921,8 @@ const TEXT = {
   // new (V1-060 B6, DL-100): the walk-in draft's Security Deposit and paying at signing.
   deposit_box: ["Security Deposit (USD)", "ប្រាក់កក់សុវត្ថិភាព (ដុល្លារ)"],
   deposit_help: [
-    "Usually one month's Rent. The customer pays it when the Lease is signed.",
-    "ជាធម្មតាថ្លៃឈ្នួលមួយខែ។ អតិថិជនបង់វាពេលចុះហត្ថលេខាកិច្ចសន្យា។",
+    "Usually one month's Rent. Due within 5 days after the Start Date, with the Initial Rent.",
+    "ជាធម្មតាថ្លៃឈ្នួលមួយខែ។ ត្រូវបង់ក្នុង ៥ ថ្ងៃបន្ទាប់ពីថ្ងៃចាប់ផ្តើម ជាមួយថ្លៃឈ្នួលដំបូង។",
   ],
   err_deposit: [
     "Enter the Security Deposit, more than 0.",
@@ -1146,6 +1149,57 @@ const TEXT = {
     "អ្នកជួលចម្បង៖ ចាកចេញបានតែជាមួយកិច្ចសន្យា។",
   ],
   "e_lease.occupant_moved_out": ["Occupant moved out", "អ្នករស់នៅបានចាកចេញ"],
+  // UI v81 pilot (owner 08/11/2026 06:55): the shared PageHeader, the Customer card and the
+  // New Lease form as in design v81.
+  mgr_only: ["Manager only", "សម្រាប់អ្នកគ្រប់គ្រងប៉ុណ្ណោះ"], // new
+  req_mark: ["Required", "ត្រូវបំពេញ"], // new
+  opt_mark: ["Optional", "ស្រេចចិត្ត"], // new
+  cancel_form: ["Cancel", "បោះបង់"], // new
+  pet_help2: [
+    "Only then is a Pet Deposit required.",
+    "ទើបត្រូវការប្រាក់កក់សត្វចិញ្ចឹម។",
+  ], // new
+  signers_help: [
+    "Each one is responsible for the whole balance.",
+    "ម្នាក់ៗទទួលខុសត្រូវលើសមតុល្យទាំងមូល។",
+  ], // new
+  occupants_help: [
+    "People who will live there without signing. Recorded at move-in.",
+    "អ្នកដែលនឹងរស់នៅដោយមិនចុះហត្ថលេខា។ កត់ត្រាពេលចូលស្នាក់នៅ។",
+  ], // new
+  next_t: ["Next step", "ជំហានបន្ទាប់"], // new
+  next_1: [
+    "The Lease is saved as a draft. Nothing is billed yet.",
+    "កិច្ចសន្យារក្សាទុកជាសេចក្តីព្រាង។ មិនទាន់ចេញវិក្កយបត្រទេ។",
+  ], // new
+  next_2: [
+    "Print it, and let every Signer sign the paper.",
+    "បោះពុម្ពវា ហើយឱ្យអ្នកចុះហត្ថលេខាទាំងអស់ចុះលើក្រដាស។",
+  ], // new
+  next_3: [
+    "A Manager records the signing. The Unit becomes Occupied and the Initial Rent Invoice is made.",
+    "អ្នកគ្រប់គ្រងកត់ត្រាការចុះហត្ថលេខា។ បន្ទប់ក្លាយជាមានអ្នកជួល ហើយវិក្កយបត្រថ្លៃឈ្នួលដំបូងត្រូវបានបង្កើត។",
+  ], // new
+  next_4: [
+    "Record the move-in when the keys are handed over.",
+    "កត់ត្រាការចូលស្នាក់នៅពេលប្រគល់កូនសោ។",
+  ], // new
+  cu_title: ["Customer", "អតិថិជន"], // new
+  cu_open: ["Open Customer", "បើកអតិថិជន"], // new
+  cu_role: ["Primary Tenant · {0}", "អ្នកជួលចម្បង · {0}"], // new
+  cu_phone: ["Phone", "ទូរស័ព្ទ"], // new
+  cu_ontime: ["Paid on time", "បង់ទាន់ពេល"], // new
+  cu_ontime_v: ["{0} of {1} Invoices", "{0} នៃ {1} វិក្កយបត្រ"], // new
+  cu_ontime_none: ["No Invoice due yet", "មិនទាន់មានវិក្កយបត្រដល់កំណត់"], // new
+  cu_ontime_note: [
+    "Invoices paid in full on or before the Due Date, in the last 12 months. Only Invoices whose Due Date has passed count. It changes no money.",
+    "វិក្កយបត្រដែលបង់គ្រប់ចំនួននៅ ឬមុនថ្ងៃផុតកំណត់ ក្នុង ១២ ខែចុងក្រោយ។ រាប់តែវិក្កយបត្រដែលថ្ងៃផុតកំណត់កន្លងផុតហើយ។ វាមិនប្តូរលុយទេ។",
+  ], // new
+  cu_credit: ["Customer Credit", "ឥណទានអតិថិជន"], // new
+  cu_unpaid: ["Unpaid Invoices", "វិក្កយបត្រមិនទាន់បង់"], // new
+  cu_loading: ["Reading…", "កំពុងអាន…"], // new
+  cu_failed: ["Could not be read now.", "មិនអាចអានបានឥឡូវនេះ។"], // new
+  cu_inactive: ["Deactivated", "បានបិទ"], // new
 } as const;
 
 export type LeaseTextKey = keyof typeof TEXT;
