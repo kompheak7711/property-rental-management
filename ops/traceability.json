@@ -65591,6 +65591,27 @@
       "test_path": "backend/tests/test_telegram_tenant_bot.py",
       "status": "implemented",
       "notes": "Database review 7 Nov 2026 (B): the Tenant bot passes the inbound message it answers (updates and forms), so the outbox keeps each answer once. The Staff and Customer bot tests of the same name do the same."
+    },
+    {
+      "test_id": "test_migration_373_follows_372_and_is_forward_only",
+      "upstream_ids": [
+        "DL-202"
+      ],
+      "test_level": "migration",
+      "test_path": "backend/tests/test_v12_gl_method_account_right_migration.py",
+      "status": "implemented",
+      "notes": "Database review 7 Nov 2026 (E): migration 373 follows 372 and is forward-only."
+    },
+    {
+      "test_id": "test_only_a_person_with_the_accounts_right_sets_a_method_account",
+      "upstream_ids": [
+        "DL-202",
+        "DB-GL-010"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_v12_gl_method_account_right_migration.py",
+      "status": "implemented",
+      "notes": "Database review 7 Nov 2026 (E), owner 8 Nov 2026: the database refuses to set a method's ledger account to a Manager, a Staff person or no actor (42501, ledger.accounts.manage) and writes nothing; the Owner's call writes the mapping and its audit event."
     }
   ]
 }

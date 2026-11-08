@@ -5596,7 +5596,7 @@ Owner plan of 03/11/2026 (L3, L4) and the automatic posting table of PRD v2 (PR-
 - `app.gl_app_record_events(property, from, until)` builds one candidate entry per money record, each with a posting key so it posts once: Invoice issued (`invoice:<id>:issue`: DR 1100; CR 4010 Rent, or 2050 Rent billed in advance when the Rent month starts after the billing month, 4020 Services, 4030 Electricity, 4040 Water, 4060 cleaning, 4070 damage, 4080 other), the first day of an advance Rent month (`invoice_line:<id>:rent_to_income`, DR 2050, CR 4010), Invoice voided, Invoice adjustment and its reversal, late-payment charge (DR 1110, CR 4050) and its corrections, Payment and its reversal (DR the method's cash or bank account, riel cash to 1011; CR 2210 Money not used yet), allocation, Deposit receipt, Deposit applied, Deposit kept (CR 4090), Customer Credit recognized and applied, each with its reversal, and Refund (DR 2100, 2110, 2200 or 2210; CR the Refund method's account). A Refund correction always waits for an adjusting entry from the Owner.
 - `app.gl_rent_account(rent_month, on)` gives 2050 or 4010.
 - `app.gl_post_app_records(property, actor, until, limit)` (money login only) posts what is not posted yet, from the ledger's first day (L3). A record dated in a closed month posts on the first day of the first open month with a note (L4). A record that cannot post is kept in `app.gl_posting_problems` ("Needs check", runtime may read) with the reason and is tried again on every pass; it leaves the list when it posts. Records already in the list go last, so they never hold back new ones.
-- `app.gl_set_method_account(property, payment_method, refund_method, account, from, actor, correlation)` (runtime) sets the cash or bank account of one Payment Method or Refund method from a date, with the audit event `ledger.method_account.set`.
+- `app.gl_set_method_account(property, payment_method, refund_method, account, from, actor, correlation)` (runtime) sets the cash or bank account of one Payment Method or Refund method from a date, with the audit event `ledger.method_account.set`. Since migration `20270708_373` it checks the right `ledger.accounts.manage` inside the database (DB-GL-010).
 - The billing worker runs the posting after the day's billing and late-payment charges, under its lock (`property_rental.ledger_posting_job`). The downgrade is refused once an automatic entry exists.
 
 ## DB-GL-003 — Money records: expenses, supplier bills, petty cash, moves, owner money, cash counts (General Ledger phase 6 step 3)
@@ -5678,6 +5678,13 @@ Owner message of 05/11/2026 07:25. Migration `20270612_321` (forward-only; chang
 - A Refund method's account may be `BANK_KHR` (`gl_check_method_account`, `gl_set_method_account`); a Payment Method's still may not.
 - Posting (`gl_app_record_events`): a Refund whose method account is `CASH_KHR` or `BANK_KHR` waits with "Type the riel paid for this Refund" until its riel is typed; then the credit line carries `KHR` and the riel. A Refund correction (not recovered by a charge) on such an account waits with "A Refund correction on a riel account cannot post yet".
 - `app.gl_waiting_records` shows each kept record's problem as it is now; a record that waited for a method account or its riel and has it now says "Ready: it posts at the next run".
+
+## DB-GL-010 — The right to set a method's ledger account is checked inside the database (DL-202 (E))
+
+Owner message of 08/11/2026 04:39. Migration `20270708_373` (forward-only; replaces one GL function).
+
+- `app.gl_set_method_account(property, payment_method, refund_method, account, from, actor, correlation, riel_account)` now starts with `app.gl_require(actor, property, 'ledger.accounts.manage')`, like the other ledger changes. A call without the right is refused with SQLSTATE 42501 ("This needs the right ledger.accounts.manage") and writes no `gl_method_accounts` row and no audit event. The arguments, the checks that follow, the audit event `ledger.method_account.set` and the grants (EXECUTE to the runtime login only) do not change.
+- The API (`PUT .../ledger/method-accounts`) still checks the right first, so a person without it never reaches the database; the database check is the second lock.
 
 ## DB-BS-001 — Settings › Business: numbering, Invoice types, Property fields (V1.1 part 2)
 
