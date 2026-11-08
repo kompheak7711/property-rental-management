@@ -20,7 +20,7 @@ New relations: none. The functions are added or replaced in place; nothing is re
 from alembic import op
 
 revision = "20270710_361"
-down_revision = "20270709_381"
+down_revision = "20270710_382"
 branch_labels = None
 depends_on = None
 
