@@ -11,7 +11,8 @@
   --border-strong: #79776f;
   --text: #252a28;
   --text-2: #5c625e;
-  --muted: #79776f;
+  /* Design v81 --muted (Home batch, 08/11/2026); was the edge colour #79776f. */
+  --muted: #6b6962;
   --heading: #4d6153;
   --primary: #4d6153;
   --primary-hover: #445549;

@@ -174,7 +174,10 @@
 .ui-card h2 {
   margin: 0;
   color: var(--heading);
-  font-size: 1.15rem;
+  /* Design v81 h2: 1.125rem, weight 600 (owner 08/11/2026: the design's weights). */
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.45;
 }
 
 .ui-card.pad0 {
@@ -427,7 +430,9 @@
     grid-column: span 12;
   }
 
-  .ui-kpi {
+  /* Home batch: written as .shell-view .ui-kpi so the base card rule further down does not
+     win over it (the phone padding of design v81 .kpi is 12px). */
+  .shell-view .ui-kpi {
     padding: 12px;
   }
 
@@ -1358,6 +1363,7 @@ table.ui-table a.ui-no {
 .ui-card h3 {
   margin: 14px 0 6px;
   font-size: 0.95rem;
+  font-weight: 600;
   color: var(--text);
 }
 
@@ -2046,6 +2052,12 @@ table.ui-table.ui-paylist .ui-phone {
   background: var(--surface);
 }
 
+/* Design v81 .om29 .kv: the Owner money figures are a little smaller (1.6rem) and never wrap. */
+.ui-om .ui-kpi-value {
+  font-size: 1.6rem;
+  white-space: nowrap;
+}
+
 /* V1-058 R6: Home cards and the "What to do" list (mock-up v43). */
 .ui-home-kpis {
   grid-auto-rows: 1fr;
@@ -2053,6 +2065,17 @@ table.ui-table.ui-paylist .ui-phone {
 a.ui-kpi.ui-home-kpi {
   grid-template-rows: 1fr auto auto auto;
   text-decoration: none;
+}
+/* Design v81 .kpi.nm: a card without a meter (Owner money, the Tasks cards) has three rows,
+   the label row taking the spare height, so no empty row adds a gap at the bottom. */
+.ui-om a.ui-kpi.ui-home-kpi,
+.ui-tasks > .ui-kpi {
+  grid-template-rows: 1fr auto auto;
+}
+/* Home batch (design v81 .kpi .kv): a card that is a link keeps the dark text, not the link
+   green, on every page; red (err) and grey (none) still win. */
+.shell-view a.ui-kpi {
+  color: var(--text);
 }
 .ui-home-kpi.err .ui-kpi-value {
   color: var(--err);
@@ -2092,6 +2115,7 @@ a.ui-kpi.ui-home-kpi {
   margin: 14px 0 6px;
   color: var(--text);
   font-size: 1rem;
+  font-weight: 600;
 }
 .ui-tasks-hint {
   margin: 8px 0 0;

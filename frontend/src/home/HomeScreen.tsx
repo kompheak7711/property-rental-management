@@ -23,7 +23,13 @@ import {
 } from "../reportsClient";
 import { dayText, momentText, usdFromCents } from "../shell/format";
 import { Icon, type ShellIcon } from "../shell/icons";
-import { type PageId, hashForPage, queryFromHash } from "../shell/navigation";
+import {
+  type PageId,
+  hashForPage,
+  pageName,
+  queryFromHash,
+} from "../shell/navigation";
+import { CardGrid, PageHeader } from "../shell/layouts";
 import type { Language } from "../signInText";
 import { monthText } from "../utilities/text";
 import {
@@ -39,7 +45,6 @@ import {
   ledgerApi as defaultLedgerApi,
 } from "../ledger/ledgerClient";
 import { AttendanceCard, OwnerMoney } from "./OwnerMoney";
-import { PageHead } from "../shell/pageHead";
 import {
   type TelegramApi,
   telegramApi as defaultTelegramApi,
@@ -551,7 +556,7 @@ function Cards({
     );
   }
   if (shown.length === 0) return null;
-  return <div className="ui-kpis ui-home-kpis">{shown}</div>;
+  return <CardGrid className="ui-home-kpis">{shown}</CardGrid>;
 }
 
 function ProblemsCard({
@@ -700,11 +705,7 @@ function TodoList({ language, page }: { language: Language; page: HomePage }) {
       <header>
         <h2 id="home-todo">{hmt(language, "todo_t")}</h2>
       </header>
-      <div
-        aria-label={hmt(language, "todo_t")}
-        className="ui-kpis ui-tasks"
-        role="group"
-      >
+      <CardGrid label={hmt(language, "todo_t")} tasks>
         {TASK_CARDS.map(({ group, tone, icon }) => {
           const items = inGroup(group);
           return (
@@ -729,7 +730,7 @@ function TodoList({ language, page }: { language: Language; page: HomePage }) {
             </button>
           );
         })}
-      </div>
+      </CardGrid>
       <div
         className="ui-tasks-list"
         hidden={open === undefined || openItems.length === 0}
@@ -890,7 +891,7 @@ export function HomeScreen({
 
   const actions = (may("payments.record") ||
     may("utility_readings.record")) && (
-    <div className="ui-actions">
+    <>
       {may("payments.record") && (
         <a className="ui-btn primary" href={hashForPage("payments", "receive")}>
           <Icon name="payments" />
@@ -903,13 +904,16 @@ export function HomeScreen({
           {hmt(language, "qa_readings")}
         </a>
       )}
-    </div>
+    </>
   );
 
   if (propertyId === "") return null;
 
   // UI v81 round 4 (owner 08/11/2026): no line under the title; only the two buttons beside it.
-  const head = <PageHead actions={actions} active={active} />;
+  // Home batch (owner 08/11/2026 08:14): drawn with the shared PageHeader.
+  const head = (
+    <PageHeader actions={actions} title={pageName("home", language)} />
+  );
 
   if (failure !== null) {
     return (

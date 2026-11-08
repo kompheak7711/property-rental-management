@@ -8,6 +8,7 @@ import type { AttendanceDay, HrApi } from "../hr/hrClient";
 import type { LedgerApi, Report } from "../ledger/ledgerClient";
 import { usdFromCents } from "../shell/format";
 import { Icon, type ShellIcon } from "../shell/icons";
+import { CardGrid } from "../shell/layouts";
 import { type PageId, hashForPage } from "../shell/navigation";
 import { Chip } from "../shell/ui";
 import type { Language } from "../signInText";
@@ -163,7 +164,7 @@ export function OwnerMoney({
           {hmt(language, "om_only")}
         </Chip>
       </div>
-      <div className="ui-kpis ui-home-kpis ui-om">
+      <CardGrid className="ui-home-kpis ui-om">
         <MoneyCard
           icon="payments"
           label={hmt(language, "om_cash")}
@@ -208,7 +209,7 @@ export function OwnerMoney({
           tone={(numbers.profit ?? 0) >= 0 ? "ok" : "err"}
           value={numbers.profit}
         />
-      </div>
+      </CardGrid>
     </section>
   );
 }

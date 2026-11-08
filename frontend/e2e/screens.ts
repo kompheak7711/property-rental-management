@@ -1,6 +1,6 @@
 // The screens the check opens (UI v81). A screen is done only when it passes this check and
-// its design-and-app sheet matches. The list grows one module per batch; the pilot (owner
-// 08/11/2026) is Lease details and New Lease.
+// its design-and-app sheet matches. The list grows one module per batch: the pilot (owner
+// 08/11/2026) is Lease details and New Lease; then Home (with a Tasks card open).
 
 export interface Screen {
   /** A short name for the report and the screenshot file. */
@@ -14,6 +14,18 @@ export interface Screen {
 }
 
 export const SCREENS: readonly Screen[] = [
+  {
+    name: "home",
+    hash: "#/home",
+    fixture: "home",
+    ready: "Tap a card to see its list.",
+  },
+  {
+    name: "home-tasks",
+    hash: "#/home?tasks=later",
+    fixture: "home",
+    ready: "Tap a card to see its list.",
+  },
   {
     name: "lease-details",
     hash: "#/leases/7510dfbf-1307-4e67-a858-88ea6fe623fa",

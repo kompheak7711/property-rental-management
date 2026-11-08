@@ -480,3 +480,44 @@ Lease details, differences left after this round:
 | History lines | "Signed by Keo Vannak." with the time | "Signed by Keo Vannak", "Recorded by …" and the note under it, then the time | The note (reason) the person wrote is kept |
 
 Tests: TEST-FE-1923 (Lease number in the title and list, History names, History button with two steps), TEST-FE-1924 (Invoice page Open Lease with the number); backend `test_lease_number_migration.py` (the next number and the names in the read; written once; the counter moves by one; the app role reads only).
+
+## Round 6 (owner 08/11/2026 08:14): module batch 1, Home
+
+The first module batch after the pilot, with the pilot's method: the shared layouts, a design-and-app sheet at all five sizes, the screen check passing, and every difference with its reason. No design change. The next module waits for the owner's approval of this one.
+
+### What changed
+
+| Part | Change | Where |
+|---|---|---|
+| Page head | Home is drawn with the shared `PageHeader`: the title "Home" on the left, Receive payment and Enter meter readings on the right (one title on the page) | `home/HomeScreen.tsx` |
+| Card rows | The Home cards, the Owner money row and the Tasks cards use the shared `CardGrid` (the Tasks cards are one group named "Tasks") | `home/HomeScreen.tsx`, `home/OwnerMoney.tsx`, `shell/layouts.tsx` |
+| Card titles | Every card title (h2) is 1.125rem, weight 600, as design v81 `h2` (it was 1.15rem bold). Small titles inside a card (h3) and the Tasks list title are 600 | Shared: every page |
+| Card figures | A card that is a link shows its figure in the dark text colour, as design `.kpi .kv` (it showed the link green); red for a problem and grey for nothing stay. The Owner money figures are 1.6rem and stay on one line, as design `.om29 .kv` | Shared: every page with number cards |
+| Grey text | The grey of "nothing here" figures is design v81's `--muted` (#6B6962, it was #79776F) | Shared: every page |
+| Phone cards | Under 640 px a card has 12 px padding, as design `.kpi` on a phone (the rule was there but a later rule won over it) | Shared: every page with number cards |
+| Cards without a bar | Owner money and Tasks cards have three rows (label, figure, note) like design `.kpi.nm`, so no empty row adds a gap at the bottom | `screens.css` |
+
+Measured after the change at 1440 × 900 (design | app): page title 28 px / 600 | 28 px / 600; card titles 18 px / 600 | 18 px / 600; card labels 14 px / 600 | 14 px / 600; figures 28 px / 700 (Owner money 25.6 px / 700) | the same; notes 13 px / 400 | the same; task rows 16 px / 600 with the date 14 px / 600 | the same; figure colour #252A28 | #252A28.
+
+### Sheets
+
+`/mnt/project-files/ui-design/module-sheets/sheet-home-<width>.png` at 390, 768, 1366, 1440 and 1920 (design left, app right). The app side is Home with the Later Tasks card open (`#/home?tasks=later`), so the open list can be compared with the design's open Overdue list. The screen check opens Home both ways (`home`, `home-tasks`) at all five sizes and passes.
+
+### Every difference left, with its reason
+
+| Part | Design v81 | App | Why |
+|---|---|---|---|
+| Numbers in every card | Sample data | The review database's own numbers (mostly 0) | Not faked: the app shows what the database holds |
+| Tasks list | Overdue open, 8 rows | Later open, 6 rows | No task is overdue in the review data; the app opens Overdue first when there is one (TEST-FE-929), as the design does |
+| Task row names | Supplier bills, Invoices, letters | "Lease for LEASE-… ends" | The review database also holds the test Units, named LEASE-…; real Units read U101 and so on |
+| Paid on time | 79% with a bar | "—" and "No Invoice was due in the last 12 months" | No Invoice was due in the review data, so there is no share to show |
+| Attendance | 3 to check, warning icon | 0, tick icon | Review data |
+| Line at the bottom | Green tick: the last billing run and rate update | Amber: no billing run has finished, no ABA rate loaded | Review data; the app says so instead of hiding it |
+| Card heights in a row | Taller rows | Shorter rows | Cards in a row share the height of the longest note; the sample notes are longer |
+| Menu | "Collapse menu" and a fold arrow per group | Fixed menu | Not built yet (open question 10) |
+| Banner under the top bar | "Design v81, for owner approval…" | None | Design only |
+| Page edge | Content starts 8 px further in | Same 16 px (phone) and 24 px (tablet) page margin | The design page has an extra 8 px body margin; the page margins are the same |
+
+Tests: TEST-FE-1925 (Home on the shared PageHeader and CardGrid). The screen check (`frontend/e2e/screens.spec.ts`) now has `home` and `home-tasks` with the recorded answers in `frontend/e2e/fixtures/home.har.json`.
+
+Shared changes reach the Lease pilot too: the Lease sheets were made again with the new card titles.

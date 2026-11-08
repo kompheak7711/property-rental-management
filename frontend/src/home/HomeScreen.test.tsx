@@ -554,4 +554,25 @@ describe("Home", () => {
     ).toBe(hashForPage("problems", "pr:r-7"));
     expect(within(costs).getByText(/U101 · \$14\.00 \+ 40,000 ៛/)).toBeTruthy();
   });
+
+  it("TEST-FE-1925 Home batch (owner 08/11/2026): Home is drawn with the shared PageHeader (one title, the two buttons beside it) and its cards with the shared CardGrid, the Tasks cards as one named group", async () => {
+    show(() => Promise.resolve(PAGE));
+    expect(await screen.findByText("21 / 23")).toBeTruthy();
+    const head = document.querySelector("header.ui-pagehead");
+    if (!(head instanceof HTMLElement)) throw new Error("no page header");
+    expect(
+      within(head).getByRole("heading", { level: 1, name: "Home" }),
+    ).toBeTruthy();
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    expect(
+      within(head)
+        .getAllByRole("link")
+        .map((link) => link.textContent),
+    ).toEqual(["Receive payment", "Enter meter readings"]);
+    const cards = document.querySelector(".ui-kpis.ui-home-kpis");
+    expect(cards?.querySelectorAll(".ui-home-kpi")).toHaveLength(10);
+    const tasks = screen.getByRole("group", { name: "Tasks" });
+    expect(tasks).toHaveClass("ui-kpis", "ui-tasks");
+    expect(within(tasks).getAllByRole("button")).toHaveLength(4);
+  });
 });

@@ -66065,6 +66065,16 @@
       "test_path": "backend/tests/test_reports_home_migration.py",
       "status": "implemented",
       "notes": "UI v81 round 4 and pilot (migrations 20270710_361 and 20270711_362): on PostgreSQL the Primary Tenant of a running Lease with a date of birth is listed with the Unit and the next birthday, in date order (29 February falls on 28 February in other years); customer_paid_on_time gives two counts; both refuse another Property; Home shows the Paid on time and Birthdays cards only with their sections."
+    },
+    {
+      "test_id": "TEST-FE-1925",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/home/HomeScreen.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 Home batch (owner 08/11/2026 08:14): Home is drawn with the shared PageHeader (one level-1 title, Receive payment and Enter meter readings beside it) and its number cards with the shared CardGrid; the four Tasks cards are one group named Tasks."
     }
   ]
 }
