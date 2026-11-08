@@ -521,3 +521,68 @@ Measured after the change at 1440 × 900 (design | app): page title 28 px / 600 
 Tests: TEST-FE-1925 (Home on the shared PageHeader and CardGrid). The screen check (`frontend/e2e/screens.spec.ts`) now has `home` and `home-tasks` with the recorded answers in `frontend/e2e/fixtures/home.har.json`.
 
 Shared changes reach the Lease pilot too: the Lease sheets were made again with the new card titles.
+
+## Round 6b (owner 08/11/2026 09:57): Home fixes and the side menu
+
+The owner answered the Home sheets with three points: the task texts showed internal codes, the side menu had to be built now (section D of 05:43), and "Paid on time" had to be checked. Home stays with the owner for approval; Payments has not started.
+
+### 1. Task texts with internal codes ("Lease for LEASE-0a96849c55e3 ends · Primary Lease Customer")
+
+**Root cause.** The screen never prints an ID: every Home task row is drawn from the Unit number and the Customer's legal name that the server sends (`home/HomeScreen.tsx` `rowOf`, `app.home_page` since migration 220). The review database held the backend test suite's rows, whose Units are literally named `LEASE-<hex>` and whose Customers are literally named "Primary Lease Customer", so the screen showed those names faithfully. Every task kind was checked in `app.home_page` (overdue first rent, Lease ending, Reservation ending, drafts waiting, deposit decisions, readings missing, day-20 and day-30 notices, settlements, refunds): each carries `unit_number` and `customer_name`, none carries a code the screen would show.
+
+**Fix, as the owner asked.** "Comes from the test data" is no longer an answer: the review app now runs on the design's own sample data, loaded by a new script, `scripts/local/seed-design-data.py` (Mac launcher `scripts/local/seed-design-data.sh`). It loads, into an EMPTY test database only: the 23 Units U101 to U406 with their Unit Types and rents, the 30 people with their real names and phone numbers, one signed Lease per occupied Unit with the design's dates (so the Lease numbers run U101L0001 to U406L0023 by Start Date), this month's Rent Invoices with their payments (U203, U402 and U304 still unpaid), the U406 Reservation of Tep Sreymom with its Deposit and drafted Lease, the 46 meters with readings, and two birthdays in the coming week. Home then reads "Lease for U201 ends · Ouk Chanthy. Ask about renewing." and "Reservation for U406 ends · Tep Sreymom". The script refuses to run when the database already holds a Unit, and nothing is deleted or changed.
+
+**What the sample data cannot do (database rule).** An Invoice and a payment allocation cannot be dated in the past: the database stamps the issue time and the allocation time with the real clock and refuses an issue time before the Invoice lines were written (`app.stamp_invoice_detail_change`, `app.validate_invoice_issuance_lines`, `app.validate_payment_allocation_source`). A recurring Rent Invoice may only be dated on its billing day and due on the 5th, and only for a month after the move-in month (`app.lease_is_billable_for_recurring_period`). So the Rent history of earlier months is not made up: the Invoices are this month's (dated 25/10, due 05/11, issued the moment the script runs), their payments are dated in the past week, and cards such as Overdue and Paid on time fill up as real months pass. This is the database protecting the financial record, as the repo rules ask, so the script works with it rather than around it.
+
+**Playwright check.** `frontend/e2e/screens.spec.ts` step 7 reads every visible text of the page and the menu and FAILS on an internal ID or placeholder: a UUID, `LEASE-`/`INV-`/any capital prefix followed by hex, a long hex key, "Primary Lease Customer", "Primary Lease Tenant", "Lease Service", "Synthetic", "Lorem ipsum", "TODO", "undefined", "null", "NaN", "[object Object]", "Test Customer/Unit/Lease/Tenant/Property". Only the build id at the foot of the menu is left out. The Home fixture (`e2e/fixtures/home.har.json`) was re-recorded from the design data, so the check runs on the design's names.
+
+### 2. Side menu (section D, points 12 to 17), built as the design app23.js
+
+| Owner point | Built | Where |
+|---|---|---|
+| 12 "Collapse menu" | A button under the brand shrinks the menu to an 84 px rail of icons; the name and the sub-items show in a fly-out on hover or focus (Escape closes it and the focus returns to the icon); the button becomes "Expand menu" (Khmer បង្រួមម៉ឺនុយ / ពង្រីកម៉ឺនុយ); remembered on the device (`chetana-rail`); not shown under 1081 px | `shell/AppShell.tsx`, `shell/shell.css` |
+| 13 Groups fold | Operations, Leasing, Property and Administration are buttons with `aria-expanded`; folded, a group shows its item count and "›" (for example "Property 4 ›"); the group of the open page is always open (it opens when the page is entered); remembered (`chetana-navgrp`); the folded group of the open page keeps a thin bar, as in the design | same |
+| 14 Sub-items | An item with tabs (Invoices, Bookings, Leases, Products, Ledger, Staff, Telegram; Approvals, Users and access and Settings with their in-page tabs) gets a "⌄" whose sub-items link to the SAME addresses as the tabs (`#/letters`, `#/approvals?tab=shortstays`, `#/settings?tab=rates`...). No address changed. The open page's sub-items open by themselves, the current one is marked, and a sub-tab picked inside the page moves the mark (the tab bar now tells the address listeners). Items without tabs (Payments, Utilities, Short stays, Customers, Units, Inspections, Problem reports, Reports, Audit log) have no "⌄". Tabs not built yet are not in the menu; a person sees only the tabs they may open | `shell/navigation.ts` (`PAGE_SUB_TABS`, `subItemsOf`), `shell/AppShell.tsx`, `shell/ui.tsx` |
+| 15 User card | Avatar, name and role ("Kompheak · Owner"; Khmer ម្ចាស់, អ្នកគ្រប់គ្រង, បុគ្គលិក) and Sign out. The role is the account class the server already keeps for each user (owner, manager, staff); the session answer now carries it as `account_class`, display only. "My account" shows while the role is unknown | `shell/AppShell.tsx`, `authClient.ts`, backend `auth_flow.py`, `auth_api.py` |
+| 16 Phone | The same menu is the drawer behind ☰ (unchanged); Collapse menu and the fly-out do not exist there | `shell/shell.css` |
+| 17 Keyboard | Group headers and "⌄" are real buttons (Enter and Space) with `aria-expanded` and `aria-controls`; the fly-out opens on focus and closes with Escape | `shell/AppShell.tsx` |
+
+Measured at 1440 × 900 (design | app): menu width 252 | 252 px, rail 84 | 84 px; item rows 44 | 44 px; group header 36 | 44 px; sub-item rows 40 | 44 px (the 44 px touch rule of the owner's check, point 4, wins over the design's 36 and 40); fly-out 220 to 280 px wide, 44 px title row, both; icons 20 px, chevrons 16 px (18 px on the "⌄"), both.
+
+### 3. "Paid on time" says "No Invoice was due in the last 12 months" while "Paid this month" shows money
+
+**The card is right.** It counts an Invoice only once its Due Date has passed (`due_date < today`, migration 361), because an Invoice that is not yet due cannot be late. "Paid this month" counts the Invoices DUE in this month, paid or not. In the old review data every Invoice was due on 15/11, so on 08/11 "Paid this month" had Invoices to show and "Paid on time" had none yet. With the design data the Invoices are due 05/11: the card now counts them, "0% · 0 of 18 Invoices, last 12 months", because their payments were allocated the moment the script ran (08/11), three days after the Due Date (the database rule above). When the script runs on or before the 5th they count as paid on time. The design's 79 % needs twelve months of real Invoices and payments, which no script may invent.
+
+### 4. Also found and fixed on the way
+
+- The screen check's recorded sign-in ran out after 30 minutes (the recorded session's expiry times were in the past, so every screen showed "You were signed out"); the replay now moves them to the present (`e2e/replay.ts`).
+- The drawer's close button shrank to 44 × 24 px when the menu was taller than the screen (a flex item with `min-height: auto`); every part of the menu is now `flex: none`.
+- The tab bar's address update fired the new menu listener even when the page had no address (unit tests of the Settings tabs); it now fires only when the page is in the address.
+- The menu's item markers clashed with the page markers of `App.tsx` (`data-page`), so the menu uses `data-menu-page`.
+
+### Sheets
+
+`/mnt/project-files/ui-design/module-sheets/`: `sheet-home-<w>.png` (Home with the design data, the Later Tasks card open), `sheet-menu-open-<w>.png`, `sheet-menu-collapsed-<w>.png`, `sheet-menu-folded-<w>.png` at 390, 768, 1366, 1440 and 1920 (design left, app right). On the phone and tablet sheets the menu is the open drawer; "Collapse menu" does not exist there, as the design.
+
+### Every difference left, with its reason
+
+| Part | Design v81 | App | Why |
+|---|---|---|---|
+| Owner money, Attendance, Approvals, Notices, Viewing requests, Problem reports, Cash and bank | Sample figures | $0.00 and 0 | The design data holds Units, people, Leases, this month's Rent Invoices and payments, the Reservation and the meters; it holds no ledger postings, supplier bills, expense reports, problem reports, viewing requests, attendance or notices (each needs its own module's rows; they come with that module's batch) |
+| Paid this month | $3,716.20, 40 % of $9,222.25 | $5,560.00, 83 % of $6,690.00 | 15 of this month's 18 Rent Invoices are paid in the sample data (the design's figure includes Utilities and Products Invoices) |
+| Paid on time | 79 %, 95 of 120 Invoices | 0 %, 0 of 18 Invoices | See point 3: counted, but allocated after the Due Date by the database rule |
+| Overdue | $696.20, 4 Invoices | $1,130.00, 3 Invoices | The three unpaid Rent Invoices (U203, U402, U304); the design's fourth is a Utilities Invoice |
+| Tasks | Overdue open, 8 rows (supplier bills, Invoices, a letter) | Later open, 4 Lease renewals; This week 1 (Reservation U406) | No supplier bill or expense report in the data; Rent Invoices unpaid since 05/11 become day-20 letters on 25/11 (BR-LETTER) and are not tasks before that |
+| Meter readings missing | 15 | 46 | Every meter's November reading is missing in the sample data (reading day 24/11); the design counts 15 |
+| Occupancy | 21 / 28 | 21 / 23 | The design has 28 Units in its text and 23 in its Units list; the script loads the 23 of the list |
+| Menu brand line | "CHETANA Residence SAMPLE" on one line | "CHETANA Residence" wraps beside the DEVELOPMENT badge | The badge is the app's environment name; it is longer than the design's "SAMPLE" |
+| Drawer (phone, tablet) | No close button; the first item has a focus ring | A × button at the top of the drawer | Kept from V1-058 (TEST-FE-807): a visible way to close without the scrim |
+| Group header and sub-item height | 36 px and 40 px | 44 px | The owner's 44 px touch rule (06:55, point 4) |
+| Avatar | "KP" | "K" | Initials come from the display name, which is one word ("Kompheak") |
+| Build line | "Design v81 round 4 · 08/11/2026" | "Build development" | The app shows its build |
+
+Tests: TEST-FE-1926 (Collapse menu), 1927 (groups), 1928 (sub-items and their addresses), 1929 (user card role), 1930 (fly-out); TEST-FE-809 updated (the sub-item Notices carries the current mark). Backend: the session answer's `account_class` (test_authentication_api). Screen check: 7 screens × 5 sizes pass, with the menu now inside the checks (targets, cut-off text, contrast, internal IDs).
+
+### Open questions (for the owner)
+
+- The design data: run it on the Mac test app only on an EMPTY test database (`sh scripts/local/seed-design-data.sh`); it refuses otherwise. A test database that already holds rows needs a fresh database first (database.sh).

@@ -1676,6 +1676,7 @@ export function App({
 
   return (
     <AppShell
+      accountClass={session.account_class ?? null}
       buildId={buildId}
       capabilities={capabilities}
       displayName={session.display_name ?? null}

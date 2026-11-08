@@ -49486,7 +49486,7 @@
       "test_level": "UI component",
       "test_path": "frontend/src/shell/AppShell.test.tsx",
       "status": "implemented",
-      "notes": "Letters and Move-out are tabs of Leases (the Leases menu item stays marked); Bookings shows no tab bar while it has one tab (V1-058 R1 app shell, owner menu approval of 24/10/2026)."
+      "notes": "Letters and Move-out are tabs of Leases (the Leases menu item stays marked; UI v81 side menu: its sub-item Notices carries the current mark); Bookings shows no tab bar while it has one tab (V1-058 R1 app shell, owner menu approval of 24/10/2026)."
     },
     {
       "test_id": "test_actor_access_lists_the_actors_own_capabilities_and_properties_for_the_menu",
@@ -66075,6 +66075,56 @@
       "test_path": "frontend/src/home/HomeScreen.test.tsx",
       "status": "implemented",
       "notes": "UI v81 Home batch (owner 08/11/2026 08:14): Home is drawn with the shared PageHeader (one level-1 title, Receive payment and Enter meter readings beside it) and its number cards with the shared CardGrid; the four Tasks cards are one group named Tasks."
+    },
+    {
+      "test_id": "TEST-FE-1926",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shell/AppShell.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 side menu (owner 08/11/2026 09:57, section D point 12): Collapse menu shrinks the menu to icons (html class shell-rail, aria-pressed), turns into Expand menu, is remembered on the device (chetana-rail) and is said in Khmer."
+    },
+    {
+      "test_id": "TEST-FE-1927",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shell/AppShell.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 side menu (owner 08/11/2026, section D point 13): a group folds and unfolds from its header button (aria-expanded), a folded group shows its item count, the choice is remembered (chetana-navgrp), and the group of the open page is always open."
+    },
+    {
+      "test_id": "TEST-FE-1928",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shell/AppShell.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 side menu (owner 08/11/2026, section D point 14): a page with tabs gets a ⌄ whose sub-items link to the same addresses as the page's tabs (Leases: #/leases, #/letters, #/moveout; Approvals: #/approvals?tab=financial, ?tab=shortstays), the current sub-item is marked and follows the address, the ⌄ is remembered (chetana-navopen), and a page without tabs has none."
+    },
+    {
+      "test_id": "TEST-FE-1929",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shell/AppShell.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 side menu (owner 08/11/2026, section D point 15): the user card names the person and the role (Owner, Manager, Staff; Khmer ម្ចាស់) from the session's account_class, or My account while the role is unknown."
+    },
+    {
+      "test_id": "TEST-FE-1930",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shell/AppShell.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 side menu (owner 08/11/2026, section D point 12): on a wide screen the collapsed rail shows the item's name and its sub-items in a fly-out on hover or focus (aria-expanded on the icon), Escape closes it and returns the focus; the open menu has no fly-out."
     }
   ]
 }

@@ -15,6 +15,8 @@ import type { Language } from "../signInText";
 
 afterEach(() => {
   cleanup();
+  // UI v81 side menu: what the device remembers (Collapse menu, folded groups, sub-lists).
+  window.localStorage.clear();
 });
 
 const NOW = new Date("2026-10-24T18:30:00Z").getTime();
@@ -252,7 +254,13 @@ describe("V1-058 R1 app shell", () => {
   it("TEST-FE-809 shows Letters and Move-out as tabs of Leases and keeps Leases marked in the menu", () => {
     renderShell("letters");
     const menu = screen.getByRole("navigation", { name: "Menu" });
-    expect(within(menu).getByRole("link", { name: "Leases" })).toHaveAttribute(
+    // UI v81 side menu: the Leases item stays marked while its sub-item Notices is the current
+    // page (the sub-item carries aria-current, the item its "cur" mark).
+    const leasesRow = menu.querySelector(
+      '.shell-nitem[data-menu-page="leases"]',
+    );
+    expect(leasesRow).toHaveClass("cur");
+    expect(within(menu).getByRole("link", { name: "Notices" })).toHaveAttribute(
       "aria-current",
       "page",
     );
@@ -285,6 +293,236 @@ describe("V1-058 R1 app shell", () => {
       ["Viewing requests", "#/visitreqs"],
       ["Reservations", "#/reservations"],
     ]);
+  });
+
+  // UI v81 side menu (owner 08/11/2026 09:57, section D of 05:43): Collapse menu, folding
+  // groups, sub-items, the user card with the role, and the fly-out of the collapsed rail.
+  describe("UI v81 side menu", () => {
+    const menuOf = () => screen.getByRole("navigation", { name: "Menu" });
+    /** One element of the menu by its selector; the test fails when it is missing. */
+    const part = (selector: string): HTMLElement => {
+      const found = menuOf().querySelector<HTMLElement>(selector);
+      if (found === null) throw new Error(`no ${selector} in the menu`);
+      return found;
+    };
+    const hrefsOf = (root: ParentNode, selector: string) =>
+      [...root.querySelectorAll<HTMLAnchorElement>(selector)].map((link) => [
+        link.textContent,
+        link.getAttribute("href"),
+      ]);
+
+    it("TEST-FE-1926 Collapse menu shrinks the menu to icons, is remembered on the device and turns into Expand menu", () => {
+      renderShell();
+      const button = screen.getByRole("button", { name: "Collapse menu" });
+      expect(button).toHaveAttribute("aria-pressed", "false");
+      expect(document.documentElement).not.toHaveClass("shell-rail");
+      fireEvent.click(button);
+      expect(document.documentElement).toHaveClass("shell-rail");
+      expect(
+        screen.getByRole("button", { name: "Expand menu" }),
+      ).toHaveAttribute("aria-pressed", "true");
+      expect(window.localStorage.getItem("chetana-rail")).toBe("1");
+      // The whole menu stays in the page: every item link is still there (icons with a title).
+      expect(
+        within(menuOf()).getByRole("link", { name: "Payments" }),
+      ).toHaveAttribute("title", "Payments");
+      // The choice is remembered on the device.
+      cleanup();
+      renderShell();
+      expect(document.documentElement).toHaveClass("shell-rail");
+      fireEvent.click(screen.getByRole("button", { name: "Expand menu" }));
+      expect(document.documentElement).not.toHaveClass("shell-rail");
+      expect(window.localStorage.getItem("chetana-rail")).toBe("0");
+      // The Khmer menu says it in Khmer.
+      cleanup();
+      renderShell("home", "km");
+      expect(
+        screen.getByRole("button", { name: "បង្រួមម៉ឺនុយ" }),
+      ).toBeInTheDocument();
+    });
+
+    it("TEST-FE-1927 a group folds and unfolds, shows its item count when folded, is remembered, and the open page's group is always open", () => {
+      renderShell();
+      const header = () =>
+        within(menuOf()).getByRole("button", { name: /^Operations/ });
+      expect(header()).toHaveAttribute("aria-expanded", "true");
+      expect(
+        within(menuOf()).getByRole("link", { name: "Payments" }),
+      ).toBeVisible();
+      fireEvent.click(header());
+      expect(header()).toHaveAttribute("aria-expanded", "false");
+      expect(header().querySelector(".shell-cnt")).toHaveTextContent("4");
+      // The folded group's items are out of the page (not reachable, not read out).
+      expect(
+        within(menuOf()).queryByRole("link", { name: "Payments" }),
+      ).not.toBeInTheDocument();
+      expect(
+        JSON.parse(window.localStorage.getItem("chetana-navgrp") ?? "{}"),
+      ).toEqual({ operations: true });
+      // Remembered on the device.
+      cleanup();
+      renderShell();
+      expect(header()).toHaveAttribute("aria-expanded", "false");
+      expect(
+        within(menuOf()).getByRole("button", { name: /^Leasing/ }),
+      ).toHaveAttribute("aria-expanded", "true");
+      // Opening a page of the folded group opens the group (and remembers it open).
+      cleanup();
+      renderShell("payments");
+      expect(header()).toHaveAttribute("aria-expanded", "true");
+      expect(header().closest(".shell-group")).toHaveClass("cur");
+      expect(
+        JSON.parse(window.localStorage.getItem("chetana-navgrp") ?? "{}"),
+      ).toEqual({});
+      // Enter and Space work because the header is a real button.
+      fireEvent.click(header());
+      expect(header()).toHaveAttribute("aria-expanded", "false");
+      fireEvent.click(header());
+      expect(header()).toHaveAttribute("aria-expanded", "true");
+    });
+
+    it("TEST-FE-1928 a page with tabs gets a ⌄ whose sub-items link to the same addresses as its tabs; the current sub-item is marked; a page without tabs has none", () => {
+      renderShell("letters");
+      const menu = menuOf();
+      const leasesRow = part('.shell-nitem[data-menu-page="leases"]');
+      const toggle = within(leasesRow).getByRole("button", { name: "3 pages" });
+      expect(toggle).toHaveAttribute("aria-expanded", "true");
+      const tabs = screen.getByRole("navigation", { name: "Leases" });
+      const subItems = hrefsOf(menu, "#shell-sub-leases a");
+      expect(subItems).toEqual(hrefsOf(tabs, "a"));
+      expect(subItems).toEqual([
+        ["Leases", "#/leases"],
+        ["Notices", "#/letters"],
+        ["Move-outs", "#/moveout"],
+      ]);
+      expect(
+        within(menu).getByRole("link", { name: "Notices" }),
+      ).toHaveAttribute("aria-current", "page");
+      expect(
+        menu.querySelector(
+          '.shell-nitem[data-menu-page="leases"] > .shell-item',
+        ),
+      ).not.toHaveAttribute("aria-current");
+      // The ⌄ closes and opens the sub-items, and the choice is remembered.
+      fireEvent.click(toggle);
+      expect(toggle).toHaveAttribute("aria-expanded", "false");
+      expect(menu.querySelector("#shell-sub-leases")).toHaveAttribute("hidden");
+      expect(
+        JSON.parse(window.localStorage.getItem("chetana-navopen") ?? "{}"),
+      ).toEqual({ leases: false });
+      fireEvent.click(toggle);
+      expect(toggle).toHaveAttribute("aria-expanded", "true");
+      // Approvals: its in-page tabs as sub-items, at the tabs' own addresses.
+      expect(hrefsOf(menu, "#shell-sub-approvals a")).toEqual([
+        ["Financial approvals", "#/approvals?tab=financial"],
+        ["Short-stay approvals", "#/approvals?tab=shortstays"],
+      ]);
+      // Payments and Utilities have no tabs, so no ⌄.
+      expect(
+        menu.querySelector(
+          '.shell-nitem[data-menu-page="payments"] .shell-subtog',
+        ),
+      ).toBeNull();
+      expect(
+        menu.querySelector(
+          '.shell-nitem[data-menu-page="utilities"] .shell-subtog',
+        ),
+      ).toBeNull();
+      // On Approvals the sub-item of the open tab is the current one and follows the address.
+      cleanup();
+      window.history.replaceState(null, "", "#/approvals?tab=shortstays");
+      renderShell("approvals");
+      expect(
+        within(menuOf()).getByRole("link", { name: "Short-stay approvals" }),
+      ).toHaveAttribute("aria-current", "page");
+      expect(
+        within(menuOf()).getByRole("link", { name: "Financial approvals" }),
+      ).not.toHaveAttribute("aria-current");
+      act(() => {
+        window.history.replaceState(null, "", "#/approvals?tab=financial");
+        window.dispatchEvent(new HashChangeEvent("hashchange"));
+      });
+      expect(
+        within(menuOf()).getByRole("link", { name: "Financial approvals" }),
+      ).toHaveAttribute("aria-current", "page");
+    });
+
+    it("TEST-FE-1929 the user card names the person and the role, in English and Khmer, or My account while the role is unknown", () => {
+      renderShell("home", "en", { accountClass: "owner" });
+      const card = () => screen.getByRole("link", { name: /Sokha Chan/ });
+      expect(within(card()).getByText("Owner")).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Sign out" }),
+      ).toBeInTheDocument();
+      cleanup();
+      renderShell("home", "km", { accountClass: "owner" });
+      expect(within(card()).getByText("ម្ចាស់")).toBeInTheDocument();
+      cleanup();
+      renderShell("home", "en", { accountClass: "manager" });
+      expect(within(card()).getByText("Manager")).toBeInTheDocument();
+      cleanup();
+      renderShell("home", "en", { accountClass: "staff" });
+      expect(within(card()).getByText("Staff")).toBeInTheDocument();
+      cleanup();
+      renderShell("home", "en", { accountClass: null });
+      expect(within(card()).getByText("My account")).toBeInTheDocument();
+    });
+
+    it("TEST-FE-1930 the collapsed rail shows the item's name and sub-items in a fly-out on hover or focus; Escape closes it and returns the focus", () => {
+      const matchMedia = window.matchMedia as unknown;
+      Object.defineProperty(window, "matchMedia", {
+        configurable: true,
+        writable: true,
+        value: (query: string) => ({
+          matches: query === "(min-width: 1081px)",
+          media: query,
+          onchange: null,
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+          addListener: vi.fn(),
+          removeListener: vi.fn(),
+          dispatchEvent: vi.fn(),
+        }),
+      });
+      try {
+        renderShell("letters");
+        const row = () => part('.shell-nitem[data-menu-page="leases"]');
+        const link = () =>
+          part('.shell-nitem[data-menu-page="leases"] > .shell-item');
+        // The open menu has no fly-out.
+        fireEvent.mouseEnter(row());
+        expect(document.querySelector(".shell-fly")).toBeNull();
+        fireEvent.click(screen.getByRole("button", { name: "Collapse menu" }));
+        fireEvent.mouseEnter(row());
+        const fly = part(".shell-fly");
+        expect(link()).toHaveAttribute("aria-expanded", "true");
+        expect(hrefsOf(fly, "a")).toEqual([
+          ["Leases", "#/leases"],
+          ["Leases", "#/leases"],
+          ["Notices", "#/letters"],
+          ["Move-outs", "#/moveout"],
+        ]);
+        expect(
+          within(fly).getByRole("link", { name: "Notices" }),
+        ).toHaveAttribute("aria-current", "page");
+        fireEvent.mouseLeave(row());
+        expect(document.querySelector(".shell-fly")).toBeNull();
+        // Keyboard: the focus opens it, Escape closes it and the focus goes back to the icon.
+        act(() => {
+          link().focus();
+        });
+        expect(document.querySelector(".shell-fly")).not.toBeNull();
+        fireEvent.keyDown(window, { key: "Escape" });
+        expect(document.querySelector(".shell-fly")).toBeNull();
+        expect(link()).toHaveFocus();
+      } finally {
+        Object.defineProperty(window, "matchMedia", {
+          configurable: true,
+          writable: true,
+          value: matchMedia,
+        });
+      }
+    });
   });
 
   it("TEST-FE-808 reads the page from the address and follows address changes", () => {

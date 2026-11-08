@@ -413,3 +413,111 @@ export function hashForPage(page: PageId, detail?: string): string {
     ? `#/${page}`
     : `#/${page}/${encodeURIComponent(detail)}`;
 }
+
+/**
+ * UI v81 (owner 08/11/2026, section D item 14): the sub-tabs inside one page, shown as the menu
+ * item's sub-items. A sub-item links to the same address as the sub-tab row writes
+ * ("#/approvals?tab=shortstays"), so no address changes. The ids and names are the pages' own
+ * (approvals/text.ts, settings/text.ts); a sub-tab shows only to a person who holds one of its
+ * capabilities (null: everyone who sees the page).
+ */
+export interface PageSubTab {
+  id: string;
+  label: readonly [string, string];
+  needs?: readonly string[];
+}
+
+const PAGE_SUB_TABS: Partial<Record<PageId, readonly PageSubTab[]>> = {
+  approvals: [
+    { id: "financial", label: ["Financial approvals", "ការអនុម័តហិរញ្ញវត្ថុ"] },
+    {
+      id: "shortstays",
+      label: ["Short-stay approvals", "ការអនុម័តការស្នាក់នៅខ្លី"],
+    },
+  ],
+  access: [
+    { id: "users", label: ["Users", "អ្នកប្រើ"] },
+    { id: "roles", label: ["Roles", "តួនាទី"] },
+    { id: "signin", label: ["Sign-in and security", "ការចូល និងសុវត្ថិភាព"] },
+    { id: "history", label: ["History", "ប្រវត្តិ"] },
+  ],
+  settings: [
+    {
+      id: "business",
+      label: ["Business", "អាជីវកម្ម"],
+      needs: ["settings.manage"],
+    },
+    {
+      id: "rates",
+      label: ["Utility rates", "អត្រាទឹកភ្លើង"],
+      needs: ["settings.manage"],
+    },
+    {
+      id: "services",
+      label: ["Monthly services", "សេវាប្រចាំខែ"],
+      needs: ["settings.manage"],
+    },
+    {
+      id: "units",
+      label: ["Unit setup", "ការរៀបចំបន្ទប់"],
+      needs: ["settings.manage"],
+    },
+    {
+      id: "health",
+      label: ["System health", "សុខភាពប្រព័ន្ធ"],
+      needs: ["settings.manage", "operations.status.read"],
+    },
+  ],
+};
+
+/** One sub-item of a menu item: a page tab or an in-page sub-tab. */
+export interface SubItem {
+  key: string;
+  href: string;
+  label: string;
+  /** The open page (and sub-tab) is this one. */
+  current: boolean;
+}
+
+/**
+ * The sub-items of a menu item the person may see: its page tabs (Leases → Leases, Notices,
+ * Move-outs) or its in-page sub-tabs (Approvals → Financial approvals, Short-stay approvals).
+ * Fewer than two means the item has no "⌄". `tab` is the sub-tab in the address, null for the
+ * page's first one.
+ */
+export function subItemsOf(
+  item: MenuItem,
+  page: PageId,
+  tab: string | null,
+  capabilities: ReadonlySet<string> | null,
+  language: Language,
+): SubItem[] {
+  const pages = allowedPagesOf(item, capabilities);
+  if (pages.length > 1) {
+    return pages.map((tabPage) => ({
+      key: tabPage,
+      href: hashForPage(tabPage),
+      label: pageName(tabPage, language),
+      current: tabPage === page,
+    }));
+  }
+  const subTabs = (PAGE_SUB_TABS[item.page] ?? []).filter(
+    (subTab) =>
+      subTab.needs === undefined ||
+      capabilities === null ||
+      subTab.needs.some((capability) => capabilities.has(capability)),
+  );
+  if (subTabs.length < 2) return [];
+  const here = item.page === page;
+  return subTabs.map((subTab, index) => ({
+    key: subTab.id,
+    href: `${hashForPage(item.page)}?tab=${encodeURIComponent(subTab.id)}`,
+    label: subTab.label[language === "en" ? 0 : 1],
+    current: here && (tab === null ? index === 0 : tab === subTab.id),
+  }));
+}
+
+/** The key a menu group is remembered under (folded or open) on the device. */
+export function menuGroupKey(group: MenuGroup): string {
+  return group.label === null ? "home" : group.label[0].toLowerCase();
+}

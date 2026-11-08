@@ -1,6 +1,7 @@
 // The screens the check opens (UI v81). A screen is done only when it passes this check and
 // its design-and-app sheet matches. The list grows one module per batch: the pilot (owner
-// 08/11/2026) is Lease details and New Lease; then Home (with a Tasks card open).
+// 08/11/2026) is Lease details and New Lease; then Home (with a Tasks card open) and the side
+// menu (owner 08/11/2026 09:57: open, collapsed, and with its groups folded).
 
 export interface Screen {
   /** A short name for the report and the screenshot file. */
@@ -11,7 +12,19 @@ export interface Screen {
   fixture: string;
   /** Text that shows once the screen has its data. */
   ready: string;
+  /** What the device remembers before the screen opens (the menu's localStorage keys). */
+  storage?: Readonly<Record<string, string>>;
+  /** "menu": the ☰ button is pressed where it shows (phone, tablet), so the drawer is open. */
+  open?: "menu";
 }
+
+/** Every menu group folded (the keys of AppShell's chetana-navgrp). */
+const ALL_GROUPS_FOLDED = JSON.stringify({
+  operations: true,
+  leasing: true,
+  property: true,
+  administration: true,
+});
 
 export const SCREENS: readonly Screen[] = [
   {
@@ -25,6 +38,31 @@ export const SCREENS: readonly Screen[] = [
     hash: "#/home?tasks=later",
     fixture: "home",
     ready: "Tap a card to see its list.",
+  },
+  // The side menu: on a desktop beside Home; on a phone or tablet the drawer behind ☰.
+  {
+    name: "menu-open",
+    hash: "#/home",
+    fixture: "home",
+    ready: "Tap a card to see its list.",
+    open: "menu",
+  },
+  // "Collapse menu" (icons only) exists on wide screens only; the drawer ignores it.
+  {
+    name: "menu-collapsed",
+    hash: "#/home",
+    fixture: "home",
+    ready: "Tap a card to see its list.",
+    storage: { "chetana-rail": "1" },
+    open: "menu",
+  },
+  {
+    name: "menu-folded",
+    hash: "#/home",
+    fixture: "home",
+    ready: "Tap a card to see its list.",
+    storage: { "chetana-navgrp": ALL_GROUPS_FOLDED },
+    open: "menu",
   },
   {
     name: "lease-details",

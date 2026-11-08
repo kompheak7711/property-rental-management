@@ -42,6 +42,23 @@ export function loadFixture(name: string): Map<string, HarEntry> {
   return answers;
 }
 
+/** The recorded session answer with its activity and expiry times moved to now. */
+export function freshSession(body: string): string {
+  const now = Date.now();
+  const at = (offsetMs: number) =>
+    JSON.stringify(new Date(now + offsetMs).toISOString());
+  return body
+    .replace(/"last_activity_at"\s*:\s*"[^"]*"/, `"last_activity_at":${at(0)}`)
+    .replace(
+      /"idle_expires_at"\s*:\s*"[^"]*"/,
+      `"idle_expires_at":${at(30 * 60_000)}`,
+    )
+    .replace(
+      /"absolute_expires_at"\s*:\s*"[^"]*"/,
+      `"absolute_expires_at":${at(24 * 3_600_000)}`,
+    );
+}
+
 export async function replay(page: Page, fixture: string): Promise<void> {
   const answers = loadFixture(fixture);
   await page.route(
@@ -66,6 +83,10 @@ export async function replay(page: Page, fixture: string): Promise<void> {
       // The money clients check the answer's headers and that it names their own request id,
       // which is new on every call: the replay answers with the id of the request it gets.
       const requestId = request.headers()["x-request-id"];
+      // The recorded session would have run out by now (it ends 30 minutes after the last
+      // activity): the replay moves its times to the present, as a live server would.
+      if (typeof body === "string" && url.pathname.endsWith("/auth/session"))
+        body = freshSession(body);
       const headers: Record<string, string> = {
         "cache-control": "private, no-store",
         vary: "Cookie",

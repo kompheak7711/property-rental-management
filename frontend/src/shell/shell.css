@@ -162,6 +162,12 @@ html[lang="km"] body {
   color: var(--nav-text);
 }
 
+/* A menu taller than the screen scrolls; no part of it shrinks (the drawer's close button kept
+   44 px of its height only when the menu fit the screen). */
+.shell-nav > * {
+  flex: none;
+}
+
 .shell-brand {
   display: grid;
   gap: 8px;
@@ -224,20 +230,74 @@ html[lang="km"] body {
   list-style: none;
 }
 
-.shell-group-label {
-  padding: 0 10px 4px;
+/* UI v81 side menu (owner 08/11/2026, section D; design app23.js). The group header is a
+   button that folds and unfolds its group; folded, it shows the item count and "›". The header
+   is 44px tall (design 36px) for the 44px touch rule. */
+.shell-grph {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+  min-height: 44px;
+  padding: 4px 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
   color: var(--nav-muted);
-  font-size: 0.7rem;
+  font: inherit;
+  font-size: 0.72rem;
   font-weight: 600;
   letter-spacing: 0.1em;
+  text-align: left;
   text-transform: uppercase;
+  cursor: pointer;
 }
 
-html[lang="km"] .shell-group-label {
+.shell-grph > span:first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+html[lang="km"] .shell-grph {
   font-size: 0.8rem;
   font-weight: 500;
   letter-spacing: 0;
   text-transform: none;
+}
+
+.shell-grph:hover {
+  background: var(--nav-hover);
+  color: var(--nav-text);
+}
+
+.shell-grph .shell-icon {
+  transform: rotate(90deg);
+  transition: transform 0.22s ease;
+}
+
+.shell-grph[aria-expanded="false"] .shell-icon {
+  transform: none;
+}
+
+.shell-cnt {
+  margin-right: 8px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.shell-grph[aria-expanded="true"] .shell-cnt {
+  display: none;
+}
+
+/* The folded group that holds the open page keeps a thin bar, as in the design. */
+.shell-group.cur > .shell-grph[aria-expanded="false"] {
+  color: var(--nav-text);
+  box-shadow: inset 3px 0 0 var(--nav-active-bg);
+}
+
+.shell-col {
+  display: grid;
 }
 
 .shell-item {
@@ -257,6 +317,207 @@ html[lang="km"] .shell-group-label {
 }
 
 .shell-item[aria-current="page"] {
+  background: var(--nav-active-bg);
+  color: var(--nav-active-text);
+  font-weight: 600;
+}
+
+/* "Collapse menu" under the brand (design .railbtn). Wide screens only. */
+.shell-railbtn {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  min-height: 44px;
+  margin-top: -8px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--nav-muted);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.shell-railbtn:hover {
+  background: var(--nav-hover);
+  color: var(--nav-text);
+}
+
+/* A menu item row: the link, then the "⌄" of an item with tabs (design .nitem). */
+.shell-nitem {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  border-radius: 7px;
+}
+
+.shell-nitem > .shell-item {
+  min-width: 0;
+}
+
+.shell-nitem > .shell-item > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* The open page's item stays marked while one of its sub-items is the current one. */
+.shell-nitem.cur > .shell-item:not([aria-current]) {
+  background: var(--nav-hover);
+  font-weight: 600;
+}
+
+.shell-subtog {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--nav-text);
+  cursor: pointer;
+}
+
+.shell-subtog:hover {
+  background: var(--nav-hover);
+}
+
+.shell-subtog .shell-icon {
+  width: 18px;
+  height: 18px;
+  transform: rotate(90deg);
+  transition: transform 0.22s ease;
+}
+
+.shell-subtog[aria-expanded="true"] .shell-icon {
+  transform: rotate(-90deg);
+}
+
+.shell-nitem > .shell-col {
+  grid-column: 1 / -1;
+}
+
+/* The sub-items: the page's tabs, each with a dot (design ul.sub). 44px rows (design 40px). */
+.shell-group .shell-sub {
+  display: grid;
+  gap: 2px;
+  margin: 2px 0 6px;
+  padding: 0 0 0 22px;
+  list-style: none;
+}
+
+.shell-sub a {
+  position: relative;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 44px;
+  padding: 6px 10px 6px 20px;
+  border-radius: 7px;
+  color: var(--nav-muted);
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.shell-sub a::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 6px;
+  width: 6px;
+  height: 6px;
+  margin-top: -3px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.55;
+}
+
+.shell-sub a:hover {
+  background: var(--nav-hover);
+  color: var(--nav-text);
+}
+
+.shell-sub a[aria-current="page"] {
+  background: var(--nav-active-bg);
+  color: var(--nav-active-text);
+  font-weight: 600;
+}
+
+.shell-sub a[aria-current="page"]::before {
+  opacity: 1;
+}
+
+/* The fly-out of the collapsed rail: the item's name and its sub-items (design .fly23). */
+.shell-fly {
+  position: fixed;
+  left: 84px;
+  z-index: 60;
+  display: grid;
+  gap: 2px;
+  min-width: 220px;
+  max-width: 280px;
+  padding: 8px;
+  border-radius: 10px;
+  background: var(--nav-bg);
+  color: var(--nav-text);
+  box-shadow: var(--shadow);
+}
+
+.shell-fly-title {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  min-height: 44px;
+  padding: 6px 10px;
+  border-radius: 7px;
+  color: var(--nav-text);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.shell-fly-title:hover {
+  background: var(--nav-hover);
+}
+
+.shell-fly-title[aria-current="page"] {
+  background: var(--nav-active-bg);
+  color: var(--nav-active-text);
+}
+
+.shell-group .shell-fly-subs {
+  display: grid;
+  gap: 2px;
+  margin: 4px 0 0;
+  padding: 4px 0 0;
+  border-top: 1px solid var(--nav-hover);
+  list-style: none;
+}
+
+.shell-fly-subs a {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 44px;
+  padding: 6px 10px 6px 14px;
+  border-radius: 7px;
+  color: var(--nav-muted);
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.shell-fly-subs a:hover {
+  background: var(--nav-hover);
+  color: var(--nav-text);
+}
+
+.shell-fly-subs a[aria-current="page"] {
   background: var(--nav-active-bg);
   color: var(--nav-active-text);
   font-weight: 600;
@@ -591,6 +852,142 @@ html[lang="km"] .shell-head h1 {
   outline-offset: 2px;
 }
 
+/* ---------- the collapsed menu (design html.rail23), wide screens only ---------- */
+
+@media (min-width: 1081px) {
+  html.shell-rail .shell {
+    grid-template-columns: 84px minmax(0, 1fr);
+  }
+
+  html.shell-rail .shell-nav {
+    gap: 12px;
+    padding: 18px 12px 14px;
+    overflow-x: hidden;
+  }
+
+  html.shell-rail .shell-brand {
+    justify-items: center;
+    padding: 0 0 10px;
+  }
+
+  html.shell-rail .shell-appname {
+    justify-items: center;
+  }
+
+  html.shell-rail .shell-appname img {
+    width: 44px;
+    height: 38px;
+    object-fit: cover;
+    object-position: left center;
+  }
+
+  html.shell-rail .shell-appname span,
+  html.shell-rail .shell-property {
+    display: none;
+  }
+
+  html.shell-rail .shell-railbtn {
+    justify-content: center;
+    margin-top: 0;
+    padding: 8px 0;
+  }
+
+  html.shell-rail .shell-railbtn span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  html.shell-rail .shell-nav nav {
+    gap: 10px;
+  }
+
+  html.shell-rail .shell-group {
+    gap: 4px;
+  }
+
+  /* A group header is a thin line; every group stays open. */
+  html.shell-rail .shell-grph {
+    width: auto;
+    height: 1px;
+    min-height: 0;
+    margin: 2px 10px;
+    padding: 0;
+    background: var(--nav-hover);
+    font-size: 0;
+    pointer-events: none;
+  }
+
+  html.shell-rail .shell-grph .shell-icon,
+  html.shell-rail .shell-grph .shell-cnt {
+    display: none;
+  }
+
+  html.shell-rail .shell-nitem {
+    grid-template-columns: 1fr;
+  }
+
+  html.shell-rail .shell-nitem > .shell-item {
+    position: relative;
+    justify-content: center;
+    width: 56px;
+    height: 48px;
+    min-height: 48px;
+    margin: 0 auto;
+    padding: 0;
+  }
+
+  html.shell-rail .shell-nitem > .shell-item > span,
+  html.shell-rail .shell-subtog,
+  html.shell-rail .shell-nitem > .shell-col {
+    display: none;
+  }
+
+  /* A small corner arrow marks an item that has sub-items. */
+  html.shell-rail .shell-nitem.has-sub > .shell-item::after {
+    content: "";
+    position: absolute;
+    right: 6px;
+    bottom: 8px;
+    width: 5px;
+    height: 5px;
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    transform: rotate(-45deg);
+    opacity: 0.7;
+  }
+
+  html.shell-rail .shell-nitem.cur > .shell-item {
+    background: var(--nav-active-bg);
+    color: var(--nav-active-text);
+  }
+
+  html.shell-rail .shell-me {
+    flex-direction: column;
+    justify-content: center;
+    padding: 10px 0;
+  }
+
+  html.shell-rail .shell-me-text,
+  html.shell-rail .shell-build {
+    display: none;
+  }
+
+  html.shell-rail .shell-signout {
+    justify-content: center;
+    width: 48px;
+    height: 44px;
+    padding: 0;
+  }
+
+  html.shell-rail .shell-signout span {
+    display: none;
+  }
+}
+
 /* ---------- narrow screens (DESIGN.md breakpoints) ---------- */
 
 @media (max-width: 1080px) {
@@ -621,6 +1018,12 @@ html[lang="km"] .shell-head h1 {
   .shell-menu-button {
     display: inline-grid;
   }
+
+  /* The drawer is the whole menu; no Collapse button and no fly-out on a phone or tablet. */
+  .shell-railbtn,
+  .shell-fly {
+    display: none;
+  }
 }
 
 @media (max-width: 760px) {
@@ -646,7 +1049,9 @@ html[lang="km"] .shell-head h1 {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .shell-nav {
+  .shell-nav,
+  .shell-grph .shell-icon,
+  .shell-subtog .shell-icon {
     transition: none;
   }
 }

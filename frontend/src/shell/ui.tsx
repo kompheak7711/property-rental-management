@@ -364,6 +364,11 @@ export function SubTabs({
         "",
         `${base}?tab=${encodeURIComponent(id)}`,
       );
+      // UI v81 side menu: the menu's sub-items follow the address, so tell them about it (a
+      // replaced address fires no hashchange of its own). Only when the page is in the address
+      // (a screen test may draw the tabs without one).
+      if (base.startsWith("#"))
+        window.dispatchEvent(new HashChangeEvent("hashchange"));
     } catch {
       // The sub-tab still changes; only the address is not updated.
     }

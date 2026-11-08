@@ -26,7 +26,12 @@ export type ShellIcon =
   | "userplus"
   // UI v81 shared layouts: the Lease page's Customer card and the Renew button.
   | "phone"
-  | "pen";
+  | "pen"
+  // UI v81 side menu (design app23.js): the "⌄" of a group or a sub-list, Collapse menu, Expand
+  // menu.
+  | "chevron"
+  | "collapse"
+  | "expand";
 
 const PATHS: Record<ShellIcon, string[]> = {
   home: ["M3 10.5 12 3l9 7.5", "M5 9.5V21h14V9.5", "M10 21v-6h4v6"],
@@ -46,6 +51,17 @@ const PATHS: Record<ShellIcon, string[]> = {
     "M5 4h3.5l1.5 4-2 1.5a10 10 0 0 0 6.5 6.5L16 14l4 1.5V19a1.5 1.5 0 0 1-1.6 1.5A16.5 16.5 0 0 1 3.5 5.6 1.5 1.5 0 0 1 5 4z",
   ],
   pen: ["M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z", "M14 20h6"],
+  chevron: ["m9 6 6 6-6 6"],
+  collapse: [
+    "M3.5 4.5h17a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-17a2 2 0 0 1-2-2v-11a2 2 0 0 1 2-2z",
+    "M9 4.5v15",
+    "m16 9.5-2.5 2.5 2.5 2.5",
+  ],
+  expand: [
+    "M3.5 4.5h17a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-17a2 2 0 0 1-2-2v-11a2 2 0 0 1 2-2z",
+    "M9 4.5v15",
+    "m13 9.5 2.5 2.5-2.5 2.5",
+  ],
   units: [
     "M6 21V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v17",
     "M3.5 21h17",

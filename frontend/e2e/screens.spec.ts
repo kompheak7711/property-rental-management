@@ -1,7 +1,9 @@
 // UI v81 (owner 08/11/2026 06:55, point 4): every screen in e2e/screens.ts at the five sizes.
 // The check FAILS on: horizontal page overflow; a button, link or tab under 44 × 44 px; colour
 // contrast under 4.5:1 (axe-core); cut-off text or numbers; a role badge inside a button; a
-// card alone in a grid row on a desktop; two stacked tables. The problems are listed in the
+// card alone in a grid row on a desktop; two stacked tables; and (owner 08/11/2026 09:57) any
+// visible text that is an internal ID or placeholder ("LEASE-" + hex, a UUID, "Primary Lease
+// Customer"...). The side menu is checked with the page. The problems are listed in the
 // failure message. A screenshot of each screen and size goes to e2e/results/shots.
 
 import { mkdirSync } from "node:fs";
@@ -19,6 +21,7 @@ const SHOTS = join(import.meta.dirname, "results", "shots");
 function audit(desktop: boolean): string[] {
   const problems: string[] = [];
   const view = document.getElementById("shell-view") ?? document.body;
+  const nav = document.getElementById("shell-nav");
   const visible = (el: Element): boolean => {
     if (el.closest("[hidden]") !== null) return false;
     const style = getComputedStyle(el);
@@ -45,8 +48,13 @@ function audit(desktop: boolean): string[] {
       `horizontal overflow: the page is ${String(pageWidth)}px wide in a ${String(window.innerWidth)}px window`,
     );
 
+  // The page and, where it is on screen, the side menu (UI v81 side menu, owner 08/11/2026).
+  const roots = nav !== null && visible(nav) ? [view, nav] : [view];
+  const all = <T extends Element>(selector: string): T[] =>
+    roots.flatMap((root) => [...root.querySelectorAll<T>(selector)]);
+
   // 2. Buttons, links and tabs under 44 × 44 px (a checkbox or radio counts with its label).
-  const targets = view.querySelectorAll<HTMLElement>(
+  const targets = all<HTMLElement>(
     'a[href], button, [role="button"], [role="tab"], summary, input[type="checkbox"], input[type="radio"]',
   );
   for (const el of targets) {
@@ -60,7 +68,7 @@ function audit(desktop: boolean): string[] {
 
   // 3. Cut-off text or numbers: text clipped inside a box that does not scroll, or a number
   //    that runs past its box.
-  for (const el of view.querySelectorAll<HTMLElement>("*")) {
+  for (const el of all<HTMLElement>("*")) {
     if (!visible(el)) continue;
     const style = getComputedStyle(el);
     const clips = (value: string) => value === "hidden" || value === "clip";
@@ -89,9 +97,7 @@ function audit(desktop: boolean): string[] {
   }
 
   // 4. A role badge inside a button.
-  for (const el of view.querySelectorAll<HTMLElement>(
-    'button, a.ui-btn, [role="button"]',
-  )) {
+  for (const el of all<HTMLElement>('button, a.ui-btn, [role="button"]')) {
     if (!visible(el)) continue;
     if (
       el.querySelector(".ui-badge, .ui-chip") !== null ||
@@ -143,12 +149,48 @@ function audit(desktop: boolean): string[] {
       if (!sideBySide)
         problems.push(`two stacked tables (${round(a)} and ${round(b)})`);
     }
+
+  // 7. Internal IDs or placeholder text anywhere a person can read (owner 08/11/2026 09:57):
+  //    "LEASE-0a96849c55e3", a UUID, a long hex key, "Primary Lease Customer"... The build id at
+  //    the foot of the menu is the one hex a person may see.
+  const internal = [
+    /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/i,
+    /\b[A-Z]{2,8}-[0-9a-f]{6,}\b/,
+    /\b(?=[0-9a-f]*[a-f])(?=[0-9a-f]*\d)[0-9a-f]{16,}\b/i,
+    /\b(?:Primary Lease (?:Customer|Tenant)|Lease Service|Synthetic|Lorem ipsum|TODO|undefined|null|NaN|\[object Object\]|Test (?:Customer|Unit|Lease|Tenant|Property))\b/,
+  ];
+  const seen = new Set<string>();
+  for (const root of roots) {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    for (
+      let node = walker.nextNode();
+      node !== null;
+      node = walker.nextNode()
+    ) {
+      const parent = node.parentElement;
+      if (parent === null || !visible(parent)) continue;
+      if (parent.closest(".shell-build, script, style") !== null) continue;
+      const text = (node.textContent ?? "").replace(/\s+/g, " ").trim();
+      if (text === "") continue;
+      for (const pattern of internal) {
+        const match = pattern.exec(text);
+        if (match === null) continue;
+        const key = `${match[0]}|${describe(parent)}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        problems.push(
+          `internal ID or placeholder text "${match[0]}" in ${describe(parent)}`,
+        );
+      }
+    }
+  }
   return problems;
 }
 
 async function contrast(page: Page): Promise<string[]> {
   const results = await new AxeBuilder({ page })
     .include("#shell-view")
+    .include("#shell-nav")
     .withRules(["color-contrast"])
     .analyze();
   return results.violations.flatMap((violation) =>
@@ -170,10 +212,28 @@ for (const screen of SCREENS) {
     }) => {
       await page.setViewportSize({ width, height });
       await replay(page, screen.fixture);
+      if (screen.storage !== undefined)
+        await page.addInitScript((entries: Record<string, string>) => {
+          for (const [key, value] of Object.entries(entries))
+            window.localStorage.setItem(key, value);
+        }, screen.storage);
       await page.goto(`/${screen.hash}`);
       await expect(page.getByText(screen.ready).first()).toBeVisible({
         timeout: 30_000,
       });
+      if (screen.open === "menu") {
+        // The ☰ button shows on a phone or tablet only; a desktop has the menu beside the page.
+        const menuButton = page.getByRole("button", {
+          name: "Menu",
+          exact: true,
+        });
+        if (await menuButton.isVisible()) {
+          await menuButton.click();
+          await expect(
+            page.getByRole("button", { name: "Close the menu", exact: true }),
+          ).toBeVisible();
+        }
+      }
       // The pages draw their data in a few steps; let the last one settle.
       await page.waitForTimeout(600);
       await page.screenshot({
