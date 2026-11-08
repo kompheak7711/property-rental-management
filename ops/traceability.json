@@ -65744,6 +65744,17 @@
       "test_path": "frontend/src/telegram/TelegramPages.test.tsx",
       "status": "implemented",
       "notes": "Invoices on Telegram: Linked tenants lists who got each issued Invoice and its reminder, and counts the Invoices that need a paper copy."
+    },
+    {
+      "test_id": "test_a_typed_unit_number_finds_a_unit_numbered_with_u",
+      "upstream_ids": [
+        "DL-212",
+        "DB-TG-018"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_tenant_offline_migration.py",
+      "status": "implemented",
+      "notes": "Tenant bot linking: U302, 302, Room u302 and Unit 302 give the same Unit key; UB12 keeps its letters."
     }
   ]
 }
