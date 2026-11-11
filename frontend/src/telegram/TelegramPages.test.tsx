@@ -12,6 +12,7 @@ import {
   ContactOfficePage,
   FaqPageView,
   LinkedTenantsPage,
+  NoticesPageView,
   TelegramHealthPage,
   VisitRequestsPageView,
 } from "./TelegramPages";
@@ -21,12 +22,18 @@ import {
   type HealthPage,
   type InvoicesPage,
   type LinksPage,
+  type NoticesPage,
+  type ReceiptsPage,
+  type WarningsPage,
   type TelegramApi,
   TelegramError,
   type VisitRequest,
   type VisitRequestDetail,
   type VisitRequestsPage,
   contactPageOf,
+  noticesPageOf,
+  receiptsPageOf,
+  warningsPageOf,
   faqPageOf,
   healthPageOf,
   linksPageOf,
@@ -336,6 +343,99 @@ const INVOICES: InvoicesPage = {
   rules: { remind_days: 3, days: 45 },
 };
 
+const RECEIPTS: ReceiptsPage = {
+  receipts: [
+    {
+      id: "rec-1",
+      number: "R2611-0007",
+      customer: "Sao Rina",
+      status: "RECEIVED",
+      issued_at: "2026-11-11T03:00:00Z",
+      amount_usd_cents: 90000,
+      sent: [
+        {
+          telegram_user_id: 9001,
+          queued_at: "2026-11-11T03:01:00Z",
+          state: "SENT",
+          sent_at: "2026-11-11T03:01:05Z",
+        },
+      ],
+    },
+    {
+      id: "rec-2",
+      number: "R2611-0008",
+      customer: "Kim Dara",
+      status: "RECEIVED",
+      issued_at: "2026-11-11T03:10:00Z",
+      amount_usd_cents: 5000,
+      sent: [],
+    },
+    {
+      id: "rec-3",
+      number: "R2611-0009",
+      customer: "Lim Bora",
+      status: "REVERSED",
+      issued_at: "2026-11-11T03:20:00Z",
+      amount_usd_cents: 7000,
+      sent: [],
+    },
+  ],
+  rules: { days: 45 },
+};
+
+const NOTICES: NoticesPage = {
+  notices: [
+    {
+      id: "nt-1",
+      text_en: "No water 9-11 tomorrow.",
+      text_km: "គ្មានទឹកថ្ងៃស្អែក។",
+      audience: "FLOORS",
+      floors: ["3"],
+      units: [],
+      sent_by: "Dara Manager",
+      created_at: "2026-11-11T03:00:00Z",
+      people: 4,
+      sent: 3,
+      failed: 1,
+    },
+  ],
+  floors: ["3", "5"],
+  units: [
+    { id: "u-301", unit_number: "U301", floor: "3" },
+    { id: "u-501", unit_number: "U501", floor: "5" },
+  ],
+  rules: { days: 90, max: 1500 },
+};
+
+const WARNINGS: WarningsPage = {
+  warnings: [
+    {
+      id: "warn-1",
+      kind: "RENT_20",
+      unit_number: "U512",
+      customer: "Heng Dara",
+      recorded_at: "2026-11-11T05:00:00Z",
+      sent: [
+        {
+          telegram_user_id: 9001,
+          queued_at: "2026-11-11T05:01:00Z",
+          state: "SENT",
+          sent_at: "2026-11-11T05:01:05Z",
+        },
+      ],
+    },
+    {
+      id: "warn-2",
+      kind: "LEASE_WARNING",
+      unit_number: "U301",
+      customer: "Sok Vanna",
+      recorded_at: "2026-11-10T09:00:00Z",
+      sent: [],
+    },
+  ],
+  rules: { days: 90 },
+};
+
 function fakeApi(extra: Partial<TelegramApi> = {}): TelegramApi {
   return {
     contact: vi.fn(() => Promise.resolve(CONTACT)),
@@ -372,6 +472,10 @@ function fakeApi(extra: Partial<TelegramApi> = {}): TelegramApi {
     removeLink: vi.fn(() => Promise.resolve({ ...LINKS, linked: [] })),
     health: vi.fn(() => Promise.resolve(HEALTH)),
     invoices: vi.fn(() => Promise.resolve(INVOICES)),
+    receipts: vi.fn(() => Promise.resolve(RECEIPTS)),
+    warnings: vi.fn(() => Promise.resolve(WARNINGS)),
+    notices: vi.fn(() => Promise.resolve(NOTICES)),
+    sendNotice: vi.fn(() => Promise.resolve({ queued: 2, page: NOTICES })),
     retry: vi.fn(() =>
       Promise.resolve({
         ...HEALTH,
@@ -460,6 +564,166 @@ describe("Office › Telegram", () => {
       "A reminder goes 3 days before the due date",
     );
     expect(api.invoices).toHaveBeenCalledWith("prop-1");
+  });
+
+  it("TEST-FE-1954 Receipts on Telegram shows who got each Receipt, a Receipt that reached nobody, and a reversed one", async () => {
+    const api = fakeApi();
+    render(
+      <LinkedTenantsPage
+        active
+        api={api}
+        capabilities={READER}
+        language="en"
+        propertyId="prop-1"
+      />,
+    );
+    const receipts = await screen.findByRole("region", {
+      name: "Receipts on Telegram",
+    });
+    const sent = await within(receipts).findByRole("row", {
+      name: /R2611-0007/,
+    });
+    expect(sent.textContent).toContain("Sent to 1");
+    expect(sent.textContent).toContain("$900.00");
+    const paper = within(receipts).getByRole("row", { name: /R2611-0008/ });
+    expect(paper.textContent).toContain("Give a paper copy");
+    const reversed = within(receipts).getByRole("row", { name: /R2611-0009/ });
+    expect(reversed.textContent).toContain("Reversed");
+    expect(
+      within(receipts).getByText(
+        "Receipts that did not reach anyone on Telegram: 1. Give these people a paper copy if they need one.",
+      ),
+    ).toBeTruthy();
+    expect(receipts.textContent).toContain("Receipts of the last 45 days.");
+    expect(api.receipts).toHaveBeenCalledWith("prop-1");
+    expect(receiptsPageOf(JSON.parse(JSON.stringify(RECEIPTS)))).toEqual(
+      RECEIPTS,
+    );
+    expect(() => receiptsPageOf({ receipts: [], rules: {} })).toThrow(
+      TelegramError,
+    );
+  });
+
+  it("TEST-FE-1955 Notices: a Manager writes a notice, chooses floors, confirms and sends it; the list shows who got each one", async () => {
+    const api = fakeApi();
+    render(
+      <NoticesPageView
+        active
+        api={api}
+        capabilities={MANAGER}
+        language="en"
+        propertyId="prop-1"
+      />,
+    );
+    const list = await screen.findByRole("region", { name: "Sent notices" });
+    const row = within(list).getByRole("row", { name: /No water 9-11/ });
+    expect(row.textContent).toContain("Floor 3");
+    expect(row.textContent).toContain("3 of 4");
+    expect(row.textContent).toContain("1 not delivered");
+    expect(row.textContent).toContain("Dara Manager");
+    const send = screen.getByRole("button", { name: "Send notice" });
+    fireEvent.click(send);
+    expect(
+      screen.getByText("Write the notice in English or Khmer."),
+    ).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("In English"), {
+      target: { value: "  Lift work on Monday. " },
+    });
+    fireEvent.click(screen.getByRole("radio", { name: "Some floors" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send notice" }));
+    expect(screen.getByText("Choose at least one floor or Unit.")).toBeTruthy();
+    fireEvent.click(screen.getByRole("checkbox", { name: "Floor 5" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send notice" }));
+    expect(api.sendNotice).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Yes, send it" }));
+    expect(
+      await screen.findByText("The notice is on its way to 2 people."),
+    ).toBeTruthy();
+    expect(api.sendNotice).toHaveBeenCalledWith("prop-1", {
+      text_en: "Lift work on Monday.",
+      text_km: "",
+      audience: "FLOORS",
+      floors: ["5"],
+      unit_ids: [],
+    });
+    expect(screen.getByLabelText("In English")).toHaveValue("");
+  });
+
+  it("TEST-FE-1956 Notices: a reader sees the list but no form; a refused notice says so and keeps the words; a wrong page answer is refused", async () => {
+    render(
+      <NoticesPageView
+        active
+        api={fakeApi()}
+        capabilities={READER}
+        language="km"
+        propertyId="prop-1"
+      />,
+    );
+    expect(await screen.findByText(/គ្មានទឹកថ្ងៃស្អែក/)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /ផ្ញើ/ })).toBeNull();
+    cleanup();
+
+    const refused = fakeApi({
+      sendNotice: vi.fn(() => Promise.reject(new TelegramError(422))),
+    });
+    render(
+      <NoticesPageView
+        active
+        api={refused}
+        capabilities={MANAGER}
+        language="en"
+        propertyId="prop-1"
+      />,
+    );
+    fireEvent.change(await screen.findByLabelText("In Khmer"), {
+      target: { value: "សួស្តី" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send notice" }));
+    fireEvent.click(screen.getByRole("button", { name: "Yes, send it" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "The notice was not sent. Check the words and who it is for.",
+    );
+    expect(screen.getByLabelText("In Khmer")).toHaveValue("សួស្តី");
+
+    expect(noticesPageOf(JSON.parse(JSON.stringify(NOTICES)))).toEqual(NOTICES);
+    expect(() => noticesPageOf({ ...NOTICES, rules: {} })).toThrow(
+      TelegramError,
+    );
+  });
+
+  it("TEST-FE-1957 Warnings on Telegram shows who got each late Rent letter and Lease warning, and which tenants need the letter by hand", async () => {
+    const api = fakeApi();
+    render(
+      <LinkedTenantsPage
+        active
+        api={api}
+        capabilities={READER}
+        language="en"
+        propertyId="prop-1"
+      />,
+    );
+    const warnings = await screen.findByRole("region", {
+      name: "Warnings on Telegram",
+    });
+    const rent = await within(warnings).findByRole("row", { name: /U512/ });
+    expect(rent.textContent).toContain("Rent not paid: day 20");
+    expect(rent.textContent).toContain("Sent to 1");
+    const lease = within(warnings).getByRole("row", { name: /U301/ });
+    expect(lease.textContent).toContain("Lease warning");
+    expect(lease.textContent).toContain("Give the letter");
+    expect(
+      within(warnings).getByText(
+        "Warnings that did not reach anyone on Telegram: 1. Make sure these tenants got the paper letter.",
+      ),
+    ).toBeTruthy();
+    expect(warnings.textContent).toContain("Warnings of the last 90 days.");
+    expect(api.warnings).toHaveBeenCalledWith("prop-1");
+    expect(warningsPageOf(JSON.parse(JSON.stringify(WARNINGS)))).toEqual(
+      WARNINGS,
+    );
+    expect(() => warningsPageOf({ warnings: [], rules: {} })).toThrow(
+      TelegramError,
+    );
   });
 
   it("TEST-FE-1501 Remove link needs a reason, sends it and shows the list the server answers; an ended link reads the list again; a person without telegram.operate gets no button", async () => {

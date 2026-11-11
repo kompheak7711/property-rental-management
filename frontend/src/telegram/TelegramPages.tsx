@@ -30,9 +30,14 @@ import {
   type FaqWords,
   type HealthPage,
   type InvoicesPage,
-  type TelegramInvoice,
+  type ReceiptsPage,
+  type WarningsPage,
+  type TelegramReceipt,
   type LinkedTenant,
   type LinksPage,
+  type NoticeBody,
+  type NoticesPage,
+  type TelegramNotice,
   type TelegramApi,
   TelegramError,
   telegramApi as defaultTelegramApi,
@@ -170,6 +175,316 @@ function when(value: string | null, language: Language): string {
 
 function person(name: string | null, fallback: string): string {
   return name === null || name === "" ? fallback : name;
+}
+
+// ---------------------------------------------------------------- Notices (DL-216)
+
+function noticeFor(language: Language, notice: TelegramNotice): string {
+  if (notice.audience === "FLOORS")
+    return notice.floors
+      .map((floor) => tt(language, "nt_floor", floor))
+      .join(", ");
+  if (notice.audience === "UNITS") return notice.units.join(", ");
+  return tt(language, "nt_ALL");
+}
+
+export function NoticesPageView({
+  language,
+  propertyId,
+  active,
+  capabilities,
+  api = defaultTelegramApi,
+}: TelegramPageProps) {
+  const page = usePage<NoticesPage>(propertyId, active, api.notices);
+  const operate = mayOperate(capabilities);
+  const [english, setEnglish] = useState("");
+  const [khmer, setKhmer] = useState("");
+  const [audience, setAudience] = useState<NoticeBody["audience"]>("ALL");
+  const [floors, setFloors] = useState<string[]>([]);
+  const [units, setUnits] = useState<string[]>([]);
+  const [shown, setShown] = useState(false);
+  const [asking, setAsking] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [failure, setFailure] = useState<TelegramTextKey | null>(null);
+  const [done, setDone] = useState<string | null>(null);
+
+  if (propertyId === "") return <NoProperty language={language} />;
+  const data = page.data;
+  const max = data?.rules.max ?? 1500;
+  const noWords = english.trim() === "" && khmer.trim() === "";
+  const noOne =
+    (audience === "FLOORS" && floors.length === 0) ||
+    (audience === "UNITS" && units.length === 0);
+
+  const toggle = (
+    list: string[],
+    set: (next: string[]) => void,
+    value: string,
+  ) => {
+    set(
+      list.includes(value)
+        ? list.filter((item) => item !== value)
+        : [...list, value],
+    );
+  };
+
+  const ask = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setShown(true);
+    setDone(null);
+    if (noWords || noOne || busy) return;
+    setAsking(true);
+  };
+
+  const send = () => {
+    setBusy(true);
+    setFailure(null);
+    api
+      .sendNotice(propertyId, {
+        text_en: english.trim(),
+        text_km: khmer.trim(),
+        audience,
+        floors: audience === "FLOORS" ? floors : [],
+        unit_ids: audience === "UNITS" ? units : [],
+      })
+      .then(
+        (answer) => {
+          setBusy(false);
+          setAsking(false);
+          setShown(false);
+          setEnglish("");
+          setKhmer("");
+          setFloors([]);
+          setUnits([]);
+          setAudience("ALL");
+          setDone(tt(language, "nt_done", answer.queued));
+          page.set(answer.page);
+        },
+        (error: unknown) => {
+          setBusy(false);
+          setAsking(false);
+          setFailure(
+            error instanceof TelegramError && error.status === 403
+              ? "e_403"
+              : error instanceof TelegramError && error.status === 422
+                ? "nt_e_422"
+                : "e_save",
+          );
+        },
+      );
+  };
+
+  return (
+    <>
+      <p className="ui-muted">{tt(language, "nt_sub")}</p>
+      <Done text={done} />
+      {operate && data !== null && (
+        <form
+          aria-labelledby="tg-nt-new"
+          className="ui-card"
+          noValidate
+          onSubmit={ask}
+        >
+          <h2 id="tg-nt-new">{tt(language, "nt_new")}</h2>
+          <p className="ui-small ui-muted" id="tg-nt-hint">
+            {tt(language, "nt_hint", max)}
+          </p>
+          <div className="ui-field">
+            <label htmlFor="tg-nt-en">{tt(language, "nt_en")}</label>
+            <textarea
+              aria-describedby="tg-nt-hint"
+              disabled={busy || asking}
+              id="tg-nt-en"
+              maxLength={max}
+              onChange={(event) => {
+                setEnglish(event.currentTarget.value);
+              }}
+              rows={4}
+              value={english}
+            />
+          </div>
+          <div className="ui-field">
+            <label htmlFor="tg-nt-km">{tt(language, "nt_km")}</label>
+            <textarea
+              aria-describedby="tg-nt-hint"
+              disabled={busy || asking}
+              id="tg-nt-km"
+              lang="km"
+              maxLength={max}
+              onChange={(event) => {
+                setKhmer(event.currentTarget.value);
+              }}
+              rows={4}
+              value={khmer}
+            />
+          </div>
+          {shown && noWords && (
+            <p className="ui-error" role="alert">
+              {tt(language, "nt_e_words")}
+            </p>
+          )}
+          <fieldset className="ui-radios">
+            <legend>{tt(language, "nt_who")}</legend>
+            {(["ALL", "FLOORS", "UNITS"] as const).map((value) => (
+              <label className="ui-chk" key={value}>
+                <input
+                  checked={audience === value}
+                  disabled={busy || asking}
+                  name="tg-nt-who"
+                  onChange={() => {
+                    setAudience(value);
+                  }}
+                  type="radio"
+                />
+                {tt(language, `nt_${value}`)}
+              </label>
+            ))}
+          </fieldset>
+          {audience === "FLOORS" && (
+            <fieldset className="ui-radios">
+              <legend className="ui-sr">{tt(language, "nt_FLOORS")}</legend>
+              {data.floors.map((floor) => (
+                <label className="ui-chk" key={floor}>
+                  <input
+                    checked={floors.includes(floor)}
+                    disabled={busy || asking}
+                    onChange={() => {
+                      toggle(floors, setFloors, floor);
+                    }}
+                    type="checkbox"
+                  />
+                  {tt(language, "nt_floor", floor)}
+                </label>
+              ))}
+            </fieldset>
+          )}
+          {audience === "UNITS" && (
+            <fieldset className="ui-radios">
+              <legend className="ui-sr">{tt(language, "nt_UNITS")}</legend>
+              {data.units.map((unit) => (
+                <label className="ui-chk" key={unit.id}>
+                  <input
+                    checked={units.includes(unit.id)}
+                    disabled={busy || asking}
+                    onChange={() => {
+                      toggle(units, setUnits, unit.id);
+                    }}
+                    type="checkbox"
+                  />
+                  {unit.unit_number}
+                </label>
+              ))}
+            </fieldset>
+          )}
+          {shown && noOne && (
+            <p className="ui-error" role="alert">
+              {tt(language, "nt_e_who")}
+            </p>
+          )}
+          {failure !== null && (
+            <div className="ui-notice warn" role="alert">
+              <Icon name="alert" />
+              <p>{tt(language, failure)}</p>
+            </div>
+          )}
+          {asking ? (
+            <div className="ui-notice warn" role="alertdialog">
+              <p>{tt(language, "nt_confirm")}</p>
+              <div className="ui-actions">
+                <button
+                  className="ui-btn primary"
+                  disabled={busy}
+                  onClick={send}
+                  type="button"
+                >
+                  {tt(language, busy ? "loading" : "nt_yes")}
+                </button>
+                <button
+                  className="ui-btn"
+                  disabled={busy}
+                  onClick={() => {
+                    setAsking(false);
+                  }}
+                  type="button"
+                >
+                  {tt(language, "nt_back")}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="ui-actions">
+              <button className="ui-btn primary" type="submit">
+                <Icon name="send" small />
+                {tt(language, "nt_send")}
+              </button>
+            </div>
+          )}
+        </form>
+      )}
+      <section aria-labelledby="tg-nt-list" className="ui-card pad0">
+        <div className="ui-listbar">
+          <h2 id="tg-nt-list">{tt(language, "nt_list")}</h2>
+        </div>
+        {data === null ? (
+          <Waiting
+            failed={page.failed}
+            language={language}
+            onRetry={page.load}
+          />
+        ) : data.notices.length === 0 ? (
+          <p className="ui-empty">{tt(language, "nt_none")}</p>
+        ) : (
+          <div className="ui-tablewrap">
+            <table className="ui-table">
+              <thead>
+                <tr>
+                  <th scope="col">{tt(language, "c_notice")}</th>
+                  <th scope="col">{tt(language, "c_for")}</th>
+                  <th className="ui-wide" scope="col">
+                    {tt(language, "c_sent_by")}
+                  </th>
+                  <th scope="col">{tt(language, "c_got")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.notices.map((notice) => {
+                  const words =
+                    language === "km"
+                      ? (notice.text_km ?? notice.text_en)
+                      : (notice.text_en ?? notice.text_km);
+                  return (
+                    <tr key={notice.id}>
+                      <td className="note">
+                        {words ?? ""}
+                        <span className="ui-sub2 ui-num">
+                          {momentText(notice.created_at)}
+                        </span>
+                      </td>
+                      <td>{noticeFor(language, notice)}</td>
+                      <td className="ui-wide">{notice.sent_by}</td>
+                      <td className="ui-num">
+                        {tt(language, "nt_got", notice.sent, notice.people)}
+                        {notice.failed > 0 && (
+                          <span className="ui-sub2">
+                            {tt(language, "nt_failed", notice.failed)}
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {data !== null && (
+          <p className="ui-tfoot">
+            {tt(language, "nt_list_sub", data.rules.days)}
+          </p>
+        )}
+      </section>
+    </>
+  );
 }
 
 // ---------------------------------------------------------------- Linked tenants
@@ -415,6 +730,18 @@ export function LinkedTenantsPage({
         language={language}
         propertyId={propertyId}
       />
+      <ReceiptsOnTelegram
+        active={active}
+        api={api}
+        language={language}
+        propertyId={propertyId}
+      />
+      <WarningsOnTelegram
+        active={active}
+        api={api}
+        language={language}
+        propertyId={propertyId}
+      />
       {removing !== null && (
         <RemoveLinkDialog
           api={api}
@@ -448,9 +775,9 @@ export function LinkedTenantsPage({
 
 // Invoices on Telegram (DL-211): who got each issued Invoice, and who needs a paper copy.
 
-function invoiceReached(
-  invoice: TelegramInvoice,
-): "sent" | "waiting" | "failed" | "none" {
+function invoiceReached(invoice: {
+  sent: readonly { state: string }[];
+}): "sent" | "waiting" | "failed" | "none" {
   if (invoice.sent.length === 0) return "none";
   if (invoice.sent.some((person) => person.state === "SENT")) return "sent";
   if (invoice.sent.every((person) => person.state === "GAVE_UP"))
@@ -562,6 +889,226 @@ function InvoicesOnTelegram({
           )}
           <p className="ui-tfoot">
             {tt(language, "inv_sub", data.rules.remind_days, data.rules.days)}
+          </p>
+        </>
+      )}
+    </section>
+  );
+}
+
+// Receipts on Telegram (DL-215): who got each Receipt, and who may need a paper copy.
+
+function ReceiptsOnTelegram({
+  language,
+  propertyId,
+  active,
+  api,
+}: {
+  language: Language;
+  propertyId: string;
+  active: boolean;
+  api: TelegramApi;
+}) {
+  const page = usePage<ReceiptsPage>(propertyId, active, api.receipts);
+  const data = page.data;
+  const reachedOf = (receipt: TelegramReceipt) => invoiceReached(receipt);
+  const paper =
+    data === null
+      ? 0
+      : data.receipts.filter((receipt) => {
+          if (receipt.status !== "RECEIVED") return false;
+          const reached = reachedOf(receipt);
+          return reached === "none" || reached === "failed";
+        }).length;
+  return (
+    <section aria-labelledby="tg-receipts" className="ui-card pad0">
+      <div className="ui-listbar">
+        <h2 id="tg-receipts">{tt(language, "rec_h")}</h2>
+      </div>
+      {data === null ? (
+        <Waiting failed={page.failed} language={language} onRetry={page.load} />
+      ) : (
+        <>
+          {paper > 0 && (
+            <div className="ui-notice warn" role="status">
+              <Icon name="alert" />
+              <p>{tt(language, "rec_paper_t", paper)}</p>
+            </div>
+          )}
+          {data.receipts.length === 0 ? (
+            <p className="ui-empty">{tt(language, "rec_none")}</p>
+          ) : (
+            <div className="ui-tablewrap">
+              <table className="ui-table">
+                <thead>
+                  <tr>
+                    <th scope="col">{tt(language, "c_receipt")}</th>
+                    <th className="ui-wide" scope="col">
+                      {tt(language, "c_cust")}
+                    </th>
+                    <th className="ui-wide" scope="col">
+                      {tt(language, "c_made")}
+                    </th>
+                    <th scope="col">{tt(language, "c_amount")}</th>
+                    <th scope="col">{tt(language, "c_telegram")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.receipts.map((receipt) => {
+                    const reached = reachedOf(receipt);
+                    const sentCount = receipt.sent.filter(
+                      (person) => person.state === "SENT",
+                    ).length;
+                    return (
+                      <tr key={receipt.id}>
+                        <td className="ui-num">{receipt.number}</td>
+                        <td className="ui-wide">{receipt.customer}</td>
+                        <td className="ui-wide ui-num">
+                          {momentText(receipt.issued_at)}
+                        </td>
+                        <td className="ui-num">
+                          {usdFromCents(receipt.amount_usd_cents)}
+                        </td>
+                        <td>
+                          {receipt.status !== "RECEIVED" ? (
+                            <Chip tone="warn">
+                              {tt(language, "rec_reversed")}
+                            </Chip>
+                          ) : reached === "sent" ? (
+                            <Chip tone="ok">
+                              {tt(language, "inv_sent", sentCount)}
+                            </Chip>
+                          ) : reached === "waiting" ? (
+                            <Chip tone="warn">
+                              {tt(language, "inv_waiting")}
+                            </Chip>
+                          ) : reached === "failed" ? (
+                            <Chip tone="err">{tt(language, "inv_failed")}</Chip>
+                          ) : (
+                            <Chip tone="err">{tt(language, "inv_paper")}</Chip>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <p className="ui-tfoot">{tt(language, "rec_sub", data.rules.days)}</p>
+        </>
+      )}
+    </section>
+  );
+}
+
+// Warnings on Telegram (DL-217): who got each late Rent letter and Lease warning.
+
+const WARNING_KINDS = {
+  RENT_20: "warn_RENT_20",
+  RENT_30: "warn_RENT_30",
+  LEASE_WARNING: "warn_LEASE_WARNING",
+} as const;
+
+function warningKindText(language: Language, kind: string): string {
+  return kind in WARNING_KINDS
+    ? tt(language, WARNING_KINDS[kind as keyof typeof WARNING_KINDS])
+    : kind;
+}
+
+function WarningsOnTelegram({
+  language,
+  propertyId,
+  active,
+  api,
+}: {
+  language: Language;
+  propertyId: string;
+  active: boolean;
+  api: TelegramApi;
+}) {
+  const page = usePage<WarningsPage>(propertyId, active, api.warnings);
+  const data = page.data;
+  const paper =
+    data === null
+      ? 0
+      : data.warnings.filter((warning) => {
+          const reached = invoiceReached(warning);
+          return reached === "none" || reached === "failed";
+        }).length;
+  return (
+    <section aria-labelledby="tg-warnings" className="ui-card pad0">
+      <div className="ui-listbar">
+        <h2 id="tg-warnings">{tt(language, "warn_h")}</h2>
+      </div>
+      {data === null ? (
+        <Waiting failed={page.failed} language={language} onRetry={page.load} />
+      ) : (
+        <>
+          {paper > 0 && (
+            <div className="ui-notice warn" role="status">
+              <Icon name="alert" />
+              <p>{tt(language, "warn_paper_t", paper)}</p>
+            </div>
+          )}
+          {data.warnings.length === 0 ? (
+            <p className="ui-empty">{tt(language, "warn_none")}</p>
+          ) : (
+            <div className="ui-tablewrap">
+              <table className="ui-table">
+                <thead>
+                  <tr>
+                    <th scope="col">{tt(language, "c_warning")}</th>
+                    <th scope="col">{tt(language, "c_unit")}</th>
+                    <th className="ui-wide" scope="col">
+                      {tt(language, "c_cust")}
+                    </th>
+                    <th className="ui-wide" scope="col">
+                      {tt(language, "c_recorded")}
+                    </th>
+                    <th scope="col">{tt(language, "c_telegram")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.warnings.map((warning) => {
+                    const reached = invoiceReached(warning);
+                    const sentCount = warning.sent.filter(
+                      (person) => person.state === "SENT",
+                    ).length;
+                    return (
+                      <tr key={warning.id}>
+                        <td>{warningKindText(language, warning.kind)}</td>
+                        <td className="ui-num">{warning.unit_number}</td>
+                        <td className="ui-wide">{warning.customer}</td>
+                        <td className="ui-wide ui-num">
+                          {momentText(warning.recorded_at)}
+                        </td>
+                        <td>
+                          {reached === "sent" ? (
+                            <Chip tone="ok">
+                              {tt(language, "inv_sent", sentCount)}
+                            </Chip>
+                          ) : reached === "waiting" ? (
+                            <Chip tone="warn">
+                              {tt(language, "inv_waiting")}
+                            </Chip>
+                          ) : reached === "failed" ? (
+                            <Chip tone="err">{tt(language, "inv_failed")}</Chip>
+                          ) : (
+                            <Chip tone="err">
+                              {tt(language, "warn_letter")}
+                            </Chip>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <p className="ui-tfoot">
+            {tt(language, "warn_sub", data.rules.days)}
           </p>
         </>
       )}

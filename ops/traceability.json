@@ -66231,6 +66231,200 @@
       "notes": "Telegram QR client: reads the people, makes a code with the CSRF token, refuses a bad answer, reads a guest's stay on Linked tenants."
     },
     {
+      "test_id": "test_a_payment_sends_its_receipt_with_what_it_paid_once",
+      "upstream_ids": [
+        "DL-215",
+        "DB-TG-022"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_receipts_migration.py",
+      "status": "implemented",
+      "notes": "Receipts on Telegram: Receive payment's Receipt goes to the linked tenant once, after the pull job runs, with the Invoice it paid and money not used yet, in the tenant's language; the office page lists who got it."
+    },
+    {
+      "test_id": "test_a_receipt_of_someone_not_linked_is_not_sent",
+      "upstream_ids": [
+        "DL-215",
+        "DB-TG-022"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_receipts_migration.py",
+      "status": "implemented",
+      "notes": "Receipts on Telegram: a Receipt of a payer with no link goes to nobody."
+    },
+    {
+      "test_id": "test_receipts_need_the_telegram_rights_and_stay_as_sent",
+      "upstream_ids": [
+        "DL-215",
+        "DB-TG-022"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_receipts_migration.py",
+      "status": "implemented",
+      "notes": "Receipts on Telegram: queueing needs telegram.operate; the notices are append-only and not readable by the runtime role."
+    },
+    {
+      "test_id": "test_a_receipt_reads_as_the_tenant_gets_it_in_english_and_khmer",
+      "upstream_ids": [
+        "DL-215"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_receipts.py",
+      "status": "implemented",
+      "notes": "Receipts on Telegram: the send job puts the Receipt text together in English and Khmer from the queued fields."
+    },
+    {
+      "test_id": "TEST-FE-1954",
+      "upstream_ids": [
+        "DL-215",
+        "API-TG-010"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/telegram/TelegramPages.test.tsx",
+      "status": "implemented",
+      "notes": "Receipts on Telegram: Linked tenants lists who got each Receipt, counts the Receipts that reached nobody, and marks a reversed one."
+    },
+    {
+      "test_id": "test_a_notice_for_everyone_goes_to_each_person_in_their_language",
+      "upstream_ids": [
+        "DL-216",
+        "DB-TG-023"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_notices_migration.py",
+      "status": "implemented",
+      "notes": "Notices: a notice for everyone goes once to each linked person in their language; one written in one language goes to all in that language."
+    },
+    {
+      "test_id": "test_a_notice_for_floors_or_units_goes_only_there",
+      "upstream_ids": [
+        "DL-216",
+        "DB-TG-023"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_notices_migration.py",
+      "status": "implemented",
+      "notes": "Notices: a notice for some floors or Units goes only to people linked there; the office list shows who it was for and how many got it."
+    },
+    {
+      "test_id": "test_a_notice_needs_words_a_real_audience_and_the_operate_right",
+      "upstream_ids": [
+        "DL-216",
+        "DB-TG-023"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_notices_migration.py",
+      "status": "implemented",
+      "notes": "Notices: Staff without telegram.operate are refused; no words, too long, an unknown audience or floor or Unit is refused; notices are append-only and not readable by the runtime role."
+    },
+    {
+      "test_id": "test_a_notice_needs_operate_words_and_the_browser_checks",
+      "upstream_ids": [
+        "DL-216",
+        "API-TG-011"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_api.py",
+      "status": "implemented",
+      "notes": "Notices API: telegram.operate and the browser checks; no words, too long or an unknown audience is 422; the answer has the count and the page."
+    },
+    {
+      "test_id": "test_a_notice_reads_with_the_office_heading_and_keeps_long_words",
+      "upstream_ids": [
+        "DL-216"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_notices.py",
+      "status": "implemented",
+      "notes": "Notices: the bot text has the office heading in English and Khmer and keeps a long notice."
+    },
+    {
+      "test_id": "TEST-FE-1955",
+      "upstream_ids": [
+        "DL-216",
+        "API-TG-011"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/telegram/TelegramPages.test.tsx",
+      "status": "implemented",
+      "notes": "Notices tab: a Manager writes a notice, chooses floors, confirms and sends it; the list shows who got each one."
+    },
+    {
+      "test_id": "TEST-FE-1956",
+      "upstream_ids": [
+        "DL-216",
+        "API-TG-011"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/telegram/TelegramPages.test.tsx",
+      "status": "implemented",
+      "notes": "Notices tab: a reader gets no form; a refused notice says so and keeps the words; a wrong page answer is refused."
+    },
+    {
+      "test_id": "test_the_late_rent_letters_go_to_the_linked_tenant_once",
+      "upstream_ids": [
+        "DL-217",
+        "DB-TG-024"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_warnings_migration.py",
+      "status": "implemented",
+      "notes": "Warnings on Telegram: opening a Rent case sends nothing; the day-20 and day-30 events each go once to the linked tenant in the tenant's language with the Invoice, Due Date and Rent still to pay; the office page lists who got them."
+    },
+    {
+      "test_id": "test_a_lease_warning_goes_with_the_words_staff_wrote",
+      "upstream_ids": [
+        "DL-217",
+        "DB-TG-024"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_warnings_migration.py",
+      "status": "implemented",
+      "notes": "Warnings on Telegram: a Lease warning goes with its number, what happened and the Lease rule; a warning recorded days ago is not sent."
+    },
+    {
+      "test_id": "test_warnings_need_the_telegram_rights_and_stay_as_sent",
+      "upstream_ids": [
+        "DL-217",
+        "DB-TG-024"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_warnings_migration.py",
+      "status": "implemented",
+      "notes": "Warnings on Telegram: queueing needs telegram.operate and the page telegram.read; the notices are append-only and not readable by the runtime role."
+    },
+    {
+      "test_id": "test_the_late_rent_letters_read_as_the_tenant_gets_them",
+      "upstream_ids": [
+        "DL-217"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_warnings.py",
+      "status": "implemented",
+      "notes": "Warnings on Telegram: the day-20 and day-30 Rent messages in English and Khmer, with the paper letter as the official copy."
+    },
+    {
+      "test_id": "test_a_lease_warning_reads_with_the_words_staff_wrote",
+      "upstream_ids": [
+        "DL-217"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_warnings.py",
+      "status": "implemented",
+      "notes": "Warnings on Telegram: the Lease warning message in English and Khmer keeps the words staff wrote."
+    },
+    {
+      "test_id": "TEST-FE-1957",
+      "upstream_ids": [
+        "DL-217",
+        "API-TG-012"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/telegram/TelegramPages.test.tsx",
+      "status": "implemented",
+      "notes": "Warnings on Telegram: Linked tenants lists who got each late Rent letter and Lease warning and counts the warnings that reached nobody."
+    },
+    {
       "test_id": "test_an_issued_invoice_goes_to_the_linked_tenant_once",
       "upstream_ids": [
         "DL-211",

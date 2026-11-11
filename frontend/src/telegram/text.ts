@@ -635,6 +635,101 @@ const TEXT = {
   inv_failed: ["Not delivered", "មិនបានទៅដល់"],
   inv_paper: ["Give a paper copy", "ផ្តល់ច្បាប់ចម្លងក្រដាស"],
   inv_no_reminder: ["Not yet", "មិនទាន់"],
+  // Receipts on Telegram (DL-215, owner 11 Nov 2026). All Khmer here is new and needs the native
+  // check.
+  rec_h: ["Receipts on Telegram", "បង្កាន់ដៃតាមតេឡេក្រាម"],
+  rec_sub: [
+    "Each Receipt goes to the people linked to the Lease or stay it paid, about a minute after it is saved. Receipts of the last {0} days.",
+    "បង្កាន់ដៃនីមួយៗ ផ្ញើទៅអ្នកដែលភ្ជាប់នឹងកិច្ចសន្យា ឬការស្នាក់នៅដែលវាបានបង់ ប្រហែលមួយនាទីបន្ទាប់ពីរក្សាទុក។ បង្កាន់ដៃ {0} ថ្ងៃចុងក្រោយ។",
+  ],
+  rec_paper_t: [
+    "Receipts that did not reach anyone on Telegram: {0}. Give these people a paper copy if they need one.",
+    "បង្កាន់ដៃ {0} មិនបានទៅដល់នរណាម្នាក់តាមតេឡេក្រាមទេ។ សូមផ្តល់ច្បាប់ចម្លងក្រដាស ប្រសិនបើពួកគេត្រូវការ។",
+  ],
+  rec_none: [
+    "No Receipts were made in this time.",
+    "មិនមានបង្កាន់ដៃក្នុងរយៈពេលនេះទេ។",
+  ],
+  c_receipt: ["Receipt", "បង្កាន់ដៃ"],
+  c_amount: ["Amount", "ចំនួនទឹកប្រាក់"],
+  c_made: ["Made on", "ធ្វើនៅ"],
+  rec_reversed: ["Reversed", "បានបញ្ច្រាស"],
+  // Warnings on Telegram (DL-217, owner card 11 Nov 2026 "When staff record it"). All Khmer here
+  // is new and needs the native check.
+  warn_h: ["Warnings on Telegram", "ការព្រមានតាមតេឡេក្រាម"],
+  warn_sub: [
+    "Late Rent letters (day 20 and day 30) and Lease warnings go to the tenants linked to the Lease about a minute after staff record them. The paper letter stays the official copy. Warnings of the last {0} days.",
+    "លិខិតថ្លៃឈ្នួលយឺត (ថ្ងៃទី ២០ និងថ្ងៃទី ៣០) និងការព្រមានតាមកិច្ចសន្យាជួល ផ្ញើទៅអ្នកជួលដែលភ្ជាប់នឹងកិច្ចសន្យា ប្រហែលមួយនាទីបន្ទាប់ពីបុគ្គលិកកត់ត្រា។ លិខិតក្រដាសនៅតែជាច្បាប់ផ្លូវការ។ ការព្រមាន {0} ថ្ងៃចុងក្រោយ។",
+  ],
+  warn_paper_t: [
+    "Warnings that did not reach anyone on Telegram: {0}. Make sure these tenants got the paper letter.",
+    "ការព្រមាន {0} មិនបានទៅដល់នរណាម្នាក់តាមតេឡេក្រាមទេ។ សូមប្រាកដថាអ្នកជួលទាំងនេះបានទទួលលិខិតក្រដាស។",
+  ],
+  warn_none: [
+    "No warnings were recorded in this time.",
+    "មិនមានការព្រមានដែលបានកត់ត្រាក្នុងរយៈពេលនេះទេ។",
+  ],
+  c_warning: ["Warning", "ការព្រមាន"],
+  c_recorded: ["Recorded", "កត់ត្រានៅ"],
+  warn_RENT_20: ["Rent not paid: day 20", "មិនទាន់បង់ថ្លៃឈ្នួល៖ ថ្ងៃទី ២០"],
+  warn_RENT_30: ["Rent not paid: day 30", "មិនទាន់បង់ថ្លៃឈ្នួល៖ ថ្ងៃទី ៣០"],
+  warn_LEASE_WARNING: ["Lease warning", "ការព្រមានតាមកិច្ចសន្យាជួល"],
+  warn_letter: ["Give the letter", "ផ្តល់លិខិត"],
+  // Notices (DL-216, owner 11 Nov 2026). All Khmer here is new and needs the native check.
+  nt_sub: [
+    "Send news from the office to the people linked on Telegram, tenants and guests: a water or power cut, building work, a holiday. Not for money or Lease letters.",
+    "ផ្ញើព័ត៌មានពីការិយាល័យទៅអ្នកដែលភ្ជាប់តាមតេឡេក្រាម ទាំងអ្នកជួល និងភ្ញៀវ៖ ការផ្តាច់ទឹក ឬភ្លើង ការងារជួសជុលអគារ ថ្ងៃឈប់សម្រាក។ មិនមែនសម្រាប់ប្រាក់ ឬលិខិតកិច្ចសន្យាទេ។",
+  ],
+  nt_new: ["New notice", "សេចក្តីជូនដំណឹងថ្មី"],
+  nt_en: ["In English", "ជាភាសាអង់គ្លេស"],
+  nt_km: ["In Khmer", "ជាភាសាខ្មែរ"],
+  nt_hint: [
+    "Write it in one language or both. Each person gets their own language; a notice in one language goes to everyone in that language. At most {0} characters.",
+    "សរសេរជាភាសាមួយ ឬទាំងពីរ។ ម្នាក់ៗទទួលជាភាសារបស់ខ្លួន។ សេចក្តីជូនដំណឹងជាភាសាតែមួយ ផ្ញើទៅគ្រប់គ្នាជាភាសានោះ។ យ៉ាងច្រើន {0} តួអក្សរ។",
+  ],
+  nt_who: ["Who gets it", "អ្នកណាទទួល"],
+  nt_ALL: ["Everyone linked", "អ្នកភ្ជាប់ទាំងអស់"],
+  nt_FLOORS: ["Some floors", "ជាន់ខ្លះ"],
+  nt_UNITS: ["Some Units", "បន្ទប់ខ្លះ"],
+  nt_floor: ["Floor {0}", "ជាន់ {0}"],
+  nt_send: ["Send notice", "ផ្ញើសេចក្តីជូនដំណឹង"],
+  nt_confirm: [
+    "Send this notice now? It cannot be taken back.",
+    "ផ្ញើសេចក្តីជូនដំណឹងនេះឥឡូវ? មិនអាចដកវិញបានទេ។",
+  ],
+  nt_yes: ["Yes, send it", "បាទ/ចាស ផ្ញើ"],
+  nt_back: ["Back", "ត្រឡប់"],
+  nt_e_words: [
+    "Write the notice in English or Khmer.",
+    "សូមសរសេរសេចក្តីជូនដំណឹងជាភាសាអង់គ្លេស ឬខ្មែរ។",
+  ],
+  nt_e_who: [
+    "Choose at least one floor or Unit.",
+    "សូមជ្រើសយ៉ាងហោចណាស់ជាន់ ឬបន្ទប់មួយ។",
+  ],
+  nt_e_422: [
+    "The notice was not sent. Check the words and who it is for.",
+    "សេចក្តីជូនដំណឹងមិនបានផ្ញើទេ។ សូមពិនិត្យពាក្យ និងអ្នកទទួល។",
+  ],
+  nt_done: [
+    "The notice is on its way to {0} people.",
+    "សេចក្តីជូនដំណឹងកំពុងផ្ញើទៅ {0} នាក់។",
+  ],
+  nt_list: ["Sent notices", "សេចក្តីជូនដំណឹងបានផ្ញើ"],
+  nt_none: [
+    "No notices were sent in this time.",
+    "មិនមានសេចក្តីជូនដំណឹងបានផ្ញើក្នុងរយៈពេលនេះទេ។",
+  ],
+  nt_list_sub: [
+    "Notices of the last {0} days.",
+    "សេចក្តីជូនដំណឹង {0} ថ្ងៃចុងក្រោយ។",
+  ],
+  c_notice: ["Notice", "សេចក្តីជូនដំណឹង"],
+  c_for: ["For", "សម្រាប់"],
+  c_sent_by: ["Sent by", "ផ្ញើដោយ"],
+  c_got: ["Got it", "បានទទួល"],
+  nt_got: ["{0} of {1}", "{0} ក្នុងចំណោម {1}"],
+  nt_failed: ["{0} not delivered", "{0} មិនបានទៅដល់"],
   // The one-time Telegram QR (DL-214, owner 11 Nov 2026 "Yes, QR for tenants and guests"). All
   // Khmer here is new and needs the native check.
   qr_h: ["Telegram", "តេឡេក្រាម"],

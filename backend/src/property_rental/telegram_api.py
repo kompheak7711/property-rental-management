@@ -33,6 +33,16 @@ can get a one-time Telegram QR, and `POST .../telegram/link-codes` makes one for
 t.me link and its QR picture, shown once (`leases.sign` for a Lease, `short_stays.desk` for a
 Booking).
 
+DL-215: `GET .../telegram/receipts` lists the Receipts of the last 45 days and who got them on
+Telegram (`telegram.read`).
+
+DL-217: `GET .../telegram/warnings` lists the late Rent letters and Lease warnings of the last 90
+days and who got them on Telegram (`telegram.read`).
+
+DL-216: `GET .../telegram/notices` lists the notices of the last 90 days, the floors and the
+Units (`telegram.read`); `POST .../telegram/notices` sends a notice to the people linked to
+everyone, some floors or some Units (`telegram.operate`).
+
 The database functions check the rights again.
 """
 
@@ -108,6 +118,14 @@ class TelegramPageFlow(Protocol):
 
     def invoices(self, property_id: UUID, *, actor_id: str) -> Json: ...
 
+    def receipts(self, property_id: UUID, *, actor_id: str) -> Json: ...
+
+    def warnings(self, property_id: UUID, *, actor_id: str) -> Json: ...
+
+    def notices(self, property_id: UUID, *, actor_id: str) -> Json: ...
+
+    def send_notice(self, property_id: UUID, body: Json, *, actor_id: str) -> Json: ...
+
     def retry(self, property_id: UUID, message_id: UUID, *, actor_id: str) -> UUID: ...
 
     def contact(self, property_id: UUID, *, actor_id: str) -> Json: ...
@@ -158,6 +176,18 @@ class UnavailableTelegramPageFlow:
         raise ProductUnavailable
 
     def invoices(self, property_id: UUID, **_: object) -> Json:
+        raise ProductUnavailable
+
+    def receipts(self, property_id: UUID, **_: object) -> Json:
+        raise ProductUnavailable
+
+    def warnings(self, property_id: UUID, **_: object) -> Json:
+        raise ProductUnavailable
+
+    def notices(self, property_id: UUID, **_: object) -> Json:
+        raise ProductUnavailable
+
+    def send_notice(self, property_id: UUID, body: Json, **_: object) -> Json:
         raise ProductUnavailable
 
     def retry(self, property_id: UUID, message_id: UUID, **_: object) -> UUID:
@@ -245,6 +275,29 @@ class PostgresTelegramPageFlow:
     def invoices(self, property_id: UUID, *, actor_id: str) -> Json:
         return _json(
             self._one("SELECT app.telegram_invoices_page(%s, %s)", (property_id, UUID(actor_id)))
+        )
+
+    def receipts(self, property_id: UUID, *, actor_id: str) -> Json:
+        return _json(
+            self._one("SELECT app.telegram_receipts_page(%s, %s)", (property_id, UUID(actor_id)))
+        )
+
+    def warnings(self, property_id: UUID, *, actor_id: str) -> Json:
+        return _json(
+            self._one("SELECT app.telegram_warnings_page(%s, %s)", (property_id, UUID(actor_id)))
+        )
+
+    def notices(self, property_id: UUID, *, actor_id: str) -> Json:
+        return _json(
+            self._one("SELECT app.telegram_notices_page(%s, %s)", (property_id, UUID(actor_id)))
+        )
+
+    def send_notice(self, property_id: UUID, body: Json, *, actor_id: str) -> Json:
+        return _json(
+            self._one(
+                "SELECT app.telegram_notice_send(%s, %s::jsonb, %s)",
+                (property_id, json.dumps(body), UUID(actor_id)),
+            )
         )
 
     def retry(self, property_id: UUID, message_id: UUID, *, actor_id: str) -> UUID:
@@ -362,6 +415,21 @@ class LinkCode(BaseModel):
     customer_id: UUID = Field(strict=False)
 
 
+NoticeWords = Annotated[str, StringConstraints(strip_whitespace=True, max_length=1500)]
+
+
+class SendNotice(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    text_en: NoticeWords = ""
+    text_km: NoticeWords = ""
+    audience: Literal["ALL", "FLOORS", "UNITS"]
+    floors: list[Annotated[str, StringConstraints(max_length=40)]] = Field(
+        default_factory=list, max_length=100
+    )
+    unit_ids: list[UUID] = Field(default_factory=list, max_length=500, strict=False)
+
+
 class ContactAnswer(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
 
@@ -464,6 +532,58 @@ def create_telegram_router(
         response.headers["Cache-Control"] = "private, no-store"
         try:
             return envelope(request, flow.invoices(property_id, actor_id=actor.actor_id))
+        except REFUSED as exc:
+            raise _http(exc) from exc
+
+    @pages.get("/telegram/receipts")
+    def telegram_receipts(property_id: UUID, request: Request, response: Response) -> Json:
+        actor = _require(request, resolver, TELEGRAM_READ, property_id)
+        response.headers["Cache-Control"] = "private, no-store"
+        try:
+            return envelope(request, flow.receipts(property_id, actor_id=actor.actor_id))
+        except REFUSED as exc:
+            raise _http(exc) from exc
+
+    @pages.get("/telegram/warnings")
+    def telegram_warnings(property_id: UUID, request: Request, response: Response) -> Json:
+        actor = _require(request, resolver, TELEGRAM_READ, property_id)
+        response.headers["Cache-Control"] = "private, no-store"
+        try:
+            return envelope(request, flow.warnings(property_id, actor_id=actor.actor_id))
+        except REFUSED as exc:
+            raise _http(exc) from exc
+
+    @pages.get("/telegram/notices")
+    def telegram_notices(property_id: UUID, request: Request, response: Response) -> Json:
+        actor = _require(request, resolver, TELEGRAM_READ, property_id)
+        response.headers["Cache-Control"] = "private, no-store"
+        try:
+            return envelope(request, flow.notices(property_id, actor_id=actor.actor_id))
+        except REFUSED as exc:
+            raise _http(exc) from exc
+
+    @pages.post("/telegram/notices", status_code=status.HTTP_201_CREATED)
+    def send_telegram_notice(
+        property_id: UUID, body: SendNotice, request: Request, response: Response
+    ) -> Json:
+        actor = _require(request, resolver, TELEGRAM_OPERATE, property_id)
+        require_browser_mutation(request, settings)
+        response.headers["Cache-Control"] = "private, no-store"
+        if body.text_en == "" and body.text_km == "":
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
+        sent: Json = {
+            "text_en": body.text_en or None,
+            "text_km": body.text_km or None,
+            "audience": body.audience,
+            "floors": body.floors,
+            "unit_ids": [str(unit) for unit in body.unit_ids],
+        }
+        try:
+            made = flow.send_notice(property_id, sent, actor_id=actor.actor_id)
+            return envelope(
+                request,
+                {"sent": made, "page": flow.notices(property_id, actor_id=actor.actor_id)},
+            )
         except REFUSED as exc:
             raise _http(exc) from exc
 
