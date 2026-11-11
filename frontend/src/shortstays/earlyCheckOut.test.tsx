@@ -27,6 +27,7 @@ function show(today: string) {
       onDecide={vi.fn()}
       onPrice={vi.fn()}
       onStep={onStep}
+      problemTypes={[]}
       today={today}
     />,
   );

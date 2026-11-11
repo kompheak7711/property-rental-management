@@ -65593,17 +65593,6 @@
       "notes": "UI v81 top-bar search finds Customers and Units and opens the record."
     },
     {
-      "test_id": "TEST-FE-1911",
-      "upstream_ids": [
-        "UI-008",
-        "DL-069"
-      ],
-      "test_level": "UI component",
-      "test_path": "frontend/src/approvals/ShortStayApprovals.test.tsx",
-      "status": "implemented",
-      "notes": "UI v81 Approvals tabs: Short-stay approvals lists waiting damage charges and opens the booking; without short_stays.approve there are no tabs."
-    },
-    {
       "test_id": "test_360_follows_321_and_is_the_head",
       "upstream_ids": [
         "API-GL-006"
@@ -66709,7 +66698,7 @@
       "test_level": "UI component",
       "test_path": "frontend/src/shell/AppShell.test.tsx",
       "status": "implemented",
-      "notes": "UI v81 side menu (owner 08/11/2026, section D point 14): a page with tabs gets a ⌄ whose sub-items link to the same addresses as the page's tabs (Leases: #/leases, #/letters, #/moveout; Approvals: #/approvals?tab=financial, ?tab=shortstays), the current sub-item is marked and follows the address, the ⌄ is remembered (chetana-navopen), and a page without tabs has none."
+      "notes": "UI v81 side menu (owner 08/11/2026, section D point 14): a page with tabs gets a ⌄ whose sub-items link to the same addresses as the page's tabs (Leases: #/leases, #/letters, #/moveout; Users and access: #/access?tab=users, ?tab=roles, ...; Approvals has no sub-items since DL-222), the current sub-item is marked and follows the address, the ⌄ is remembered (chetana-navopen), and a page without tabs has none."
     },
     {
       "test_id": "TEST-FE-1929",
@@ -66757,9 +66746,9 @@
         "UI-008"
       ],
       "test_level": "UI component",
-      "test_path": "frontend/src/approvals/ShortStayApprovals.test.tsx",
+      "test_path": "frontend/src/shell/subTabs.test.tsx",
       "status": "implemented",
-      "notes": "UI v81 round 8 (owner 12/11/2026): the sub-tabs are square and joined (the Payments filter row look), never round pills, the count a plain number; a sub-tab's panel is a stack, so the Approvals number cards, list, note and Processed today keep the normal space."
+      "notes": "UI v81 round 8 (owner 12/11/2026): the sub-tabs are square and joined (the Payments filter row look), never round pills, the count a plain number; a sub-tab's panel is a stack, so its cards, lists and notes keep the normal space. Drawn on the shared parts since DL-222 took the Short-stay approvals tab away."
     },
     {
       "test_id": "TEST-FE-1934",

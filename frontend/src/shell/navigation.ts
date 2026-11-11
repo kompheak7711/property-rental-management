@@ -421,9 +421,10 @@ export function hashForPage(page: PageId, detail?: string): string {
 /**
  * UI v81 (owner 08/11/2026, section D item 14): the sub-tabs inside one page, shown as the menu
  * item's sub-items. A sub-item links to the same address as the sub-tab row writes
- * ("#/approvals?tab=shortstays"), so no address changes. The ids and names are the pages' own
- * (approvals/text.ts, settings/text.ts); a sub-tab shows only to a person who holds one of its
- * capabilities (null: everyone who sees the page).
+ * ("#/access?tab=roles"), so no address changes. The ids and names are the pages' own
+ * (access, settings/text.ts); a sub-tab shows only to a person who holds one of its
+ * capabilities (null: everyone who sees the page). Approvals has one view since DL-222
+ * (owner 12/11/2026: a short-stay damage charge needs no approval), so it has no sub-items.
  */
 export interface PageSubTab {
   id: string;
@@ -432,13 +433,6 @@ export interface PageSubTab {
 }
 
 const PAGE_SUB_TABS: Partial<Record<PageId, readonly PageSubTab[]>> = {
-  approvals: [
-    { id: "financial", label: ["Financial approvals", "ការអនុម័តហិរញ្ញវត្ថុ"] },
-    {
-      id: "shortstays",
-      label: ["Short-stay approvals", "ការអនុម័តការស្នាក់នៅខ្លី"],
-    },
-  ],
   access: [
     { id: "users", label: ["Users", "អ្នកប្រើ"] },
     { id: "roles", label: ["Roles", "តួនាទី"] },
@@ -485,7 +479,7 @@ export interface SubItem {
 
 /**
  * The sub-items of a menu item the person may see: its page tabs (Leases → Leases, Notices,
- * Move-outs) or its in-page sub-tabs (Approvals → Financial approvals, Short-stay approvals).
+ * Move-outs) or its in-page sub-tabs (Users and access → Users, Roles, …).
  * Fewer than two means the item has no "⌄". `tab` is the sub-tab in the address, null for the
  * page's first one.
  */

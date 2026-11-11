@@ -412,12 +412,20 @@ describe("V1-058 R1 app shell", () => {
       ).toEqual({ leases: false });
       fireEvent.click(toggle);
       expect(toggle).toHaveAttribute("aria-expanded", "true");
-      // Approvals: its in-page tabs as sub-items, at the tabs' own addresses.
-      expect(hrefsOf(menu, "#shell-sub-approvals a")).toEqual([
-        ["Financial approvals", "#/approvals?tab=financial"],
-        ["Short-stay approvals", "#/approvals?tab=shortstays"],
+      // Users and access: its in-page tabs as sub-items, at the tabs' own addresses.
+      expect(hrefsOf(menu, "#shell-sub-access a")).toEqual([
+        ["Users", "#/access?tab=users"],
+        ["Roles", "#/access?tab=roles"],
+        ["Sign-in and security", "#/access?tab=signin"],
+        ["History", "#/access?tab=history"],
       ]);
-      // Payments and Utilities have no tabs, so no ⌄.
+      // Approvals has one view since DL-222 (a short-stay damage charge needs no approval),
+      // and Payments and Utilities have no tabs, so no ⌄.
+      expect(
+        menu.querySelector(
+          '.shell-nitem[data-menu-page="approvals"] .shell-subtog',
+        ),
+      ).toBeNull();
       expect(
         menu.querySelector(
           '.shell-nitem[data-menu-page="payments"] .shell-subtog',
@@ -428,22 +436,23 @@ describe("V1-058 R1 app shell", () => {
           '.shell-nitem[data-menu-page="utilities"] .shell-subtog',
         ),
       ).toBeNull();
-      // On Approvals the sub-item of the open tab is the current one and follows the address.
+      // On Users and access the sub-item of the open tab is the current one and follows the
+      // address.
       cleanup();
-      window.history.replaceState(null, "", "#/approvals?tab=shortstays");
-      renderShell("approvals");
+      window.history.replaceState(null, "", "#/access?tab=roles");
+      renderShell("access");
       expect(
-        within(menuOf()).getByRole("link", { name: "Short-stay approvals" }),
+        within(menuOf()).getByRole("link", { name: "Roles" }),
       ).toHaveAttribute("aria-current", "page");
       expect(
-        within(menuOf()).getByRole("link", { name: "Financial approvals" }),
+        within(menuOf()).getByRole("link", { name: "Users" }),
       ).not.toHaveAttribute("aria-current");
       act(() => {
-        window.history.replaceState(null, "", "#/approvals?tab=financial");
+        window.history.replaceState(null, "", "#/access?tab=users");
         window.dispatchEvent(new HashChangeEvent("hashchange"));
       });
       expect(
-        within(menuOf()).getByRole("link", { name: "Financial approvals" }),
+        within(menuOf()).getByRole("link", { name: "Users" }),
       ).toHaveAttribute("aria-current", "page");
     });
 

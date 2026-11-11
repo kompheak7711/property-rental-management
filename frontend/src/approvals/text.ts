@@ -213,25 +213,6 @@ const TEXT = {
   ],
   cv_PAYMENT_MOVE: ["move payment", "ផ្ទេរការបង់ប្រាក់"],
   cv_other: ["other change", "ការផ្លាស់ប្តូរផ្សេង"],
-  // UI v81 (B4): the Approvals tabs. All new.
-  tab_label: ["What waits for approval", "អ្វីដែលរង់ចាំការអនុម័ត"], // new
-  tab_fin: ["Financial approvals", "ការអនុម័តហិរញ្ញវត្ថុ"], // new
-  tab_ss: ["Short-stay approvals", "ការអនុម័តការស្នាក់នៅខ្លី"], // new
-  ss_sub: [
-    "Damage charges on short stays wait for the Owner or a Manager. Open the booking to approve or refuse.",
-    "ថ្លៃខូចខាតលើការស្នាក់នៅខ្លី រង់ចាំម្ចាស់ ឬអ្នកគ្រប់គ្រង។ បើកការកក់ ដើម្បីអនុម័ត ឬបដិសេធ។",
-  ], // new
-  ss_loading: ["Loading the short stays…", "កំពុងផ្ទុកការស្នាក់នៅខ្លី…"], // new
-  ss_failed: [
-    "The short stays could not be loaded. Check the connection and try again.",
-    "មិនអាចផ្ទុកការស្នាក់នៅខ្លីបានទេ។ សូមពិនិត្យការតភ្ជាប់ ហើយព្យាយាមម្តងទៀត។",
-  ], // new
-  ss_none: ["No damage charge is waiting.", "គ្មានថ្លៃខូចខាតណាកំពុងរង់ចាំទេ។"], // new
-  ss_booking: ["Booking", "ការកក់"], // new
-  ss_unit: ["Unit", "បន្ទប់"], // new
-  ss_guest: ["Guest", "ភ្ញៀវ"], // new
-  ss_what: ["Damage", "ការខូចខាត"], // new
-  ss_amount: ["Amount", "ចំនួនទឹកប្រាក់"], // new
 } as const satisfies Record<string, readonly [string, string]>;
 
 export type ApprovalsTextKey = keyof typeof TEXT;
