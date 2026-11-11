@@ -54587,7 +54587,7 @@
       "test_level": "UI component",
       "test_path": "frontend/src/settings/BusinessTab.test.tsx",
       "status": "implemented",
-      "notes": "V1-058 R7b-4, reworked in V1.1 part 2 (DL-118): Business shows the Property with description and Rentable Units, the business name, the business rules by group (Not used yet, a waiting change), the Invoice types, Payment Methods, the newest riel rate, App preferences and the document numbering with the next numbers."
+      "notes": "V1-058 R7b-4, reworked in V1.1 part 2 (DL-118): Business shows the Property with description and Rentable Units, the business name, the business rules by group (Not used yet, a waiting change), the Invoice types, Payment Methods, the newest riel rate, App preferences and the document numbering with the next numbers. UI v81 round 8 (owner 12/11/2026): the riel card is Exchange, with Rate now and Last rate used."
     },
     {
       "test_id": "TEST-FE-951",
@@ -54647,7 +54647,7 @@
       "test_level": "UI component",
       "test_path": "frontend/src/settings/RatesTab.test.tsx",
       "status": "implemented",
-      "notes": "V1-058 R7b-5: Rates and services lists every page of Utility Rates newest first with until, Starts later or Active and when the tenants were told; Services show the rate today, the next change and the rate history."
+      "notes": "V1-058 R7b-5: Rates and services lists every page of Utility Rates newest first with until, Starts later or Active and when the tenants were told; Services show the rate today, the next change and the rate history. UI v81 round 8 (owner 12/11/2026): the rate history folds open and, opened, comes into view."
     },
     {
       "test_id": "TEST-FE-956",
@@ -66750,6 +66750,36 @@
       "test_path": "frontend/src/home/HomeScreen.test.tsx",
       "status": "implemented",
       "notes": "UI v81 round 7 Home (owner 12/11/2026): every Home card and Tasks card holds its number beside its name in the card's head, with the note under it; only Paid this month has a bar."
+    },
+    {
+      "test_id": "TEST-FE-1933",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/approvals/ShortStayApprovals.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 round 8 (owner 12/11/2026): the sub-tabs are square and joined (the Payments filter row look), never round pills, the count a plain number; a sub-tab's panel is a stack, so the Approvals number cards, list, note and Processed today keep the normal space."
+    },
+    {
+      "test_id": "TEST-FE-1934",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/settings/SettingsPage.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 round 8 (owner 12/11/2026): on a test app, health records that are not set up show Test computer with a calm note and no Needs attention; the real install and any other note still need attention; the Settings wrapper spaces its cards and notes."
+    },
+    {
+      "test_id": "TEST-FE-1935",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/settings/BusinessTab.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 round 8 (owner 12/11/2026): the Exchange card shows the riel rate now from the Receive payment read, also before any riel payment, and says Not available when it cannot be read; the Business rules tables share their column widths."
     },
     {
       "test_id": "test_the_nssf_number_is_optional",

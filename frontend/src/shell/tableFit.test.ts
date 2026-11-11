@@ -2,7 +2,13 @@
 
 import { afterEach, describe, expect, it } from "vitest";
 
-import { installTableFit, mainTableBox, planFit, scrollKey } from "./tableFit";
+import {
+  holdsFold,
+  installTableFit,
+  mainTableBox,
+  planFit,
+  scrollKey,
+} from "./tableFit";
 
 afterEach(() => {
   document.body.innerHTML = "";
@@ -10,6 +16,12 @@ afterEach(() => {
   window.history.replaceState(null, "", "#/");
   window.sessionStorage.clear();
 });
+
+const byId = (id: string): HTMLElement => {
+  const found = document.getElementById(id);
+  if (found === null) throw new Error(`No element ${id}`);
+  return found;
+};
 
 const tick = () =>
   new Promise<void>((resolve) => {
@@ -118,5 +130,75 @@ describe("tableFit", () => {
     stop();
     expect(two?.classList.contains("ui-tscroll")).toBe(false);
     expect(document.body.classList.contains("ui-fit")).toBe(false);
+  });
+
+  it("TEST-FE-1936 (owner 12/11/2026) a table whose card holds a history that folds open is not fitted, so the page scrolls as usual and the opened history has room; a history still folded shut is not a second table; a card with two tables that show is still one scrolling area", async () => {
+    // A desktop that would fit the table: with a history in the card the page flows instead.
+    const desktop = {
+      width: 1440,
+      height: 900,
+      tableTop: 300,
+      tableHeight: 1200,
+      pageHeight: 1580,
+    };
+    expect(planFit({ ...desktop, tableWider: false })).toEqual({
+      mode: "fit",
+      maxHeight: 520,
+      short: true,
+    });
+    expect(planFit({ ...desktop, tableWider: false, folds: true })).toEqual({
+      mode: "flow",
+    });
+    expect(planFit({ ...desktop, tableWider: true, folds: true })).toEqual({
+      mode: "plain",
+    });
+
+    const rows = (count: number) =>
+      "<table><tbody>" +
+      "<tr><td>1</td></tr>".repeat(count) +
+      "</tbody></table>";
+    // Settings › Monthly services: the Services table, and the rate history folded under it.
+    document.body.innerHTML = `<main><section class="ui-card" id="card">
+      <div class="ui-tablewrap" id="services">${rows(2)}</div>
+      <details class="ui-hist"><summary>Rate history</summary>
+        <div class="ui-tablewrap" id="history">${rows(5)}</div>
+      </details>
+    </section></main>`;
+    window.history.replaceState(null, "", "#/settings/services");
+    const card = byId("card");
+    const services = byId("services");
+    const history = byId("history");
+    expect(holdsFold(services)).toBe(true);
+    expect(holdsFold(card)).toBe(true);
+    // Folded shut (a browser says the history does not show): the Services table is the main
+    // table, not the card, however many rows the history has.
+    history.checkVisibility = () => false;
+    expect(mainTableBox(document.body)?.id).toBe("services");
+    // Open: both tables show, so the card is the main box.
+    history.checkVisibility = () => true;
+    expect(mainTableBox(document.body)?.id).toBe("card");
+    const stop = installTableFit();
+    await tick();
+    // Nothing is fitted: no scrolling area, no height, no fitted page spacing.
+    expect(document.querySelector(".ui-tscroll")).toBeNull();
+    expect(card.style.maxHeight).toBe("");
+    expect(services.style.maxHeight).toBe("");
+    expect(document.body.classList.contains("ui-fit")).toBe(false);
+    stop();
+
+    // The Business rules by group: two tables that show and no history. One scrolling area.
+    document.body.innerHTML = `<main><section class="ui-card" id="rules">
+      <div class="ui-tablewrap">${rows(1)}</div>
+      <div class="ui-tablewrap" id="prices">${rows(2)}</div>
+    </section></main>`;
+    window.history.replaceState(null, "", "#/settings/business");
+    const rules = byId("rules");
+    expect(holdsFold(byId("prices"))).toBe(false);
+    expect(mainTableBox(document.body)?.id).toBe("rules");
+    const again = installTableFit();
+    await tick();
+    expect(rules.classList.contains("ui-tscroll")).toBe(true);
+    expect(document.body.classList.contains("ui-fit")).toBe(true);
+    again();
   });
 });

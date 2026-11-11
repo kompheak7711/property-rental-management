@@ -333,10 +333,15 @@ describe("Settings: Business", () => {
       "ABA PAYABA_PAYActiveEdit",
       "ChequeCHEQUETurned offEdit",
     ]);
-    // The newest confirmed rate.
-    const fx = card("Riel exchange rate");
-    expect(fx.textContent).toContain("4,135 ៛ per $1");
-    expect(fx.textContent).toContain("Entered by hand, 24/10/2026 10:00.");
+    // The newest confirmed rate (owner 12/11/2026: the card is "Exchange"). With no read of the
+    // rate now, that line says so.
+    expect(
+      screen.queryByRole("region", { name: "Riel exchange rate" }),
+    ).toBeNull();
+    expect(pairs(card("Exchange"))).toEqual([
+      "Rate now: Not availableThe app cannot read the ABA rate now.",
+      "Last rate used: 4,135 ៛ per $1Entered by hand, 24/10/2026 10:00.",
+    ]);
     expect(pairs(card("App preferences"))).toEqual([
       "Time zone: Asia/Phnom_Penh (UTC+7), from the business location (Cambodia)Due dates, expiry and reading days use Phnom Penh time.",
       "Screen language: Chosen on each phone or iPad; the browser remembers it",
@@ -349,6 +354,57 @@ describe("Settings: Business", () => {
       "Receipt | RCPyy000n | RCP260062",
     ]);
     expect(screen.queryByText("Same as this device")).toBeNull();
+  });
+
+  it("TEST-FE-1935 (owner 12/11/2026) the Exchange card shows the riel rate now from the Receive payment read, also before any riel payment; a rate that cannot be read says so; the Business rules tables share their column widths", async () => {
+    // No riel payment yet: the rate now still shows.
+    const first = apiOf();
+    const empty = await first.rates.load();
+    first.rates.load.mockResolvedValue({ ...empty, exchangeRates: [] });
+    const khrRate = vi.fn(() => Promise.resolve({ rate: 4_083 }));
+    show({ ...first, payments: { khrRate } } as never);
+    await screen.findByRole("region", { name: "Property" });
+    await waitFor(() => {
+      expect(pairs(card("Exchange"))).toEqual([
+        "Rate now: 4,083 ៛ per $1",
+        "Last rate used: No riel payment yet.",
+      ]);
+    });
+    expect(khrRate).toHaveBeenCalledWith("property-1");
+    expect(card("Exchange").textContent).toContain(
+      "ABA Sell rate plus 0.5%, rounded up to the next 1 ៛.",
+    );
+    cleanup();
+
+    // The app has no rate to give (null), or the read fails: the line says so, calmly.
+    for (const answer of [
+      () => Promise.resolve(null),
+      () => Promise.reject(new Error("down")),
+    ]) {
+      show({ ...apiOf(), payments: { khrRate: vi.fn(answer) } } as never);
+      await screen.findByRole("region", { name: "Property" });
+      await waitFor(() => {
+        expect(pairs(card("Exchange"))).toEqual([
+          "Rate now: Not availableThe app cannot read the ABA rate now.",
+          "Last rate used: 4,135 ៛ per $1Entered by hand, 24/10/2026 10:00.",
+        ]);
+      });
+      cleanup();
+    }
+
+    // Every group's table of the Business rules has the same class, which fixes the widths.
+    show();
+    await screen.findByRole("region", { name: "Property" });
+    openSub("Business rules");
+    const tables = within(card("Business rules")).getAllByRole("table");
+    expect(tables).toHaveLength(2);
+    for (const table of tables)
+      expect(table).toHaveClass("ui-table", "ui-rules");
+    // The other tables of the tab are not Business rules tables.
+    openSub("Document numbering");
+    expect(
+      within(card("Document numbering")).getByRole("table"),
+    ).not.toHaveClass("ui-rules");
   });
 
   it("TEST-FE-951 Edit changes the Property name, description and address; Edit business changes only the business name; a Payment Method is added with a new code, renamed or turned off, but one stays on", async () => {

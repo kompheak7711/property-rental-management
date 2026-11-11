@@ -78,3 +78,12 @@ Branch `ui-v81`, 07/11/2026. The words the app uses after batch 5, so every scre
 | Short stays checked in | | Guests staying now. |
 | Low stock | | Products at or below their reorder level. |
 | Attendance | Attendance needs attention | The Home card; the number is the people to check today. |
+
+## Settings (owner 12/11/2026)
+
+| Use | Do not use | Note |
+|---|---|---|
+| Exchange | Riel exchange rate | The card on Settings › Business › General. |
+| Rate now | | The riel rate the app would use at this moment (ABA Sell rate plus 0.5%, rounded up). "Not available" when the app cannot read it. |
+| Last rate used | | The newest confirmed rate, with "ABA rate" or "Entered by hand" and its time. "No riel payment yet." when there is none. |
+| Test computer | Needs attention (for health records not set up on a test app) | System health on a test app. The real install keeps "Needs attention". |

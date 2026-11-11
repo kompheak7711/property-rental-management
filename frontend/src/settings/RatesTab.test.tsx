@@ -336,6 +336,21 @@ describe("Settings: Rates and services", () => {
       "Trash Collection$3.5001/12/2026New contract",
       "Trash Collection$3.0001/01/2025—",
     ]);
+    // Owner 12/11/2026: the history is a part that folds open ("ui-hist": the page then scrolls
+    // as usual, tableFit.ts), and once opened it comes into view.
+    const fold = history.closest("details");
+    if (fold === null) throw new Error("The rate history does not fold");
+    expect(fold).toHaveClass("ui-hist");
+    expect(within(fold).getByText("Rate history")).toBeTruthy();
+    const intoView = vi.fn();
+    fold.scrollIntoView = intoView;
+    fold.open = true;
+    fireEvent(fold, new Event("toggle"));
+    expect(intoView).toHaveBeenCalledTimes(1);
+    expect(intoView).toHaveBeenCalledWith({ block: "nearest" });
+    fold.open = false;
+    fireEvent(fold, new Event("toggle"));
+    expect(intoView).toHaveBeenCalledTimes(1);
     // R7b-6d: the cleaning rates have their own card now.
     expect(within(services).queryByText(/cleaning rates come/)).toBeNull();
     // The helpers on their own.

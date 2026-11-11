@@ -159,6 +159,7 @@ function show(
     language = "en" as "en" | "km",
     propertyId = "property-1",
     mode = "settings" as "settings" | "access",
+    testApp = false,
   } = {},
 ) {
   const api = { status: vi.fn(status) };
@@ -181,6 +182,7 @@ function show(
       businessApi={businessApi}
       ratesApi={ratesApi}
       mode={mode}
+      testApp={testApp}
     />,
   );
   return api;
@@ -315,6 +317,82 @@ describe("Settings", () => {
       await screen.findByText("Your account cannot open this tab."),
     ).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Retry" })).toBeNull();
+  });
+
+  it("TEST-FE-1934 (owner 12/11/2026) on a test app, health records that are not set up are normal: System health says Test computer with a calm note and no Needs attention; the real install, and any other note, still need attention; the Settings wrapper spaces its parts", async () => {
+    const notSetUp = {
+      code: "operations_status_not_set_up",
+      message: "The health records are not set up on this computer yet.",
+      critical: false,
+    };
+    const calm =
+      "This is a test computer. Backups and health checks are set up when the app is installed on the real computer, so they show “Not yet” here. Nothing needs fixing.";
+    // The local server calls itself "production" too; the screens' own label decides.
+    show(() => Promise.resolve({ ...HEALTHY, warnings: [notSetUp] }), {
+      testApp: true,
+    });
+    openTab("health");
+    let card = await screen.findByRole("region", { name: "System health" });
+    expect(within(card).getByText("Test computer")).toBeTruthy();
+    expect(screen.getByText(calm).closest('[role="note"]')).toHaveClass(
+      "ui-notice",
+      "info",
+    );
+    expect(screen.queryByText("Needs attention")).toBeNull();
+    expect(screen.queryByText("Healthy")).toBeNull();
+    expect(
+      screen.queryByRole("region", { name: "What needs attention" }),
+    ).toBeNull();
+    expect(screen.queryByText(notSetUp.message)).toBeNull();
+    // The cards and notes of Settings sit in one wrapper that keeps the space between them.
+    expect(card.parentElement).toHaveClass("ui-settings");
+    cleanup();
+
+    // The real install: the same note needs attention, as before.
+    show(() => Promise.resolve({ ...HEALTHY, warnings: [notSetUp] }));
+    openTab("health");
+    card = await screen.findByRole("region", { name: "System health" });
+    expect(within(card).getByText("Needs attention")).toBeTruthy();
+    expect(
+      screen.getByRole("region", { name: "What needs attention" }).textContent,
+    ).toContain(notSetUp.message);
+    expect(screen.queryByText(calm)).toBeNull();
+    expect(screen.queryByText("Test computer")).toBeNull();
+    cleanup();
+
+    // A test app with another note: that note still needs attention; the calm note stays too.
+    show(
+      () =>
+        Promise.resolve({
+          ...HEALTHY,
+          warnings: [
+            notSetUp,
+            {
+              code: "backup_stale",
+              message: "The last good backup is more than a day old.",
+              critical: false,
+            },
+          ],
+        }),
+      { testApp: true },
+    );
+    openTab("health");
+    card = await screen.findByRole("region", { name: "System health" });
+    expect(within(card).getByText("Needs attention")).toBeTruthy();
+    const notes = screen.getByRole("region", { name: "What needs attention" });
+    expect(notes.textContent).toContain(
+      "The last good backup is more than a day old.",
+    );
+    expect(notes.textContent).not.toContain(notSetUp.message);
+    expect(screen.getByText(calm)).toBeTruthy();
+    cleanup();
+
+    // A healthy test app is simply Healthy.
+    show(() => Promise.resolve(HEALTHY), { testApp: true });
+    openTab("health");
+    card = await screen.findByRole("region", { name: "System health" });
+    expect(within(card).getByText("Healthy")).toBeTruthy();
+    expect(screen.queryByText(calm)).toBeNull();
   });
 
   it("TEST-FE-939 Khmer words come from the mock-up, and the server's English notes are marked as English", async () => {

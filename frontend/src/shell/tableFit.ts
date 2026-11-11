@@ -35,6 +35,12 @@ export interface FitMeasure {
   pageHeight: number;
   /** The table is wider than its box (it scrolls sideways). */
   tableWider: boolean;
+  /**
+   * The table's card holds a history that folds open (Settings › Monthly services). Such a page
+   * scrolls as usual, so the opened history has room (owner 12/11/2026: in a fitted card the
+   * history opened out of sight and the page did not scroll).
+   */
+  folds?: boolean;
 }
 
 export type FitPlan =
@@ -47,7 +53,8 @@ export function planFit(m: FitMeasure): FitPlan {
   const flowOrPlain: FitPlan = m.tableWider
     ? { mode: "plain" }
     : { mode: "flow" };
-  if (m.width < FIT_MIN_WIDTH || m.height < FIT_MIN_HEIGHT) return flowOrPlain;
+  if (m.folds === true || m.width < FIT_MIN_WIDTH || m.height < FIT_MIN_HEIGHT)
+    return flowOrPlain;
   const below = m.pageHeight - (m.tableTop + m.tableHeight);
   const maxHeight = Math.floor(m.height - m.tableTop - below);
   if (maxHeight < MIN_TABLE_HEIGHT) return flowOrPlain;
@@ -123,11 +130,18 @@ export function mainTableBox(root: ParentNode): HTMLElement | null {
     rows(box) > rows(best) ? box : best,
   );
   // UI v81 round 4 (owner 08/11/2026): a card that holds several tables (the Business rules by
-  // group) scrolls as one area, so every group stays reachable.
+  // group) scrolls as one area, so every group stays reachable. Only tables that show count: a
+  // history still folded shut is not a second table.
   const card = best.closest<HTMLElement>(".ui-card");
-  if (card !== null && card.querySelectorAll(".ui-tablewrap").length > 1)
+  if (card !== null && boxes.filter((box) => card.contains(box)).length > 1)
     return card;
   return best;
+}
+
+/** The card of this table holds a history that folds open (`details.ui-hist`). */
+export function holdsFold(box: HTMLElement): boolean {
+  const history = box.closest(".ui-card")?.querySelector("details.ui-hist");
+  return history != null;
 }
 
 /**
@@ -188,7 +202,9 @@ export function installTableFit(): () => void {
       root.classList.remove("ui-fit", "ui-short");
       return;
     }
+    const folds = holdsFold(box);
     const fitScreen =
+      !folds &&
       window.innerWidth >= FIT_MIN_WIDTH &&
       window.innerHeight >= FIT_MIN_HEIGHT;
     // Measure with the fitted spacing on, since it moves the table.
@@ -209,6 +225,7 @@ export function installTableFit(): () => void {
         tableHeight: box.offsetHeight,
         pageHeight: document.documentElement.scrollHeight,
         tableWider: box.scrollWidth > box.clientWidth + 1,
+        folds,
       });
     };
     let plan = measure();
@@ -265,6 +282,8 @@ export function installTableFit(): () => void {
   window.addEventListener("resize", queue);
   window.addEventListener("hashchange", onHashChange);
   document.addEventListener("scroll", onScroll, true);
+  // A history folding open or shut changes which tables show ("toggle" does not bubble).
+  document.addEventListener("toggle", queue, true);
   if (pending !== null) {
     restoreTimer = window.setTimeout(() => {
       pending = null;
@@ -276,6 +295,7 @@ export function installTableFit(): () => void {
     window.removeEventListener("resize", queue);
     window.removeEventListener("hashchange", onHashChange);
     document.removeEventListener("scroll", onScroll, true);
+    document.removeEventListener("toggle", queue, true);
     window.cancelAnimationFrame(queued);
     window.clearTimeout(restoreTimer);
     clear(current);

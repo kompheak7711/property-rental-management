@@ -627,3 +627,40 @@ The review app's sample data got three sample products with a reorder level (and
 | Paid on time | A Home card | Not on Home | Owner 12/11, point 5. The read stays: the Customer card on the Lease page still shows a Customer's "Paid on time" |
 
 Tests: TEST-FE-928, 930, 931, 1294, 1912 and 1925 updated; TEST-FE-1907 (Financial summary) and 1908 (what Attendance counts) updated; new TEST-FE-1931 (the fifteen cards, their counts, rights and failures) and TEST-FE-1932 (the number beside the name on every Home card). Screen check: the Home answers were recorded again (now with the bookings, products and attendance reads); 7 screens × 5 sizes pass.
+
+## Round 8 (owner 12/11/2026 04:34 and 04:36): Approvals and Settings in the real app
+
+The owner tested the Mac test app and sent two lists. This round is the screen part of them for Approvals and Settings. The Payments and Receipt names ("Paid for") follow in their own round, because they need a small read-only database step. The Invoice types and the short-stay damage approval are rule changes: they went to the main chat and are not part of this branch's work.
+
+### What changed
+
+| Owner point | Before | Now | Where |
+|---|---|---|---|
+| Approvals: "Review tab corner round style" | The sub-tabs were round pills, the chosen one a filled green pill; a line ran under them | Sub-tabs are square and joined in one box with 8px corners, the chosen one tinted with a green underline: the same look as the filter row on Payments ("All / Today / This month"). The count beside a name is a plain number. On a phone the tabs are separate square buttons in one scrolling row. This is the shared sub-tab row, so Settings › Business, Utility rates, Monthly services and Users and access change the same way | `shell/screens.css` (`.ui-subtabs[role="tablist"]`) |
+| Approvals › Financial: "check spacing of cards" | The number cards, the list, the note and "Processed today" touched each other (the tab's panel had no space rule) | A sub-tab's panel is a stack: its parts keep the normal space. On a page the panel uses the page's own space (22px), so Approvals looks the same with and without tabs; the tabs no longer add a second gap under themselves | `shell/ui.tsx` (`SubTabPanel`), `shell/screens.css` |
+| Settings: cards and notes touching (seen while fixing the above) | System health's two cards and note, Unit setup's filter row and card, and the "earlier forms" note under every tab touched the part above | Settings keeps 16px between its cards, notes and filter rows | `settings/SettingsPage.tsx` (`ui-settings`, `ui-earlier`), `shell/screens.css` |
+| Settings › General 1: rename "Riel exchange rate" to "Exchange"; show the rate with no riel payment yet | Card "Riel exchange rate" showed only the last rate used, or "No riel payment yet." | Card "Exchange" (Khmer អត្រាប្តូរប្រាក់) with two lines. "Rate now": the app's rate at this moment, from the read the Receive payment form already uses (a preview of one dollar; nothing is saved; needs `payments.record`). "Last rate used": the newest confirmed rate with its source and time, or "No riel payment yet." | `settings/BusinessTab.tsx`, `settings/text.ts`, `App.tsx` |
+| Settings › Business rules 2: "Table columns are misaligned" | One table per group, each with its own column widths | Every group's table has the same widths (Rule 44%, Value 25%, Effective from 20%, Edit 11%) from 641px up; a long rule name or value wraps. On a phone each table keeps its own widths so it fits the screen | `settings/BusinessTab.tsx` (`ui-rules`), `shell/screens.css` |
+| Settings › Monthly services 4: Rate history does not open; scrolling works only under the table | On a desktop the Services card was a fixed-height scrolling area (the round 3 "only the table scrolls" rule). "Rate history" sat at its bottom edge and opened out of sight, and the wheel scrolled the page only outside the card | A card that holds a history that folds open (`details.ui-hist`) is not fitted: that page scrolls as usual. Opened, the history scrolls into view under the top bar. A history still folded shut no longer counts as a second table | `shell/tableFit.ts`, `settings/RatesTab.tsx`, `shell/screens.css` |
+| Settings › System health 5: "The health records are not set up on this computer yet. Needs attention." | Shown as a warning on every computer | On a test app (the screens' own label, the "DEVELOPMENT" mark in the menu) this note is normal: the chip says "Test computer" and a calm note says backups and health checks are set up by the real install. Any other note still says "Needs attention". On the real install nothing changes | `settings/SettingsPage.tsx`, `settings/text.ts`, `App.tsx` |
+
+No database or server change in this round.
+
+### The rate now: what the app can show today
+
+The app has no link to ABA's published rate yet. The server's rate source is a placeholder that always answers "not available" (`UnavailableExchangeRateProvider`; nothing passes a real source to the app). So "Rate now" reads "Not available · The app cannot read the ABA rate now." on every computer until a source is connected, and the Receive payment form says "Today's riel rate is not available yet" for the same reason. The card shows the rate by itself as soon as the server has one. Connecting a source decides the rate used when riel is received, so it is the owner's decision and not a display change (open question 14 in 01).
+
+### Review data
+
+Six sample Monthly services with two later rate changes for four of them were added to the review app through the app's own server calls, so the Services table and its Rate history have rows.
+
+### Every difference from design v81 left, with its reason
+
+| Part | Design v81 | App | Why |
+|---|---|---|---|
+| Sub-tabs | Round pills | Square, joined | Owner 12/11: one tab look; the same as the Payments filter row |
+| Riel card on General | "Riel exchange rate", last rate only | "Exchange", rate now and last rate used | Owner 12/11, Settings point 1 |
+| Monthly services on a desktop | The table scrolls in its own area | The page scrolls | Owner 12/11, Settings point 4: the opened history needs room |
+| System health on a test app | "Needs attention" | "Test computer" with a calm note | Owner 12/11, Settings point 5 |
+
+Tests: TEST-FE-950 updated (the card's name and lines) and TEST-FE-955 extended (the history folds and comes into view); new TEST-FE-1933 (square tabs, the panel is a stack), 1934 (System health on a test app, Settings spacing), 1935 (Exchange card, Business rules column widths) and 1936 (a card with a history is not fitted).

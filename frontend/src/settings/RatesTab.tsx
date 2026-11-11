@@ -766,7 +766,19 @@ export function RatesTab({
                 </div>
               )}
               {history.length > 0 && (
-                <details className="ui-hist">
+                <details
+                  className="ui-hist"
+                  onToggle={(event) => {
+                    // Owner 12/11/2026: the opened history comes into view, so a click on it
+                    // near the bottom of the screen shows its rows at once.
+                    const opened = event.currentTarget;
+                    if (
+                      opened.open &&
+                      typeof opened.scrollIntoView === "function"
+                    )
+                      opened.scrollIntoView({ block: "nearest" });
+                  }}
+                >
                   <summary>{sst(language, "sv_hist")}</summary>
                   <div className="ui-tablewrap">
                     <table className="ui-table">

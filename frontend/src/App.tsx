@@ -753,8 +753,17 @@ export function App({
       dueDays: dueDaysApi,
       units: unitApi ?? defaultUnitApi,
       rates: effectiveConfigApi,
+      // Owner 12/11/2026: the Exchange card shows the riel rate now.
+      payments: paymentsApi,
     }),
-    [propertyApi, businessSettingsApi, dueDaysApi, unitApi, effectiveConfigApi],
+    [
+      propertyApi,
+      businessSettingsApi,
+      dueDaysApi,
+      unitApi,
+      effectiveConfigApi,
+      paymentsApi,
+    ],
   );
   const client = useMemo<AuthenticationApi>(
     () => api ?? { ...authenticationApi, signIn: authenticate },
@@ -3246,6 +3255,7 @@ export function App({
           rolesApi={rolesApi}
           businessApi={businessApi}
           ratesApi={effectiveConfigApi}
+          testApp={environment !== "production"}
         />
       </div>
     </AppShell>

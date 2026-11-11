@@ -35,6 +35,7 @@ import {
   PropertySavedReadFailedError,
   type PropertySource,
 } from "../propertyClient";
+import type { PaymentsApi } from "../payments/paymentsClient";
 import { DateInput, parseDay } from "../shell/DateInput";
 import { dayText, momentText } from "../shell/format";
 import { Icon } from "../shell/icons";
@@ -62,8 +63,13 @@ import { type SettingsTextKey, hasSettingsText, sst } from "./text";
 export interface BusinessApi {
   property: PropertyConfigurationApi;
   units: Pick<UnitApi, "list">;
-  /** The riel rate comes from the confirmed exchange rates. */
+  /** The last riel rate used comes from the confirmed exchange rates. */
   rates: Pick<EffectiveConfigurationApi, "load">;
+  /**
+   * Owner 12/11/2026: the Exchange card also shows the rate now, with no riel payment made yet.
+   * It is the read the Receive payment form uses (a preview of one dollar; nothing is saved).
+   */
+  payments?: Pick<PaymentsApi, "khrRate">;
   /** V1.1 part 2: business rules, document numbering and Invoice types. */
   settings: BusinessSettingsApi;
   /** The days after issue for other Invoices stay the V1 Property setting (DL-118). */
@@ -239,6 +245,27 @@ export function BusinessTab({
   );
   const shownProperty = useRef(propertyId);
   const sequence = useRef(0);
+  // The riel rate now: undefined while it is read, null when the app has none to give.
+  const [rateNow, setRateNow] = useState<number | null | undefined>(undefined);
+  const readRate = api.payments?.khrRate;
+  useEffect(() => {
+    setRateNow(undefined);
+    if (!active || propertyId === "") return;
+    if (readRate === undefined) {
+      setRateNow(null);
+      return;
+    }
+    let current = true;
+    void readRate(propertyId)
+      .then((found) => found?.rate ?? null)
+      .catch(() => null)
+      .then((found) => {
+        if (current) setRateNow(found);
+      });
+    return () => {
+      current = false;
+    };
+  }, [active, propertyId, readRate]);
 
   const load = useCallback((): Promise<void> => {
     if (propertyId === "") return Promise.resolve();
@@ -503,32 +530,58 @@ export function BusinessTab({
           )}
           {tab === "general" && (
             <Card id="biz-fx" title={sst(language, "se_fx")}>
-              {rate === undefined ? (
-                <p className="ui-muted">{sst(language, "fx_cannot")}</p>
-              ) : rate === null ? (
-                <p className="ui-muted">{sst(language, "fx_none")}</p>
-              ) : (
-                <>
-                  <p className="ui-num">
-                    <b>
-                      {sst(
-                        language,
-                        "fx_last",
-                        rielText(rate.system_rate_khr_per_usd),
-                      )}
-                    </b>
-                  </p>
-                  <p className="ui-small ui-muted">
-                    {sst(
-                      language,
-                      rate.rate_source === "ABA_AUTOMATIC"
-                        ? "fx_auto"
-                        : "fx_hand_v",
-                      momentText(rate.applicable_at),
-                    )}
-                  </p>
-                </>
-              )}
+              {/* Owner 12/11/2026: the rate now always has its line, and the last rate used
+                  keeps its own, so the card is never empty before the first riel payment. */}
+              <Rows
+                rows={[
+                  [
+                    sst(language, "fx_now"),
+                    rateNow === undefined ? (
+                      <span className="ui-muted">—</span>
+                    ) : rateNow === null ? (
+                      <>
+                        <span>{sst(language, "fx_now_none")}</span>
+                        <span className="ui-sub2">
+                          {sst(language, "fx_now_none_n")}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="ui-num">
+                        {sst(language, "fx_last", rielText(rateNow))}
+                      </span>
+                    ),
+                  ],
+                  [
+                    sst(language, "fx_used"),
+                    rate === undefined ? (
+                      <span className="ui-muted">
+                        {sst(language, "fx_cannot")}
+                      </span>
+                    ) : rate === null ? (
+                      <span>{sst(language, "fx_none")}</span>
+                    ) : (
+                      <>
+                        <span className="ui-num">
+                          {sst(
+                            language,
+                            "fx_last",
+                            rielText(rate.system_rate_khr_per_usd),
+                          )}
+                        </span>
+                        <span className="ui-sub2">
+                          {sst(
+                            language,
+                            rate.rate_source === "ABA_AUTOMATIC"
+                              ? "fx_auto"
+                              : "fx_hand_v",
+                            momentText(rate.applicable_at),
+                          )}
+                        </span>
+                      </>
+                    ),
+                  ],
+                ]}
+              />
               <p className="ui-small ui-muted">{sst(language, "fx_note")}</p>
             </Card>
           )}
@@ -936,7 +989,8 @@ function RulesTable({
   const heading = `br-area-${area}`;
   return (
     <div className="ui-tablewrap">
-      <table aria-labelledby={heading} className="ui-table fit">
+      {/* "ui-rules": every group's table has the same column widths (owner 12/11/2026). */}
+      <table aria-labelledby={heading} className="ui-table fit ui-rules">
         <caption id={heading}>
           {sst(language, `br_area_${area}` as SettingsTextKey)}
         </caption>

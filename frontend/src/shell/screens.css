@@ -2429,6 +2429,12 @@ a.ui-kpi.ui-home-kpi {
   border-top: 1px solid var(--border);
 }
 
+/* Opened, the history scrolls into view under the top bar, not behind it. */
+.ui-hist {
+  scroll-margin-top: calc(var(--ui-top, 0px) + 12px);
+  scroll-margin-bottom: 16px;
+}
+
 .ui-hist summary {
   display: flex;
   align-items: center;
@@ -3068,7 +3074,9 @@ a.ui-kpi.ui-home-kpi {
   font-weight: 600;
 }
 
-/* Sub-tabs: pills on a wide screen, one scrolling row on a phone. */
+/* Sub-tabs (owner 12/11/2026: no round tabs): square and joined, the same look as the filter
+   row on Payments. A row that does not fit wraps inside its box; on a phone the tabs are
+   separate square buttons in one scrolling row. */
 .ui-subtabs {
   display: flex;
   flex-wrap: wrap;
@@ -3076,16 +3084,49 @@ a.ui-kpi.ui-home-kpi {
   margin: 0 0 16px;
 }
 
+.ui-subtabs[role="tablist"] {
+  gap: 0;
+  width: fit-content;
+  max-width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--btn-edge);
+  border-radius: 8px;
+  background: var(--btn-bg);
+  box-shadow: var(--btn-shadow);
+}
+
+/* Directly on a page the page's own space follows the tabs, and the panel's parts are spaced as
+   the page's parts are; inside a box the tabs keep their own space. */
+.shell-page > .ui-subtabs[role="tablist"] {
+  margin-bottom: 0;
+}
+
+.shell-page > .ui-stack[role="tabpanel"] {
+  gap: inherit;
+}
+
+/* Settings (owner 12/11/2026): its parts sit in one wrapper, so the page's space did not reach
+   them and cards, notes and filter rows touched. They keep the normal space between them. */
+.ui-settings > :is(.ui-card, .ui-notice, .ui-seg) + :is(.ui-card, .ui-notice),
+.ui-settings > .ui-earlier {
+  margin-top: 16px;
+}
+
 .ui-subtabs [role="tab"] {
   display: inline-flex;
+  flex: 0 0 auto;
   gap: 8px;
   align-items: center;
   min-height: 44px;
-  padding: 8px 16px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--surface);
-  color: var(--text);
+  padding: 0 16px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  /* The lines between the tabs, also between two rows when the tabs wrap. */
+  box-shadow:
+    1px 0 0 var(--btn-edge),
+    0 1px 0 var(--btn-edge);
+  color: var(--btn-text);
   font: inherit;
   font-weight: 600;
   white-space: nowrap;
@@ -3093,29 +3134,31 @@ a.ui-kpi.ui-home-kpi {
 }
 
 .ui-subtabs [role="tab"]:hover {
-  background: var(--hover);
+  background: var(--btn-hover);
+}
+
+.ui-subtabs [role="tab"]:focus-visible {
+  outline-offset: -3px;
 }
 
 .ui-subtabs [role="tab"][aria-selected="true"] {
-  border-color: var(--primary);
-  background: var(--primary);
-  color: var(--on-primary);
+  background: var(--selected);
+  box-shadow:
+    inset 0 -3px 0 var(--primary),
+    1px 0 0 var(--btn-edge),
+    0 1px 0 var(--btn-edge);
+  color: var(--heading);
+  font-weight: 700;
 }
 
+/* The count beside a tab's name: a plain number, as on the Payments filter row. */
 .ui-subtab-count {
-  min-width: 24px;
-  padding: 0 8px;
-  border-radius: 999px;
-  background: var(--sunken);
-  color: var(--text);
-  font-size: 0.8125rem;
-  line-height: 24px;
-  text-align: center;
+  color: var(--text-2);
+  font-weight: 400;
 }
 
 .ui-subtabs [aria-selected="true"] .ui-subtab-count {
-  background: var(--surface);
-  color: var(--text);
+  color: inherit;
 }
 
 @media (max-width: 640px) {
@@ -3132,8 +3175,28 @@ a.ui-kpi.ui-home-kpi {
     display: none;
   }
 
+  .ui-subtabs[role="tablist"] {
+    gap: 6px;
+    width: auto;
+    max-width: none;
+    padding: 2px 16px;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+
   .ui-subtabs [role="tab"] {
-    flex: 0 0 auto;
+    border: 1px solid var(--btn-edge);
+    border-radius: 8px;
+    background: var(--btn-bg);
+    box-shadow: none;
+  }
+
+  .ui-subtabs [role="tab"][aria-selected="true"] {
+    border-color: var(--primary);
+    background: var(--selected);
+    box-shadow: inset 0 0 0 1px var(--primary);
   }
 }
 
@@ -3331,6 +3394,35 @@ table.ui-numbering .ui-btn.link {
 
 table.ui-numbering td.ui-num {
   white-space: nowrap;
+}
+
+/* Owner 12/11/2026: the Business rules tables, one per group, share their column widths, so
+   Value, Effective from and Edit line up down the card. A long rule name or value wraps. On a
+   phone each table keeps its own widths, so it still fits the screen. */
+@media (min-width: 641px) {
+  table.ui-rules {
+    table-layout: fixed;
+  }
+
+  table.ui-rules th:nth-child(1) {
+    width: 44%;
+  }
+
+  table.ui-rules th:nth-child(2) {
+    width: 25%;
+  }
+
+  table.ui-rules th:nth-child(3) {
+    width: 20%;
+  }
+
+  table.ui-rules th:nth-child(4) {
+    width: 11%;
+  }
+
+  table.ui-table.ui-rules td:nth-child(-n + 2) {
+    white-space: normal;
+  }
 }
 
 /* UI v81 round 2: Property › Inspections, the two places of today's inspection work. */

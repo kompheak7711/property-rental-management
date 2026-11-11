@@ -425,7 +425,10 @@ export function SubTabs({
   );
 }
 
-/** UI v81 (B2): the panel that belongs to a sub-tab. */
+/**
+ * UI v81 (B2): the panel that belongs to a sub-tab. Its parts keep the normal space between them
+ * (owner 12/11/2026: the cards on Approvals touched each other).
+ */
 export function SubTabPanel({
   id,
   idPrefix = "subtab",
@@ -438,6 +441,7 @@ export function SubTabPanel({
   return (
     <div
       aria-labelledby={`${idPrefix}-${id}`}
+      className="ui-stack"
       id={`${idPrefix}-panel-${id}`}
       role="tabpanel"
       tabIndex={0}

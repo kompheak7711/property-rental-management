@@ -112,6 +112,8 @@ export interface SettingsPageProps {
   earlier: Partial<Record<SettingsTab, ReactNode>>;
   /** UI v81: "access" draws the Users and access page instead of Settings. */
   mode?: "settings" | "access";
+  /** These screens are a test app (not the real install): System health says so calmly. */
+  testApp?: boolean;
 }
 
 function Earlier({
@@ -139,6 +141,9 @@ function Earlier({
   );
 }
 
+/** The server's note that this computer has no health records (operations_status_api.py). */
+const NOT_SET_UP = "operations_status_not_set_up";
+
 /** "Not yet", or the time of the last success, or when it last failed. */
 function recordText(language: Language, record: HealthRecord | null): string {
   if (record === null) return sst(language, "never");
@@ -159,10 +164,12 @@ function HealthTab({
   language,
   active,
   api,
+  testApp,
 }: {
   language: Language;
   active: boolean;
   api: HealthApi;
+  testApp: boolean;
 }) {
   const [status, setStatus] = useState<HealthStatus | null>(null);
   const [failure, setFailure] = useState<"failed" | "not_allowed" | null>(null);
@@ -213,8 +220,17 @@ function HealthTab({
     );
   }
 
-  const healthy = status.database === "ok" && status.warnings.length === 0;
-  const critical = status.warnings.some((warning) => warning.critical);
+  // Owner 12/11/2026: on a test computer the health records are not set up, and that is normal:
+  // the real install sets them up. There the page says so calmly instead of "Needs attention".
+  // `testApp` is the screens' own label (the "DEVELOPMENT" mark in the menu): the local server
+  // always calls itself "production". On the real computer the same note still needs attention.
+  const testComputer =
+    testApp && status.warnings.some((warning) => warning.code === NOT_SET_UP);
+  const warnings = testComputer
+    ? status.warnings.filter((warning) => warning.code !== NOT_SET_UP)
+    : status.warnings;
+  const healthy = status.database === "ok" && warnings.length === 0;
+  const critical = warnings.some((warning) => warning.critical);
   const time = (value: string | null) =>
     value === null ? sst(language, "never") : momentText(value);
   const rows: [SettingsTextKey, string][] = [
@@ -273,7 +289,11 @@ function HealthTab({
       <section aria-labelledby="settings-health" className="ui-card">
         <header className="ui-chead">
           <h2 id="settings-health">{sst(language, "se_health")}</h2>
-          {healthy ? (
+          {healthy && testComputer ? (
+            <Chip icon="info" tone="info">
+              {sst(language, "health_test")}
+            </Chip>
+          ) : healthy ? (
             <Chip icon="check" tone="ok">
               {sst(language, "se_ok")}
             </Chip>
@@ -295,14 +315,20 @@ function HealthTab({
           {sst(language, "checked_at", momentText(status.generated_at))}
         </p>
       </section>
-      {status.warnings.length > 0 && (
+      {testComputer && (
+        <div className="ui-notice info" role="note">
+          <Icon name="info" />
+          <p>{sst(language, "health_test_n")}</p>
+        </div>
+      )}
+      {warnings.length > 0 && (
         <section aria-labelledby="settings-health-warn" className="ui-card">
           <h2 id="settings-health-warn">{sst(language, "warn_h")}</h2>
           {language === "km" && (
             <p className="ui-small ui-muted">{sst(language, "warn_lang")}</p>
           )}
           <ul className="ui-apps">
-            {status.warnings.map((warning) => (
+            {warnings.map((warning) => (
               <li key={warning.code}>
                 <span lang="en">{warning.message}</span>
                 <Chip icon="alert" tone={warning.critical ? "err" : "warn"}>
@@ -337,6 +363,7 @@ export function SettingsPage({
   reauthenticate,
   earlier,
   mode = "settings",
+  testApp = false,
 }: SettingsPageProps) {
   const detail = useHashDetail(mode === "access" ? "access" : "settings");
   // UI v81: Users and sign-in moved to its own menu item; an old address goes there.
@@ -383,7 +410,9 @@ export function SettingsPage({
           </Earlier>
         </div>
       )}
-      <div hidden={mode === "access"}>
+      {/* One wrapper, so the earlier forms stay mounted; "ui-settings" keeps the normal space
+        between its cards and notes (owner 12/11/2026). */}
+      <div className="ui-settings" hidden={mode === "access"}>
         <PageHead>
           <p>{sst(language, "se_sub")}</p>
         </PageHead>
@@ -408,7 +437,12 @@ export function SettingsPage({
           </div>
         )}
         {tab === "health" && (
-          <HealthTab active={active} api={healthApi} language={language} />
+          <HealthTab
+            active={active}
+            api={healthApi}
+            language={language}
+            testApp={testApp}
+          />
         )}
         {tab !== undefined && tab !== "health" && (
           <p className="ui-small ui-muted">{sst(language, "set_who")}</p>
@@ -449,7 +483,11 @@ export function SettingsPage({
         {TABS.map(
           (item) =>
             earlier[item.tab] !== undefined && (
-              <div hidden={item.tab !== tab} key={item.tab}>
+              <div
+                className="ui-earlier"
+                hidden={item.tab !== tab}
+                key={item.tab}
+              >
                 <Earlier
                   language={language}
                   note={

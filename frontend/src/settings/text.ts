@@ -75,6 +75,12 @@ const TEXT = {
   se_health: ["System health", "សុខភាពប្រព័ន្ធ"],
   se_ok: ["Healthy", "ល្អ"],
   se_warn: ["Needs attention", "ត្រូវការការយកចិត្តទុកដាក់"],
+  // Owner 12/11/2026: a test computer has no health records, and that is normal.
+  health_test: ["Test computer", "កុំព្យូទ័រសាកល្បង"],
+  health_test_n: [
+    "This is a test computer. Backups and health checks are set up when the app is installed on the real computer, so they show “Not yet” here. Nothing needs fixing.",
+    "នេះជាកុំព្យូទ័រសាកល្បង។ ការបម្រុងទុក និងការពិនិត្យសុខភាពត្រូវបានរៀបចំនៅពេលដំឡើងកម្មវិធីលើកុំព្យូទ័រពិត ដូច្នេះនៅទីនេះវាបង្ហាញ «មិនទាន់»។ គ្មានអ្វីត្រូវជួសជុលទេ។",
+  ],
   se_version: ["App version", "កំណែកម្មវិធី"],
   se_db: ["Database", "មូលដ្ឋានទិន្នន័យ"],
   se_migration: ["Migration", "ការធ្វើចំណាកស្រុក"],
@@ -583,7 +589,15 @@ const TEXT = {
     "ត្រូវបើកយ៉ាងហោចណាស់មួយវិធី។",
   ],
   sv_saved: ["{0} saved.", "បានរក្សា {0}។"],
-  se_fx: ["Riel exchange rate", "អត្រាប្តូរប្រាក់រៀល"],
+  // Owner 12/11/2026: the card is "Exchange" and always shows the rate now.
+  se_fx: ["Exchange", "អត្រាប្តូរប្រាក់"],
+  fx_now: ["Rate now", "អត្រាឥឡូវនេះ"],
+  fx_now_none: ["Not available", "មិនទាន់មាន"],
+  fx_now_none_n: [
+    "The app cannot read the ABA rate now.",
+    "កម្មវិធីមិនអាចអានអត្រា ABA បានទេឥឡូវនេះ។",
+  ],
+  fx_used: ["Last rate used", "អត្រាដែលបានប្រើចុងក្រោយ"],
   // new
   fx_last: ["{0} ៛ per $1", "{0} ៛ ក្នុង $1"],
   // new
