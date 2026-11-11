@@ -231,23 +231,23 @@ const TEXT = {
     "គ្មានការបង់ប្រាក់ក្នុងរយៈពេលនេះទេ។",
   ],
   pc_addup: [
-    "The seven category cards ({0}) and {1} not matched yet add up to {2}.",
-    "ប័ណ្ណប្រភេទទាំងប្រាំពីរ ({0}) និង {1} ដែលមិនទាន់ផ្គូផ្គង ស្មើនឹង {2}។",
+    "The category cards ({0}) and {1} not matched yet add up to {2}.",
+    "ប័ណ្ណប្រភេទទាំងអស់ ({0}) និង {1} ដែលមិនទាន់ផ្គូផ្គង ស្មើនឹង {2}។",
   ],
   pc_addup0: [
-    "The seven category cards add up to {0}.",
-    "ប័ណ្ណប្រភេទទាំងប្រាំពីរ ស្មើនឹង {0}។",
+    "The category cards add up to {0}.",
+    "ប័ណ្ណប្រភេទទាំងអស់ ស្មើនឹង {0}។",
   ],
-  // new: money refunded straight from a payment is in none of the seven cards (decided by
+  // new: money refunded straight from a payment is in none of the category cards (decided by
   // Claude, 25/10/2026).
   pc_addup_r: [
-    "The seven category cards ({0}), {1} refunded and {2} not matched yet add up to {3}.",
-    "ប័ណ្ណប្រភេទទាំងប្រាំពីរ ({0}) {1} ដែលបានសងវិញ និង {2} ដែលមិនទាន់ផ្គូផ្គង ស្មើនឹង {3}។",
+    "The category cards ({0}), {1} refunded and {2} not matched yet add up to {3}.",
+    "ប័ណ្ណប្រភេទទាំងអស់ ({0}) {1} ដែលបានសងវិញ និង {2} ដែលមិនទាន់ផ្គូផ្គង ស្មើនឹង {3}។",
   ],
   // new: shown when the cards, refunds and money left do not add up to Total received.
   pc_addup_bad: [
-    "The seven category cards ({0}), {1} refunded and {2} not matched yet add up to {3}, not {4}. Tell the Owner.",
-    "ប័ណ្ណប្រភេទទាំងប្រាំពីរ ({0}) {1} ដែលបានសងវិញ និង {2} ដែលមិនទាន់ផ្គូផ្គង ស្មើនឹង {3} មិនមែន {4} ទេ។ សូមប្រាប់ម្ចាស់។",
+    "The category cards ({0}), {1} refunded and {2} not matched yet add up to {3}, not {4}. Tell the Owner.",
+    "ប័ណ្ណប្រភេទទាំងអស់ ({0}) {1} ដែលបានសងវិញ និង {2} ដែលមិនទាន់ផ្គូផ្គង ស្មើនឹង {3} មិនមែន {4} ទេ។ សូមប្រាប់ម្ចាស់។",
   ],
   pc_rev_note: ["{0} reversed, not counted", "{0} បានត្រឡប់វិញ មិនរាប់ទេ"],
   pc_none_left: [
@@ -295,11 +295,25 @@ const TEXT = {
   ],
   c_DEPOSIT: ["Deposits", "ប្រាក់កក់"],
   c_DEPOSIT_s: ["Held, not income", "រក្សាទុក មិនមែនចំណូល"],
-  c_MOVEOUT: ["Move-out charges", "ថ្លៃពេលចាកចេញ"],
-  // new: other one-time charges count here too (decided by Claude, 25/10/2026).
-  c_MOVEOUT_s: [
-    "Cleaning, damage and other one-time charges",
-    "ការសម្អាត ការខូចខាត និងថ្លៃមួយដងផ្សេងទៀត",
+  // UI v81 round 9 (owner 12/11/2026): "Move-out charges" is divided by the type of the Invoice
+  // (DL-221), with the type's own name, so the list and the Receipt page say the same words.
+  // The notes are new Khmer and need the native check.
+  c_SHORT_STAY: ["Short stay", "ការស្នាក់នៅខ្លី"],
+  c_SHORT_STAY_s: [
+    "Daily and weekly guests",
+    "ភ្ញៀវប្រចាំថ្ងៃ និងប្រចាំសប្ដាហ៍",
+  ],
+  c_PRODUCTS: ["Products", "ផលិតផល"],
+  c_PRODUCTS_s: ["Sold with a Quotation", "លក់តាមសម្រង់តម្លៃ"],
+  c_DAMAGE: ["Damage", "ការខូចខាត"],
+  c_DAMAGE_s: [
+    "Move-out and short-stay damage",
+    "ការខូចខាតពេលចាកចេញ និងស្នាក់នៅខ្លី",
+  ],
+  c_OTHER: ["Other charges", "ថ្លៃផ្សេងៗ"],
+  c_OTHER_s: [
+    "Cleaning and other one-time charges",
+    "ការសម្អាត និងថ្លៃមួយដងផ្សេងទៀត",
   ],
   c_CREDIT: ["Customer Credit", "ឥណទានអតិថិជន"],
   c_CREDIT_s: ["Overpayments kept as Credit", "ប្រាក់បង់លើស រក្សាទុកជាឥណទាន"],

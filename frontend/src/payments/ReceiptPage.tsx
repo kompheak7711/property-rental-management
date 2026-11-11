@@ -2,6 +2,10 @@
 // column, what the money paid with links to the Invoices, the reprints, Print Receipt, and
 // Reprint, which records why a copy was made before it prints a copy marked REPRINT (one Receipt
 // per payment; it never changes).
+//
+// UI v81 round 9 (owner 12/11/2026): under an Invoice the card lists the parts the Payments list
+// names ("Rent" and "Services" under a Rent Invoice), so the list and this page say the same
+// words. The printed Receipt does not change.
 
 import {
   type FormEvent,
@@ -417,6 +421,18 @@ export function ReceiptPage({
                         )}
                       </span>
                       <b className="ui-num">{usdFromCents(line.amount)}</b>
+                      {line.parts !== undefined && line.parts.length > 0 && (
+                        <ul className="ui-app-parts">
+                          {line.parts.map((part) => (
+                            <li key={part.kind}>
+                              <span>{pyt(language, `c_${part.kind}`)}</span>
+                              <span className="ui-num">
+                                {usdFromCents(part.amount)}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </li>
                   );
                 })}

@@ -17,7 +17,7 @@ How to read this list:
 | Operations | Payments | – | payments.read, payments.record, receipts.read, credits.read or refunds.read |
 | Operations | Invoices | Invoices, Quotations | invoices.read; quotations.read |
 | Operations | Utilities | (own tabs inside the page) | utility.read |
-| Operations | Approvals | – (v81 adds tabs, incl. Short-stay approvals) | financial.approve |
+| Operations | Approvals | – (one view; the Short-stay approvals tab of round 4 went with DL-222) | financial.approve |
 | Leasing | Bookings | Reservations, Viewing requests | reservations.read; visit_requests.read |
 | Leasing | Short stays | (own tabs inside the page, underlined in v81) | short_stays.read |
 | Leasing | Leases | Leases, Notices, Move-outs | leases.read; rent_nonpayment.read or leases.warn; deposits.read, final_settlements.prepare or leases.move_out |
@@ -41,11 +41,11 @@ How to read this list:
 |---|---|---|---|---|---|
 | Home | `#/home` | – | – | none; adds the Financial summary box (was Owner money) and the Short stays, Low stock and Attendance cards (round 7) | 3 |
 | Top-bar search | (all pages) | opens the record found | – | – | 3 |
-| Payments | `#/payments` | `receive`, `receive:<invoice>`, `receipt:<id>` | Payments | none | 4 |
+| Payments | `#/payments` | `receive`, `receive:<invoice>`, `receipt:<id>` | Payments | none; cards by Invoice type and parts on the Receipt page (round 9) | 4 |
 | Invoices | `#/invoices` | `inv:<id>`, `new`, edit | Invoices | none (record on one page) | 4 |
 | Quotations | `#/quotations` | `qt:<id>`, `new`, `new:<from>` | Quotations | none | 4 |
 | Utilities | `#/utilities` | `meters`, `meter:<id>` | Utilities › Meters | page tabs stay | 4 |
-| Approvals | `#/approvals` | – | – | tabs by kind incl. Short-stay approvals | 4 |
+| Approvals | `#/approvals` | – | – | one view (design tabs by kind not used: DL-222 needs no short-stay approval) | 4 |
 | Reservations | `#/reservations` | `<id>`, `new:<unit>` | Bookings | none | 4 |
 | Viewing requests | `#/visitreqs` | – | – | none | 4 |
 | Short stays | `#/shortstays` | `st:<id>`, `new`, week report | Short stays | tabs underlined; early check-out warning | 4 |

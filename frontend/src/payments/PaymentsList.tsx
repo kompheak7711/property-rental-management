@@ -1,7 +1,11 @@
-// V1-058 R5c-3: the Payments list (DESIGN.md "Summary cards (Payments)"): the period switch, eight
-// cards that filter the list (Total received and the seven kinds of what the money paid), the
+// V1-058 R5c-3: the Payments list (DESIGN.md "Summary cards (Payments)"): the period switch, the
+// cards that filter the list (Total received and the kinds of what the money paid), the
 // add-up line, and the list of payments with their Receipt, Customer, amount, what they paid
 // and whether all the money is used. The server splits each payment, so the cards add up.
+//
+// UI v81 round 9 (owner 12/11/2026): the list said "Move-out charges" for a Receipt whose page
+// said "Short stay". The one-time charges are now split by the type of the Invoice (DL-221):
+// Short stay, Products, Damage, Other charges, the names the Receipt page uses.
 
 import {
   type FormEvent,
@@ -36,7 +40,10 @@ const KIND_LOOK: Record<PayKind, [ShellIcon, Tone | "brand"]> = {
   SVC: ["list", "brand"],
   LATE: ["clock", "warn"],
   DEPOSIT: ["lease", "info"],
-  MOVEOUT: ["moveout", "brand"],
+  SHORT_STAY: ["calendar", "brand"],
+  PRODUCTS: ["box", "brand"],
+  DAMAGE: ["wrench", "brand"],
+  OTHER: ["invoice", "brand"],
   CREDIT: ["customers", "brand"],
 };
 
@@ -294,7 +301,7 @@ export function PaymentsList({
       </>
     );
 
-  const seven = PAY_KINDS.reduce(
+  const kindsTotal = PAY_KINDS.reduce(
     (total, kind) => total + summary.kinds[kind].cents,
     0,
   );
@@ -306,23 +313,24 @@ export function PaymentsList({
   const anyLeft = rows.some((row) => row.left > 0);
   const reversed = listed.filter((row) => row.status === "REVERSED").length;
   // The app checks the sum itself, so a kind of money the cards miss shows as a problem.
-  const addsUp = seven + summary.refunded + summary.left === summary.received;
+  const addsUp =
+    kindsTotal + summary.refunded + summary.left === summary.received;
   const addUp = [
     !addsUp
       ? pyt(
           language,
           "pc_addup_bad",
-          usdFromCents(seven),
+          usdFromCents(kindsTotal),
           usdFromCents(summary.refunded),
           usdFromCents(summary.left),
-          usdFromCents(seven + summary.refunded + summary.left),
+          usdFromCents(kindsTotal + summary.refunded + summary.left),
           usdFromCents(summary.received),
         )
       : summary.refunded > 0
         ? pyt(
             language,
             "pc_addup_r",
-            usdFromCents(seven),
+            usdFromCents(kindsTotal),
             usdFromCents(summary.refunded),
             usdFromCents(summary.left),
             usdFromCents(summary.received),
@@ -331,7 +339,7 @@ export function PaymentsList({
           ? pyt(
               language,
               "pc_addup",
-              usdFromCents(seven),
+              usdFromCents(kindsTotal),
               usdFromCents(summary.left),
               usdFromCents(summary.received),
             )

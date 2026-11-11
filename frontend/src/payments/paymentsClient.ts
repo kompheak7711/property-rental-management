@@ -55,14 +55,22 @@ export interface KhrRate {
   rate: number;
 }
 
-/** The seven kinds the Payments cards split each payment into (DESIGN.md Summary cards). */
+/**
+ * The kinds the Payments cards split each payment into (DESIGN.md Summary cards). UI v81 round 9
+ * (owner 12/11/2026): "Move-out charges" is divided by the type of the Invoice it paid (DL-221)
+ * into Short stay, Products, Damage and Other charges, so the list and the Receipt page say the
+ * same words.
+ */
 export const PAY_KINDS = [
   "RENT",
   "UTIL",
   "SVC",
   "LATE",
   "DEPOSIT",
-  "MOVEOUT",
+  "SHORT_STAY",
+  "PRODUCTS",
+  "DAMAGE",
+  "OTHER",
   "CREDIT",
 ] as const;
 export type PayKind = (typeof PAY_KINDS)[number];
@@ -80,7 +88,7 @@ export interface PaymentRow {
   receivedMinor: number;
   usdCents: number;
   left: number;
-  /** Refunded straight from this payment; in none of the seven kinds. */
+  /** Refunded straight from this payment; in none of the kinds. */
   refunded: number;
   kinds: Partial<Record<PayKind, number>>;
 }
@@ -100,6 +108,12 @@ export interface PaymentsSummary {
   rows: PaymentRow[];
 }
 
+/** One part of what a payment paid to an Invoice, named as on the Payments list. */
+export interface ReceiptPart {
+  kind: PayKind;
+  amount: number;
+}
+
 export interface ReceiptLine {
   kind: "INVOICE" | "LATE_PAYMENT_CHARGE" | "DEPOSIT" | "CREDIT" | "REFUND";
   invoiceId: string | null;
@@ -108,6 +122,11 @@ export interface ReceiptLine {
   dueDate: string | null;
   depositType: string | null;
   amount: number;
+  /**
+   * UI v81 round 9 (owner 12/11/2026): the parts of an Invoice line when they say more than the
+   * Invoice's own name ("Rent" and "Services" under a Rent Invoice); none otherwise.
+   */
+  parts?: ReceiptPart[];
 }
 
 export interface ReceiptView {
@@ -250,6 +269,47 @@ export function typeCategory(value: unknown): string | null {
     DAMAGE: "DAMAGE_CHARGES",
     MISCELLANEOUS: "MISCELLANEOUS_CHARGES",
   }[type];
+}
+
+/** The Payments list kind of an Invoice of this type (DL-221). */
+const TYPE_KIND: Record<string, PayKind> = {
+  RENT: "RENT",
+  UTILITIES: "UTIL",
+  SHORT_STAY: "SHORT_STAY",
+  PRODUCTS: "PRODUCTS",
+  DAMAGE: "DAMAGE",
+  MISCELLANEOUS: "OTHER",
+};
+/** The Payments list kind of an Invoice line of this category; a one-time charge line (Damage,
+ * Miscellaneous) takes the kind of its Invoice. */
+const LINE_KIND: Record<string, PayKind | null> = {
+  RENT: "RENT",
+  UTILITIES: "UTIL",
+  SERVICE_CHARGES: "SVC",
+  DAMAGE_CHARGES: null,
+  MISCELLANEOUS_CHARGES: null,
+};
+
+/**
+ * The parts of one Invoice line of a Receipt, named as on the Payments list and in its order.
+ * Empty when the one part is the Invoice itself (a Rent Invoice that only paid Rent), so the
+ * page shows parts only when they say more than the Invoice's name.
+ */
+function receiptParts(value: unknown, invoiceType: unknown): ReceiptPart[] {
+  if (value === null || value === undefined) return [];
+  const type = invoiceTypeCode(invoiceType);
+  const own = type === null ? null : (TYPE_KIND[type] ?? null);
+  const sums = new Map<PayKind, number>();
+  for (const [category, amount] of Object.entries(object(value))) {
+    if (!(category in LINE_KIND)) return invalid();
+    const kind = LINE_KIND[category] ?? own ?? "OTHER";
+    sums.set(kind, (sums.get(kind) ?? 0) + cents(amount));
+  }
+  if (sums.size === 1 && own !== null && sums.has(own)) return [];
+  return PAY_KINDS.filter((kind) => sums.has(kind)).map((kind) => ({
+    kind,
+    amount: sums.get(kind) ?? 0,
+  }));
 }
 
 function payableItem(value: unknown): PayableItem {
@@ -410,6 +470,8 @@ function receiptOf(value: unknown): ReceiptView {
         dueDate: maybeText(line.due_date),
         depositType: maybeText(line.deposit_type),
         amount: cents(line.amount_usd_cents),
+        parts:
+          kind === "INVOICE" ? receiptParts(line.parts, line.invoice_type) : [],
       };
     }),
     reprints: list(data.reprints).map((entry) => {

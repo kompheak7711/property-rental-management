@@ -664,3 +664,45 @@ Six sample Monthly services with two later rate changes for four of them were ad
 | System health on a test app | "Needs attention" | "Test computer" with a calm note | Owner 12/11, Settings point 5 |
 
 Tests: TEST-FE-950 updated (the card's name and lines) and TEST-FE-955 extended (the history folds and comes into view); new TEST-FE-1933 (square tabs, the panel is a stack), 1934 (System health on a test app, Settings spacing), 1935 (Exchange card, Business rules column widths) and 1936 (a card with a history is not fitted).
+
+## Round 9 (owner 12/11/2026 04:34): the Payments list and the Receipt page say the same "Paid for"
+
+The owner's two Payments points from the real app:
+
+1. "Receipt table / RCP260020 is paid for Move-out charges. Yet, in Receipt Detail, it is paid for a short stay."
+2. "Receipt table / RCP260018 is paid for Rent Services Deposit. Yet, in Receipt Detail, is paid for Rent."
+
+### Why the two screens differed
+
+The list divided each payment by the category of the Invoice **line** it paid (Rent, Utilities, Services, and one kind for every one-time charge line, named "Move-out charges"). The Receipt page named the **type of the Invoice** (DL-221: Rent, Utilities, Short stay, Products, Damage, Other charges). A short stay's Invoice has one-time charge lines, so the list said "Move-out charges" and the page said "Short stay". A Rent Invoice may hold Services lines, so the list said "Rent, Services" and the page said "Rent".
+
+### What changed
+
+| Part | Before | Now | Where |
+|---|---|---|---|
+| Payments cards and the "Paid for" column | Rent, Utilities, Services, Late-payment charges, Deposits, **Move-out charges**, Customer Credit | Rent, Utilities, Services, Late-payment charges, Deposits, **Short stay, Products, Damage, Other charges**, Customer Credit. Money paid to a one-time charge counts under the type of its Invoice. The four new kinds add up to what "Move-out charges" was, so the cards still add up to the money received | `payments/PaymentsList.tsx`, `payments/text.ts`, migration 20270713_364 (`app.payments_period_summary`) |
+| Card rows | 8 cards (4 + 4) | 11 cards: Total received, the ten kinds; 4 + 4 + 3 on a desktop by the shared card rule (no card alone) | shared `.ui-kpis` rule, unchanged |
+| Receipt page, card "Paid for" | One line for each Invoice with its type | The same line, and under it the parts of that Invoice when they say more than its own name: "Rent $316.67 / Services $19.00" under a Rent Invoice. A short-stay Invoice shows no parts (its one part is the Invoice itself) | `payments/ReceiptPage.tsx`, `payments/paymentsClient.ts`, `shell/screens.css` (`.ui-app-parts`), migration 20270713_364 (`app.payment_receipt_lines` gives `parts`) |
+| Printed Receipt | – | Not changed: it prints the Invoice lines as before | – |
+
+Names of the new cards: Short stay ("Daily and weekly guests"), Products ("Sold with a Quotation"), Damage ("Move-out and short-stay damage"), Other charges ("Cleaning and other one-time charges"). The Khmer of the four notes is new and needs the native check.
+
+### The database step (migration 20270713_364)
+
+Read only. It changes the text of two read functions and nothing else: no table, row, amount, document, number or ledger entry. Each function is changed from the text the database holds (each old text must be there exactly once, or the migration stops), so a change made by another migration stays. Forward-only. It follows 20270712_363 and is the head of this branch. The Database thread checked it on a copy that followed the owner's Mac path before it was pushed.
+
+An app from before this step that reads a database after it (or the other way round) shows "invalid response" on Payments instead of a wrong name: the screens refuse the old kind `MOVEOUT`.
+
+### Review data
+
+A Lease with two Monthly services (U406L0024) was drafted from a Booking and signed with cash through the app's own screens, so one real Receipt (RCP260018) pays Rent, Services and a Security Deposit.
+
+### Every difference from design v81 left, with its reason
+
+| Part | Design v81 | App | Why |
+|---|---|---|---|
+| Payments cards | Seven kinds with "Move-out charges" | Ten kinds by Invoice type | Owner 12/11, Payments points 1 and 2; DL-221 names |
+| Receipt page "Paid for" | Invoice lines only | Parts under a Rent Invoice | Owner 12/11, Payments point 2 |
+| Reports › Payments register | "Move-out charges" | "Move-out charges" (not changed yet) | Its own report read; Reports batch (01, open question 15) |
+
+Tests: TEST-FE-914 updated (the category cards); new TEST-FE-1937 (cards, names, Paid for cells, card filter), 1938 (parts on the Receipt page; printed Receipt unchanged) and 1939 (the client reads the new kinds and parts and refuses the old kind); database tests `test_payments_paid_for_migration.py` (three) and `test_payments_summary_migration.py` (kinds and parts).

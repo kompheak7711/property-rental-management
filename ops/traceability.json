@@ -54013,7 +54013,7 @@
       "test_level": "UI component",
       "test_path": "frontend/src/payments/PaymentsList.test.tsx",
       "status": "implemented",
-      "notes": "V1-058 R5c-3b Payments list and Receipt: shows Total received and the seven cards, the add-up line, and filters the list by a card or by money not matched yet."
+      "notes": "V1-058 R5c-3b Payments list and Receipt: shows Total received and the category cards, the add-up line, and filters the list by a card or by money not matched yet. UI v81 round 9: the cards are the ten kinds of migration 20270713_364 (no Move-out charges)."
     },
     {
       "test_id": "TEST-FE-915",
@@ -66920,6 +66920,72 @@
       "test_path": "frontend/src/problems/ProblemReportsPage.test.tsx",
       "status": "implemented",
       "notes": "DL-222: a problem from a short-stay room check links back to the stay. Listed here by the UI v81 merge."
+    },
+    {
+      "test_id": "TEST-FE-1937",
+      "upstream_ids": [
+        "UI-008",
+        "DL-221"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/payments/PaymentsList.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 round 9 (owner 12/11/2026): the Payments cards are Rent, Utilities, Services, Late-payment charges, Deposits, Short stay, Products, Damage, Other charges and Customer Credit; there is no Move-out charges card; each row's Paid for names the same kinds and a card filters the list."
+    },
+    {
+      "test_id": "TEST-FE-1938",
+      "upstream_ids": [
+        "UI-008",
+        "DL-221"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/payments/PaymentsList.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 round 9: the Receipt page lists Rent and Services under a Rent Invoice, shows no parts under a short-stay Invoice, and the printed Receipt is unchanged."
+    },
+    {
+      "test_id": "TEST-FE-1939",
+      "upstream_ids": [
+        "UI-008",
+        "DL-221"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/payments/PaymentsList.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 round 9: the client reads the ten kinds and the parts of an Invoice line; the old kind MOVEOUT and an unknown line category are refused as an invalid response; parts that say no more than the Invoice's own type are left out."
+    },
+    {
+      "test_id": "test_migration_364_follows_the_lease_numbers_and_is_forward_only",
+      "upstream_ids": [
+        "UI-008",
+        "DL-221"
+      ],
+      "test_level": "migration",
+      "test_path": "backend/tests/test_payments_paid_for_migration.py",
+      "status": "implemented",
+      "notes": "UI v81 round 9 (migration 20270713_364): the Payments paid-for migration follows 20270712_363, is the head on ui-v81 and is forward-only."
+    },
+    {
+      "test_id": "test_a_short_stay_and_its_damage_count_under_the_type_of_their_invoice",
+      "upstream_ids": [
+        "UI-008",
+        "DL-221"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_payments_paid_for_migration.py",
+      "status": "implemented",
+      "notes": "UI v81 round 9 (migration 20270713_364): money paid to a short stay counts under Short stay and money paid to its damage Invoice under Damage, in the list rows and the cards; the ten cards plus money left and refunded add up to the money received; the Receipt read gives the same Invoice type and the parts of each Invoice line."
+    },
+    {
+      "test_id": "test_a_miscellaneous_charge_counts_under_other_charges",
+      "upstream_ids": [
+        "UI-008",
+        "DL-221"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_payments_paid_for_migration.py",
+      "status": "implemented",
+      "notes": "UI v81 round 9 (migration 20270713_364): money paid to a miscellaneous one-time charge counts under Other charges; no MOVEOUT kind is returned; the Receipt read names the Invoice type MISCELLANEOUS with its part."
     }
   ]
 }
