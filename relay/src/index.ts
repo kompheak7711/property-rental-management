@@ -5,15 +5,13 @@
 //      serve the Mini App form pages (the Tenant bot's Problem report);
 //   3. seal every message and photo with the office's public key;
 //   4. hand over to the office (signed pull, then delete after the office confirms);
-//   5. while the office is away (DL-210, offline.ts): answer the Tenant bot itself, with the texts
-//      and the scrambled Lease check codes the office sent, and send an urgent report to the
-//      caretaker on shift.
-// It never decides money, never stores the record and never reads the office database. Before
-// DL-210 it never answered in place of the office; now it answers the Tenant bot, and since
-// DL-213 the Customer and Staff bots (offline_bots.ts), only while the office has not pulled for
-// 30 seconds, and tells the office what it said. Since DL-218 a message that came while the
-// office still looked open is answered by the relay 25 seconds later if the office has not
-// pulled it by then, so no message waits for the app to open again.
+//   5. answer every bot message at once (DL-219, owner 11/11/2026: "all telegram bot has to reply
+//      immediately even app open or close"; offline.ts, offline_bots.ts), with the texts, FAQ,
+//      Lease check codes and each tenant's requests the office sent, and send an urgent report to
+//      the caretaker on shift.
+// It never decides money, never stores the record and never reads the office database. It tells
+// the office what it said (inside the sealed item); the office collects the items every 150
+// seconds and saves the same steps without answering twice.
 
 import { importOfficeKey, seal, sha256Hex, toBase64 } from "./seal.ts";
 import {
@@ -29,7 +27,6 @@ import {
   LINK_BLOCK_SECONDS,
   noteLanguage,
   noteOfficePull,
-  officeAway,
   offlineTexts,
   send,
   tenantAnswer,
@@ -63,20 +60,13 @@ const DEFAULT_API = "https://api.telegram.org";
 
 type Clock = () => number;
 
-/** Runs a task after LATE_SECONDS (Workers: ctx.waitUntil); the task gets the time then. */
-export type Later = (task: (now: number) => Promise<void>) => void;
-
-// DL-218: how long the relay waits for the office to pull a message before answering it itself.
-// The office pulls every 10 seconds; Cloudflare keeps a request's work for 30 seconds.
-export const LATE_SECONDS = 25;
-
 interface Answered {
   relay: RelayFacts | BotFacts;
   out: Awaited<ReturnType<typeof tenantAnswer>>["out"];
 }
 
-// The relay's answer to a bot message, as when the office is away (DL-210, DL-213); null when
-// the office has not sent that bot's texts.
+// The relay's answer to a bot message (DL-210, DL-213, DL-219); null when the office has not
+// sent that bot's texts.
 async function chatAnswer(
   env: Env,
   bot: BotCode,
@@ -101,7 +91,7 @@ async function chatAnswer(
   return { relay: answered.facts, out: answered.out };
 }
 
-// While the office pulls, the relay only remembers the language a person picks.
+// Without the bot's texts the relay answers nothing; it still remembers the language picked.
 async function noteChat(
   env: Env,
   bot: BotCode,
@@ -118,47 +108,6 @@ async function noteChat(
       now,
       "CUSTOMER",
     );
-  }
-}
-
-// DL-218: a message kept for the office while it looked open. If the office has not pulled
-// since the message came, it is away: the relay answers now, puts what it said in the same
-// sealed item (only while the office still has not pulled it), then sends the answer.
-async function answerLate(
-  env: Env,
-  officeKey: CryptoKey,
-  itemId: string,
-  plain: Record<string, unknown>,
-  arrived: number,
-  answer: () => Promise<Answered | null>,
-  fetcher: typeof fetch,
-): Promise<void> {
-  const seen = await env.DB.prepare(
-    "SELECT at FROM office_seen WHERE what = 'pull'",
-  ).first<{ at: number }>();
-  if (seen !== null && seen.at >= arrived) return;
-  const kept = await env.DB.prepare("SELECT id FROM items WHERE id = ?")
-    .bind(itemId)
-    .first<{ id: string }>();
-  if (kept === null) return;
-  const answered = await answer();
-  if (answered === null) return;
-  const sealed = await seal(
-    officeKey,
-    new TextEncoder().encode(
-      JSON.stringify({ ...plain, relay: answered.relay }),
-    ),
-    itemId,
-  );
-  const changed = await env.DB.prepare(
-    "UPDATE items SET sealed = ? WHERE id = ? AND NOT EXISTS " +
-      "(SELECT 1 FROM office_seen WHERE what = 'pull' AND at >= ?) RETURNING id",
-  )
-    .bind(toBase64(sealed), itemId, arrived)
-    .first<{ id: string }>();
-  if (changed === null) return;
-  for (const message of answered.out) {
-    await send(env, message, fetcher);
   }
 }
 
@@ -319,7 +268,6 @@ async function webhook(
   bot: BotCode,
   now: number,
   fetcher: typeof fetch,
-  later?: Later,
 ) {
   const secret = env[`${bot}_WEBHOOK_SECRET`];
   const token = env[`${bot}_BOT_TOKEN`];
@@ -361,9 +309,8 @@ async function webhook(
       }
     }
   }
-  // While the office is away (DL-210, DL-213): the relay answers and tells the office.
-  const away = await officeAway(env, now);
-  const answered = away ? await chatAnswer(env, bot, update, now) : null;
+  // The relay answers every message at once and tells the office (DL-219).
+  const answered = await chatAnswer(env, bot, update, now);
   if (answered === null) {
     await noteChat(env, bot, update, now);
   }
@@ -390,19 +337,6 @@ async function webhook(
   );
   for (const message of outgoing) {
     await send(env, message, fetcher);
-  }
-  if (!away && later) {
-    later((at) =>
-      answerLate(
-        env,
-        officeKey,
-        itemId,
-        plain,
-        now,
-        () => chatAnswer(env, bot, update, at),
-        fetcher,
-      ),
-    );
   }
   return new Response("ok");
 }
@@ -498,11 +432,26 @@ async function formStart(
     {
       ok: true,
       choices: choices ? JSON.parse(choices.body) : null,
-      mine: caller.data ? JSON.parse(caller.data) : null,
+      mine: caller.data ? formMine(caller.data) : null,
     },
     200,
     cors,
   );
+}
+
+// The person's own data the form shows, without what only the chat answers use (DL-219: My
+// requests and the repair waiting for Fixed or Not fixed).
+function formMine(data: string): unknown {
+  const mine = JSON.parse(data) as unknown;
+  if (typeof mine !== "object" || mine === null || Array.isArray(mine)) {
+    return mine;
+  }
+  const {
+    requests: _requests,
+    check: _check,
+    ...shown
+  } = mine as Record<string, unknown>;
+  return shown;
 }
 
 async function form(
@@ -511,7 +460,6 @@ async function form(
   bot: BotCode,
   now: number,
   fetcher: typeof fetch,
-  later?: Later,
 ) {
   const cors = corsHeaders(request);
   const caller = await formCaller(request, env, bot, now, cors);
@@ -571,19 +519,16 @@ async function form(
     payload: { form: fields, role: caller.role },
     media,
   };
-  // A form while the office is away (DL-210, DL-213): the urgent alert goes out first, then the
-  // item says whether it went, so the office does not send it again.
-  const away = await officeAway(env, now);
-  const answered = away
-    ? await formAnswer(
-        env,
-        bot,
-        caller,
-        fields as Record<string, unknown>,
-        now,
-        fetcher,
-      )
-    : null;
+  // Every form gets its answer at once (DL-219); an urgent alert goes out first, then the item
+  // says whether it went, so the office does not send it again.
+  const answered = await formAnswer(
+    env,
+    bot,
+    caller,
+    fields as Record<string, unknown>,
+    now,
+    fetcher,
+  );
   await keepItem(
     env,
     officeKey,
@@ -596,31 +541,10 @@ async function form(
   for (const message of answered?.out ?? []) {
     await send(env, message, fetcher);
   }
-  if (!away && later) {
-    later((at) =>
-      answerLate(
-        env,
-        officeKey,
-        itemId,
-        plain,
-        now,
-        () =>
-          formAnswer(
-            env,
-            bot,
-            caller,
-            fields as Record<string, unknown>,
-            at,
-            fetcher,
-          ),
-        fetcher,
-      ),
-    );
-  }
   return json({ ok: true }, 200, cors);
 }
 
-// The relay's answer to a Tenant or Staff form, as when the office is away: the urgent alerts
+// The relay's answer to a Tenant or Staff form (DL-219, app open or closed): the urgent alerts
 // go out here, and the answer to the person after the item is kept. Null for the Customer bot
 // or when the office has not sent the bot's texts.
 async function formAnswer(
@@ -770,7 +694,7 @@ async function office(request: Request, env: Env, now: number, path: string[]) {
     return json({ deleted: await removeItems(env, ids as string[]) });
   }
   if (what === "offline" && request.method === "PUT") {
-    // What the relay needs to answer while the office is away (DL-210, DL-213): one body for
+    // What the relay needs to answer every message (DL-210, DL-213, DL-219): one body for
     // the bot's texts and alerts, and for the Tenant bot one for the scrambled Lease check codes.
     const bot = botFromPath(which);
     let parsed: { texts?: unknown; links?: unknown };
@@ -955,7 +879,6 @@ export async function handle(
   env: Env,
   clock: Clock = () => Math.floor(Date.now() / 1000),
   fetcher: typeof fetch = fetch,
-  later?: Later,
 ): Promise<Response> {
   const url = new URL(request.url);
   const path = url.pathname.split("/").filter(Boolean);
@@ -963,7 +886,7 @@ export async function handle(
   if (path[0] === "telegram" && request.method === "POST") {
     const bot = botFromPath(path[1]);
     return bot
-      ? webhook(request, env, bot, now, fetcher, later)
+      ? webhook(request, env, bot, now, fetcher)
       : new Response("not found", { status: 404 });
   }
   if (path[0] === "form") {
@@ -978,7 +901,7 @@ export async function handle(
       return formStart(request, env, bot, now);
     }
     return path.length === 2
-      ? form(request, env, bot, now, fetcher, later)
+      ? form(request, env, bot, now, fetcher)
       : new Response("not found", { status: 404 });
   }
   // The Mini App pages (the Tenant bot's Problem report form, the Staff forms). They hold no
@@ -1015,20 +938,8 @@ export async function handle(
 }
 
 export default {
-  fetch(
-    request: Request,
-    env: Env,
-    ctx?: { waitUntil(promise: Promise<unknown>): void },
-  ): Promise<Response> {
-    const later: Later | undefined = ctx
-      ? (task) =>
-          ctx.waitUntil(
-            new Promise((done) => setTimeout(done, LATE_SECONDS * 1000)).then(
-              () => task(Math.floor(Date.now() / 1000)),
-            ),
-          )
-      : undefined;
-    return handle(request, env, undefined, fetch, later);
+  fetch(request: Request, env: Env): Promise<Response> {
+    return handle(request, env);
   },
   async scheduled(_event: unknown, env: Env): Promise<void> {
     await cleanUp(env, Math.floor(Date.now() / 1000));

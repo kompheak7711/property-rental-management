@@ -124,16 +124,6 @@ TEXTS: Final[dict[str, dict[str, str]]] = {
             "Thank you. You are linked to Unit {unit}. If you have a problem, tap Problem report."
         ),
     },
-    "tenant.office_away": {
-        "km": (
-            "ការិយាល័យរបស់យើងបិទនៅពេលនេះ។ យើងនឹងឆ្លើយតបលោកអ្នកនៅពេលការិយាល័យបើក។ "
-            "ប្រសិនបើមានបញ្ហា សូមចុច «រាយការណ៍បញ្ហា» ឥឡូវនេះបាន។"
-        ),
-        "en": (
-            "Our office is closed now. We will answer you when the office opens. "
-            "If you have a problem, you can tap Problem report now."
-        ),
-    },
     "tenant.report_sent_offline": {
         "km": (
             "យើងបានទទួលរបាយការណ៍របស់លោកអ្នកហើយ។ ការិយាល័យរបស់យើងនឹងពិនិត្យមើល។ "
