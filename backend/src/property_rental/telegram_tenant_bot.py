@@ -21,6 +21,16 @@ answers the chat and says in the item what it did. Such a message is saved the s
 language, the Contact office message, the Lease link try, the next step) but not answered again;
 only when the database's link answer differs from the relay's does the tenant get the database's.
 A Problem report the relay already sent to the caretaker is saved without a second alert.
+
+DL-214 (owner 11 Nov 2026, "Yes, QR for tenants and guests"): staff show a one-time QR at Lease
+signing or guest check-in. Scanning it opens this bot with "/start <code>"; the database links
+the person at once (a short-stay guest until check-out), with no phone, name or Unit to type.
+
+DL-219 (owner 11 Nov 2026: "all telegram bot has to reply immediately even app open or close"):
+the relay answers every message, app open or closed, and the app collects the messages every 150
+seconds. The relay also answers FAQ, My requests and Fixed or Not fixed from what the app sends it
+(``relay_person``); the database closes or reopens the repair when the app collects the tap, and
+the tenant hears the database's answer only when it differs from the relay's.
 """
 
 from __future__ import annotations
@@ -34,6 +44,8 @@ from property_rental.telegram_texts import TEXTS, button_tapped, render
 BOT: Final = "TENANT"
 MAX_NAME: Final = 120
 MAX_UNIT: Final = 20
+# The Start of a QR scan (DL-214): 40 lower-case hex letters made by the database.
+START_CODE: Final = re.compile(r"^/start\s+([0-9a-f]{40})$")
 LANGUAGE_BUTTONS: Final = {"button.khmer": "km", "button.english": "en"}
 # The chat steps this bot saves (telegram_chat_steps.step).
 TENANT_STEPS: Final = frozenset(
@@ -115,6 +127,14 @@ def handle_tenant_update(
             reply_to=saved.get("inbound_id"),
         )
 
+    started = START_CODE.match(typed)
+    if started is not None:
+        answer = _code_answer(store.tenant_link_code(user, started.group(1)))
+        if language is None:
+            reply("language", answer, _say("tenant.welcome", "tenant.language"))
+        else:
+            reply("menu", answer)
+        return
     if typed.startswith("/start") or (language is None and tapped not in LANGUAGE_BUTTONS):
         reply("language", _say("tenant.welcome", "tenant.language"))
         return
@@ -192,11 +212,22 @@ def _after_relay(
     saved: dict[str, Any],
     store: TelegramStore,
 ) -> None:
-    """Save what the relay answered while the office was away (DL-210), without answering."""
+    """Save what the relay answered (DL-210; DL-219: every message), without answering again."""
     chosen = relay.get("language")
     if chosen in LANGUAGE_BUTTONS.values():
         store.choose_language(BOT, user, str(chosen))
     language = str(chosen or store.bot_state(BOT, user).get("language") or "km")
+    code = relay.get("code")
+    started = START_CODE.match(typed)
+    if isinstance(code, dict) and started is not None:
+        result = store.tenant_link_code(user, started.group(1))
+        linked = result.get("result") == "LINKED"
+        answer = [] if linked == (code.get("outcome") == "LINKED") else [_code_answer(result)]
+        step = relay.get("step")
+        store.bot_reply(
+            BOT, user, chat, step if step in TENANT_STEPS else "menu", None, language, answer
+        )
+        return
     link = relay.get("link")
     if isinstance(link, dict):
         name = str(link.get("name") or "").strip()[:MAX_NAME]
@@ -209,6 +240,22 @@ def _after_relay(
             else:
                 store.bot_reply(BOT, user, chat, "menu", None, language, _link_answer(result))
             return
+    check = relay.get("check")
+    if isinstance(check, dict) and isinstance(check.get("fixed"), bool):
+        # DL-219: the relay answered Fixed or Not fixed from what the office last sent. The
+        # database decides now; only a different answer is sent.
+        result = store.tenant_report_check(user, bool(check["fixed"]))
+        told = check.get("number")
+        number = str(result.get("report_number") or "")
+        same = (
+            result.get("result") in {"CLOSED", "REOPENED"} and told == number
+            if told
+            else result.get("result") == "NOTHING"
+        )
+        store.bot_reply(
+            BOT, user, chat, "menu", None, language, [] if same else [_check_answer(result)]
+        )
+        return
     if relay.get("contact") is True:
         inbound = saved.get("inbound_id")
         if typed and isinstance(inbound, str):
@@ -277,6 +324,18 @@ def _hello(state: dict[str, Any]) -> dict[str, Any]:
             "tenant.hello_linked", "tenant.menu", name=link["name"], unit=link["unit_number"]
         )
     return _say("tenant.hello", "tenant.start")
+
+
+def _code_answer(result: dict[str, Any]) -> dict[str, Any]:
+    """The answer to a QR scan (DL-214): linked, the stay is over, or the code does not work."""
+    outcome = result.get("result")
+    if outcome == "LINKED":
+        return _say(
+            "tenant.linked_code", "tenant.menu", name=result["name"], unit=result["unit_number"]
+        )
+    if outcome == "ENDED":
+        return _say("tenant.code_ended", "tenant.reject")
+    return _say("tenant.code_bad", "tenant.reject")
 
 
 def _link_answer(result: dict[str, Any]) -> list[dict[str, Any]]:
@@ -362,9 +421,22 @@ def _my_requests(result: dict[str, Any], language: str) -> dict[str, Any]:
     """My requests as one message: a fixed line for each report, in the person's language."""
     if result.get("result") != "OK":
         return _say("tenant.link_first", "tenant.start")
-    reports = result.get("reports")
-    if not isinstance(reports, list) or not reports:
+    lines = _request_lines(result, language)
+    if not lines:
         return _say("tenant.my_none", "tenant.menu")
+    return _say(
+        "tenant.my_requests",
+        "tenant.menu",
+        unit=str(result.get("unit_number") or ""),
+        list=lines,
+    )
+
+
+def _request_lines(result: dict[str, Any], language: str) -> str:
+    """The lines of My requests (empty when there is none)."""
+    reports = result.get("reports")
+    if not isinstance(reports, list):
+        return ""
     lines: list[str] = []
     for report in reports[:MY_REQUESTS_SHOWN]:
         if not isinstance(report, dict):
@@ -398,9 +470,28 @@ def _my_requests(result: dict[str, Any], language: str) -> dict[str, Any]:
                     },
                 )
             )
-    return _say(
-        "tenant.my_requests",
-        "tenant.menu",
-        unit=str(result.get("unit_number") or ""),
-        list="\n".join(lines),
+    return "\n".join(lines)
+
+
+def relay_person(result: dict[str, Any]) -> dict[str, Any]:
+    """DL-219: what the relay needs to answer one linked person at once, from their My requests:
+    the lines in both languages, and the newest Unit repair marked done (the one Fixed or Not
+    fixed answers; the database decides again when the app collects the tap)."""
+    if result.get("result") != "OK":
+        return {}
+    reports = result.get("reports")
+    done = next(
+        (
+            str(report["report_number"])
+            for report in (reports if isinstance(reports, list) else [])
+            if isinstance(report, dict)
+            and report.get("kind") == "UNIT"
+            and report.get("state") == "DONE"
+            and report.get("report_number")
+        ),
+        None,
     )
+    return {
+        "requests": {language: _request_lines(result, language) for language in ("km", "en")},
+        "check": done,
+    }

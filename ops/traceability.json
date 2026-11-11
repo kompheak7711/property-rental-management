@@ -65714,6 +65714,36 @@
       "notes": "Telegram while the app is closed: the pull job sends the relay's offline body only when it changes; without the link check key the relay links nobody."
     },
     {
+      "test_id": "test_fixed_or_not_fixed_the_relay_answered_is_decided_by_the_database",
+      "upstream_ids": [
+        "DL-219"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_offline.py",
+      "status": "implemented",
+      "notes": "Telegram, the relay answers every message: when the app collects a Fixed or Not fixed the relay answered, the database decides and the tenant hears it only when the answer differs."
+    },
+    {
+      "test_id": "test_the_relay_gets_my_requests_in_both_languages_and_the_repair_to_check",
+      "upstream_ids": [
+        "DL-219"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_tenant_bot.py",
+      "status": "implemented",
+      "notes": "Telegram, the relay answers every message: each linked person's My requests in Khmer and English and the newest Unit repair marked done go to the relay with the access list."
+    },
+    {
+      "test_id": "test_the_items_are_collected_every_150_seconds",
+      "upstream_ids": [
+        "DL-219"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_jobs.py",
+      "status": "implemented",
+      "notes": "Telegram, the relay answers every message: the pull job runs every 10 seconds but collects the relay's items every 150 seconds."
+    },
+    {
       "test_id": "test_what_the_relay_answered_is_saved_without_answering_again",
       "upstream_ids": [
         "DL-210"
@@ -65796,6 +65826,453 @@
       "test_path": "backend/tests/test_telegram_tenant_offline_migration.py",
       "status": "implemented",
       "notes": "Telegram while the app is closed: Staff without telegram.operate cannot read the offline data."
+    },
+    {
+      "test_id": "test_the_customer_body_has_every_step_the_unit_types_the_faq_and_the_clock",
+      "upstream_ids": [
+        "DL-213"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_offline.py",
+      "status": "implemented",
+      "notes": "Customer bot while the app is closed: the relay gets every step's text and keyboard in Khmer and English, the Unit Types, the Customer FAQ and the Property's UTC offset, and no person's data."
+    },
+    {
+      "test_id": "test_the_staff_body_is_khmer_with_the_alert_list",
+      "upstream_ids": [
+        "DL-213"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_offline.py",
+      "status": "implemented",
+      "notes": "Staff bot while the app is closed: Khmer texts only, with the Authorizers and caretaker shifts for an urgent alert."
+    },
+    {
+      "test_id": "test_a_customer_inquiry_the_relay_took_is_saved_and_only_the_number_is_sent",
+      "upstream_ids": [
+        "DL-213"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_offline.py",
+      "status": "implemented",
+      "notes": "Customer bot while the app is closed: the language and steps are saved without an answer; the inquiry becomes a Visit request and only its number is sent."
+    },
+    {
+      "test_id": "test_a_customer_contact_message_the_relay_took_is_saved_without_an_answer",
+      "upstream_ids": [
+        "DL-213"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_offline.py",
+      "status": "implemented",
+      "notes": "Customer bot while the app is closed: a Contact office message is saved without an answer; an inquiry the database refuses gets the office's answer."
+    },
+    {
+      "test_id": "test_a_staff_join_the_relay_took_is_saved_and_hello_only_when_approved_at_once",
+      "upstream_ids": [
+        "DL-213"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_offline.py",
+      "status": "implemented",
+      "notes": "Staff bot while the app is closed: a shared phone becomes a join request; the hello is sent only when the database links the person at once."
+    },
+    {
+      "test_id": "test_a_staff_report_the_relay_alerted_is_saved_without_a_second_alert",
+      "upstream_ids": [
+        "DL-213"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_offline.py",
+      "status": "implemented",
+      "notes": "Staff bot while the app is closed: an urgent report the relay already alerted is saved without a second alert, and the number is still sent."
+    },
+    {
+      "test_id": "test_the_clock_is_the_propertys_time_zone_and_offset",
+      "upstream_ids": [
+        "DL-213",
+        "DB-TG-020"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_offline_clock_migration.py",
+      "status": "implemented",
+      "notes": "The relay's clock: the Property's time zone and UTC offset in minutes."
+    },
+    {
+      "test_id": "test_the_clock_is_behind_the_telegram_right",
+      "upstream_ids": [
+        "DL-213",
+        "DB-TG-020"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_offline_clock_migration.py",
+      "status": "implemented",
+      "notes": "The relay's clock: Staff without telegram.operate are refused; an unknown Property is refused."
+    },
+    {
+      "test_id": "test_a_scan_links_a_new_person_at_once_then_asks_the_language",
+      "upstream_ids": [
+        "DL-214"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_link_qr.py",
+      "status": "implemented",
+      "notes": "Telegram QR: a scan links a new person at once, then the bot asks the language."
+    },
+    {
+      "test_id": "test_a_scan_by_a_person_who_chose_a_language_shows_the_menu",
+      "upstream_ids": [
+        "DL-214"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_link_qr.py",
+      "status": "implemented",
+      "notes": "Telegram QR: a person who chose a language gets the linked text with the menu."
+    },
+    {
+      "test_id": "test_a_code_that_does_not_work_says_why",
+      "upstream_ids": [
+        "DL-214"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_link_qr.py",
+      "status": "implemented",
+      "notes": "Telegram QR: a used, old or unknown code asks for a new QR; an ended Lease or stay says to contact the office."
+    },
+    {
+      "test_id": "test_a_plain_start_or_a_wrong_code_is_not_a_scan",
+      "upstream_ids": [
+        "DL-214"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_link_qr.py",
+      "status": "implemented",
+      "notes": "Telegram QR: Start without a well-formed code is the normal welcome and tries no code."
+    },
+    {
+      "test_id": "test_a_scan_the_relay_answered_is_linked_again_without_a_second_answer",
+      "upstream_ids": [
+        "DL-214",
+        "DL-210"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_link_qr.py",
+      "status": "implemented",
+      "notes": "Telegram QR while the app is closed: the app saves the link without answering again, and answers only when the database disagrees with the relay."
+    },
+    {
+      "test_id": "test_the_relay_gets_each_unused_codes_hash_and_unit_even_without_the_link_key",
+      "upstream_ids": [
+        "DL-214",
+        "DL-210"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_link_qr.py",
+      "status": "implemented",
+      "notes": "Telegram QR while the app is closed: the relay gets only the hash, Unit and expiry of each unused code."
+    },
+    {
+      "test_id": "test_the_send_job_learns_the_bot_names_once_a_day",
+      "upstream_ids": [
+        "DL-214"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_link_qr.py",
+      "status": "implemented",
+      "notes": "Telegram QR: the send job learns each bot's user name with getMe once a day and tries again after a refusal."
+    },
+    {
+      "test_id": "test_the_qr_picture_is_only_for_a_one_time_telegram_link",
+      "upstream_ids": [
+        "DL-214",
+        "API-TG-009"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_link_qr.py",
+      "status": "implemented",
+      "notes": "Telegram QR: the server draws a QR only for a t.me link with a one-time code."
+    },
+    {
+      "test_id": "test_no_qr_before_the_send_job_knows_the_bot_name",
+      "upstream_ids": [
+        "DL-214",
+        "DB-TG-021"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_link_qr_migration.py",
+      "status": "implemented",
+      "notes": "Telegram QR: no QR until the bot's user name is known; a bad user name is refused."
+    },
+    {
+      "test_id": "test_a_tenant_scans_once_and_is_linked_to_the_lease",
+      "upstream_ids": [
+        "DL-214",
+        "DB-TG-021"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_link_qr_migration.py",
+      "status": "implemented",
+      "notes": "Telegram QR: only the code's hash is kept; one scan links the tenant to the Lease; a second account is refused."
+    },
+    {
+      "test_id": "test_a_guest_is_linked_until_the_stay_is_over_and_gets_no_invoice",
+      "upstream_ids": [
+        "DL-214",
+        "DB-TG-021"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_link_qr_migration.py",
+      "status": "implemented",
+      "notes": "Telegram QR: a guest is linked to the Booking, gets no Invoices, and the link ends with STAY_ENDED."
+    },
+    {
+      "test_id": "test_the_qr_rights_and_the_one_stay_rule",
+      "upstream_ids": [
+        "DL-214",
+        "DB-TG-021"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_link_qr_migration.py",
+      "status": "implemented",
+      "notes": "Telegram QR: exactly one Lease or Booking; scanning and the relay codes need telegram.operate; codes are append-only."
+    },
+    {
+      "test_id": "test_a_telegram_qr_needs_the_lease_or_desk_right_and_shows_once",
+      "upstream_ids": [
+        "DL-214",
+        "API-TG-009"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_api.py",
+      "status": "implemented",
+      "notes": "Telegram QR API: Sign Lease or the front desk; exactly one stay; the answer has the QR picture and is not cached."
+    },
+    {
+      "test_id": "TEST-FE-1951",
+      "upstream_ids": [
+        "DL-214",
+        "API-TG-009"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/telegram/TelegramQrCard.test.tsx",
+      "status": "implemented",
+      "notes": "Telegram QR on a Lease: pick a person, the QR is shown once with the name, Unit and expiry, then closed."
+    },
+    {
+      "test_id": "TEST-FE-1952",
+      "upstream_ids": [
+        "DL-214",
+        "API-TG-009"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/telegram/TelegramQrCard.test.tsx",
+      "status": "implemented",
+      "notes": "Telegram QR on a Booking: guest words; the bot not ready, nobody, and each refusal say so."
+    },
+    {
+      "test_id": "TEST-FE-1953",
+      "upstream_ids": [
+        "DL-214",
+        "API-TG-009"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/telegram/TelegramQrCard.test.tsx",
+      "status": "implemented",
+      "notes": "Telegram QR client: reads the people, makes a code with the CSRF token, refuses a bad answer, reads a guest's stay on Linked tenants."
+    },
+    {
+      "test_id": "test_a_payment_sends_its_receipt_with_what_it_paid_once",
+      "upstream_ids": [
+        "DL-215",
+        "DB-TG-022"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_receipts_migration.py",
+      "status": "implemented",
+      "notes": "Receipts on Telegram: Receive payment's Receipt goes to the linked tenant once, after the pull job runs, with the Invoice it paid and money not used yet, in the tenant's language; the office page lists who got it."
+    },
+    {
+      "test_id": "test_a_receipt_of_someone_not_linked_is_not_sent",
+      "upstream_ids": [
+        "DL-215",
+        "DB-TG-022"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_receipts_migration.py",
+      "status": "implemented",
+      "notes": "Receipts on Telegram: a Receipt of a payer with no link goes to nobody."
+    },
+    {
+      "test_id": "test_receipts_need_the_telegram_rights_and_stay_as_sent",
+      "upstream_ids": [
+        "DL-215",
+        "DB-TG-022"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_receipts_migration.py",
+      "status": "implemented",
+      "notes": "Receipts on Telegram: queueing needs telegram.operate; the notices are append-only and not readable by the runtime role."
+    },
+    {
+      "test_id": "test_a_receipt_reads_as_the_tenant_gets_it_in_english_and_khmer",
+      "upstream_ids": [
+        "DL-215"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_receipts.py",
+      "status": "implemented",
+      "notes": "Receipts on Telegram: the send job puts the Receipt text together in English and Khmer from the queued fields."
+    },
+    {
+      "test_id": "TEST-FE-1954",
+      "upstream_ids": [
+        "DL-215",
+        "API-TG-010"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/telegram/TelegramPages.test.tsx",
+      "status": "implemented",
+      "notes": "Receipts on Telegram: Linked tenants lists who got each Receipt, counts the Receipts that reached nobody, and marks a reversed one."
+    },
+    {
+      "test_id": "test_a_notice_for_everyone_goes_to_each_person_in_their_language",
+      "upstream_ids": [
+        "DL-216",
+        "DB-TG-023"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_notices_migration.py",
+      "status": "implemented",
+      "notes": "Notices: a notice for everyone goes once to each linked person in their language; one written in one language goes to all in that language."
+    },
+    {
+      "test_id": "test_a_notice_for_floors_or_units_goes_only_there",
+      "upstream_ids": [
+        "DL-216",
+        "DB-TG-023"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_notices_migration.py",
+      "status": "implemented",
+      "notes": "Notices: a notice for some floors or Units goes only to people linked there; the office list shows who it was for and how many got it."
+    },
+    {
+      "test_id": "test_a_notice_needs_words_a_real_audience_and_the_operate_right",
+      "upstream_ids": [
+        "DL-216",
+        "DB-TG-023"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_notices_migration.py",
+      "status": "implemented",
+      "notes": "Notices: Staff without telegram.operate are refused; no words, too long, an unknown audience or floor or Unit is refused; notices are append-only and not readable by the runtime role."
+    },
+    {
+      "test_id": "test_a_notice_needs_operate_words_and_the_browser_checks",
+      "upstream_ids": [
+        "DL-216",
+        "API-TG-011"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_api.py",
+      "status": "implemented",
+      "notes": "Notices API: telegram.operate and the browser checks; no words, too long or an unknown audience is 422; the answer has the count and the page."
+    },
+    {
+      "test_id": "test_a_notice_reads_with_the_office_heading_and_keeps_long_words",
+      "upstream_ids": [
+        "DL-216"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_notices.py",
+      "status": "implemented",
+      "notes": "Notices: the bot text has the office heading in English and Khmer and keeps a long notice."
+    },
+    {
+      "test_id": "TEST-FE-1955",
+      "upstream_ids": [
+        "DL-216",
+        "API-TG-011"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/telegram/TelegramPages.test.tsx",
+      "status": "implemented",
+      "notes": "Notices tab: a Manager writes a notice, chooses floors, confirms and sends it; the list shows who got each one."
+    },
+    {
+      "test_id": "TEST-FE-1956",
+      "upstream_ids": [
+        "DL-216",
+        "API-TG-011"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/telegram/TelegramPages.test.tsx",
+      "status": "implemented",
+      "notes": "Notices tab: a reader gets no form; a refused notice says so and keeps the words; a wrong page answer is refused."
+    },
+    {
+      "test_id": "test_the_late_rent_letters_go_to_the_linked_tenant_once",
+      "upstream_ids": [
+        "DL-217",
+        "DB-TG-024"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_warnings_migration.py",
+      "status": "implemented",
+      "notes": "Warnings on Telegram: opening a Rent case sends nothing; the day-20 and day-30 events each go once to the linked tenant in the tenant's language with the Invoice, Due Date and Rent still to pay; the office page lists who got them."
+    },
+    {
+      "test_id": "test_a_lease_warning_goes_with_the_words_staff_wrote",
+      "upstream_ids": [
+        "DL-217",
+        "DB-TG-024"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_warnings_migration.py",
+      "status": "implemented",
+      "notes": "Warnings on Telegram: a Lease warning goes with its number, what happened and the Lease rule; a warning recorded days ago is not sent."
+    },
+    {
+      "test_id": "test_warnings_need_the_telegram_rights_and_stay_as_sent",
+      "upstream_ids": [
+        "DL-217",
+        "DB-TG-024"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_warnings_migration.py",
+      "status": "implemented",
+      "notes": "Warnings on Telegram: queueing needs telegram.operate and the page telegram.read; the notices are append-only and not readable by the runtime role."
+    },
+    {
+      "test_id": "test_the_late_rent_letters_read_as_the_tenant_gets_them",
+      "upstream_ids": [
+        "DL-217"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_warnings.py",
+      "status": "implemented",
+      "notes": "Warnings on Telegram: the day-20 and day-30 Rent messages in English and Khmer, with the paper letter as the official copy."
+    },
+    {
+      "test_id": "test_a_lease_warning_reads_with_the_words_staff_wrote",
+      "upstream_ids": [
+        "DL-217"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_warnings.py",
+      "status": "implemented",
+      "notes": "Warnings on Telegram: the Lease warning message in English and Khmer keeps the words staff wrote."
+    },
+    {
+      "test_id": "TEST-FE-1957",
+      "upstream_ids": [
+        "DL-217",
+        "API-TG-012"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/telegram/TelegramPages.test.tsx",
+      "status": "implemented",
+      "notes": "Warnings on Telegram: Linked tenants lists who got each late Rent letter and Lease warning and counts the warnings that reached nobody."
     },
     {
       "test_id": "test_an_issued_invoice_goes_to_the_linked_tenant_once",
@@ -65883,6 +66360,26 @@
       "test_path": "backend/tests/test_telegram_tenant_offline_migration.py",
       "status": "implemented",
       "notes": "Tenant bot linking: U302, 302, Room u302 and Unit 302 give the same Unit key; UB12 keeps its letters."
+    },
+    {
+      "test_id": "test_the_nssf_number_is_optional",
+      "upstream_ids": [
+        "PR-HR-011"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_hr_office_hours_migration.py",
+      "status": "implemented",
+      "notes": "HRIS: an optional NSSF number with the ID details, seen only with See salaries, at most 30 letters (owner 07/11 17:59, migration 306)."
+    },
+    {
+      "test_id": "TEST-FE-1403",
+      "upstream_ids": [
+        "PR-HR-011"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/hr/HrPages.test.tsx",
+      "status": "implemented",
+      "notes": "HRIS: the NSSF number is optional at Add employee and shows on the employee page (owner 07/11 17:59)."
     }
   ]
 }

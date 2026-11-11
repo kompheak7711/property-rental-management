@@ -13,7 +13,7 @@ from typing import Final
 MAX_FIELD_CHARACTERS: Final = 300
 # A field the bot builds itself from fixed texts (My requests), or a long answer or note, may
 # be longer.
-LONG_FIELDS: Final = {"list": 3000, "text": 600, "answer": 800, "note": 500}
+LONG_FIELDS: Final = {"list": 3000, "text": 600, "answer": 800, "note": 500, "notice": 1500}
 # A keyboard whose buttons the bot builds (FAQ questions, Unit Types, days, months): at most
 # this many, each this long.
 MAX_CHOICES: Final = 30
@@ -103,22 +103,25 @@ TEXTS: Final[dict[str, dict[str, str]]] = {
         "km": "សូមភ្ជាប់កិច្ចសន្យាជួលរបស់លោកអ្នកជាមុនសិន។",
         "en": "Please link your Lease first.",
     },
+    # DL-214 (owner 11/11/2026): the one-time QR staff show at Lease signing or guest check-in.
+    "tenant.linked_code": {
+        "km": "សូមស្វាគមន៍ {name}។ លោកអ្នកបានភ្ជាប់ជាមួយបន្ទប់ {unit}។ តើលោកអ្នកត្រូវការអ្វី?",
+        "en": "Welcome, {name}. You are linked to Unit {unit}. What do you need?",
+    },
+    "tenant.code_bad": {
+        "km": "QR នេះមិនដំណើរការទៀតទេ។ សូមសុំ QR ថ្មីពីការិយាល័យ។",
+        "en": "This QR code does not work any more. Please ask the office for a new one.",
+    },
+    "tenant.code_ended": {
+        "km": "កិច្ចសន្យាជួល ឬការស្នាក់នៅរបស់លោកអ្នកបានបញ្ចប់ហើយ។ សូមទាក់ទងការិយាល័យ។",
+        "en": "Your Lease or stay has ended. Please contact the office.",
+    },
     # DL-210: what the relay says while the office app is closed (owner 07/11/2026). The relay
     # cannot say the person's name, so "linked" names only the Unit.
     "tenant.linked_offline": {
         "km": ("សូមអរគុណ។ លោកអ្នកបានភ្ជាប់ជាមួយបន្ទប់ {unit} ហើយ។ ប្រសិនបើមានបញ្ហា សូមចុច «រាយការណ៍បញ្ហា»។"),
         "en": (
             "Thank you. You are linked to Unit {unit}. If you have a problem, tap Problem report."
-        ),
-    },
-    "tenant.office_away": {
-        "km": (
-            "ការិយាល័យរបស់យើងបិទនៅពេលនេះ។ យើងនឹងឆ្លើយតបលោកអ្នកនៅពេលការិយាល័យបើក។ "
-            "ប្រសិនបើមានបញ្ហា សូមចុច «រាយការណ៍បញ្ហា» ឥឡូវនេះបាន។"
-        ),
-        "en": (
-            "Our office is closed now. We will answer you when the office opens. "
-            "If you have a problem, you can tap Problem report now."
         ),
     },
     "tenant.report_sent_offline": {
@@ -172,6 +175,78 @@ TEXTS: Final[dict[str, dict[str, str]]] = {
             "⏰ Reminder: Invoice {number} for {unit} is due on {due}.\n"
             "Still to pay: {to_pay}\n\n"
             "If you have already paid, thank you, and please ignore this message."
+        ),
+    },
+    # DL-215: the Receipt of a Payment. Khmer is new and needs the native check.
+    "tenant.receipt": {
+        "km": (
+            "✅ បង្កាន់ដៃ {number}\n{unit}\n"
+            "កាលបរិច្ឆេទ៖ {date}\nបានទទួល៖ {amount} ({method})\n\n{list}\n\n"
+            "សូមអរគុណសម្រាប់ការបង់ប្រាក់។"
+        ),
+        "en": (
+            "✅ Receipt {number}\n{unit}\n"
+            "Date: {date}\nReceived: {amount} ({method})\n\n{list}\n\n"
+            "Thank you for your payment."
+        ),
+    },
+    # DL-216: a notice from the office (water cut, building work). Khmer is new: native check.
+    "tenant.notice": {
+        "km": "📢 សេចក្តីជូនដំណឹងពីការិយាល័យ\n\n{notice}",
+        "en": "📢 Notice from the office\n\n{notice}",
+    },
+    # DL-217 (owner card 11 Nov 2026 "When staff record it"): the late Rent letters and the Lease
+    # warning, sent when staff record them. Khmer is new and needs the native check.
+    "tenant.rent_warning": {
+        "km": (
+            "⚠️ មិនទាន់បង់ថ្លៃឈ្នួល៖ ២០ ថ្ងៃ\n{unit}\n"
+            "វិក្កយបត្រ {invoice} ដល់កាលកំណត់បង់នៅថ្ងៃ {due}។\n"
+            "ថ្លៃឈ្នួលនៅត្រូវបង់៖ {amount}\n\n"
+            "សូមបង់ឱ្យបានឆាប់តាមដែលអាចធ្វើបាន ឬទាក់ទងការិយាល័យ ប្រសិនបើមានបញ្ហា។\n"
+            "លិខិតក្រដាសពីការិយាល័យ ថ្ងៃ {date} គឺជាច្បាប់ផ្លូវការ។"
+        ),
+        "en": (
+            "⚠️ Rent not paid: 20 days\n{unit}\n"
+            "Invoice {invoice} was due on {due}.\n"
+            "Rent still to pay: {amount}\n\n"
+            "Please pay as soon as you can, or contact the office if there is a problem.\n"
+            "The office's paper letter of {date} is the official copy."
+        ),
+    },
+    "tenant.rent_default": {
+        "km": (
+            "🔴 មិនទាន់បង់ថ្លៃឈ្នួល៖ ៣០ ថ្ងៃ\n{unit}\n"
+            "វិក្កយបត្រ {invoice} ដល់កាលកំណត់បង់នៅថ្ងៃ {due}។\n"
+            "ថ្លៃឈ្នួលនៅត្រូវបង់៖ {amount}\n\n"
+            "យោងតាមកិច្ចសន្យាជួលរបស់លោកអ្នក នេះជាការមិនបង់ថ្លៃឈ្នួលធ្ងន់ធ្ងរ។ "
+            "សូមបង់ ឬទាក់ទងការិយាល័យនៅថ្ងៃនេះ។\n"
+            "លិខិតក្រដាសពីការិយាល័យ ថ្ងៃ {date} គឺជាច្បាប់ផ្លូវការ។"
+        ),
+        "en": (
+            "🔴 Rent not paid: 30 days\n{unit}\n"
+            "Invoice {invoice} was due on {due}.\n"
+            "Rent still to pay: {amount}\n\n"
+            "Under your Lease this is now a serious nonpayment. "
+            "Please pay or contact the office today.\n"
+            "The office's paper letter of {date} is the official copy."
+        ),
+    },
+    "tenant.lease_warning": {
+        "km": (
+            "⚠️ ការព្រមានតាមកិច្ចសន្យាជួល លើកទី {sequence}\n{unit}\n"
+            "កាលបរិច្ឆេទ៖ {date}\n\n"
+            "អ្វីដែលបានកើតឡើង ({when})៖ {text}\n"
+            "ប្រការក្នុងកិច្ចសន្យា៖ {rule}\n\n"
+            "សូមទាក់ទងការិយាល័យ ប្រសិនបើលោកអ្នកមានសំណួរ។\n"
+            "លិខិតក្រដាសពីការិយាល័យ គឺជាច្បាប់ផ្លូវការ។"
+        ),
+        "en": (
+            "⚠️ Lease warning {sequence}\n{unit}\n"
+            "Date: {date}\n\n"
+            "What happened ({when}): {text}\n"
+            "Lease rule: {rule}\n\n"
+            "Please contact the office if you have a question.\n"
+            "The office's paper letter is the official copy."
         ),
     },
     "tenant.menu": {
@@ -525,6 +600,19 @@ TEXTS: Final[dict[str, dict[str, str]]] = {
             "Working hours: Monday to Saturday, 07:00 to 17:00."
         ),
     },
+    # DL-213: what the relay says while the office app is closed.
+    "customer.inquiry_offline": {
+        "km": (
+            "សូមអរគុណ។ យើងបានទទួលសំណើរបស់អ្នក។ ការិយាល័យរបស់យើងបិទនៅពេលនេះ។ "
+            "យើងនឹងផ្ញើលេខសំណើទៅអ្នក ហើយហៅទៅអ្នកនៅពេលការិយាល័យបើក។\n"
+            "ម៉ោងធ្វើការ៖ ថ្ងៃច័ន្ទ ដល់ថ្ងៃសៅរ៍ ម៉ោង 07:00 ដល់ 17:00។"
+        ),
+        "en": (
+            "Thank you. We received your request. Our office is closed now. "
+            "We will send you the request number and call you when the office opens.\n"
+            "Working hours: Monday to Saturday, 07:00 to 17:00."
+        ),
+    },
     "customer.blocked": {
         "km": "យើងមិនអាចទទួលសំណើពីគណនីនេះបានទេ។ សូមមកការិយាល័យ ឬទូរស័ព្ទមកយើង។",
         "en": "We cannot take requests from this account. Please visit or call the office.",
@@ -686,6 +774,31 @@ TEXTS: Final[dict[str, dict[str, str]]] = {
     },
     "staff.check_refused_need_reason": {"km": "❌ សូមជ្រើសរើសមូលហេតុ។", "en": "❌ សូមជ្រើសរើសមូលហេតុ។"},
     "staff.check_refused_need_photo": {"km": "❌ សូមថតរូបបុគ្គលិក។", "en": "❌ សូមថតរូបបុគ្គលិក។"},
+    # DL-213: what the relay says while the office app is closed.
+    "staff.check_offline": {
+        "km": (
+            "✅ បានទទួលការស្កេនរបស់អ្នក។ ការិយាល័យបិទនៅពេលនេះ។ "
+            "ម៉ោងស្កេនត្រូវបានរក្សាទុក ហើយលទ្ធផលនឹងមកនៅពេលការិយាល័យបើក។"
+        ),
+        "en": (
+            "✅ បានទទួលការស្កេនរបស់អ្នក។ ការិយាល័យបិទនៅពេលនេះ។ "
+            "ម៉ោងស្កេនត្រូវបានរក្សាទុក ហើយលទ្ធផលនឹងមកនៅពេលការិយាល័យបើក។"
+        ),
+    },
+    "staff.form_offline": {
+        "km": ("✅ បានទទួល។ ការិយាល័យបិទនៅពេលនេះ។ ទម្រង់របស់អ្នកត្រូវបានរក្សាទុក ហើយលេខនឹងមកនៅពេលការិយាល័យបើក។"),
+        "en": ("✅ បានទទួល។ ការិយាល័យបិទនៅពេលនេះ។ ទម្រង់របស់អ្នកត្រូវបានរក្សាទុក ហើយលេខនឹងមកនៅពេលការិយាល័យបើក។"),
+    },
+    "staff.report_offline_urgent": {
+        "km": (
+            "🚨 បានទទួលរបាយការណ៍បន្ទាន់។ អ្នកថែរក្សាអគារវេន និងអ្នកគ្រប់គ្រងបានទទួលដំណឹងភ្លាមៗ។ "
+            "លេខរបាយការណ៍នឹងមកពេលក្រោយ។ ភ្លើងឆេះ 118 · ប៉ូលិស 117"
+        ),
+        "en": (
+            "🚨 បានទទួលរបាយការណ៍បន្ទាន់។ អ្នកថែរក្សាអគារវេន និងអ្នកគ្រប់គ្រងបានទទួលដំណឹងភ្លាមៗ។ "
+            "លេខរបាយការណ៍នឹងមកពេលក្រោយ។ ភ្លើងឆេះ 118 · ប៉ូលិស 117"
+        ),
+    },
     # Step 4b (DL-175): Report a problem, Close job and the urgent alert.
     "staff.report_saved": {
         "km": ("✅ បានទទួល {number}។ បានរក្សាទុកក្នុង «របាយការណ៍បញ្ហា»។ អ្នកគ្រប់គ្រងនឹងរៀបចំការងារ។"),

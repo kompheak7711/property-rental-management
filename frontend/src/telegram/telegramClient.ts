@@ -18,6 +18,9 @@ export interface LinkedTenant {
   name: string | null;
   unit_number: string | null;
   lease_end_date: string | null;
+  /** DL-214: a guest linked to a short stay by QR; the link ends at check-out. */
+  booking_number: string | null;
+  stay_end_date: string | null;
   linked_at: string;
 }
 
@@ -76,6 +79,77 @@ export interface TelegramInvoice {
 export interface InvoicesPage {
   invoices: TelegramInvoice[];
   rules: { remind_days: number; days: number };
+}
+
+/** One Receipt and who got it on Telegram (DL-215). */
+export interface TelegramReceipt {
+  id: string;
+  number: string;
+  customer: string;
+  /** RECEIVED or REVERSED. */
+  status: string;
+  issued_at: string;
+  amount_usd_cents: number;
+  sent: InvoiceSent[];
+}
+
+export interface ReceiptsPage {
+  receipts: TelegramReceipt[];
+  rules: { days: number };
+}
+
+/** A late Rent letter or Lease warning and who got it on Telegram (DL-217). */
+export interface TelegramWarning {
+  id: string;
+  /** LEASE_WARNING, RENT_20 or RENT_30. */
+  kind: string;
+  unit_number: string;
+  customer: string;
+  recorded_at: string;
+  sent: InvoiceSent[];
+}
+
+export interface WarningsPage {
+  warnings: TelegramWarning[];
+  rules: { days: number };
+}
+
+/** A notice from the office as it was sent (DL-216). */
+export interface TelegramNotice {
+  id: string;
+  text_en: string | null;
+  text_km: string | null;
+  /** ALL, FLOORS or UNITS. */
+  audience: string;
+  floors: string[];
+  units: string[];
+  sent_by: string;
+  created_at: string;
+  /** How many people it was queued for, sent to, and gave up on. */
+  people: number;
+  sent: number;
+  failed: number;
+}
+
+export interface NoticeUnit {
+  id: string;
+  unit_number: string;
+  floor: string | null;
+}
+
+export interface NoticesPage {
+  notices: TelegramNotice[];
+  floors: string[];
+  units: NoticeUnit[];
+  rules: { days: number; max: number };
+}
+
+export interface NoticeBody {
+  text_en: string;
+  text_km: string;
+  audience: "ALL" | "FLOORS" | "UNITS";
+  floors: string[];
+  unit_ids: string[];
 }
 
 export interface BotHealth {
@@ -340,6 +414,17 @@ export interface TelegramApi {
   health: (propertyId: string) => Promise<HealthPage>;
   /** The Invoices of the last weeks and who got them on Telegram (DL-211). */
   invoices: (propertyId: string) => Promise<InvoicesPage>;
+  /** The Receipts of the last weeks and who got them on Telegram (DL-215). */
+  receipts: (propertyId: string) => Promise<ReceiptsPage>;
+  /** The late Rent letters and Lease warnings and who got them on Telegram (DL-217). */
+  warnings: (propertyId: string) => Promise<WarningsPage>;
+  /** The notices of the last weeks (DL-216). */
+  notices: (propertyId: string) => Promise<NoticesPage>;
+  /** Sends a notice and answers how many people it went to and the page again. */
+  sendNotice: (
+    propertyId: string,
+    body: NoticeBody,
+  ) => Promise<{ queued: number; page: NoticesPage }>;
   /** Sends a message the app gave up on once more and answers the page again. */
   retry: (propertyId: string, messageId: string) => Promise<HealthPage>;
   contact: (propertyId: string) => Promise<ContactPage>;
@@ -483,6 +568,92 @@ export function invoicesPageOf(value: unknown): InvoicesPage {
   };
 }
 
+function sentOf(value: unknown): InvoiceSent[] {
+  return list(value).map((one) => {
+    const person = record(one);
+    return {
+      telegram_user_id: whole(person.telegram_user_id),
+      queued_at: text(person.queued_at),
+      state: text(person.state),
+      sent_at: maybeText(person.sent_at),
+    };
+  });
+}
+
+export function receiptsPageOf(value: unknown): ReceiptsPage {
+  const page = record(value);
+  return {
+    receipts: list(page.receipts).map((item) => {
+      const row = record(item);
+      return {
+        id: text(row.id),
+        number: text(row.number),
+        customer: text(row.customer),
+        status: text(row.status),
+        issued_at: text(row.issued_at),
+        amount_usd_cents: whole(row.amount_usd_cents),
+        sent: sentOf(row.sent),
+      };
+    }),
+    rules: { days: whole(record(page.rules).days) },
+  };
+}
+
+function texts(value: unknown): string[] {
+  return list(value).map(text);
+}
+
+export function noticesPageOf(value: unknown): NoticesPage {
+  const page = record(value);
+  const rules = record(page.rules);
+  return {
+    notices: list(page.notices).map((item) => {
+      const row = record(item);
+      return {
+        id: text(row.id),
+        text_en: maybeText(row.text_en),
+        text_km: maybeText(row.text_km),
+        audience: text(row.audience),
+        floors: texts(row.floors),
+        units: texts(row.units),
+        sent_by: text(row.sent_by),
+        created_at: text(row.created_at),
+        people: whole(row.people),
+        sent: whole(row.sent),
+        failed: whole(row.failed),
+      };
+    }),
+    floors: texts(page.floors),
+    units: list(page.units).map((item) => {
+      const row = record(item);
+      return {
+        id: text(row.id),
+        unit_number: text(row.unit_number),
+        floor: maybeText(row.floor),
+      };
+    }),
+    rules: { days: whole(rules.days), max: whole(rules.max) },
+  };
+}
+
+export function warningsPageOf(value: unknown): WarningsPage {
+  const page = record(value);
+  return {
+    warnings: list(page.warnings).map((item) => {
+      const row = record(item);
+      return {
+        id: text(row.id),
+        kind: text(row.kind),
+        unit_number: text(row.unit_number),
+        customer: text(row.customer),
+        recorded_at: text(row.recorded_at),
+        sent: sentOf(row.sent),
+      };
+    }),
+    rules: { days: whole(record(page.rules).days) },
+  };
+}
+
 export function linksPageOf(value: unknown): LinksPage {
   const page = record(value);
   const rules = record(page.rules);
@@ -496,6 +667,8 @@ export function linksPageOf(value: unknown): LinksPage {
         name: maybeText(row.name),
         unit_number: maybeText(row.unit_number),
         lease_end_date: maybeText(row.lease_end_date),
+        booking_number: maybeText(row.booking_number),
+        stay_end_date: maybeText(row.stay_end_date),
         linked_at: text(row.linked_at),
       };
     }),
@@ -814,6 +987,24 @@ export const telegramApi: TelegramApi = {
   async invoices(propertyId) {
     return invoicesPageOf(await request(`${root(propertyId)}/invoices`));
   },
+  async receipts(propertyId) {
+    return receiptsPageOf(await request(`${root(propertyId)}/receipts`));
+  },
+  async warnings(propertyId) {
+    return warningsPageOf(await request(`${root(propertyId)}/warnings`));
+  },
+  async notices(propertyId) {
+    return noticesPageOf(await request(`${root(propertyId)}/notices`));
+  },
+  async sendNotice(propertyId, body) {
+    const answer = record(
+      await request(`${root(propertyId)}/notices`, post(body)),
+    );
+    return {
+      queued: whole(record(answer.sent).queued),
+      page: noticesPageOf(answer.page),
+    };
+  },
   async retry(propertyId, messageId) {
     const answer = record(
       await request(
@@ -889,5 +1080,94 @@ export const telegramApi: TelegramApi = {
       request: visitRequestDetailOf(answer.request),
       page: visitRequestsPageOf(answer.page),
     };
+  },
+};
+
+// DL-214 (owner 11 Nov 2026, "Yes, QR for tenants and guests"): a one-time Telegram QR at Lease
+// signing or guest check-in. Staff with Sign Lease (Lease) or the front desk (Booking) may show it.
+
+/** One person on a live Lease or stay who can get a Telegram QR. */
+export interface LinkPerson {
+  customer_id: string;
+  name: string;
+  unit_number: string | null;
+}
+
+export interface LinkPeople {
+  people: LinkPerson[];
+  /** False until the app has learned the Tenant bot's user name (the send job does it). */
+  bot_ready: boolean;
+  /** How long a QR works. */
+  hours: number;
+}
+
+/** A QR made once: the server keeps only a hash, so it cannot be shown again. */
+export interface LinkCodeMade {
+  url: string;
+  name: string;
+  unit_number: string | null;
+  expires_at: string;
+  qr_svg: string;
+}
+
+/** Exactly one of the two is set. */
+export type LinkStay = { lease_id: string } | { booking_id: string };
+
+export interface LinkQrApi {
+  people: (propertyId: string, stay: LinkStay) => Promise<LinkPeople>;
+  make: (
+    propertyId: string,
+    stay: LinkStay,
+    customerId: string,
+  ) => Promise<LinkCodeMade>;
+}
+
+export function linkPeopleOf(value: unknown): LinkPeople {
+  const page = record(value);
+  if (typeof page.bot_ready !== "boolean") throw new TelegramError();
+  return {
+    people: list(page.people).map((item) => {
+      const row = record(item);
+      return {
+        customer_id: text(row.customer_id),
+        name: text(row.name),
+        unit_number: maybeText(row.unit_number),
+      };
+    }),
+    bot_ready: page.bot_ready,
+    hours: whole(page.hours),
+  };
+}
+
+export function linkCodeOf(value: unknown): LinkCodeMade {
+  const made = record(value);
+  const picture = text(made.qr_svg);
+  if (!picture.startsWith("<svg")) throw new TelegramError();
+  return {
+    url: text(made.url),
+    name: text(made.name),
+    unit_number: maybeText(made.unit_number),
+    expires_at: text(made.expires_at),
+    qr_svg: picture,
+  };
+}
+
+export const linkQrApi: LinkQrApi = {
+  async people(propertyId, stay) {
+    const query =
+      "lease_id" in stay
+        ? `lease_id=${encodeURIComponent(stay.lease_id)}`
+        : `booking_id=${encodeURIComponent(stay.booking_id)}`;
+    return linkPeopleOf(
+      await request(`${root(propertyId)}/link-people?${query}`),
+    );
+  },
+  async make(propertyId, stay, customerId) {
+    return linkCodeOf(
+      await request(
+        `${root(propertyId)}/link-codes`,
+        post({ ...stay, customer_id: customerId }),
+      ),
+    );
   },
 };

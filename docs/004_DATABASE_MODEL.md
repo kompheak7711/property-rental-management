@@ -5944,3 +5944,43 @@ Added by DL-211 (migration `20270709_381`, forward-only).
 ## DB-TG-019 — The Unit key drops a "U" before the number (DL-212)
 
 Added by DL-212 (migration `20270710_382`, forward-only). No new table. `app.tenant_unit_key(text)` also drops a leading "U" before a digit, after "Unit", "Room", "No.", "#" and "បន្ទប់": "U302" and "302" give the same key "302".
+
+## DB-TG-020 — The Property's clock for the relay (DL-213)
+
+Added by DL-213 (migration `20270711_383`, forward-only). No new table. `app.telegram_offline_clock(property, actor)` (`telegram.operate`, granted to `prm_runtime`) gives the Property's `timezone_name` and its `utc_offset_minutes` now, so the relay offers the Customer bot's visit days and move-in months from the Property's own date while the office is away. An unknown Property is refused (`22023`).
+
+## DB-TG-021 — The one-time Telegram QR and guest links (DL-214)
+
+Added by DL-214 (migration `20270712_384`, forward-only).
+
+- `app.tenant_telegram_links` gains `booking_id` (a short stay); `lease_id` may be null; exactly one of the two is set (`num_nonnulls(lease_id, booking_id) = 1`). `app.tenant_telegram_link_endings.reason` also takes `STAY_ENDED`.
+- New append-only tables (insert only; `app.reject_telegram_change()`): `app.telegram_link_codes` (the sha256 `code_hash`, unique; customer; Lease or Booking, exactly one; Unit; `created_by`; `expires_at`, 24 hours), `app.telegram_link_code_uses` (one per code: the Telegram account and the link it made) and `app.telegram_bot_names` (the bot user name the send job learned with getMe, newest row wins).
+- `app.tenant_link_stay_live(lease, booking, day)`: a Lease is live while SIGNED and not past its End Date; a stay while not past check-out and CHECKED_IN, or BOOKED from its check-in day. The link, access, form and links-page functions use it, and `telegram_tenant_end_finished_links` ends a link with `LEASE_ENDED` or `STAY_ENDED`.
+- Functions (granted to `prm_runtime`): `telegram_link_people` and `telegram_link_code_create` (`leases.sign` for a Lease, `short_stays.desk` for a Booking; `55000` when no bot name is known, `22023` when the person is not on a live stay); `telegram_tenant_link_code(property, user, code, actor)` (`telegram.operate`; answers `LINKED` (with `repeated` and `guest`), `USED`, `EXPIRED`, `ENDED` or `NOT_FOUND`; ends the account's earlier link with `NEW_LINK`); `telegram_link_codes_offline` (`telegram.operate`; the unused live codes' hashes, Units and expiry for the relay); `telegram_bot_name_set` (`telegram.operate`; a valid Telegram user name only).
+- `telegram_invoice_people` and `telegram_invoice_reminders` skip guest links (`link.booking_id IS NULL`): guests get no Invoices on Telegram.
+
+## DB-TG-022 — Receipts on Telegram (DL-215)
+
+Added by DL-215 (migration `20270713_385`, forward-only).
+
+- New append-only table `app.telegram_receipt_notices` (one row per Receipt and Telegram account, with its outbox message; unique per Receipt and account; `app.reject_telegram_change()`; no runtime grant).
+- `app.telegram_receipts_queue(property, actor)` (`telegram.operate`, granted to `prm_runtime`, run by the pull job) queues `tenant.receipt` for the Receipts of the last 3 days whose Payment is RECEIVED, for each live link of the Payment's Lease, the Leases of the Invoices and late-payment charges it paid, the stays whose Invoice it paid, and the payer, not yet sent to that account and issued no earlier than a day before the link.
+- `app.telegram_receipt_details(receipt, language)` (internal) builds the fields: `number` (`payments.payment_number`), `unit`, `date`, `amount` (riel with its US dollar value), `method`, `list` (Invoices, late-payment charges, Security Deposit, money not used yet).
+- `app.telegram_receipts_page(property, actor)` (`telegram.read`) lists the Receipts of the last 45 days with who got them.
+
+## DB-TG-023 — Notices from the office (DL-216)
+
+Added by DL-216 (migration `20270714_386`, forward-only).
+
+- New append-only tables (`app.reject_telegram_change()`, no runtime grant): `app.telegram_notices` (the words in English and/or Khmer, at most 1,500 characters each and at least one; the audience `ALL`, `FLOORS` with `floors`, or `UNITS` with `unit_ids`; `created_by`, `created_at`) and `app.telegram_notice_deliveries` (one row per notice and Telegram account, with its outbox message).
+- `app.telegram_notice_send(property, body, actor)` (`telegram.operate`) checks the words and that each floor or Unit is the Property's (`22023` otherwise), saves the notice and queues `tenant.notice` (field `notice`) for each live link of the chosen Units, tenants and guests, in each person's language.
+- `app.telegram_notices_page(property, actor)` (`telegram.read`) answers the notices of the last 90 days (words, audience, floors, Unit numbers, sender, queued, sent and given-up counts), the Property's floors and Units, and the rules.
+
+## DB-TG-024 — Warnings on Telegram (DL-217)
+
+Added by DL-217 (migration `20270715_387`, forward-only).
+
+- New append-only table `app.telegram_warning_notices` (one row per warning and Telegram account, with its outbox message; `warning_kind` `LEASE_WARNING`, `RENT_20` or `RENT_30` with `lease_warning_id` or `rent_event_id`; unique per warning and account; `app.reject_telegram_change()`; no runtime grant).
+- `app.telegram_warnings_queue(property, actor)` (`telegram.operate`, granted to `prm_runtime`, run by the pull job) queues `tenant.rent_warning`, `tenant.rent_default` or `tenant.lease_warning` for the Lease warnings and day-20 and day-30 Rent events recorded in the last 3 days, for each live link of their Lease not yet sent that warning and linked no later than a day after it was recorded.
+- `app.telegram_warnings_since(property, since)` and `app.telegram_warning_details(kind, source)` (internal) list the warnings and build the fields (`unit`, `invoice`, `due`, `amount`, `date` for Rent; `sequence`, `unit`, `date`, `when`, `text`, `rule` for a Lease warning).
+- `app.telegram_warnings_page(property, actor)` (`telegram.read`) lists the warnings of the last 90 days with who got them.

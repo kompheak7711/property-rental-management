@@ -87,3 +87,20 @@ CREATE TABLE IF NOT EXISTS link_tries (
   at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS link_tries_user ON link_tries (user_id, at);
+
+-- A customer's request while the relay asks the Send an inquiry questions for the office
+-- (DL-213): the answers given so far, until the request is sent or 30 minutes pass.
+CREATE TABLE IF NOT EXISTS chat_requests (
+  bot TEXT NOT NULL,
+  user_id INTEGER NOT NULL,
+  data TEXT NOT NULL,
+  updated_at INTEGER NOT NULL,
+  PRIMARY KEY (bot, user_id)
+);
+
+-- One-time QR codes the relay used while the office was away (DL-214), so a code links once.
+CREATE TABLE IF NOT EXISTS start_codes_used (
+  code_hash TEXT PRIMARY KEY,
+  user_id INTEGER NOT NULL,
+  used_at INTEGER NOT NULL
+);

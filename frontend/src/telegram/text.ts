@@ -41,8 +41,9 @@ const TEXT = {
   how: ["Phone, name and Unit matched", "ទូរស័ព្ទ ឈ្មោះ និងបន្ទប់ត្រូវគ្នា"],
   remove: ["Remove link", "ដកការភ្ជាប់"],
   links_n: [
-    "A link needs the phone, the name and the Unit to match an active Lease. There is no code. Several people on one Lease can each link.",
-    "ការភ្ជាប់ត្រូវការទូរស័ព្ទ ឈ្មោះ និងបន្ទប់ ត្រូវនឹងកិច្ចសន្យាសកម្ម។ គ្មានលេខកូដ។ មនុស្សច្រើននាក់ក្នុងកិច្ចសន្យាតែមួយ អាចភ្ជាប់ម្នាក់ៗ។",
+    "A link needs the phone, the name and the Unit to match an active Lease, or a one-time Telegram QR from the Lease or Booking page. Several people on one Lease can each link. A guest's link ends at check-out.",
+    // DL-214: the QR part is new and needs the native check.
+    "ការភ្ជាប់ត្រូវការទូរស័ព្ទ ឈ្មោះ និងបន្ទប់ ត្រូវនឹងកិច្ចសន្យាសកម្ម ឬ QR តេឡេក្រាមប្រើបានតែម្តង ពីទំព័រកិច្ចសន្យា ឬការកក់។ មនុស្សច្រើននាក់ក្នុងកិច្ចសន្យាតែមួយ អាចភ្ជាប់ម្នាក់ៗ។ ការភ្ជាប់របស់ភ្ញៀវបញ្ចប់ពេលចេញពីបន្ទប់។",
   ],
   none_linked: [
     "No tenant is linked yet.",
@@ -83,6 +84,12 @@ const TEXT = {
   c_end: ["Ended on", "បញ្ចប់នៅ"],
   c_why: ["Why", "ហេតុអ្វី"],
   end_LEASE_ENDED: ["The Lease ended", "កិច្ចសន្យាបានបញ្ចប់"],
+  end_STAY_ENDED: [
+    "The stay ended",
+    // new (DL-214)
+    "ការស្នាក់នៅបានបញ្ចប់",
+  ],
+  stay_n: ["Stay {0}", "ការស្នាក់នៅ {0}"],
   end_REMOVED: [
     "Removed by the office",
     // new
@@ -626,6 +633,140 @@ const TEXT = {
   inv_failed: ["Not delivered", "មិនបានទៅដល់"],
   inv_paper: ["Give a paper copy", "ផ្តល់ច្បាប់ចម្លងក្រដាស"],
   inv_no_reminder: ["Not yet", "មិនទាន់"],
+  // Receipts on Telegram (DL-215, owner 11 Nov 2026). All Khmer here is new and needs the native
+  // check.
+  rec_h: ["Receipts on Telegram", "បង្កាន់ដៃតាមតេឡេក្រាម"],
+  rec_sub: [
+    "Each Receipt goes to the people linked to the Lease or stay it paid, about a minute after it is saved. Receipts of the last {0} days.",
+    "បង្កាន់ដៃនីមួយៗ ផ្ញើទៅអ្នកដែលភ្ជាប់នឹងកិច្ចសន្យា ឬការស្នាក់នៅដែលវាបានបង់ ប្រហែលមួយនាទីបន្ទាប់ពីរក្សាទុក។ បង្កាន់ដៃ {0} ថ្ងៃចុងក្រោយ។",
+  ],
+  rec_paper_t: [
+    "Receipts that did not reach anyone on Telegram: {0}. Give these people a paper copy if they need one.",
+    "បង្កាន់ដៃ {0} មិនបានទៅដល់នរណាម្នាក់តាមតេឡេក្រាមទេ។ សូមផ្តល់ច្បាប់ចម្លងក្រដាស ប្រសិនបើពួកគេត្រូវការ។",
+  ],
+  rec_none: [
+    "No Receipts were made in this time.",
+    "មិនមានបង្កាន់ដៃក្នុងរយៈពេលនេះទេ។",
+  ],
+  c_receipt: ["Receipt", "បង្កាន់ដៃ"],
+  c_amount: ["Amount", "ចំនួនទឹកប្រាក់"],
+  c_made: ["Made on", "ធ្វើនៅ"],
+  rec_reversed: ["Reversed", "បានបញ្ច្រាស"],
+  // Warnings on Telegram (DL-217, owner card 11 Nov 2026 "When staff record it"). All Khmer here
+  // is new and needs the native check.
+  warn_h: ["Warnings on Telegram", "ការព្រមានតាមតេឡេក្រាម"],
+  warn_sub: [
+    "Late Rent letters (day 20 and day 30) and Lease warnings go to the tenants linked to the Lease about a minute after staff record them. The paper letter stays the official copy. Warnings of the last {0} days.",
+    "លិខិតថ្លៃឈ្នួលយឺត (ថ្ងៃទី ២០ និងថ្ងៃទី ៣០) និងការព្រមានតាមកិច្ចសន្យាជួល ផ្ញើទៅអ្នកជួលដែលភ្ជាប់នឹងកិច្ចសន្យា ប្រហែលមួយនាទីបន្ទាប់ពីបុគ្គលិកកត់ត្រា។ លិខិតក្រដាសនៅតែជាច្បាប់ផ្លូវការ។ ការព្រមាន {0} ថ្ងៃចុងក្រោយ។",
+  ],
+  warn_paper_t: [
+    "Warnings that did not reach anyone on Telegram: {0}. Make sure these tenants got the paper letter.",
+    "ការព្រមាន {0} មិនបានទៅដល់នរណាម្នាក់តាមតេឡេក្រាមទេ។ សូមប្រាកដថាអ្នកជួលទាំងនេះបានទទួលលិខិតក្រដាស។",
+  ],
+  warn_none: [
+    "No warnings were recorded in this time.",
+    "មិនមានការព្រមានដែលបានកត់ត្រាក្នុងរយៈពេលនេះទេ។",
+  ],
+  c_warning: ["Warning", "ការព្រមាន"],
+  c_recorded: ["Recorded", "កត់ត្រានៅ"],
+  warn_RENT_20: ["Rent not paid: day 20", "មិនទាន់បង់ថ្លៃឈ្នួល៖ ថ្ងៃទី ២០"],
+  warn_RENT_30: ["Rent not paid: day 30", "មិនទាន់បង់ថ្លៃឈ្នួល៖ ថ្ងៃទី ៣០"],
+  warn_LEASE_WARNING: ["Lease warning", "ការព្រមានតាមកិច្ចសន្យាជួល"],
+  warn_letter: ["Give the letter", "ផ្តល់លិខិត"],
+  // Notices (DL-216, owner 11 Nov 2026). All Khmer here is new and needs the native check.
+  nt_sub: [
+    "Send news from the office to the people linked on Telegram, tenants and guests: a water or power cut, building work, a holiday. Not for money or Lease letters.",
+    "ផ្ញើព័ត៌មានពីការិយាល័យទៅអ្នកដែលភ្ជាប់តាមតេឡេក្រាម ទាំងអ្នកជួល និងភ្ញៀវ៖ ការផ្តាច់ទឹក ឬភ្លើង ការងារជួសជុលអគារ ថ្ងៃឈប់សម្រាក។ មិនមែនសម្រាប់ប្រាក់ ឬលិខិតកិច្ចសន្យាទេ។",
+  ],
+  nt_new: ["New notice", "សេចក្តីជូនដំណឹងថ្មី"],
+  nt_en: ["In English", "ជាភាសាអង់គ្លេស"],
+  nt_km: ["In Khmer", "ជាភាសាខ្មែរ"],
+  nt_hint: [
+    "Write it in one language or both. Each person gets their own language; a notice in one language goes to everyone in that language. At most {0} characters.",
+    "សរសេរជាភាសាមួយ ឬទាំងពីរ។ ម្នាក់ៗទទួលជាភាសារបស់ខ្លួន។ សេចក្តីជូនដំណឹងជាភាសាតែមួយ ផ្ញើទៅគ្រប់គ្នាជាភាសានោះ។ យ៉ាងច្រើន {0} តួអក្សរ។",
+  ],
+  nt_who: ["Who gets it", "អ្នកណាទទួល"],
+  nt_ALL: ["Everyone linked", "អ្នកភ្ជាប់ទាំងអស់"],
+  nt_FLOORS: ["Some floors", "ជាន់ខ្លះ"],
+  nt_UNITS: ["Some Units", "បន្ទប់ខ្លះ"],
+  nt_floor: ["Floor {0}", "ជាន់ {0}"],
+  nt_send: ["Send notice", "ផ្ញើសេចក្តីជូនដំណឹង"],
+  nt_confirm: [
+    "Send this notice now? It cannot be taken back.",
+    "ផ្ញើសេចក្តីជូនដំណឹងនេះឥឡូវ? មិនអាចដកវិញបានទេ។",
+  ],
+  nt_yes: ["Yes, send it", "បាទ/ចាស ផ្ញើ"],
+  nt_back: ["Back", "ត្រឡប់"],
+  nt_e_words: [
+    "Write the notice in English or Khmer.",
+    "សូមសរសេរសេចក្តីជូនដំណឹងជាភាសាអង់គ្លេស ឬខ្មែរ។",
+  ],
+  nt_e_who: [
+    "Choose at least one floor or Unit.",
+    "សូមជ្រើសយ៉ាងហោចណាស់ជាន់ ឬបន្ទប់មួយ។",
+  ],
+  nt_e_422: [
+    "The notice was not sent. Check the words and who it is for.",
+    "សេចក្តីជូនដំណឹងមិនបានផ្ញើទេ។ សូមពិនិត្យពាក្យ និងអ្នកទទួល។",
+  ],
+  nt_done: [
+    "The notice is on its way to {0} people.",
+    "សេចក្តីជូនដំណឹងកំពុងផ្ញើទៅ {0} នាក់។",
+  ],
+  nt_list: ["Sent notices", "សេចក្តីជូនដំណឹងបានផ្ញើ"],
+  nt_none: [
+    "No notices were sent in this time.",
+    "មិនមានសេចក្តីជូនដំណឹងបានផ្ញើក្នុងរយៈពេលនេះទេ។",
+  ],
+  nt_list_sub: [
+    "Notices of the last {0} days.",
+    "សេចក្តីជូនដំណឹង {0} ថ្ងៃចុងក្រោយ។",
+  ],
+  c_notice: ["Notice", "សេចក្តីជូនដំណឹង"],
+  c_for: ["For", "សម្រាប់"],
+  c_sent_by: ["Sent by", "ផ្ញើដោយ"],
+  c_got: ["Got it", "បានទទួល"],
+  nt_got: ["{0} of {1}", "{0} ក្នុងចំណោម {1}"],
+  nt_failed: ["{0} not delivered", "{0} មិនបានទៅដល់"],
+  // The one-time Telegram QR (DL-214, owner 11 Nov 2026 "Yes, QR for tenants and guests"). All
+  // Khmer here is new and needs the native check.
+  qr_h: ["Telegram", "តេឡេក្រាម"],
+  qr_sub_lease: [
+    "Show a one-time QR. The tenant scans it with the phone camera and taps Start in Telegram. They are linked at once and get Invoices and reminders there.",
+    "បង្ហាញ QR ប្រើបានតែម្តង។ អ្នកជួលស្កេនវាដោយកាមេរ៉ាទូរស័ព្ទ ហើយចុច Start ក្នុងតេឡេក្រាម។ ពួកគេត្រូវបានភ្ជាប់ភ្លាមៗ ហើយទទួលវិក្កយបត្រ និងការរំលឹកនៅទីនោះ។",
+  ],
+  qr_sub_stay: [
+    "Show a one-time QR. The guest scans it with the phone camera and taps Start in Telegram. The link ends at check-out. Guests get no Invoices on Telegram.",
+    "បង្ហាញ QR ប្រើបានតែម្តង។ ភ្ញៀវស្កេនវាដោយកាមេរ៉ាទូរស័ព្ទ ហើយចុច Start ក្នុងតេឡេក្រាម។ ការភ្ជាប់បញ្ចប់ពេលចេញពីបន្ទប់។ ភ្ញៀវមិនទទួលវិក្កយបត្រតាមតេឡេក្រាមទេ។",
+  ],
+  qr_open: ["Show Telegram QR", "បង្ហាញ QR តេឡេក្រាម"],
+  qr_for: ["QR for {0}", "QR សម្រាប់ {0}"],
+  qr_none: [
+    "Nobody on this Lease or stay can get a QR now.",
+    "គ្មាននរណាម្នាក់ក្នុងកិច្ចសន្យា ឬការស្នាក់នៅនេះ អាចទទួល QR ឥឡូវនេះទេ។",
+  ],
+  qr_not_ready: [
+    "The Telegram QR is not ready yet. The app learns the bot's name within a day after the bot key is set. Until then, the person links with phone, name and Unit.",
+    "QR តេឡេក្រាមមិនទាន់រួចរាល់ទេ។ កម្មវិធីស្គាល់ឈ្មោះបូតក្នុងរយៈពេលមួយថ្ងៃ បន្ទាប់ពីដាក់សោបូត។ រហូតដល់ពេលនោះ សូមភ្ជាប់តាមទូរស័ព្ទ ឈ្មោះ និងបន្ទប់។",
+  ],
+  qr_scan: [
+    "Ask {0} ({1}) to scan this with the phone camera, then tap Start in Telegram. It works once, until {2}.",
+    "សូមឲ្យ {0} ({1}) ស្កេន QR នេះដោយកាមេរ៉ាទូរស័ព្ទ រួចចុច Start ក្នុងតេឡេក្រាម។ ប្រើបានតែម្តង រហូតដល់ {2}។",
+  ],
+  qr_once: [
+    "This QR is shown only once. Close it when the person is linked.",
+    "QR នេះបង្ហាញតែម្តងប៉ុណ្ណោះ។ សូមបិទវាពេលភ្ជាប់រួច។",
+  ],
+  qr_close: ["Close", "បិទ"],
+  qr_alt: ["Telegram QR code", "កូដ QR តេឡេក្រាម"],
+  qr_e_409: [
+    "The Telegram bot is not ready yet. Try again tomorrow.",
+    "បូតតេឡេក្រាមមិនទាន់រួចរាល់ទេ។ សូមសាកម្តងទៀតថ្ងៃស្អែក។",
+  ],
+  qr_e_422: [
+    "This person is not on a live Lease or stay now.",
+    "អ្នកនេះមិននៅក្នុងកិច្ចសន្យា ឬការស្នាក់នៅដែលកំពុងដំណើរការឥឡូវនេះទេ។",
+  ],
 } as const satisfies Record<string, readonly [string, string]>;
 
 export type TelegramTextKey = keyof typeof TEXT;
