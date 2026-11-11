@@ -65714,6 +65714,36 @@
       "notes": "Telegram while the app is closed: the pull job sends the relay's offline body only when it changes; without the link check key the relay links nobody."
     },
     {
+      "test_id": "test_fixed_or_not_fixed_the_relay_answered_is_decided_by_the_database",
+      "upstream_ids": [
+        "DL-219"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_offline.py",
+      "status": "implemented",
+      "notes": "Telegram, the relay answers every message: when the app collects a Fixed or Not fixed the relay answered, the database decides and the tenant hears it only when the answer differs."
+    },
+    {
+      "test_id": "test_the_relay_gets_my_requests_in_both_languages_and_the_repair_to_check",
+      "upstream_ids": [
+        "DL-219"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_tenant_bot.py",
+      "status": "implemented",
+      "notes": "Telegram, the relay answers every message: each linked person's My requests in Khmer and English and the newest Unit repair marked done go to the relay with the access list."
+    },
+    {
+      "test_id": "test_the_items_are_collected_every_150_seconds",
+      "upstream_ids": [
+        "DL-219"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_jobs.py",
+      "status": "implemented",
+      "notes": "Telegram, the relay answers every message: the pull job runs every 10 seconds but collects the relay's items every 150 seconds."
+    },
+    {
       "test_id": "test_what_the_relay_answered_is_saved_without_answering_again",
       "upstream_ids": [
         "DL-210"
