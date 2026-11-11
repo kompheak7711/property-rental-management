@@ -2961,13 +2961,14 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 ## DL-215 — Telegram bots: Receipts go to the people linked to the Lease or stay
 
 - **Type:** `OWNER DECISION` and `TECHNICAL DECISION`
-- **Status:** `BUILT ON BRANCH claude/telegram-receipts (on DL-214) WITH THE RECOMMENDED ANSWER; WAITS FOR THE OWNER'S CARD, TEST AND OK TO MERGE`
+- **Status:** `BUILT ON BRANCH claude/telegram-receipts (on DL-214); THE OWNER CHOSE THE RECOMMENDED ANSWER ON 11 NOV 2026; WAITS FOR THE OWNER'S TEST AND OK TO MERGE`
 - **Source:** the owner on 11 Nov 2026: "CHETANA Residence support bot is also responsible for sending invoice, reminder, receipt, and any notice or warning", and on the card "Which should CHETANA Residence support send next, after the QR?": "All three, in that order" (Receipts, then notices, then warnings). Who gets a Receipt is the owner's card "Who should get Receipts on Telegram, and for which money?" (recommended: "Tenants and guests, with deposits"). Technical choices by Claude under the owner's 2026-10-23 22:30 rule.
 - **(A) Which Receipts.** Every Payment makes one Receipt (migration 40). Each Receipt goes on Telegram once, to each live link of the Lease the Payment names, of the Leases of the Invoices and late-payment charges it paid, of the stay whose Invoice it paid, and of the payer. Money for a Security Deposit is a Payment too, so its Receipt goes the same way. A short-stay cash deposit or card hold is not a Payment and makes no Receipt. A reversed Payment is not sent.
 - **(B) What it says.** The Receipt number (the Payment's document number), the Unit, the date, the amount received and the method (riel also shows its US dollar value), what it paid (each Invoice, each late-payment charge, the Security Deposit) and money not used yet. Labels are in the language the person chose.
 - **(C) When.** The pull job (about once a minute) queues the Receipts of the last 3 days that a linked person has not had yet, so what the money paid is final when the message is made. A person who links later (a guest who paid before the QR at check-in) also gets the Receipts of the day before the link.
 - **(D) The office.** Office › Telegram › Linked tenants shows "Receipts on Telegram": each Receipt of the last 45 days, who got it, and how many reached nobody.
-- **Open:** the native Khmer check of the new texts; whether a reversed Payment should send a message; the owner's card answer (guests and deposits are one switch each in the migration).
+- **Owner's answer (11 Nov 2026, 05:11 UTC):** "Tenants and guests, with deposits", as built.
+- **Open:** the native Khmer check of the new texts; whether a reversed Payment should send a message.
 - **Built:** migration `20270713_385` (DB-TG-022), API-TG-010, `telegram_texts.py` (`tenant.receipt`), `telegram_store.py`, `telegram_pull_job.py`, `frontend/src/telegram/TelegramPages.tsx`.
 - **Links:** DL-211, DL-214.
 - **Decision date:** 2026-11-11.
@@ -2984,4 +2985,19 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **Open:** the native Khmer check of the new texts.
 - **Built:** migration `20270714_386` (DB-TG-023), API-TG-011, `telegram_texts.py` (`tenant.notice`), `telegram_api.py`, `frontend/src/telegram/TelegramPages.tsx` (`NoticesPageView`), `shell/navigation.ts`.
 - **Links:** DL-128, DL-214, DL-215.
+- **Decision date:** 2026-11-11.
+
+## DL-217 — Telegram bots: warnings go to the tenant when staff record them
+
+- **Type:** `OWNER DECISION` and `TECHNICAL DECISION`
+- **Status:** `BUILT ON BRANCH claude/telegram-warnings (on DL-216); WAITS FOR THE OWNER'S TEST AND OK TO MERGE`
+- **Source:** the owner on 11 Nov 2026: CHETANA Residence support sends "any notice or warning", and on the card "Which should CHETANA Residence support send next, after the QR?": "All three, in that order" (Receipts, then notices, then warnings). On the card "When should CHETANA Residence support send warnings to a tenant on Telegram?" the owner chose "When staff record it" (11 Nov 2026, 05:11 UTC): "The day-20 and day-30 late Rent letters and Lease warnings go to the tenant on Telegram as soon as staff record them. Paper stays the official copy." The owner did not choose the automatic "Your Rent is overdue" note the day after the Due Date. Technical choices by Claude under the owner's 2026-10-23 22:30 rule.
+- **(A) Which warnings.** The day-20 warning (`TWENTY_DAY_WARNING`) and the day-30 serious nonpayment (`THIRTY_DAY_SERIOUS_DEFAULT`) of a Rent nonpayment case (UI-108), and each Lease warning (UI-075). Cure and authorized follow-up events are not warnings and are not sent. Nothing changes in how staff record them, and nothing is sent by itself: only what staff record.
+- **(B) Who gets them.** Each live link of the Lease, once, in the language the person chose. Guests have no Lease and get none. A person who links later gets the warnings recorded from a day before the link, never older ones.
+- **(C) What it says.** For Rent: the Unit, the Invoice, its Due Date, the Rent still to pay when staff recorded it, and the date of the paper letter. For a Lease warning: its number, the Unit, its date, what happened and when, and the Lease rule, as staff wrote them. Every message says the paper letter is the official copy. No message says the Lease ends, adds a charge or names a penalty.
+- **(D) When.** The pull job (about once a minute) queues the warnings recorded in the last 3 days that a linked person has not had yet.
+- **(E) The office.** Office › Telegram › Linked tenants shows "Warnings on Telegram": each warning of the last 90 days, who got it, and how many reached nobody (those tenants need the letter by hand).
+- **Open:** the native Khmer check of the new texts.
+- **Built:** migration `20270715_387` (DB-TG-024), API-TG-012, `telegram_texts.py` (`tenant.rent_warning`, `tenant.rent_default`, `tenant.lease_warning`), `telegram_store.py`, `telegram_pull_job.py`, `frontend/src/telegram/TelegramPages.tsx`.
+- **Links:** DL-215, DL-216, UI-075, UI-108.
 - **Decision date:** 2026-11-11.

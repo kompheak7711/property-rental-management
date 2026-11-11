@@ -134,6 +134,7 @@ class FakeStore:
         self.reminder_runs = 0
         self.invoice_reminder_runs = 0
         self.receipt_runs = 0
+        self.warning_runs = 0
         self.blocked = False
         # The Staff bot (migration 20270620_331); None is a job given no service actor.
         self.staff_ready = True
@@ -235,6 +236,10 @@ class FakeStore:
 
     def receipts_queue(self) -> int:
         self.receipt_runs += 1
+        return 0
+
+    def warnings_queue(self) -> int:
+        self.warning_runs += 1
         return 0
 
     def visit_requests_remove_old(self) -> int:
