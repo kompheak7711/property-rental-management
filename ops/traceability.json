@@ -65570,7 +65570,7 @@
       "test_level": "UI component",
       "test_path": "frontend/src/home/OwnerMoney.test.tsx",
       "status": "implemented",
-      "notes": "UI v81 Home Owner money: cash and bank, customers owe, over 30 days, spent against budget and profit this year from the Ledger reports."
+      "notes": "UI v81 Home Financial summary (was Owner money; owner 12/11/2026: no \"Only the Owner sees this\"): cash and bank, customers owe, over 30 days, spent against budget and profit this year from the Ledger reports."
     },
     {
       "test_id": "TEST-FE-1908",
@@ -65580,7 +65580,7 @@
       "test_level": "UI component",
       "test_path": "frontend/src/home/OwnerMoney.test.tsx",
       "status": "implemented",
-      "notes": "UI v81 Home Attendance card: counts scans to check and people with no check-out."
+      "notes": "UI v81 Home Attendance card: counts the people to check (scans to check, people with no check-out, a person with both once)."
     },
     {
       "test_id": "TEST-FE-1909",
@@ -66730,6 +66730,26 @@
       "test_path": "frontend/src/shell/AppShell.test.tsx",
       "status": "implemented",
       "notes": "UI v81 side menu (owner 08/11/2026, section D point 12): on a wide screen the collapsed rail shows the item's name and its sub-items in a fly-out on hover or focus (aria-expanded on the icon), Escape closes it and returns the focus; the open menu has no fly-out."
+    },
+    {
+      "test_id": "TEST-FE-1931",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/home/HomeScreen.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 round 7 Home (owner 12/11/2026): the fifteen cards in the owner's order; Short stay bookings (Booked) and Short stays checked in from the bookings list, Low stock (products at or below the reorder level, still sold) in place of Paid on time, Attendance as the last card; each is read only with its right and a failed read leaves only its own card out."
+    },
+    {
+      "test_id": "TEST-FE-1932",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/home/HomeScreen.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 round 7 Home (owner 12/11/2026): every Home card and Tasks card holds its number beside its name in the card's head, with the note under it; only Paid this month has a bar."
     },
     {
       "test_id": "test_the_nssf_number_is_optional",

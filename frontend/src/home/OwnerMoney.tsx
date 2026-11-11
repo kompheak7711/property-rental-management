@@ -1,20 +1,20 @@
-// UI v81 (B4, design v81 Home): the Owner money box and the Attendance card on Home.
+// UI v81 (B4, design v81 Home): the Owner's money box on Home ("Financial summary", owner
+// 12/11/2026) and what the Attendance card counts.
 // Display only: the numbers come from the Ledger reports and the Attendance day sheet the app
 // already reads; nothing here works out money of its own beyond adding report lines.
 
 import { useEffect, useState } from "react";
 
-import type { AttendanceDay, HrApi } from "../hr/hrClient";
+import type { AttendanceDay } from "../hr/hrClient";
 import type { LedgerApi, Report } from "../ledger/ledgerClient";
 import { usdFromCents } from "../shell/format";
 import { Icon, type ShellIcon } from "../shell/icons";
 import { CardGrid } from "../shell/layouts";
 import { type PageId, hashForPage } from "../shell/navigation";
-import { Chip } from "../shell/ui";
 import type { Language } from "../signInText";
 import { hmt } from "./text";
 
-/** The five Owner money numbers, in cents; null when that report could not be read. */
+/** The Financial summary numbers, in cents; null when that report could not be read. */
 export interface OwnerMoneyNumbers {
   cash: number | null;
   owe: number | null;
@@ -91,24 +91,30 @@ function MoneyCard({
 }) {
   return (
     <a
-      className={`ui-kpi ui-home-kpi ${value === null ? "none" : tone}`}
+      className={`ui-kpi ui-home-kpi ui-kpi-top ${value === null ? "none" : tone}`}
       href={hashForPage(page)}
     >
-      <span className="ui-kpi-label">
-        <span className="ui-kpi-icon">
-          <Icon name={icon} small />
+      {/* Owner 12/11/2026: the number sits at the top right, beside the name. */}
+      <span className="ui-kpi-head">
+        <span className="ui-kpi-label">
+          <span className="ui-kpi-icon">
+            <Icon name={icon} small />
+          </span>
+          <span>{label}</span>
         </span>
-        {label}
-      </span>
-      <span className="ui-kpi-value ui-num">
-        {value === null ? "—" : usdFromCents(value)}
+        <span className="ui-kpi-value ui-num">
+          {value === null ? "—" : usdFromCents(value)}
+        </span>
       </span>
       <span className="ui-kpi-note">{note}</span>
     </a>
   );
 }
 
-/** Owner money on Home: five cards, for the Owner (ledger.owner_money with ledger.read). */
+/**
+ * The Owner's money on Home ("Financial summary"): five cards, shown to the Owner only
+ * (ledger.owner_money with ledger.read). Owner 12/11/2026: the box no longer says so in words.
+ */
 export function OwnerMoney({
   language,
   propertyId,
@@ -160,9 +166,6 @@ export function OwnerMoney({
     <section aria-labelledby="home-owner-money" className="ui-card">
       <div className="ui-chead">
         <h2 id="home-owner-money">{hmt(language, "om_t")}</h2>
-        <Chip icon="lock" tone="neutral">
-          {hmt(language, "om_only")}
-        </Chip>
       </div>
       <CardGrid className="ui-home-kpis ui-om">
         <MoneyCard
@@ -230,65 +233,4 @@ export function attendanceToCheck(day: AttendanceDay): {
       line.scans.some((scan) => scan.needs_check && !scan.accepted),
   ).length;
   return { total, scans, noOut };
-}
-
-/** The Attendance card on Home (hr.attendance.read): what needs a look on today's sheet. */
-export function AttendanceCard({
-  language,
-  propertyId,
-  active,
-  api,
-}: {
-  language: Language;
-  propertyId: string;
-  active: boolean;
-  api: Pick<HrApi, "day">;
-}) {
-  const [found, setFound] = useState<ReturnType<
-    typeof attendanceToCheck
-  > | null>(null);
-  useEffect(() => {
-    if (!active || propertyId === "") return;
-    let current = true;
-    api.day(propertyId, null).then(
-      (day) => {
-        if (current) setFound(attendanceToCheck(day));
-      },
-      () => {
-        if (current) setFound(null);
-      },
-    );
-    return () => {
-      current = false;
-    };
-  }, [active, api, propertyId]);
-  if (found === null) return null;
-  return (
-    // UI v81 round 2: one row as in the design (app31 .hm31r): the icon, the words, the button.
-    <section aria-labelledby="home-attendance" className="ui-card">
-      <div className="ui-attrow">
-        <span
-          aria-hidden="true"
-          className={found.total > 0 ? "ui-attic warn" : "ui-attic ok"}
-        >
-          <Icon name={found.total > 0 ? "alert" : "check"} />
-        </span>
-        <div>
-          <h2 id="home-attendance">
-            {hmt(language, "at_t")}:{" "}
-            <span className="ui-num">{found.total}</span>
-          </h2>
-          <p className="ui-small">
-            {found.total > 0
-              ? hmt(language, "at_n", found.total, found.scans, found.noOut)
-              : hmt(language, "at_0")}
-          </p>
-        </div>
-        <a className="ui-btn" href={hashForPage("attendance")}>
-          {hmt(language, "at_open")}
-          <Icon name="forward" small />
-        </a>
-      </div>
-    </section>
-  );
 }

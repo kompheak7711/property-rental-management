@@ -154,9 +154,9 @@ const card = (name: RegExp) => {
 };
 
 describe("Home", () => {
-  it("TEST-FE-928 shows the eight cards in the design order with their notes and links, and the head line and buttons", async () => {
+  it("TEST-FE-928 shows the cards in the owner's order (12/11/2026) with their notes and links, and the head buttons", async () => {
     const { api } = show(() => Promise.resolve(PAGE));
-    expect(await screen.findByText("21 / 23")).toBeTruthy();
+    expect(await screen.findByText("Vacant Units")).toBeTruthy();
     expect(api.home).toHaveBeenCalledWith("property-1");
     // UI v81 round 4 (owner 08/11/2026): no line under the title any more.
     expect(screen.queryByText(/As of 10:30/)).toBeNull();
@@ -164,26 +164,30 @@ describe("Home", () => {
     const labels = Array.from(
       document.querySelectorAll(".ui-home-kpi .ui-kpi-label"),
     ).map((element) => element.textContent);
+    // Owner 12/11/2026: Vacant Units takes the place of Occupancy and there is no Paid on time
+    // card; the cards from other reads are in TEST-FE-1931.
     expect(labels).toEqual([
-      "Occupancy",
+      "Vacant Units",
+      "Leases ending soon",
       "Pending payment",
       "Paid this month",
       "Overdue",
-      "Leases ending soon",
       "Approvals",
       "Meter readings missing",
       "Notices due",
       "Birthdays",
-      "Paid on time",
     ]);
+    expect(screen.queryByText("Paid on time")).toBeNull();
+    expect(screen.queryByText("Occupancy")).toBeNull();
     expect(card(/Birthdays/).textContent).toContain("3Today to 10/11/2026");
     // The Customers page Birthdays tab comes with the Customers batch; until then the card opens
     // the Customers list.
     expect(card(/Birthdays/).getAttribute("href")).toBe("#/customers");
-    expect(card(/Paid on time/).textContent).toContain(
-      "79%95 of 120 Invoices, last 12 months",
+    // Only the vacant Units are counted; the note says how many Units there are.
+    expect(card(/Vacant Units/).textContent).toBe(
+      "Vacant Units123 Units · 1 reserved",
     );
-    expect(card(/Occupancy/).textContent).toContain("1 reserved · 1 vacant");
+    expect(card(/Vacant Units/).getAttribute("href")).toBe("#/units");
     expect(card(/Approvals/).textContent).toContain(
       "1 to confirm · Refunds pending $5.00",
     );
@@ -221,7 +225,7 @@ describe("Home", () => {
     ).toBe("#/utilities");
   });
 
-  it("TEST-FE-1912 (UI v81 round 2) adds the Viewing requests waiting card before Problem reports, in the design's order, for a person who may read them", async () => {
+  it("TEST-FE-1912 (UI v81 round 2, order of 12/11/2026) adds the Viewing requests waiting card after Vacant Units, and Problem reports before Birthdays, for a person who may read them", async () => {
     const problemsApi = {
       summary: vi.fn().mockResolvedValue({
         open: 4,
@@ -263,13 +267,14 @@ describe("Home", () => {
     const labels = Array.from(
       document.querySelectorAll(".ui-home-kpi .ui-kpi-label"),
     ).map((element) => element.textContent);
-    // UI v81 round 4: Birthdays and Paid on time come last.
-    expect(labels.slice(-4)).toEqual([
+    // Owner 12/11/2026: Viewing requests waiting is the second card, after Vacant Units;
+    // Problem reports sits before Birthdays.
+    expect(labels.slice(0, 3)).toEqual([
+      "Vacant Units",
       "Viewing requests waiting",
-      "Problem reports",
-      "Birthdays",
-      "Paid on time",
+      "Leases ending soon",
     ]);
+    expect(labels.slice(-2)).toEqual(["Problem reports", "Birthdays"]);
     const visits = card(/Viewing requests waiting/);
     expect(visits.textContent).toContain("21 late · 2 visits this week");
     expect(visits.getAttribute("href")).toBe("#/visitreqs");
@@ -433,7 +438,9 @@ describe("Home", () => {
         }),
       { capabilities: new Set(["units.read", "utility.read"]) },
     );
-    expect(await screen.findByText("0 / 0")).toBeTruthy();
+    expect((await screen.findByText("Vacant Units")).closest("a")).toHaveClass(
+      "none",
+    );
     expect(document.querySelectorAll(".ui-home-kpi")).toHaveLength(2);
     expect(screen.queryByText("Pending payment")).toBeNull();
     expect(screen.getByText("Nothing overdue")).toBeTruthy();
@@ -464,7 +471,7 @@ describe("Home", () => {
     ).toBeTruthy();
     fail = false;
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
-    expect(await screen.findByText("21 / 23")).toBeTruthy();
+    expect(await screen.findByText("Vacant Units")).toBeTruthy();
     expect(api.home).toHaveBeenCalledTimes(2);
     cleanup();
 
@@ -478,7 +485,7 @@ describe("Home", () => {
     cleanup();
 
     show(() => Promise.resolve(PAGE), { language: "km" });
-    expect(await screen.findByText("អត្រាស្នាក់នៅ")).toBeTruthy();
+    expect(await screen.findByText("បន្ទប់ទំនេរ")).toBeTruthy();
     expect(screen.getByText("ការងារត្រូវធ្វើ")).toBeTruthy();
     // "Paid this month" names the month in the note: "{0}% of {1} due in វិច្ឆិកា".
     await waitFor(() => {
@@ -523,7 +530,7 @@ describe("Home", () => {
       );
 
     showWith(new Set(["reports.read"]));
-    expect(await screen.findByText("21 / 23")).toBeTruthy();
+    expect(await screen.findByText("Vacant Units")).toBeTruthy();
     expect(summary).not.toHaveBeenCalled();
     expect(screen.queryByText("Problem reports")).toBeNull();
     cleanup();
@@ -557,7 +564,7 @@ describe("Home", () => {
 
   it("TEST-FE-1925 Home batch (owner 08/11/2026): Home is drawn with the shared PageHeader (one title, the two buttons beside it) and its cards with the shared CardGrid, the Tasks cards as one named group", async () => {
     show(() => Promise.resolve(PAGE));
-    expect(await screen.findByText("21 / 23")).toBeTruthy();
+    expect(await screen.findByText("Vacant Units")).toBeTruthy();
     const head = document.querySelector("header.ui-pagehead");
     if (!(head instanceof HTMLElement)) throw new Error("no page header");
     expect(
@@ -570,9 +577,211 @@ describe("Home", () => {
         .map((link) => link.textContent),
     ).toEqual(["Receive payment", "Enter meter readings"]);
     const cards = document.querySelector(".ui-kpis.ui-home-kpis");
-    expect(cards?.querySelectorAll(".ui-home-kpi")).toHaveLength(10);
+    expect(cards?.querySelectorAll(".ui-home-kpi")).toHaveLength(9);
     const tasks = screen.getByRole("group", { name: "Tasks" });
     expect(tasks).toHaveClass("ui-kpis", "ui-tasks");
     expect(within(tasks).getAllByRole("button")).toHaveLength(4);
+  });
+
+  it("TEST-FE-1931 (owner 12/11/2026) an Owner sees the fifteen cards in the owner's order: the two Short stays cards, Low stock in place of Paid on time, and Attendance last as a card; a read that fails leaves only its own card out", async () => {
+    const all = new Set([
+      "reports.home",
+      "visit_requests.read",
+      "short_stays.read",
+      "problem_reports.read",
+      "products.read",
+      "hr.attendance.read",
+    ]);
+    const booking = (
+      status: string,
+      check_in_on: string,
+      check_out_on: string,
+    ) => ({ status, check_in_on, check_out_on });
+    const reads = {
+      problemsApi: {
+        summary: vi.fn().mockResolvedValue({
+          open: 4,
+          urgent: 0,
+          late: 0,
+          costs_to_check: [],
+        }),
+      },
+      visitsApi: {
+        visitRequests: vi
+          .fn()
+          .mockResolvedValue({ today: "2026-11-03", requests: [] }),
+      },
+      shortStaysApi: {
+        list: vi.fn().mockResolvedValue([
+          booking("BOOKED", "2026-11-03", "2026-11-05"),
+          booking("BOOKED", "2026-11-09", "2026-11-12"),
+          booking("BOOKED", "2026-11-20", "2026-11-21"),
+          booking("CHECKED_IN", "2026-11-01", "2026-11-04"),
+          booking("CHECKED_IN", "2026-11-02", "2026-11-06"),
+          // Stays that ended or never began are not counted.
+          booking("CHECKED_OUT", "2026-10-30", "2026-11-03"),
+          booking("CANCELLED", "2026-11-03", "2026-11-04"),
+          booking("NO_SHOW", "2026-11-02", "2026-11-03"),
+        ]),
+      },
+      productsApi: {
+        catalogue: vi.fn().mockResolvedValue({
+          rules: {},
+          categories: [],
+          products: [
+            { low_stock: true, discontinued: false },
+            { low_stock: true, discontinued: false },
+            { low_stock: false, discontinued: false },
+            // A product no longer sold is not counted.
+            { low_stock: true, discontinued: true },
+          ],
+        }),
+      },
+      attendanceApi: {
+        day: vi.fn().mockResolvedValue({
+          people: [
+            { no_check_out: true, scans: [] },
+            {
+              no_check_out: false,
+              scans: [{ needs_check: true, accepted: false }],
+            },
+            {
+              no_check_out: true,
+              scans: [{ needs_check: true, accepted: false }],
+            },
+            {
+              no_check_out: false,
+              scans: [{ needs_check: true, accepted: true }],
+            },
+          ],
+        }),
+      },
+    };
+    const showAll = (
+      over: Record<string, unknown> = {},
+      capabilities: ReadonlySet<string> = all,
+    ) =>
+      render(
+        <HomeScreen
+          active
+          capabilities={capabilities}
+          homeApi={{ home: vi.fn(() => Promise.resolve(PAGE)) }}
+          language="en"
+          propertyId="property-1"
+          {...({ ...reads, ...over } as object)}
+        />,
+      );
+    const names = () =>
+      Array.from(
+        document.querySelectorAll(".ui-home-kpis .ui-home-kpi .ui-kpi-label"),
+      ).map((element) => element.textContent);
+
+    showAll();
+    expect(await screen.findByText("Attendance")).toBeTruthy();
+    await waitFor(() => {
+      expect(names()).toEqual([
+        "Vacant Units",
+        "Viewing requests waiting",
+        "Leases ending soon",
+        "Short stay bookings",
+        "Short stays checked in",
+        "Pending payment",
+        "Paid this month",
+        "Overdue",
+        "Approvals",
+        "Meter readings missing",
+        "Notices due",
+        "Problem reports",
+        "Birthdays",
+        "Low stock",
+        "Attendance",
+      ]);
+    });
+    expect(reads.shortStaysApi.list).toHaveBeenCalledWith("property-1");
+    expect(reads.productsApi.catalogue).toHaveBeenCalledWith("property-1");
+    expect(reads.attendanceApi.day).toHaveBeenCalledWith("property-1", null);
+
+    // Booked and not checked in yet; one of the three arrives on the business date.
+    const booked = card(/Short stay bookings/);
+    expect(booked.textContent).toBe("Short stay bookings31 arrives today");
+    expect(booked.getAttribute("href")).toBe("#/shortstays");
+    // Staying now; nobody checks out on the business date.
+    const staying = card(/Short stays checked in/);
+    expect(staying.textContent).toBe(
+      "Short stays checked in2None check out today",
+    );
+    expect(staying.getAttribute("href")).toBe("#/shortstays");
+    const low = card(/Low stock/);
+    expect(low.textContent).toBe(
+      "Low stock2Products at or below the reorder level",
+    );
+    expect(low.getAttribute("href")).toBe("#/products");
+    // Three people need a look: two scans to check, two with no check-out (one has both).
+    const attendance = card(/Attendance/);
+    expect(attendance.textContent).toBe(
+      "Attendance3Needs check 2 · No check-out 2",
+    );
+    expect(attendance.getAttribute("href")).toBe("#/attendance");
+    expect(attendance).toHaveClass("warn");
+    // The old banner above the cards is gone.
+    expect(screen.queryByText(/Attendance needs attention/)).toBeNull();
+    expect(
+      screen.queryByRole("link", { name: "Open the daily sheet" }),
+    ).toBeNull();
+    cleanup();
+
+    // Each of these reads can fail by itself; the other cards still show.
+    showAll({
+      shortStaysApi: { list: vi.fn().mockRejectedValue(new Error("down")) },
+      productsApi: {
+        catalogue: vi.fn().mockRejectedValue(new Error("down")),
+      },
+      attendanceApi: {
+        day: vi.fn().mockResolvedValue({ people: [] }),
+      },
+    });
+    expect(await screen.findByText("Attendance")).toBeTruthy();
+    expect(card(/Attendance/).textContent).toBe(
+      "Attendance0Nothing to check today",
+    );
+    expect(card(/Attendance/)).toHaveClass("none");
+    expect(names()).not.toContain("Short stay bookings");
+    expect(names()).not.toContain("Short stays checked in");
+    expect(names()).not.toContain("Low stock");
+    cleanup();
+
+    // A person without the three rights reads none of them.
+    const quiet = {
+      shortStaysApi: { list: vi.fn() },
+      productsApi: { catalogue: vi.fn() },
+      attendanceApi: { day: vi.fn() },
+    };
+    showAll(quiet, new Set(["reports.home"]));
+    expect(await screen.findByText("Vacant Units")).toBeTruthy();
+    expect(quiet.shortStaysApi.list).not.toHaveBeenCalled();
+    expect(quiet.productsApi.catalogue).not.toHaveBeenCalled();
+    expect(quiet.attendanceApi.day).not.toHaveBeenCalled();
+    expect(names()).not.toContain("Attendance");
+  });
+
+  it("TEST-FE-1932 (owner 12/11/2026) every Home card and Tasks card holds its number beside its name, in the card's head, with the note under it; only Paid this month has a bar", async () => {
+    show(() => Promise.resolve(PAGE));
+    expect(await screen.findByText("Vacant Units")).toBeTruthy();
+    const cards = Array.from(
+      document.querySelectorAll(".ui-home-kpis .ui-kpi, .ui-tasks .ui-kpi"),
+    );
+    expect(cards).toHaveLength(13);
+    for (const each of cards) {
+      expect(each).toHaveClass("ui-kpi-top");
+      const head = each.firstElementChild;
+      expect(head).toHaveClass("ui-kpi-head");
+      expect(
+        Array.from(head?.children ?? []).map((part) => part.className),
+      ).toEqual(["ui-kpi-label", "ui-kpi-value ui-num"]);
+      expect(head?.nextElementSibling).toHaveClass("ui-kpi-note");
+    }
+    const bars = document.querySelectorAll(".ui-home-meter");
+    expect(bars).toHaveLength(1);
+    expect(bars[0]?.closest("a")?.textContent).toContain("Paid this month");
   });
 });

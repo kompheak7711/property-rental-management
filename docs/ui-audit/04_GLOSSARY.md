@@ -67,3 +67,14 @@ Branch `ui-v81`, 07/11/2026. The words the app uses after batch 5, so every scre
 - One of a thing reads as one: "1 day", "1 person", "1 Unit" (English only).
 - Dates stay dd/mm/yyyy (for example 07/11/2026).
 - Labels have no end period. Messages, errors and empty-state lines are sentences and keep it.
+
+## Home cards (owner 12/11/2026)
+
+| Use | Do not use | Note |
+|---|---|---|
+| Financial summary | Owner money (on Home) | The Owner's money box on Home. "Owner's capital and drawings" stays the Ledger term. |
+| Vacant Units | Occupancy | The card counts only the vacant Units. |
+| Short stay bookings | | Bookings not checked in yet. |
+| Short stays checked in | | Guests staying now. |
+| Low stock | | Products at or below their reorder level. |
+| Attendance | Attendance needs attention | The Home card; the number is the people to check today. |

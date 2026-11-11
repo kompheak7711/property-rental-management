@@ -586,3 +586,44 @@ Tests: TEST-FE-1926 (Collapse menu), 1927 (groups), 1928 (sub-items and their ad
 ### Open questions (for the owner)
 
 - The design data: run it on the Mac test app only on an EMPTY test database (`sh scripts/local/seed-design-data.sh`); it refuses otherwise. A test database that already holds rows needs a fresh database first (database.sh).
+
+## Round 7 (owner 12/11/2026 04:23): Home cards
+
+The owner answered the Home sheets with a numbered picture and seven points. These are the owner's own choices, so where they differ from design v81 the owner's choice wins.
+
+### What changed
+
+| Owner point | Before | Now | Where |
+|---|---|---|---|
+| 1 | Box "Owner money" with the chip "Only the Owner sees this" | Box "Financial summary" (Khmer សង្ខេបហិរញ្ញវត្ថុ), no chip. Still shown only to a person with `ledger.owner_money` and `ledger.read` | `home/OwnerMoney.tsx`, `home/text.ts` |
+| 2 | Each card: name, then the number on its own line, then the note | The number sits at the top right, beside the name; the note is under them. On Home this is every card: the Financial summary, the cards and the Tasks cards (class `ui-kpi-top`, head `ui-kpi-head`) | `home/HomeScreen.tsx`, `home/OwnerMoney.tsx`, `shell/screens.css` |
+| 3 | No Short stays cards | "Short stay bookings": bookings with the status Booked (not checked in yet), note "1 arrives today". "Short stays checked in": guests staying now (status Checked in), note "1 checks out today". Both open Short stays; read with `short_stays.read` from the bookings list the Short stays page already reads | `home/HomeScreen.tsx` (`staysNowOf`) |
+| 4 | "Occupancy 21 / 23 · 1 reserved · 1 vacant" | "Vacant Units 1 · 23 Units · 1 reserved" (only the vacant Units are counted; the same Home read) | `home/HomeScreen.tsx` |
+| 5 | "Paid on time" card | "Low stock": products at or below their reorder level and still sold (the Products page's own `low_stock` mark); opens Products; read with `products.read` | `home/HomeScreen.tsx` (`lowStockOf`) |
+| 6 | A wide "Attendance needs attention: n" row above the cards with the button "Open the daily sheet" | A card "Attendance" as the last card: the people to check today, note "Needs check 2 · No check-out 1" or "Nothing to check today"; opens the daily sheet | `home/HomeScreen.tsx`, `home/OwnerMoney.tsx` (`attendanceToCheck`) |
+| 7 | Occupancy, Pending payment, Paid this month, Overdue, Leases ending soon, Approvals, Meter readings missing, Notices due, Viewing requests waiting, Problem reports, Birthdays, Paid on time | Vacant Units, Viewing requests waiting, Leases ending soon, Short stay bookings, Short stays checked in, Pending payment, Paid this month, Overdue, Approvals, Meter readings missing, Notices due, Problem reports, Birthdays, Low stock, Attendance | `home/HomeScreen.tsx` |
+
+No database or server change: every number comes from a read the app already has, and each new card is read only by a person who holds its right; a read that fails leaves only its own card out.
+
+### How the number fits (point 2)
+
+- The name takes the room left of the number and may take three lines. The number is as tall as the icon circle, so it sits level with the first line of the name.
+- When the name and the number do not fit side by side (a long amount in a narrow phone card), the number goes under the name, at the right. Nothing is cut.
+- The card measures itself (a CSS container): a card narrower than 200 px inside drops the icon circle and draws the number a little smaller (1.05rem to 1.5rem with the card's width).
+- A row of cards is only as tall as its own cards (it was as tall as the tallest card of the page).
+- Fifteen cards are 4 + 4 + 4 + 3 on a desktop and fourteen are 4 + 4 + 3 + 3; a tablet keeps three per row and a phone two per row (round 3 rules).
+
+### Review data
+
+The review app's sample data got three sample products with a reorder level (and one without), three short-stay bookings in U305 (one checked in today, two booked) made through the app's own screens' server calls; Attendance has no rows yet, so its card reads "0 · Nothing to check today".
+
+### Every difference from design v81 left, with its reason
+
+| Part | Design v81 | App | Why |
+|---|---|---|---|
+| Box name | Owner money, "Only the Owner sees this" | Financial summary, no chip | Owner 12/11, point 1 |
+| Card layout | Number on its own line under the name | Number at the top right | Owner 12/11, point 2 |
+| Cards and order | 12 cards, Occupancy first, Paid on time last | 15 cards in the owner's order | Owner 12/11, points 3 to 7 |
+| Paid on time | A Home card | Not on Home | Owner 12/11, point 5. The read stays: the Customer card on the Lease page still shows a Customer's "Paid on time" |
+
+Tests: TEST-FE-928, 930, 931, 1294, 1912 and 1925 updated; TEST-FE-1907 (Financial summary) and 1908 (what Attendance counts) updated; new TEST-FE-1931 (the fifteen cards, their counts, rights and failures) and TEST-FE-1932 (the number beside the name on every Home card). Screen check: the Home answers were recorded again (now with the bookings, products and attendance reads); 7 screens × 5 sizes pass.

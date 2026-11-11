@@ -184,7 +184,7 @@ export function FactList({ facts }: { facts: readonly Fact[] }) {
  * The number cards of a page (round 3): twelve columns balanced by the number of cards so no
  * card is alone in a row on a desktop; two by two on a phone. `tasks` is the Home Tasks row
  * (four in a row, two by two on a phone). A `label` names the cards as one group; `className`
- * adds a page's own card rules (the Home cards, the Owner money row).
+ * adds a page's own card rules (the Home cards, the Financial summary row).
  */
 export function CardGrid({
   children,

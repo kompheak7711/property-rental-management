@@ -1,12 +1,15 @@
 // V1-058 R6: Home (DESIGN.md "Home layout", mock-up v43): the page head with "Receive payment"
-// and "Enter meter readings", up to eight cards, and the "What to do" list. The numbers come
-// from the V1-057 Home read; a card or a to-do kind the person may not read is missing from
-// the answer, so it is not shown.
+// and "Enter meter readings", the cards, and the "What to do" list. The numbers come from the
+// V1-057 Home read; a card or a to-do kind the person may not read is missing from the answer,
+// so it is not shown.
+// Owner 12/11/2026: the cards and their order are Vacant Units, Viewing requests waiting,
+// Leases ending soon, Short stay bookings, Short stays checked in, Pending payment, Paid this
+// month, Overdue, Approvals, Meter readings missing, Notices due, Problem reports, Birthdays,
+// Low stock, Attendance; every card shows its number at the top right, beside its name.
 
 import "../shell/screens.css";
 
 import {
-  Fragment,
   type ReactNode,
   useCallback,
   useEffect,
@@ -44,7 +47,16 @@ import {
   type LedgerApi,
   ledgerApi as defaultLedgerApi,
 } from "../ledger/ledgerClient";
-import { AttendanceCard, OwnerMoney } from "./OwnerMoney";
+import { OwnerMoney, attendanceToCheck } from "./OwnerMoney";
+import {
+  type ProductsApi,
+  productsApi as defaultProductsApi,
+} from "../products/productsClient";
+import {
+  type Booking,
+  type ShortStaysApi,
+  shortStaysApi as defaultShortStaysApi,
+} from "../shortstays/shortStaysClient";
 import {
   type TelegramApi,
   telegramApi as defaultTelegramApi,
@@ -63,12 +75,56 @@ export interface HomeScreenProps {
   capabilities: ReadonlySet<string> | null;
   /** DL-131: the Problem reports card, read only by a person who may see Problem reports. */
   problemsApi?: Pick<ProblemsApi, "summary">;
-  /** UI v81: the Owner money box (ledger.owner_money and ledger.read). */
+  /** UI v81: the Financial summary box (ledger.owner_money and ledger.read). */
   ledgerApi?: Pick<LedgerApi, "report">;
   /** UI v81: the Attendance card (hr.attendance.read). */
   attendanceApi?: Pick<HrApi, "day">;
   /** UI v81 round 2: the Viewing requests waiting card (visit_requests.read). */
   visitsApi?: Pick<TelegramApi, "visitRequests">;
+  /** Owner 12/11/2026: the two Short stays cards (short_stays.read). */
+  shortStaysApi?: Pick<ShortStaysApi, "list">;
+  /** Owner 12/11/2026: the Low stock card (products.read). */
+  productsApi?: Pick<ProductsApi, "catalogue">;
+}
+
+/** The two Short stays cards: bookings still to check in, and guests staying now. */
+export interface StaysNow {
+  booked: number;
+  arriveToday: number;
+  checkedIn: number;
+  outToday: number;
+}
+
+/**
+ * Counts the bookings by their status as the server gave it: "Booked" has not checked in yet,
+ * "Checked in" is staying now. `today` is the Property's business date ("yyyy-mm-dd").
+ */
+export function staysNowOf(
+  bookings: readonly {
+    status: string;
+    check_in_on: string;
+    check_out_on: string;
+  }[],
+  today: string,
+): StaysNow {
+  const day = today.slice(0, 10);
+  const booked = bookings.filter((item) => item.status === "BOOKED");
+  const staying = bookings.filter((item) => item.status === "CHECKED_IN");
+  return {
+    booked: booked.length,
+    arriveToday: booked.filter((item) => item.check_in_on.slice(0, 10) === day)
+      .length,
+    checkedIn: staying.length,
+    outToday: staying.filter((item) => item.check_out_on.slice(0, 10) === day)
+      .length,
+  };
+}
+
+/** Products the server marks as low stock (stock at or below the reorder level), still sold. */
+export function lowStockOf(
+  products: readonly { low_stock: boolean; discontinued: boolean }[],
+): number {
+  return products.filter((item) => item.low_stock && !item.discontinued).length;
 }
 
 /** The Viewing requests card: new requests nobody took yet, how many are late, visits this week. */
@@ -295,30 +351,29 @@ function Card({
   /** UI v81 round 4: the sub-tab of that page the card opens ("?tab="). */
   tab?: string;
   /** 0 to 100 for the bar under the note; none when the card has no bar. */
-  /** "blank" keeps the room of a bar, so the values of the first row stay level. */
-  meter?: number | "blank";
+  meter?: number;
   empty: boolean;
 }) {
   return (
     <a
-      className={`ui-kpi ui-home-kpi ${empty ? "none" : tone}`}
+      className={`ui-kpi ui-home-kpi ui-kpi-top ${empty ? "none" : tone}`}
       href={
         tab === undefined
           ? hashForPage(page)
           : `${hashForPage(page)}?tab=${encodeURIComponent(tab)}`
       }
     >
-      <span className="ui-kpi-label">
-        <span className="ui-kpi-icon">
-          <Icon name={icon} small />
+      {/* Owner 12/11/2026: the number sits at the top right, beside the name. */}
+      <span className="ui-kpi-head">
+        <span className="ui-kpi-label">
+          <span className="ui-kpi-icon">
+            <Icon name={icon} small />
+          </span>
+          <span>{label}</span>
         </span>
-        {label}
+        <span className="ui-kpi-value ui-num">{value}</span>
       </span>
-      <span className="ui-kpi-value ui-num">{value}</span>
       <span className="ui-kpi-note">{note}</span>
-      {meter === "blank" && (
-        <span aria-hidden="true" className="ui-home-meter blank" />
-      )}
       {typeof meter === "number" && (
         <span aria-hidden="true" className="ui-home-meter">
           <span
@@ -330,32 +385,112 @@ function Card({
   );
 }
 
+/** What the Attendance card shows: lines to check on today's sheet. */
+type AttendanceNow = ReturnType<typeof attendanceToCheck>;
+
 function Cards({
   language,
   cards,
   today,
-  extra,
+  visits,
+  problems,
+  stays,
+  lowStock,
+  attendance,
 }: {
   language: Language;
   cards: HomeCards;
   today: string;
-  /** Cards from other reads: Viewing requests waiting, then Problem reports (design order). */
-  extra?: ReactNode;
+  /** Cards from other reads; each is null for a person who may not read it. */
+  visits: VisitsWaiting | null;
+  problems: ProblemSummary | null;
+  stays: StaysNow | null;
+  lowStock: number | null;
+  attendance: AttendanceNow | null;
 }) {
+  // Owner 12/11/2026: the order is Vacant Units, Viewing requests waiting, Leases ending soon,
+  // the two Short stays cards, the three money cards, Approvals, Meter readings missing,
+  // Notices due, Problem reports, Birthdays, Low stock, Attendance.
   const shown: ReactNode[] = [];
   const units = cards.units_occupied;
   if (units !== undefined) {
     shown.push(
       <Card
-        empty={units.total === 0}
+        empty={units.vacant === 0}
         icon="units"
-        key="units"
-        label={hmt(language, "k_occ")}
-        meter={units.total > 0 ? (units.occupied * 100) / units.total : 0}
-        note={hmt(language, "k_occ_s", units.reserved, units.vacant)}
+        key="vacant"
+        label={hmt(language, "k_vac")}
+        note={hmt(language, "k_vac_s", units.total, units.reserved)}
         page="units"
         tone="brand"
-        value={`${String(units.occupied)} / ${String(units.total)}`}
+        value={String(units.vacant)}
+      />,
+    );
+  }
+  if (visits !== null) {
+    shown.push(
+      <Card
+        empty={visits.waiting === 0}
+        icon="door"
+        key="visits"
+        label={hmt(language, "n_vr")}
+        note={hmt(language, "n_vr_s", visits.late, visits.visitsThisWeek)}
+        page="visitreqs"
+        tone={visits.late > 0 ? "err" : "brand"}
+        value={String(visits.waiting)}
+      />,
+    );
+  }
+  const renewal = cards.lease_renewal;
+  if (renewal !== undefined) {
+    shown.push(
+      <Card
+        empty={renewal.count === 0}
+        icon="lease"
+        key="renewal"
+        label={hmt(language, "n_lease")}
+        note={hmt(language, "n_lease_s", dayText(renewal.end_on_or_before))}
+        page="leases"
+        tone="info"
+        value={String(renewal.count)}
+      />,
+    );
+  }
+  if (stays !== null) {
+    const countKey = (
+      count: number,
+      none: HomeTextKey,
+      one: HomeTextKey,
+      many: HomeTextKey,
+    ) => (count === 0 ? none : count === 1 ? one : many);
+    shown.push(
+      <Card
+        empty={stays.booked === 0}
+        icon="calendar"
+        key="stays-booked"
+        label={hmt(language, "n_ssb")}
+        note={hmt(
+          language,
+          countKey(stays.arriveToday, "n_ssb_s0", "n_ssb_s1", "n_ssb_s"),
+          stays.arriveToday,
+        )}
+        page="shortstays"
+        tone="info"
+        value={String(stays.booked)}
+      />,
+      <Card
+        empty={stays.checkedIn === 0}
+        icon="moveout"
+        key="stays-in"
+        label={hmt(language, "n_ssin")}
+        note={hmt(
+          language,
+          countKey(stays.outToday, "n_ssin_s0", "n_ssin_s1", "n_ssin_s"),
+          stays.outToday,
+        )}
+        page="shortstays"
+        tone="ok"
+        value={String(stays.checkedIn)}
       />,
     );
   }
@@ -367,7 +502,6 @@ function Cards({
         icon="invoice"
         key="pending"
         label={hmt(language, "k_pend")}
-        meter="blank"
         note={hmt(
           language,
           pending.invoice_count === 1 ? "k_pend_s1" : "k_pend_s",
@@ -411,7 +545,6 @@ function Cards({
           icon="payments"
           key="paid"
           label={label}
-          meter="blank"
           note={hmt(
             language,
             paid.payment_count === 1 ? "k_paid_recv1" : "k_paid_recv",
@@ -432,7 +565,6 @@ function Cards({
         icon="alert"
         key="overdue"
         label={hmt(language, "k_over")}
-        meter="blank"
         note={hmt(
           language,
           overdue.invoice_count === 1 ? "k_over_s1" : "k_over_s",
@@ -441,21 +573,6 @@ function Cards({
         page="invoices"
         tone="err"
         value={usdFromCents(overdue.amount_usd_cents)}
-      />,
-    );
-  }
-  const renewal = cards.lease_renewal;
-  if (renewal !== undefined) {
-    shown.push(
-      <Card
-        empty={renewal.count === 0}
-        icon="lease"
-        key="renewal"
-        label={hmt(language, "n_lease")}
-        note={hmt(language, "n_lease_s", dayText(renewal.end_on_or_before))}
-        page="leases"
-        tone="info"
-        value={String(renewal.count)}
       />,
     );
   }
@@ -513,9 +630,20 @@ function Cards({
       />,
     );
   }
-  if (extra !== null && extra !== undefined)
-    shown.push(<Fragment key="problems">{extra}</Fragment>);
-  // UI v81 round 4 (owner 08/11/2026): Birthdays and Paid on time, last, as in the design.
+  if (problems !== null) {
+    shown.push(
+      <Card
+        empty={problems.open === 0}
+        icon="wrench"
+        key="problems"
+        label={hmt(language, "n_problems")}
+        note={hmt(language, "n_problems_s", problems.urgent, problems.late)}
+        page="problems"
+        tone={problems.urgent > 0 || problems.late > 0 ? "err" : "info"}
+        value={String(problems.open)}
+      />,
+    );
+  }
   const birthdays = cards.birthdays;
   if (birthdays !== undefined) {
     shown.push(
@@ -531,72 +659,40 @@ function Cards({
       />,
     );
   }
-  const onTime = cards.paid_on_time;
-  if (onTime !== undefined) {
-    const percent =
-      onTime.invoice_count > 0
-        ? Math.floor((onTime.on_time * 100) / onTime.invoice_count)
-        : null;
+  if (lowStock !== null) {
     shown.push(
       <Card
-        empty={percent === null}
-        icon="check"
-        key="ontime"
-        label={hmt(language, "n_ontime")}
-        meter={percent ?? "blank"}
+        empty={lowStock === 0}
+        icon="box"
+        key="lowstock"
+        label={hmt(language, "n_low")}
+        note={hmt(language, "n_low_s")}
+        page="products"
+        tone="warn"
+        value={String(lowStock)}
+      />,
+    );
+  }
+  if (attendance !== null) {
+    shown.push(
+      <Card
+        empty={attendance.total === 0}
+        icon="staff"
+        key="attendance"
+        label={hmt(language, "at_t")}
         note={
-          percent === null
-            ? hmt(language, "n_ontime_none")
-            : hmt(language, "n_ontime_s", onTime.on_time, onTime.invoice_count)
+          attendance.total > 0
+            ? hmt(language, "at_n", attendance.scans, attendance.noOut)
+            : hmt(language, "at_0")
         }
-        page="customers"
-        tone="ok"
-        value={percent === null ? "—" : `${String(percent)}%`}
+        page="attendance"
+        tone={attendance.total > 0 ? "warn" : "ok"}
+        value={String(attendance.total)}
       />,
     );
   }
   if (shown.length === 0) return null;
   return <CardGrid className="ui-home-kpis">{shown}</CardGrid>;
-}
-
-function ProblemsCard({
-  language,
-  summary,
-}: {
-  language: Language;
-  summary: ProblemSummary;
-}) {
-  return (
-    <Card
-      empty={summary.open === 0}
-      icon="wrench"
-      label={hmt(language, "n_problems")}
-      note={hmt(language, "n_problems_s", summary.urgent, summary.late)}
-      page="problems"
-      tone={summary.urgent > 0 || summary.late > 0 ? "err" : "info"}
-      value={String(summary.open)}
-    />
-  );
-}
-
-function VisitsCard({
-  language,
-  visits,
-}: {
-  language: Language;
-  visits: VisitsWaiting;
-}) {
-  return (
-    <Card
-      empty={visits.waiting === 0}
-      icon="door"
-      label={hmt(language, "n_vr")}
-      note={hmt(language, "n_vr_s", visits.late, visits.visitsThisWeek)}
-      page="visitreqs"
-      tone={visits.late > 0 ? "err" : "brand"}
-      value={String(visits.waiting)}
-    />
-  );
 }
 
 /** Home lists each repair cost still waiting for a Manager's check (mock-up round 32 A5). */
@@ -712,20 +808,22 @@ function TodoList({ language, page }: { language: Language; page: HomePage }) {
             <button
               aria-controls="home-tasks-list"
               aria-pressed={chosen === group}
-              className={`ui-kpi ${items.length === 0 ? "none" : tone}`}
+              className={`ui-kpi ui-kpi-top ${items.length === 0 ? "none" : tone}`}
               key={group}
               onClick={() => {
                 choose(group);
               }}
               type="button"
             >
-              <span className="ui-kpi-label">
-                <span className="ui-kpi-icon">
-                  <Icon name={icon} small />
+              <span className="ui-kpi-head">
+                <span className="ui-kpi-label">
+                  <span className="ui-kpi-icon">
+                    <Icon name={icon} small />
+                  </span>
+                  <span>{hmt(language, `g_${group}`)}</span>
                 </span>
-                <span>{hmt(language, `g_${group}`)}</span>
+                <span className="ui-kpi-value ui-num">{items.length}</span>
               </span>
-              <span className="ui-kpi-value ui-num">{items.length}</span>
               <span className="ui-kpi-note">{lineOf(group, items)}</span>
             </button>
           );
@@ -825,6 +923,8 @@ export function HomeScreen({
   ledgerApi = defaultLedgerApi,
   attendanceApi = defaultHrApi,
   visitsApi = defaultTelegramApi,
+  shortStaysApi = defaultShortStaysApi,
+  productsApi = defaultProductsApi,
 }: HomeScreenProps) {
   const may = (capability: string) =>
     capabilities === null || capabilities.has(capability);
@@ -832,8 +932,15 @@ export function HomeScreen({
   const [failure, setFailure] = useState<"failed" | "not_allowed" | null>(null);
   const [problems, setProblems] = useState<ProblemSummary | null>(null);
   const [visits, setVisits] = useState<VisitsWaiting | null>(null);
+  const [bookings, setBookings] = useState<Booking[] | null>(null);
+  const [lowStock, setLowStock] = useState<number | null>(null);
+  const [attendance, setAttendance] = useState<AttendanceNow | null>(null);
   const sequence = useRef(0);
   const seesVisits = capabilities?.has("visit_requests.read") === true;
+  // Owner 12/11/2026: each of these cards is read only by a person known to hold its right.
+  const seesStays = capabilities?.has("short_stays.read") === true;
+  const seesStock = capabilities?.has("products.read") === true;
+  const seesAttendance = capabilities?.has("hr.attendance.read") === true;
   // Only a person known to see Problem reports reads the card.
   const seesProblems = capabilities?.has("problem_reports.read") === true;
   const checksCosts = capabilities?.has("problem_reports.costs") === true;
@@ -875,7 +982,51 @@ export function HomeScreen({
         .catch(() => {
           if (operation === sequence.current) setVisits(null);
         });
-  }, [homeApi, problemsApi, propertyId, seesProblems, seesVisits, visitsApi]);
+    // The Property's business date comes with the Home read, so the "today" notes of the two
+    // Short stays cards are worked out when the cards are drawn.
+    if (seesStays)
+      shortStaysApi
+        .list(propertyId)
+        .then((loaded) => {
+          if (operation === sequence.current) setBookings(loaded);
+        })
+        .catch(() => {
+          if (operation === sequence.current) setBookings(null);
+        });
+    if (seesStock)
+      productsApi
+        .catalogue(propertyId)
+        .then((loaded) => {
+          if (operation === sequence.current)
+            setLowStock(lowStockOf(loaded.products));
+        })
+        .catch(() => {
+          if (operation === sequence.current) setLowStock(null);
+        });
+    if (seesAttendance)
+      attendanceApi
+        .day(propertyId, null)
+        .then((loaded) => {
+          if (operation === sequence.current)
+            setAttendance(attendanceToCheck(loaded));
+        })
+        .catch(() => {
+          if (operation === sequence.current) setAttendance(null);
+        });
+  }, [
+    attendanceApi,
+    homeApi,
+    problemsApi,
+    productsApi,
+    propertyId,
+    seesAttendance,
+    seesProblems,
+    seesStays,
+    seesStock,
+    seesVisits,
+    shortStaysApi,
+    visitsApi,
+  ]);
 
   // Another Property never shows the numbers of the one before.
   useEffect(() => {
@@ -883,6 +1034,9 @@ export function HomeScreen({
     setPage(null);
     setProblems(null);
     setVisits(null);
+    setBookings(null);
+    setLowStock(null);
+    setAttendance(null);
   }, [propertyId]);
 
   useEffect(() => {
@@ -945,7 +1099,6 @@ export function HomeScreen({
   const seesOwnerMoney =
     capabilities?.has("ledger.owner_money") === true &&
     capabilities.has("ledger.read");
-  const seesAttendance = capabilities?.has("hr.attendance.read") === true;
   return (
     <>
       {head}
@@ -958,30 +1111,17 @@ export function HomeScreen({
           today={page.business_date}
         />
       )}
-      {seesAttendance && (
-        <AttendanceCard
-          active={active}
-          api={attendanceApi}
-          language={language}
-          propertyId={propertyId}
-        />
-      )}
       <Cards
+        attendance={attendance}
         cards={page.cards}
-        extra={
-          visits === null && problems === null ? null : (
-            <>
-              {visits !== null && (
-                <VisitsCard language={language} visits={visits} />
-              )}
-              {problems !== null && (
-                <ProblemsCard language={language} summary={problems} />
-              )}
-            </>
-          )
-        }
         language={language}
+        lowStock={lowStock}
+        problems={problems}
+        stays={
+          bookings === null ? null : staysNowOf(bookings, page.business_date)
+        }
         today={page.business_date}
+        visits={visits}
       />
       {problems !== null && checksCosts && (
         <CostsToCheck language={language} summary={problems} />

@@ -1,10 +1,11 @@
-// UI v81 (design v81 Home): Owner money and the Attendance card. TEST-FE-1907, TEST-FE-1908.
+// UI v81 (design v81 Home; owner 12/11/2026): the Financial summary box and what the
+// Attendance card counts. TEST-FE-1907, TEST-FE-1908.
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { AttendanceDay } from "../hr/hrClient";
 import type { Report, ReportName } from "../ledger/ledgerClient";
-import { AttendanceCard, OwnerMoney } from "./OwnerMoney";
+import { OwnerMoney, attendanceToCheck } from "./OwnerMoney";
 
 afterEach(() => {
   cleanup();
@@ -82,8 +83,8 @@ const REPORTS: Partial<Record<ReportName, Report>> = {
   ]),
 };
 
-describe("Home Owner money and Attendance (UI v81)", () => {
-  it("TEST-FE-1907 Owner money shows cash and bank, what customers owe, the part over 30 days, spent against budget and profit this year", async () => {
+describe("Home Financial summary and Attendance (UI v81)", () => {
+  it('TEST-FE-1907 the Financial summary (owner 12/11/2026: no longer named Owner money, no "Only the Owner sees this") shows cash and bank, what customers owe, the part over 30 days, spent against budget and profit this year', async () => {
     const api = {
       report: vi.fn((_: string, name: ReportName) =>
         REPORTS[name] === undefined
@@ -100,7 +101,11 @@ describe("Home Owner money and Attendance (UI v81)", () => {
         today="2026-11-07"
       />,
     );
-    const box = await screen.findByRole("region", { name: "Owner money" });
+    const box = await screen.findByRole("region", {
+      name: "Financial summary",
+    });
+    expect(screen.queryByText("Owner money")).toBeNull();
+    expect(screen.queryByText("Only the Owner sees this")).toBeNull();
     const cards = within(box)
       .getAllByRole("link")
       .map((card) => card.textContent);
@@ -116,7 +121,7 @@ describe("Home Owner money and Attendance (UI v81)", () => {
     });
   });
 
-  it("TEST-FE-1908 the Attendance card counts scans to check and people with no check-out", async () => {
+  it("TEST-FE-1908 the Attendance card counts the people to check: scans to check and people with no check-out, a person with both once", () => {
     const day = {
       people: [
         { no_check_out: true, scans: [] },
@@ -128,24 +133,9 @@ describe("Home Owner money and Attendance (UI v81)", () => {
         { no_check_out: false, scans: [{ needs_check: true, accepted: true }] },
       ],
     } as unknown as AttendanceDay;
-    render(
-      <AttendanceCard
-        active
-        api={{ day: vi.fn().mockResolvedValue(day) }}
-        language="en"
-        propertyId="property-1"
-      />,
-    );
+    expect(attendanceToCheck(day)).toEqual({ total: 3, scans: 2, noOut: 2 });
     expect(
-      await screen.findByRole("heading", {
-        name: "Attendance needs attention: 3",
-      }),
-    ).toBeTruthy();
-    expect(
-      screen.getByText("3 to check: Needs check 2, No check-out 2."),
-    ).toBeTruthy();
-    expect(
-      screen.getByRole("link", { name: "Open the daily sheet" }),
-    ).toHaveAttribute("href", "#/attendance");
+      attendanceToCheck({ people: [] } as unknown as AttendanceDay),
+    ).toEqual({ total: 0, scans: 0, noOut: 0 });
   });
 });

@@ -26,8 +26,9 @@ const TEXT = {
   retry: ["Retry", "ព្យាយាមម្តងទៀត"],
 
   // UI v81 round 2 (design v81 i18n25): the card names of the design.
-  k_occ: ["Occupancy", "អត្រាស្នាក់នៅ"],
-  k_occ_s: ["{0} reserved · {1} vacant", "បានកក់ {0} · ទំនេរ {1}"],
+  // Owner 12/11/2026: the Occupancy card is a Vacant card (vacant Units only).
+  k_vac: ["Vacant Units", "បន្ទប់ទំនេរ"], // new
+  k_vac_s: ["{0} Units · {1} reserved", "បន្ទប់ {0} · បានកក់ {1}"], // new
   k_pend: ["Pending payment", "ប្រាក់មិនទាន់បង់"],
   k_pend_s: ["{0} Invoices not fully paid", "វិក្កយបត្រ {0} មិនទាន់បង់គ្រប់"],
   // new
@@ -84,18 +85,24 @@ const TEXT = {
   ],
   n_problems_s: ["{0} urgent · {1} late", "{0} បន្ទាន់ · {1} យឺត"],
   n_costs: ["Repair costs to check", "ថ្លៃជួសជុលត្រូវពិនិត្យ"],
-  // UI v81 round 4 (owner 08/11/2026): the Birthdays and Paid on time cards (design i18n).
+  // UI v81 round 4 (owner 08/11/2026): the Birthdays card (design i18n).
   n_bday: ["Birthdays", "ថ្ងៃកំណើត"],
   n_week_s: ["Today to {0}", "ថ្ងៃនេះ ដល់ {0}"],
-  n_ontime: ["Paid on time", "បង់ទាន់ពេល"],
-  n_ontime_s: [
-    "{0} of {1} Invoices, last 12 months",
-    "{0} ក្នុងចំណោម {1} វិក្កយបត្រ 12 ខែចុងក្រោយ",
-  ],
-  n_ontime_none: [
-    "No Invoice was due in the last 12 months",
-    "គ្មានវិក្កយបត្រដល់កំណត់ក្នុង 12 ខែចុងក្រោយ",
-  ],
+  // Owner 12/11/2026: two Short stays cards, and Low stock in place of Paid on time. Khmer is
+  // new and needs the native check.
+  n_ssb: ["Short stay bookings", "ការកក់ស្នាក់នៅខ្លី"], // new
+  n_ssb_s: ["{0} arrive today", "{0} មកដល់ថ្ងៃនេះ"], // new
+  n_ssb_s1: ["1 arrives today", "1 មកដល់ថ្ងៃនេះ"], // new
+  n_ssb_s0: ["None arrive today", "គ្មានអ្នកមកដល់ថ្ងៃនេះ"], // new
+  n_ssin: ["Short stays checked in", "ភ្ញៀវស្នាក់នៅខ្លីបានចូល"], // new
+  n_ssin_s: ["{0} check out today", "{0} ចេញថ្ងៃនេះ"], // new
+  n_ssin_s1: ["1 checks out today", "1 ចេញថ្ងៃនេះ"], // new
+  n_ssin_s0: ["None check out today", "គ្មានអ្នកចេញថ្ងៃនេះ"], // new
+  n_low: ["Low stock", "ស្តុកតិច"],
+  n_low_s: [
+    "Products at or below the reorder level",
+    "ផលិតផលស្មើ ឬក្រោមកម្រិតបញ្ជាទិញឡើងវិញ",
+  ], // new
 
   todo_t: ["Tasks", "ការងារត្រូវធ្វើ"],
   g_overdue: ["Overdue", "ហួសកំណត់"],
@@ -193,9 +200,9 @@ const TEXT = {
   tip_lease: ["Open Lease", "បើកកិច្ចសន្យា"],
   tip_appr: ["Open the draft", "បើកសេចក្តីព្រាង"],
   tip_letter: ["Open Notices", "បើកលិខិត"],
-  // UI v81 (design v81 Home): Owner money and Attendance.
-  om_t: ["Owner money", "ប្រាក់ម្ចាស់"], // new
-  om_only: ["Only the Owner sees this", "មានតែម្ចាស់ឃើញ"], // new
+  // UI v81 (design v81 Home): the Owner's money box and Attendance. Owner 12/11/2026: the box
+  // is named "Financial summary" and no longer says "Only the Owner sees this".
+  om_t: ["Financial summary", "សង្ខេបហិរញ្ញវត្ថុ"], // new
   om_cash: ["Cash and bank today", "សាច់ប្រាក់ និងធនាគារថ្ងៃនេះ"], // new
   om_cash_s: ["Opens the Balance sheet", "បើកតារាងតុល្យការ"], // new
   om_owe: ["Customers owe", "អតិថិជនជំពាក់"], // new
@@ -206,13 +213,13 @@ const TEXT = {
   om_nobudget: ["No budget for this month", "គ្មានថវិកាសម្រាប់ខែនេះ"], // new
   om_profit: ["Profit this year", "ចំណេញឆ្នាំនេះ"], // new
   om_profit_s: ["{0} so far", "{0} រហូតមកដល់ពេលនេះ"], // new
-  at_t: ["Attendance needs attention", "វត្តមានត្រូវយកចិត្តទុកដាក់"], // new
+  // Owner 12/11/2026: Attendance is a card like the others, named "Attendance".
+  at_t: ["Attendance", "វត្តមាន"],
   at_n: [
-    "{0} to check: Needs check {1}, No check-out {2}.",
-    "{0} ត្រូវពិនិត្យ៖ ត្រូវពិនិត្យ {1} គ្មានការចុះចេញ {2}។",
+    "Needs check {0} · No check-out {1}",
+    "ត្រូវពិនិត្យ {0} · គ្មានការចុះចេញ {1}",
   ], // new
-  at_0: ["Nothing to check today.", "ថ្ងៃនេះគ្មានអ្វីត្រូវពិនិត្យ។"], // new
-  at_open: ["Open the daily sheet", "បើកតារាងប្រចាំថ្ងៃ"], // new
+  at_0: ["Nothing to check today", "ថ្ងៃនេះគ្មានអ្វីត្រូវពិនិត្យ"], // new
 } as const satisfies Record<string, readonly [string, string]>;
 
 export type HomeTextKey = keyof typeof TEXT;

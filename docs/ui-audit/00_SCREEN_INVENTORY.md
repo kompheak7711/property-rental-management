@@ -39,7 +39,7 @@ How to read this list:
 
 | Page | Address | Record pages (detail) | Back (direct open) | Sub-tabs (v81) | Batch |
 |---|---|---|---|---|---|
-| Home | `#/home` | – | – | none; adds Owner money and Attendance cards | 3 |
+| Home | `#/home` | – | – | none; adds the Financial summary box (was Owner money) and the Short stays, Low stock and Attendance cards (round 7) | 3 |
 | Top-bar search | (all pages) | opens the record found | – | – | 3 |
 | Payments | `#/payments` | `receive`, `receive:<invoice>`, `receipt:<id>` | Payments | none | 4 |
 | Invoices | `#/invoices` | `inv:<id>`, `new`, edit | Invoices | none (record on one page) | 4 |

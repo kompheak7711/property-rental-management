@@ -346,8 +346,8 @@
    Phone (under 640px): two cards per row, Owner money one per row. Tablet (640 to 1023px): three
    per row, Owner money two per row. Desktop (1024px and up): four per row, and the last rows are
    balanced by the number of cards so no card is alone: 5 = 3 + 2, 7 = 4 + 3, 9 = 3 + 3 + 3,
-   10 = 4 + 3 + 3, 11 = 4 + 4 + 3, 13 = 4 + 3 + 3 + 3. One to three cards stretch to fill the
-   row. Twelve columns. A label or note never wraps past two lines; the cards of one row share
+   10 = 4 + 3 + 3, 11 = 4 + 4 + 3, 13 = 4 + 3 + 3 + 3, 14 = 4 + 4 + 3 + 3, 15 = 4 + 4 + 4 + 3.
+   One to three cards stretch to fill the row. Twelve columns. A label or note never wraps past two lines; the cards of one row share
    the row's height. The Home Tasks cards (.ui-tasks) are four in a row, two by two on a phone. */
 .ui-kpis {
   display: grid;
@@ -376,7 +376,9 @@
   .ui-kpis:has(> :nth-child(7):last-child) > :nth-child(n + 5),
   .ui-kpis:has(> :nth-child(10):last-child) > :nth-child(n + 5),
   .ui-kpis:has(> :nth-child(11):last-child) > :nth-child(n + 9),
-  .ui-kpis:has(> :nth-child(13):last-child) > :nth-child(n + 5) {
+  .ui-kpis:has(> :nth-child(13):last-child) > :nth-child(n + 5),
+  .ui-kpis:has(> :nth-child(14):last-child) > :nth-child(n + 9),
+  .ui-kpis:has(> :nth-child(15):last-child) > :nth-child(n + 13) {
     grid-column: span 4;
   }
 
@@ -449,6 +451,13 @@
     -webkit-line-clamp: 2;
     font-size: clamp(1rem, 5vw, 1.5rem);
     white-space: normal;
+  }
+
+  /* A number beside its name (Home) stays on one line; it goes under the name when the two do
+     not fit side by side. */
+  .ui-kpis .ui-kpi.ui-kpi-top .ui-kpi-value {
+    display: block;
+    white-space: nowrap;
   }
 
   .ui-kpis .ui-kpi .ui-kpi-label {
@@ -607,6 +616,63 @@
   white-space: pre-line;
   color: var(--text-2);
   font-size: 0.82rem;
+}
+
+/* Owner 12/11/2026 (Home): the number sits at the top right, beside the card's name, so a card
+   is shorter. The name takes the room left of the number and may take three lines. When the two
+   do not fit side by side (a long amount in a narrow card) the number goes under the name, at
+   the right, so nothing is cut. The card measures itself: a narrow card drops the icon circle
+   and draws the number a little smaller. */
+.ui-kpi.ui-kpi-top {
+  grid-template-rows: auto 1fr;
+  grid-template-columns: minmax(0, 1fr);
+  container: kpi / inline-size;
+}
+
+.ui-kpi-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.ui-kpi-head > .ui-kpi-label {
+  flex: 1 1 calc(36px + 4.9em);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.ui-kpi-head > .ui-kpi-label > :not(.ui-kpi-icon) {
+  -webkit-line-clamp: 3;
+}
+
+.ui-kpi.ui-kpi-top .ui-kpi-value {
+  flex: none;
+  max-width: 100%;
+  margin-left: auto;
+  font-size: 1.2rem;
+  font-size: clamp(1.05rem, 7.8cqi, 1.5rem);
+  /* As tall as the icon circle, so the number sits level with the first line of the name. */
+  line-height: 28px;
+}
+
+.ui-kpi.ui-kpi-top .ui-kpi-note {
+  align-self: start;
+}
+
+@container kpi (max-width: 200px) {
+  .ui-kpi-head > .ui-kpi-label {
+    flex-basis: 4.9em;
+  }
+
+  .ui-kpi-head .ui-kpi-icon {
+    display: none;
+  }
+
+  .ui-kpi.ui-kpi-top .ui-kpi-value {
+    line-height: 1.3;
+  }
 }
 
 .ui-listbar {
@@ -2052,25 +2118,12 @@ table.ui-table.ui-paylist .ui-phone {
   background: var(--surface);
 }
 
-/* Design v81 .om29 .kv: the Owner money figures are a little smaller (1.6rem) and never wrap. */
-.ui-om .ui-kpi-value {
-  font-size: 1.6rem;
-  white-space: nowrap;
-}
-
-/* V1-058 R6: Home cards and the "What to do" list (mock-up v43). */
-.ui-home-kpis {
-  grid-auto-rows: 1fr;
-}
+/* V1-058 R6: Home cards and the "What to do" list (mock-up v43). Owner 12/11/2026: every Home
+   card (the Financial summary, the cards, the Tasks cards) is a .ui-kpi-top card: two rows, the
+   name with its number and the note; the bar of "Paid this month" adds a row of its own. A row
+   of cards is only as tall as its own cards. */
 a.ui-kpi.ui-home-kpi {
-  grid-template-rows: 1fr auto auto auto;
   text-decoration: none;
-}
-/* Design v81 .kpi.nm: a card without a meter (Owner money, the Tasks cards) has three rows,
-   the label row taking the spare height, so no empty row adds a gap at the bottom. */
-.ui-om a.ui-kpi.ui-home-kpi,
-.ui-tasks > .ui-kpi {
-  grid-template-rows: 1fr auto auto;
 }
 /* Home batch (design v81 .kpi .kv): a card that is a link keeps the dark text, not the link
    green, on every page; red (err) and grey (none) still win. */
@@ -2086,9 +2139,6 @@ a.ui-kpi.ui-home-kpi {
   overflow: hidden;
   border-radius: 4px;
   background: var(--sunken);
-}
-.ui-home-meter.blank {
-  visibility: hidden;
 }
 .ui-home-meter span {
   display: block;
@@ -2301,9 +2351,6 @@ a.ui-kpi.ui-home-kpi {
     grid-row: 1 / span 2;
     grid-column: 3;
     align-self: center;
-  }
-  .ui-home-kpis .ui-kpi-note {
-    min-height: 3.2em;
   }
 }
 
@@ -3284,43 +3331,6 @@ table.ui-numbering .ui-btn.link {
 
 table.ui-numbering td.ui-num {
   white-space: nowrap;
-}
-
-/* UI v81 round 2: the Attendance card on Home is one row (design app31 .hm31r): the icon, the
-   words, the button; it wraps on a narrow screen. */
-.ui-attrow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: center;
-}
-.ui-attrow > div {
-  flex: 1 1 14rem;
-  min-width: 0;
-}
-.ui-attrow h2,
-.ui-attrow p {
-  margin: 0;
-}
-.ui-attrow p {
-  margin-top: 2px;
-}
-.ui-attic {
-  display: inline-flex;
-  flex: none;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-}
-.ui-attic.warn {
-  background: var(--warn-bg);
-  color: var(--warn);
-}
-.ui-attic.ok {
-  background: var(--ok-bg);
-  color: var(--ok);
 }
 
 /* UI v81 round 2: Property › Inspections, the two places of today's inspection work. */
