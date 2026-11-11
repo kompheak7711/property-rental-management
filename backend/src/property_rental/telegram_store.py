@@ -42,6 +42,7 @@ class TelegramStore(Protocol):
         data: dict[str, Any] | None,
         language: str,
         messages: list[dict[str, Any]],
+        reply_to: str | None = None,
     ) -> None: ...
 
     def choose_language(self, bot: str, user: int, language: str) -> None: ...
@@ -61,6 +62,8 @@ class TelegramStore(Protocol):
     def tenant_form_data(self) -> dict[str, Any]: ...
 
     def tenant_offline_data(self) -> dict[str, Any]: ...
+
+    def offline_clock(self) -> dict[str, Any]: ...
 
     def tenant_problem_report(
         self,
@@ -108,7 +111,11 @@ class TelegramStore(Protocol):
     def staff_form_data(self) -> dict[str, Any]: ...
 
     def staff_problem_report(
-        self, inbound_id: str, form: dict[str, Any], media_ids: list[str]
+        self,
+        inbound_id: str,
+        form: dict[str, Any],
+        media_ids: list[str],
+        relay_alerted: bool = False,
     ) -> dict[str, Any]: ...
 
     def staff_close_job(
@@ -242,9 +249,12 @@ class PostgresTelegramStore:
         data: dict[str, Any] | None,
         language: str,
         messages: list[dict[str, Any]],
+        reply_to: str | None = None,
     ) -> None:
+        # reply_to names the inbound message answered: the database keeps each answer to it
+        # once (DL-202 (B)).
         self._one(
-            "SELECT app.telegram_bot_reply(%s, %s, %s, %s, %s, %s::jsonb, %s, %s::jsonb, %s)",
+            "SELECT app.telegram_bot_reply(%s, %s, %s, %s, %s, %s::jsonb, %s, %s::jsonb, %s, %s)",
             self._property,
             bot,
             user,
@@ -254,6 +264,7 @@ class PostgresTelegramStore:
             language,
             json.dumps(messages),
             self._actor,
+            reply_to,
         )
 
     def choose_language(self, bot: str, user: int, language: str) -> None:
@@ -323,6 +334,11 @@ class PostgresTelegramStore:
         result = self._one(
             "SELECT app.telegram_tenant_offline_data(%s, %s)", self._property, self._actor
         )
+        assert isinstance(result, dict)
+        return result
+
+    def offline_clock(self) -> dict[str, Any]:
+        result = self._one("SELECT app.telegram_offline_clock(%s, %s)", self._property, self._actor)
         assert isinstance(result, dict)
         return result
 
@@ -504,10 +520,21 @@ class PostgresTelegramStore:
         )
 
     def staff_problem_report(
-        self, inbound_id: str, form: dict[str, Any], media_ids: list[str]
+        self,
+        inbound_id: str,
+        form: dict[str, Any],
+        media_ids: list[str],
+        relay_alerted: bool = False,
     ) -> dict[str, Any]:
+        # An urgent report the relay already sent to the caretaker is saved without a second
+        # alert (DL-213, as DL-210 for the Tenant bot).
+        flag = (
+            " FROM (SELECT set_config('prm.relay_alerted', 'on', true)) AS flag"
+            if relay_alerted
+            else ""
+        )
         return self._staff_dict(
-            "SELECT app.telegram_staff_problem_report(%s, %s, %s::jsonb, %s::jsonb, %s)",
+            "SELECT app.telegram_staff_problem_report(%s, %s, %s::jsonb, %s::jsonb, %s)" + flag,
             self._property,
             inbound_id,
             json.dumps(form),

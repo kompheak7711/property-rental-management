@@ -108,6 +108,7 @@ class FakeStore:
         self.languages: dict[int, str] = {}
         self.steps: dict[int, tuple[str, dict[str, Any]]] = {}
         self.replies: list[dict[str, Any]] = []
+        self.reply_to: list[str | None] = []
         self.phones: set[int] = set()
         self.links: dict[int, dict[str, Any]] = {}
         self.link_answers: list[dict[str, Any]] = []
@@ -143,12 +144,15 @@ class FakeStore:
         self.staff_data: dict[str, Any] = {"choices": {}, "users": []}
         self.photos_due: list[dict[str, Any]] = []
         self.photos_removed: list[str] = []
+        # The Customer and Staff bots while the office is away (migration 20270711_383, DL-213).
+        self.clock: dict[str, Any] = {"timezone_name": "Asia/Phnom_Penh", "utc_offset_minutes": 420}
+        self.staff_join_state = "WAITING"
 
     def record_item(self, item: dict[str, Any]) -> dict[str, Any]:
         if item["relay_item_id"] in self.items:
             return {"saved": False}
         self.items[item["relay_item_id"]] = item
-        return {"saved": True}
+        return {"saved": True, "inbound_id": item["relay_item_id"]}
 
     def record_run(self, run: dict[str, Any]) -> None:
         self.runs.append(run)
@@ -191,7 +195,9 @@ class FakeStore:
         data: dict[str, Any] | None,
         language: str,
         messages: list[dict[str, Any]],
+        reply_to: str | None = None,
     ) -> None:
+        self.reply_to.append(reply_to)
         if step is not None:
             self.steps[user] = (step, data or {})
         for message in messages:
@@ -229,6 +235,9 @@ class FakeStore:
 
     def tenant_offline_data(self) -> dict[str, Any]:
         return self.offline_data
+
+    def offline_clock(self) -> dict[str, Any]:
+        return self.clock
 
     def tenant_problem_report(
         self,
@@ -286,6 +295,9 @@ class FakeStore:
     def staff_join(self, user: int, name: str, phone: str) -> dict[str, Any]:
         self._staff_ready()
         self.staff_joins.append((user, name, phone))
+        if self.staff_join_state == "LINKED":
+            self.staff[user] = {"name_km": name}
+            return {"ok": True, "state": "LINKED"}
         self.staff_waiting.add(user)
         return {"ok": True, "state": "WAITING", "request_id": "r1"}
 
@@ -309,8 +321,13 @@ class FakeStore:
         return self.staff_data
 
     def staff_problem_report(
-        self, inbound_id: str, form: dict[str, Any], media_ids: list[str]
+        self,
+        inbound_id: str,
+        form: dict[str, Any],
+        media_ids: list[str],
+        relay_alerted: bool = False,
     ) -> dict[str, Any]:
+        self.relay_alerted.append(relay_alerted)
         self.staff_scans.append(("REPORT", 0, {"form": form, "media": media_ids}, inbound_id))
         return self.staff_answers.pop(0)
 
@@ -417,6 +434,8 @@ def test_pull_saves_each_item_once_keeps_photos_and_confirms(
             "text_code": "base.ping_reply",
             "language": "km",
             "details": {"bot": "CHETANA Residence support"},
+            # The answer names the message it answers, so the outbox keeps it once (DL-202 (B)).
+            "dedupe_key": "ping:item-0002",
         }
     ]
     run = store.runs[-1]

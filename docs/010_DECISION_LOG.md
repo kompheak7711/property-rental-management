@@ -2847,6 +2847,46 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **Links:** DL-170.
 - **Decision date:** 2026-11-06.
 
+## DL-200 — Short stays: a guest who checks out early
+
+- **Type:** `BUSINESS RULE`
+- **Status:** `AGREED BY THE OWNER; THE APP SHOWS IT IN THE DESIGN V81 WORK (BRANCH ui-v81)`
+- **Source:** the owner's choice on a decision card on 7 Nov 2026 10:04 (thread "Database v1.2 review"), for the design v81 warning "Not the check-out date" (Keep the stay / Check out early).
+- **(A) Unused nights stay paid.** When a short-stay guest checks out before the booked check-out day, the money for the nights not used is kept. Nothing comes back by itself.
+- **(B) Credit only by hand.** Only the Owner, a Manager or a person with the credit right may turn some or all of the unused nights into the guest's Credit, and must give a reason. This is the same as a late cancel (the short-stay rules of DL-150 and later): the Credit can be used for a later stay or the first month of a Lease, and it ends after the same number of months.
+- **(C) Early check-out itself.** The stay is checked out on the day the guest leaves (`checked_out_at`); the booked dates and the paid Invoice do not change.
+- **Links:** the short-stay rules of DL-150 to DL-159 and DL-190 to DL-199; design v81 (docs/ui-audit/02_DESIGN_V81_CHANGES.md, item 8); open question 7 of docs/ui-audit/01_UI_AUDIT_REPORT.md (branch ui-v81).
+- **Decision date:** 2026-11-07.
+
+## DL-201 — Unit Check and Joint Inspection: places, many problems in one check, checks made in the app
+
+- **Type:** `BUSINESS RULE`
+- **Status:** `AGREED BY THE OWNER; NOT BUILT. Built in V1.2 after the design v81 work (owner 7 Nov 2026 10:06); needs a database change.`
+- **Source:** the owner's messages of 7 Nov 2026 08:56 to 10:55 (thread "Database v1.2 review"). Technical shape suggested by Claude under the owner's 2026-10-23 22:30 rule.
+- **(A) Places come from the Unit.** A check lists the places of that Unit only, from its Unit features and their count: for a Studio or One Bedroom the kitchen, bathroom, living room or zone, bedroom or sleeping zone and balcony; for a Two Bedroom the kitchen, Bathroom 1 and 2, living room, Bedroom 1 and 2 and balcony. The air conditioner, keys, key cards and remotes are not places: they are Unit inventory items, checked in the place where they are. Once built, this replaces the seven fixed areas of DL-178 (B), and the Telegram Unit Check uses the same places.
+- **(B) Many problems in one check.** Staff choose the Unit once and add as many problems as needed, without a new check and without typing the Unit again. A place can have more than one problem. Each problem has its own number (a Unit problem report, UP...), linked to the check (UC...), so each one is planned, fixed and closed on its own.
+- **(C) Three jobs, three records (owner 7 Nov 2026 10:55).** The **Unit Check** only reports problems; it does not mark every place or item. The **Unit inventory** only records which furniture and appliances a Unit has, where and how many; it holds no condition. The **Joint Inspection** has its own table and is the only record of condition (quality). It is done at move-in and again at move-out, belongs to the Lease, marks each place of the Unit and each inventory item (Good, Broken or Missing, with a note and photos), keeps a copy of the item name, place and count as they were that day (the inventory may change later), records keys and meter readings, and is signed by the tenant and the staff member. The move-out is compared with the move-in record. The V1 move-out inspection records stay as history. An inspection never makes a charge by itself (DL-115).
+- **(D) Checks made in the app.** Unit Checks and Joint Inspections can be made in the app on a tablet or computer, not only from Telegram.
+- **(E) Forms.** The Joint Inspection and Unit Check forms of 17 Oct 2026 are samples; the owner will redesign them for each Unit type.
+- **Open:** the native Khmer words; the owner's new paper forms.
+- **Links:** DL-115, DL-178.
+- **Decision date:** 2026-11-07.
+
+## DL-202 — Database review of 7 Nov 2026: payroll once a month, Telegram messages once, blocked chats, early check-out nights
+
+- **Type:** `OWNER BUSINESS DECISION` for (A), (C) and (D); `TECHNICAL DECISION UNDER THE OWNER'S RULE` for (B) and the shape of each fix.
+- **Status:** `AGREED BY THE OWNER 7 NOV 2026 13:58; BUILT; FULL DATABASE SUITE GREEN ON POSTGRESQL 17 (CI 7 NOV, THE OWNER'S MAC 8 NOV); (E) ADDED 8 NOV 2026 ON THE OWNER'S WORD; IN A PULL REQUEST, NOT MERGED`
+- **Source:** the read-only database review of 7 Nov 2026 (thread "Database v1.2 review", score 8/10), the owner's answers of 7 Nov 2026 13:58, the owner's go-ahead on a decision card at 14:46 and the owner's message of 8 Nov 2026 04:39 for (E).
+- **(A) Exactly one REGULAR payroll run per month and Property; CORRECTION runs allowed on top.** The owner's rule. The review said the database did not keep it; that was wrong: migration `20270501_301` already has the unique index `payroll_runs_one_regular` on (Property, salary month) where the run is REGULAR, and `hr_make_payroll` locks the Property first. No new migration. Two tests prove the guard (two payroll clicks at the same moment make one run and one "already made"; a second REGULAR run is refused even from the owner login; a CORRECTION of the same month is allowed): `backend/tests/test_v12_payroll_one_run_check.py`. A read-only count on the real database on 7 Nov 2026 14:46 found 0 payroll runs, so nothing to repair.
+- **(B) A Telegram message with a dedupe key is queued once.** `telegram_outbox.dedupe_key` (optional, 1 to 120 letters, digits, dots, colons, dashes, underscores) with a unique index per bot, chat and key. The jobs set it: the pull job keys the ping answer `ping:<inbound id>`, and a bot's answer names the inbound message it answers (`telegram_bot_reply` 10th argument), keyed `reply:<inbound>:<n>`. Queuing the same key again returns the first message and queues nothing. A message sent again after Gave up carries no key. Migration `20270705_370` (DB-TG-016).
+- **(C) A chat whose person blocked the bot gets nothing until the person writes again.** The owner's rule. Shape by Claude: the review suggested `telegram_accounts.blocked_at`, but one Telegram person can block one bot and keep another, so the block is kept per bot and chat in the append-only table `app.telegram_bot_blocks` (BLOCKED when Telegram answers 403 to a send, `telegram_blocked_by_person`; CLEARED when an inbound message from that chat is saved; two triggers write it, nobody by hand). `telegram_outbox_due` leaves the blocked chat's messages out, so the send job stops trying; they go out again after the clear. `telegram_health` adds `chats_blocked`, and `outbox_failing_12h` no longer counts blocked chats. Telegram's own report of the block (`my_chat_member` kicked or left) does not clear it. Migration `20270706_371` (DB-TG-016). The Health page does not show the number yet (a design v81 follow-up).
+- **(D) After an early check-out the week report counts the Unit's nights only to the day the guest left.** The owner's rule (answer 1: "count unused nights as empty from the day the guest left. Money stays as DL-200"). `short_stay_week_report` stops a CHECKED_OUT stay's nights on the Property's day of `checked_out_at`; the money is still the whole paid amount, shared over the booked nights. A night sold again after an early check-out therefore counts once. The calendar still shows the booking to its booked check-out day. Migration `20270707_372`.
+- **(E) The database itself checks the right `ledger.accounts.manage` when a method's ledger account is set.** The owner's word of 8 Nov 2026 04:39 on an open item of the ledger review: only the API checked the right before calling `gl_set_method_account`, the function wrote the row for any actor. It now starts with `app.gl_require(p_actor, p_property, 'ledger.accounts.manage')`, like every other ledger change. A call without the right is refused (SQLSTATE 42501, "This needs the right ledger.accounts.manage") and writes no account mapping and no audit event. The API keeps its own check first, so a person without the right never reaches the database; the database check is the second lock. Migration `20270708_373` (DB-GL-010). Test: `backend/tests/test_v12_gl_method_account_right_migration.py`.
+- **Not changed:** `booking_site_calendars.export_token` (review item 5) and the docs-only pass for the missing tables and money-type names (the owner's answer 4: its own thread later).
+- **Built:** migrations `20270705_370`, `20270706_371`, `20270707_372`, `20270708_373` (head `20270708_373`, after `20270612_321`); `backend/src/property_rental/telegram_store.py`, `telegram_pull_job.py` and the three bots pass the inbound message; tests `backend/tests/test_v12_payroll_one_run_check.py`, `test_v12_telegram_outbox_migration.py`, `test_v12_short_stay_early_check_out_migration.py`, `test_v12_gl_method_account_right_migration.py`.
+- **Links:** DL-125, DL-140 to DL-149 (HR), DL-150 to DL-159 and DL-190 to DL-199 (short stays), DL-160, DL-200.
+- **Decision date:** 2026-11-07 (A to D), 2026-11-08 (E).
+
 ## DL-210 — Telegram bots: the Tenant bot answers while the app is closed
 
 - **Type:** `OWNER DECISION` and `TECHNICAL DECISION`
@@ -2859,7 +2899,7 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **(E) When the app opens.** The pull job saves every item as before. For a chat message the relay answered, it saves the same language, Contact office message, link try and next step, without answering again; only if the database's link answer differs from the relay's does the tenant get the database's answer. A report the relay already alerted is saved without a second alert (`prm.relay_alerted` for that one change); the tenant still gets the report's number.
 - **(F) Cloudflare's free plan.** A Worker call may run 50 database queries on the free plan. The relay's pull, confirm and hourly clean-up now use a few queries whatever the number of items, so a busy night of messages can still be collected.
 - **Open:** the native Khmer check of the new texts; the office server's own `link_check_key_file` setting and secret when the office server is set up.
-- **Built:** `relay/src/offline.ts`, migration `20270708_380` (DB-TG-016), `backend/src/property_rental/telegram_offline.py`, `scripts/local/telegram-setup.sh` (the key and the secret).
+- **Built:** `relay/src/offline.ts`, migration `20270708_380` (DB-TG-017), `backend/src/property_rental/telegram_offline.py`, `scripts/local/telegram-setup.sh` (the key and the secret).
 - **Links:** DL-125, DL-126, DL-127, DL-175.
 - **Decision date:** 2026-11-07.
 
@@ -2875,7 +2915,7 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **(E) In the app.** Office › Telegram › Linked tenants shows "Invoices on Telegram": the Invoices issued in the last 45 days, who got each one (sent, waiting, not delivered) and when the reminder went, and how many reached nobody ("Give a paper copy").
 - **(F) Not in this step.** The Invoice as a PDF: the PDF library on the office computer does not join Khmer letters correctly, so a PDF with Khmer names would be wrong. It comes with the ABA KHQR step, which redesigns the printed Invoice. No new package.
 - **Open:** the native Khmer check of the new texts; the PDF with the ABA KHQR.
-- **Built:** migration `20270709_381` (DB-TG-017), API-TG-008, `frontend/src/telegram/TelegramPages.tsx`.
+- **Built:** migration `20270709_381` (DB-TG-018), API-TG-008, `frontend/src/telegram/TelegramPages.tsx`.
 - **Links:** DL-125, DL-126, DL-210.
 - **Decision date:** 2026-11-08.
 
@@ -2885,6 +2925,20 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **Status:** `BUILT ON BRANCH claude/telegram-invoices; WAITS FOR THE OWNER'S OK TO MERGE`
 - **Source:** the owner's test on 8 Nov 2026: the Units are numbered "U302", and linking with "302" was refused. Tenants will type the number they know.
 - **Decision:** when the Tenant bot compares the Unit a tenant typed with the Lease's Unit, a "U" right before a digit is dropped, after the words already dropped ("Unit", "Room", "No.", "#", "បន្ទប់"). "U302", "u 302", "302", "Unit 302" and "Room U302" are the same Unit; "UB12" stays "UB12". The office (`app.tenant_unit_key`) and the relay (`unitKey` in `relay/src/offline.ts`) use the same rule. The name and phone checks do not change, and the bot still never says which part was wrong.
-- **Built:** migration `20270710_382` (DB-TG-018), `relay/src/offline.ts`.
+- **Built:** migration `20270710_382` (DB-TG-019), `relay/src/offline.ts`.
 - **Links:** DL-126, DL-210.
 - **Decision date:** 2026-11-08.
+
+## DL-213 — Telegram bots: the Customer bot and the Staff bot answer while the app is closed
+
+- **Type:** `OWNER DECISION` and `TECHNICAL DECISION`
+- **Status:** `BUILT ON BRANCH claude/telegram-offline-customer-staff; WAITS FOR THE OWNER'S TEST AND OK TO MERGE`
+- **Source:** the owner on 11 Nov 2026: "now CHETANA Residence support can work 24/7. let's make CHETANA Residence and CHETANA Staff work without rely on Property rental management app open." Technical choices by Claude under the owner's 2026-10-23 22:30 rule; no new business or money rule.
+- **(A) When.** As DL-210: only while the office has not pulled for 150 seconds. While the office pulls, the office answers everything and the relay only remembers the language a customer picks.
+- **(B) The Customer bot.** The relay answers Start, the language, the menu, FAQ (the questions the Owner approved for the Customer bot, sent by the office), Contact office (own phone first, then one message that waits for the office) and every step of Send an inquiry with the office's own rules: how to contact, the own phone, the email, the name, the Unit Type, the visit day (2 to 30 days ahead, Monday to Saturday, or Skip) and Morning or Afternoon, the move-in month (or Later), the note and the request to check. The visit days and months come from the Property's own date: the office sends the Property's distance from UTC (`app.telegram_offline_clock`). "Send an inquiry" gets at once: "Thank you. We received your request. Our office is closed now. We will send you the request number and call you when the office opens." Only the office gives request numbers, so the number comes when the app opens. The relay keeps the inquiry in progress for 30 minutes, as a link step (`chat_requests`); it does not know a phone shared in an earlier office session, so it may ask for the phone again.
+- **(C) The Staff bot (Khmer only).** The relay answers Start: a person on the Staff access list gets the hello with the Reports button; a person who shares their own phone hears "waiting for approval" (approval still needs the app); anyone else is asked to share their phone. A sent form gets "received" at once: Check in and Check out keep the time the relay received the scan, and the result (on time, late, needs check) comes when the app opens; other forms answer "Saved, the number comes when the office opens". An urgent Problem report (a type that is always urgent) goes first to the caretaker whose shift covers that moment and to the Owner and Managers (the Authorizers), with the type and the Unit or place, as DL-210 (D); the sender is not alerted.
+- **(D) When the app opens.** The pull job saves every item as before and does not answer twice. Customer bot: the language, the next step, the inquiry in progress and the Contact office message are saved without an answer; a sent inquiry is saved as a Visit request and only its number is sent ("We got your request. Number ..."), or the office's own answer when the database refuses it. Staff bot: a shared phone is saved as a join request; the hello is sent only when the database links the person at once. Forms get the office's normal answer (the check-in result, the report number), and an urgent report the relay already alerted is saved without a second alert (`prm.relay_alerted`).
+- **Open:** the native Khmer check of the new texts; staff join approval still needs the app; short-stay guests linking in the Tenant bot (owner card of 11 Nov 2026).
+- **Built:** `relay/src/offline_bots.ts`, `relay/schema.sql` (`chat_requests`), migration `20270711_383` (DB-TG-020), `backend/src/property_rental/telegram_offline.py`, `telegram_customer_bot.py`, `telegram_staff_bot.py`.
+- **Links:** DL-171, DL-174, DL-175, DL-210.
+- **Decision date:** 2026-11-11.

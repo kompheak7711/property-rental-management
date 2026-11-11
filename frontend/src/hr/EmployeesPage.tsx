@@ -407,6 +407,7 @@ function AddEmployeeDialog({
   const [idNumber, setIdNumber] = useState("");
   const [birth, setBirth] = useState("");
   const [birthPlace, setBirthPlace] = useState("");
+  const [nssf, setNssf] = useState("");
   const [address, setAddress] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
   const [hireAgain, setHireAgain] = useState(false);
@@ -458,6 +459,7 @@ function AddEmployeeDialog({
         date_of_birth: birth,
         place_of_birth: birthPlace.trim(),
         home_address: address.trim(),
+        ...(nssf.trim() === "" ? {} : { nssf_number: nssf.trim() }),
       },
     };
     if (hireAgain) body.hire_again = true;
@@ -627,6 +629,20 @@ function AddEmployeeDialog({
             setBirthPlace(event.target.value);
           }}
           value={birthPlace}
+        />
+      </Field>
+      <Field
+        id="hr-ae-nssf"
+        label={ht(language, "e_nssf")}
+        note={ht(language, "optional")}
+      >
+        <input
+          id="hr-ae-nssf"
+          maxLength={30}
+          onChange={(event) => {
+            setNssf(event.target.value);
+          }}
+          value={nssf}
         />
       </Field>
       <Field
@@ -1626,6 +1642,8 @@ function PayCard({
           <dd className="ui-num">{dayText(identity.date_of_birth)}</dd>
           <dt>{ht(language, "e_birth_place")}</dt>
           <dd>{identity.place_of_birth ?? ""}</dd>
+          <dt>{ht(language, "e_nssf")}</dt>
+          <dd className="ui-num">{identity.nssf_number ?? ""}</dd>
           <dt>{ht(language, "e_address")}</dt>
           <dd>{identity.home_address ?? ""}</dd>
         </dl>
@@ -2217,6 +2235,7 @@ function IdentityDialog({
   const [number, setNumber] = useState(identity?.id_number ?? "");
   const [birth, setBirth] = useState(identity?.date_of_birth ?? "");
   const [birthPlace, setBirthPlace] = useState(identity?.place_of_birth ?? "");
+  const [nssf, setNssf] = useState(identity?.nssf_number ?? "");
   const [address, setAddress] = useState(identity?.home_address ?? "");
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -2241,6 +2260,7 @@ function IdentityDialog({
         if (number.trim() !== "") body.id_number = number.trim();
         if (birth !== "") body.date_of_birth = birth;
         if (birthPlace.trim() !== "") body.place_of_birth = birthPlace.trim();
+        if (nssf.trim() !== "") body.nssf_number = nssf.trim();
         if (address.trim() !== "") body.home_address = address.trim();
         run(() => onSave(body), onSaved);
       }}
@@ -2300,6 +2320,20 @@ function IdentityDialog({
             setBirthPlace(event.target.value);
           }}
           value={birthPlace}
+        />
+      </Field>
+      <Field
+        id="hr-id-nssf"
+        label={ht(language, "e_nssf")}
+        note={ht(language, "optional")}
+      >
+        <input
+          id="hr-id-nssf"
+          maxLength={30}
+          onChange={(event) => {
+            setNssf(event.target.value);
+          }}
+          value={nssf}
         />
       </Field>
       <Field

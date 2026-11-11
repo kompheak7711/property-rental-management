@@ -65624,6 +65624,134 @@
       "notes": "UI v81 migration 360 changes only the English display names of 1100, 1110, 2210 and 3900, guarded by the old names."
     },
     {
+      "test_id": "test_two_payroll_clicks_at_once_make_one_run",
+      "upstream_ids": [
+        "DL-202"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_v12_payroll_one_run_check.py",
+      "status": "implemented",
+      "notes": "Database review 7 Nov 2026 (A): two payroll clicks at the same moment make one REGULAR run; the other gets 'already made' (23505)."
+    },
+    {
+      "test_id": "test_the_database_refuses_a_second_regular_run_even_from_the_owner_login",
+      "upstream_ids": [
+        "DL-202"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_v12_payroll_one_run_check.py",
+      "status": "implemented",
+      "notes": "Database review 7 Nov 2026 (A): the unique index of migration 301 refuses a second REGULAR run of the month even from the owner login; a CORRECTION run is allowed on top."
+    },
+    {
+      "test_id": "test_migrations_370_and_371_follow_in_order_and_are_forward_only",
+      "upstream_ids": [
+        "DL-202",
+        "DB-TG-016"
+      ],
+      "test_level": "migration",
+      "test_path": "backend/tests/test_v12_telegram_outbox_migration.py",
+      "status": "implemented",
+      "notes": "Database review 7 Nov 2026: migrations 370 and 371 follow 20270612_321 in order and are forward-only."
+    },
+    {
+      "test_id": "test_a_message_with_a_dedupe_key_waits_once",
+      "upstream_ids": [
+        "DL-202",
+        "DB-TG-016"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_v12_telegram_outbox_migration.py",
+      "status": "implemented",
+      "notes": "Database review 7 Nov 2026 (B): the same dedupe key for one bot and chat queues one message and answers its id; another chat or no key is a new message; a blank or long key is refused (22023)."
+    },
+    {
+      "test_id": "test_a_given_up_message_with_a_key_can_still_be_sent_again",
+      "upstream_ids": [
+        "DL-202",
+        "DB-TG-016"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_v12_telegram_outbox_migration.py",
+      "status": "implemented",
+      "notes": "Database review 7 Nov 2026 (B): a message sent again after Gave up is due and carries no key; the key still names the first message."
+    },
+    {
+      "test_id": "test_bot_replies_to_one_inbound_item_wait_once",
+      "upstream_ids": [
+        "DL-202",
+        "DB-TG-016"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_v12_telegram_outbox_migration.py",
+      "status": "implemented",
+      "notes": "Database review 7 Nov 2026 (B): a bot's answer to one inbound message is queued once (the second call queues 0); another item or no item is new."
+    },
+    {
+      "test_id": "test_a_chat_that_blocked_the_bot_waits_until_the_person_writes_again",
+      "upstream_ids": [
+        "DL-202",
+        "DB-TG-016"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_v12_telegram_outbox_migration.py",
+      "status": "implemented",
+      "notes": "Database review 7 Nov 2026 (C): Telegram's 403 notes the chat BLOCKED once, its messages are not due and health counts it; an inbound message from the chat clears it; nobody writes or changes the record by hand."
+    },
+    {
+      "test_id": "test_migration_372_follows_371_and_is_forward_only",
+      "upstream_ids": [
+        "DL-202"
+      ],
+      "test_level": "migration",
+      "test_path": "backend/tests/test_v12_short_stay_early_check_out_migration.py",
+      "status": "implemented",
+      "notes": "Database review 7 Nov 2026: migration 372 follows 371 and is forward-only."
+    },
+    {
+      "test_id": "test_an_early_check_out_frees_the_nights_but_keeps_the_money",
+      "upstream_ids": [
+        "DL-202",
+        "DL-200"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_v12_short_stay_early_check_out_migration.py",
+      "status": "implemented",
+      "notes": "Database review 7 Nov 2026 (D): after an early check-out the week report counts only the nights slept, keeps the whole paid amount (DL-200), and a night sold again counts once."
+    },
+    {
+      "test_id": "test_each_answer_names_the_message_it_answers_so_the_outbox_keeps_it_once",
+      "upstream_ids": [
+        "DL-202",
+        "DB-TG-016"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_tenant_bot.py",
+      "status": "implemented",
+      "notes": "Database review 7 Nov 2026 (B): the Tenant bot passes the inbound message it answers (updates and forms), so the outbox keeps each answer once. The Staff and Customer bot tests of the same name do the same."
+    },
+    {
+      "test_id": "test_migration_373_follows_372_and_is_forward_only",
+      "upstream_ids": [
+        "DL-202"
+      ],
+      "test_level": "migration",
+      "test_path": "backend/tests/test_v12_gl_method_account_right_migration.py",
+      "status": "implemented",
+      "notes": "Database review 7 Nov 2026 (E): migration 373 follows 372 and is forward-only."
+    },
+    {
+      "test_id": "test_only_a_person_with_the_accounts_right_sets_a_method_account",
+      "upstream_ids": [
+        "DL-202",
+        "DB-GL-010"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_v12_gl_method_account_right_migration.py",
+      "status": "implemented",
+      "notes": "Database review 7 Nov 2026 (E), owner 8 Nov 2026: the database refuses to set a method's ledger account to a Manager, a Staff person or no actor (42501, ledger.accounts.manage) and writes nothing; the Owner's call writes the mapping and its audit event."
+    },
+    {
       "test_id": "test_the_mac_operations_file_keeps_every_bot_path_in_its_folder",
       "upstream_ids": [
         "DL-125"
@@ -65809,7 +65937,7 @@
       "test_id": "test_the_relay_gets_name_forms_phones_units_and_who_gets_an_alert",
       "upstream_ids": [
         "DL-210",
-        "DB-TG-016"
+        "DB-TG-017"
       ],
       "test_level": "integration",
       "test_path": "backend/tests/test_telegram_tenant_offline_migration.py",
@@ -65820,7 +65948,7 @@
       "test_id": "test_a_linked_tenants_form_data_says_their_unit",
       "upstream_ids": [
         "DL-210",
-        "DB-TG-016"
+        "DB-TG-017"
       ],
       "test_level": "integration",
       "test_path": "backend/tests/test_telegram_tenant_offline_migration.py",
@@ -65831,7 +65959,7 @@
       "test_id": "test_a_report_the_relay_already_alerted_is_not_alerted_again",
       "upstream_ids": [
         "DL-210",
-        "DB-TG-016"
+        "DB-TG-017"
       ],
       "test_level": "integration",
       "test_path": "backend/tests/test_telegram_tenant_offline_migration.py",
@@ -65842,7 +65970,7 @@
       "test_id": "test_the_offline_data_is_behind_the_telegram_right",
       "upstream_ids": [
         "DL-210",
-        "DB-TG-016"
+        "DB-TG-017"
       ],
       "test_level": "integration",
       "test_path": "backend/tests/test_telegram_tenant_offline_migration.py",
@@ -65850,10 +65978,92 @@
       "notes": "Telegram while the app is closed: Staff without telegram.operate cannot read the offline data."
     },
     {
+      "test_id": "test_the_customer_body_has_every_step_the_unit_types_the_faq_and_the_clock",
+      "upstream_ids": [
+        "DL-213"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_offline.py",
+      "status": "implemented",
+      "notes": "Customer bot while the app is closed: the relay gets every step's text and keyboard in Khmer and English, the Unit Types, the Customer FAQ and the Property's UTC offset, and no person's data."
+    },
+    {
+      "test_id": "test_the_staff_body_is_khmer_with_the_alert_list",
+      "upstream_ids": [
+        "DL-213"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_offline.py",
+      "status": "implemented",
+      "notes": "Staff bot while the app is closed: Khmer texts only, with the Authorizers and caretaker shifts for an urgent alert."
+    },
+    {
+      "test_id": "test_a_customer_inquiry_the_relay_took_is_saved_and_only_the_number_is_sent",
+      "upstream_ids": [
+        "DL-213"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_offline.py",
+      "status": "implemented",
+      "notes": "Customer bot while the app is closed: the language and steps are saved without an answer; the inquiry becomes a Visit request and only its number is sent."
+    },
+    {
+      "test_id": "test_a_customer_contact_message_the_relay_took_is_saved_without_an_answer",
+      "upstream_ids": [
+        "DL-213"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_offline.py",
+      "status": "implemented",
+      "notes": "Customer bot while the app is closed: a Contact office message is saved without an answer; an inquiry the database refuses gets the office's answer."
+    },
+    {
+      "test_id": "test_a_staff_join_the_relay_took_is_saved_and_hello_only_when_approved_at_once",
+      "upstream_ids": [
+        "DL-213"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_offline.py",
+      "status": "implemented",
+      "notes": "Staff bot while the app is closed: a shared phone becomes a join request; the hello is sent only when the database links the person at once."
+    },
+    {
+      "test_id": "test_a_staff_report_the_relay_alerted_is_saved_without_a_second_alert",
+      "upstream_ids": [
+        "DL-213"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_offline.py",
+      "status": "implemented",
+      "notes": "Staff bot while the app is closed: an urgent report the relay already alerted is saved without a second alert, and the number is still sent."
+    },
+    {
+      "test_id": "test_the_clock_is_the_propertys_time_zone_and_offset",
+      "upstream_ids": [
+        "DL-213",
+        "DB-TG-020"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_offline_clock_migration.py",
+      "status": "implemented",
+      "notes": "The relay's clock: the Property's time zone and UTC offset in minutes."
+    },
+    {
+      "test_id": "test_the_clock_is_behind_the_telegram_right",
+      "upstream_ids": [
+        "DL-213",
+        "DB-TG-020"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_telegram_offline_clock_migration.py",
+      "status": "implemented",
+      "notes": "The relay's clock: Staff without telegram.operate are refused; an unknown Property is refused."
+    },
+    {
       "test_id": "test_an_issued_invoice_goes_to_the_linked_tenant_once",
       "upstream_ids": [
         "DL-211",
-        "DB-TG-017"
+        "DB-TG-018"
       ],
       "test_level": "integration",
       "test_path": "backend/tests/test_telegram_tenant_invoices_migration.py",
@@ -65864,7 +66074,7 @@
       "test_id": "test_a_draft_is_never_sent",
       "upstream_ids": [
         "DL-211",
-        "DB-TG-017"
+        "DB-TG-018"
       ],
       "test_level": "integration",
       "test_path": "backend/tests/test_telegram_tenant_invoices_migration.py",
@@ -65875,7 +66085,7 @@
       "test_id": "test_the_reminder_goes_once_3_days_before_the_due_date",
       "upstream_ids": [
         "DL-211",
-        "DB-TG-017"
+        "DB-TG-018"
       ],
       "test_level": "integration",
       "test_path": "backend/tests/test_telegram_tenant_invoices_migration.py",
@@ -65886,7 +66096,7 @@
       "test_id": "test_a_reminder_waits_for_an_invoice_due_later",
       "upstream_ids": [
         "DL-211",
-        "DB-TG-017"
+        "DB-TG-018"
       ],
       "test_level": "integration",
       "test_path": "backend/tests/test_telegram_tenant_invoices_migration.py",
@@ -65897,7 +66107,7 @@
       "test_id": "test_the_invoice_list_and_reminders_need_the_telegram_rights",
       "upstream_ids": [
         "DL-211",
-        "DB-TG-017"
+        "DB-TG-018"
       ],
       "test_level": "integration",
       "test_path": "backend/tests/test_telegram_tenant_invoices_migration.py",
@@ -65929,7 +66139,7 @@
       "test_id": "test_a_typed_unit_number_finds_a_unit_numbered_with_u",
       "upstream_ids": [
         "DL-212",
-        "DB-TG-018"
+        "DB-TG-019"
       ],
       "test_level": "integration",
       "test_path": "backend/tests/test_telegram_tenant_offline_migration.py",
@@ -66125,6 +66335,26 @@
       "test_path": "frontend/src/shell/AppShell.test.tsx",
       "status": "implemented",
       "notes": "UI v81 side menu (owner 08/11/2026, section D point 12): on a wide screen the collapsed rail shows the item's name and its sub-items in a fly-out on hover or focus (aria-expanded on the icon), Escape closes it and returns the focus; the open menu has no fly-out."
+    },
+    {
+      "test_id": "test_the_nssf_number_is_optional",
+      "upstream_ids": [
+        "PR-HR-011"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_hr_office_hours_migration.py",
+      "status": "implemented",
+      "notes": "HRIS: an optional NSSF number with the ID details, seen only with See salaries, at most 30 letters (owner 07/11 17:59, migration 306)."
+    },
+    {
+      "test_id": "TEST-FE-1403",
+      "upstream_ids": [
+        "PR-HR-011"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/hr/HrPages.test.tsx",
+      "status": "implemented",
+      "notes": "HRIS: the NSSF number is optional at Add employee and shows on the employee page (owner 07/11 17:59)."
     }
   ]
 }
