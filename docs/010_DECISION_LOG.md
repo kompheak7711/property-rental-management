@@ -3040,6 +3040,22 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **Links:** DL-080, DL-118.
 - **Decision date:** 2026-11-08.
 
+## DL-221 — Invoice types: Rent, Utilities, Short stay, Products, Damage and Other charges
+
+- **Type:** `OWNER BUSINESS DECISION` for (A) to (E); `TECHNICAL DECISION UNDER THE OWNER'S RULE` for (F).
+- **Status:** `AGREED BY THE OWNER 11 NOV 2026 21:51 AND 22:02; BUILT ON BRANCH claude/project-thread-4yyhqn; WAITS FOR THE OWNER'S TEST AND OK`
+- **Source:** the owner's questions of 11 Nov 2026 21:34 and 21:36 (Invoices page points 1 and 2, Settings point 3) and two cards in the thread "Simplify Invoice types": "Use my 4 recommendations for the new Invoice types?" (21:51, "Yes, use all 4") and "Rename Miscellaneous to Other charges for the few Invoices still using it?" (22:02, "Yes, call it Other charges").
+- **Why.** Settings › Invoice types (DL-118 (C)) only holds the late-payment switch of each kind of Invoice. It listed First Rent and Services, but not Short stay or Products: Monthly services are lines on the Rent Invoice, so no Invoice is ever of the type Services, and short stays, Products and Quotation services were all saved as Miscellaneous, which the screens named "Short stay", "Short-stay damage" or "Miscellaneous".
+- **(A) First Rent joins Rent.** Every Rent Invoice, the first one too, follows the one Rent switch (still Yes). This keeps DL-118 (C): the first Rent gets the late-payment charge unless the Owner switches Rent to No.
+- **(B) Short stay** is a type of its own, late payment **No**.
+- **(C) Products** (an Invoice made when the Customer signs a Quotation, DL-123) is a type of its own, late payment **Yes** (as Miscellaneous was).
+- **(D) Short-stay damage** is a Damage Invoice and follows the Damage switch.
+- **(E) Other charges.** Miscellaneous is still used by the move-out cleaning charge, extra move-out charges and refund pay-back charges, so it stays and is named "Other charges" (ថ្លៃផ្សេងៗ), late payment Yes. Services and First Rent are no longer listed.
+- **(F) Claude's choices (no money; the owner's 2026-10-23 22:30 rule).** An Invoice's category, lines, money and ledger do not change; only the type it shows and the switch it follows. The type comes from the Invoice: Rent (and the Services category) is Rent, a stay is Short stay, its damage is Damage, an Invoice linked to a Quotation is Products, any other Miscellaneous Invoice is Other charges. Old Invoices show their new type at once. The rows FIRST_RENT and SERVICES stay (types are never removed) with `in_use` No; they cannot be switched. A late switch the Owner set on First Rent before is no longer read. On the Invoices page the type filter has the same six types; Receive payment, Receipts and the printed Invoice use the same names.
+- **Database:** migration `20270716_390` (DB-BS-002); API API-BS-002. Frontend tests TEST-FE-2000 to TEST-FE-2003.
+- **Links:** DL-118, DL-123, DL-150 to DL-159 (short stays).
+- **Decision date:** 2026-11-11.
+
 ## DL-222 — Short stays: the room check reports problems; the damage charge needs no approval
 
 - **Type:** `OWNER BUSINESS DECISION` for (A) to (D); `TECHNICAL DECISION UNDER THE OWNER'S RULE` for (E) and the database shape.
@@ -3050,6 +3066,6 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **(C) The deposit waits.** While the problems of the room check have no decision, the deposit cannot end. A charge comes from the deposit first; the rest is a Damage Invoice for the guest, as before (4070 Damage recovered). With No charge the whole deposit goes back.
 - **(D) Later.** When the Unit Check of DL-201 is built, the short-stay room check uses it too, so long and short stays use one check.
 - **(E) Claude's choices (the owner's 2026-10-23 22:30 rule).** One decision per stay covers all the problems of its room check; the "what for" text starts from the problems and can be changed. No charge takes an optional note, like "CHETANA pays" on a Problem report. Reporting a problem at the room check also needs "Add a Problem report" (`problem_reports.add`; the default Staff role has it); a room check with no problem needs only the housekeeping right. The Problem report shows "Short-stay room check" as how it came in and links to the stay; it has no Lease, so its "the tenant pays" step is not used: the money is decided on the booking. A damage charge that was already waiting before this change is decided on the booking by the same right (Charge the guest, or No charge with a reason). The Bookings list of Short stays shows the person who bills damage the stays still waiting for a decision, with a link to each. The right `short_stays.approve` now covers only extra discounts and the booking-site calendars; its name in the rights list still mentions damage charges, because the rights list only grows.
-- **Database:** migration `20270716_391` (after `20270715_387`); see DB-PR-005.
+- **Database:** migration `20270716_391` (after `20270716_390` of DL-221); see DB-PR-005.
 - **Links:** DL-132, DL-201; the short-stay rules of DL-150 to DL-159 and DL-190 to DL-199; migration `20270602_312`.
 - **Decision date:** 2026-11-12.
