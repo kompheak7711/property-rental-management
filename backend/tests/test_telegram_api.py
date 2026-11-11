@@ -23,6 +23,7 @@ from property_rental.products_api import (
     ProductConflict,
     ProductForbidden,
     ProductNotFound,
+    ProductRefused,
 )
 
 HEADERS = {
@@ -45,6 +46,10 @@ class InMemoryTelegram:
     steps: list[tuple[str, Json]] = field(default_factory=list)
     owner: bool = False
     starter_loaded: bool = False
+    customer_id: UUID = field(default_factory=uuid4)
+    codes: list[tuple[UUID | None, UUID | None, UUID]] = field(default_factory=list)
+    notices_sent: list[Json] = field(default_factory=list)
+    bot_ready: bool = True
 
     def _check(self, property_id: UUID) -> None:
         if property_id != self.property_id:
@@ -70,6 +75,25 @@ class InMemoryTelegram:
     def invoices(self, property_id: UUID, *, actor_id: str) -> Json:
         self._check(property_id)
         return {"invoices": [{"number": "INV-26-0001", "sent": []}], "rules": {"remind_days": 3}}
+
+    def receipts(self, property_id: UUID, *, actor_id: str) -> Json:
+        self._check(property_id)
+        return {"receipts": [{"number": "R26-0001", "sent": []}], "rules": {"days": 45}}
+
+    def warnings(self, property_id: UUID, *, actor_id: str) -> Json:
+        self._check(property_id)
+        return {"warnings": [{"kind": "RENT_20", "sent": []}], "rules": {"days": 90}}
+
+    def notices(self, property_id: UUID, *, actor_id: str) -> Json:
+        self._check(property_id)
+        return {"notices": list(self.notices_sent), "floors": ["3"], "units": []}
+
+    def send_notice(self, property_id: UUID, body: Json, *, actor_id: str) -> Json:
+        self._check(property_id)
+        if body["audience"] == "FLOORS" and body["floors"] == ["99"]:
+            raise ProductRefused("Choose floors of this Property")
+        self.notices_sent.append(body)
+        return {"notice_id": "n-1", "queued": 2}
 
     def retry(self, property_id: UUID, message_id: UUID, *, actor_id: str) -> UUID:
         self._check(property_id)
@@ -116,6 +140,36 @@ class InMemoryTelegram:
         self.starter_loaded = True
         return {"loaded": 15}
 
+    def link_people(
+        self, property_id: UUID, lease_id: UUID | None, booking_id: UUID | None, *, actor_id: str
+    ) -> Json:
+        self._check(property_id)
+        person = {"customer_id": str(self.customer_id), "name": "Sao Rina", "unit_number": "U302"}
+        return {"people": [person], "bot_ready": self.bot_ready, "hours": 24}
+
+    def link_code(
+        self,
+        property_id: UUID,
+        lease_id: UUID | None,
+        booking_id: UUID | None,
+        customer_id: UUID,
+        *,
+        actor_id: str,
+    ) -> Json:
+        self._check(property_id)
+        if customer_id != self.customer_id:
+            raise ProductRefused("this person is not on a live Lease or stay")
+        if not self.bot_ready:
+            raise ProductConflict("the Tenant bot is not set up yet")
+        self.codes.append((lease_id, booking_id, customer_id))
+        return {
+            "url": "https://t.me/ChetanaSupportBot?start=" + "a1" * 20,
+            "bot": "ChetanaSupportBot",
+            "name": "Sao Rina",
+            "unit_number": "U302",
+            "expires_at": "2026-11-12T04:00:00+00:00",
+        }
+
     def visit_requests(self, property_id: UUID, *, actor_id: str) -> Json:
         self._check(property_id)
         return {"requests": [{"number": "VR260001", "joined": []}], "today": "2026-11-05"}
@@ -150,7 +204,8 @@ def base(flow: InMemoryTelegram) -> str:
 
 def test_the_telegram_pages_need_telegram_read() -> None:
     flow = InMemoryTelegram()
-    for url in (f"{base(flow)}/links", f"{base(flow)}/health", f"{base(flow)}/invoices"):
+    for page in ("links", "health", "invoices", "receipts", "notices", "warnings"):
+        url = f"{base(flow)}/{page}"
         assert client(flow).get(url).status_code == 403
         answer = client(flow, "telegram.read").get(url)
         assert answer.status_code == 200
@@ -177,6 +232,39 @@ def test_remove_link_needs_operate_a_reason_and_the_browser_checks() -> None:
     assert manager.post(url, json=body, headers=HEADERS).status_code == 409
     missing = manager.post(f"{base(flow)}/links/{uuid4()}/remove", json=body, headers=HEADERS)
     assert missing.status_code == 404
+
+
+def test_a_notice_needs_operate_words_and_the_browser_checks() -> None:
+    flow = InMemoryTelegram()
+    url = f"{base(flow)}/notices"
+    body = {"audience": "ALL", "text_en": "  No water 9-11 tomorrow. ", "text_km": ""}
+    reader = client(flow, "telegram.read")
+    assert reader.post(url, json=body, headers=HEADERS).status_code == 403
+    manager = client(flow, "telegram.read", "telegram.operate")
+    assert manager.post(url, json=body).status_code == 403  # no browser mutation checks
+    for wrong in (
+        {"audience": "ALL"},
+        {"audience": "ALL", "text_en": "   "},
+        {"audience": "SOME", "text_en": "Hi"},
+        {"audience": "ALL", "text_en": "x" * 1501},
+        {"audience": "ALL", "text_en": "Hi", "extra": 1},
+    ):
+        assert manager.post(url, json=wrong, headers=HEADERS).status_code == 422
+    floors = {"audience": "FLOORS", "floors": ["99"], "text_en": "Hi"}
+    assert manager.post(url, json=floors, headers=HEADERS).status_code == 422
+    done = manager.post(url, json=body, headers=HEADERS)
+    assert done.status_code == 201 and done.headers["Cache-Control"] == "private, no-store"
+    assert done.json()["data"]["sent"] == {"notice_id": "n-1", "queued": 2}
+    assert flow.notices_sent == [
+        {
+            "text_en": "No water 9-11 tomorrow.",
+            "text_km": None,
+            "audience": "ALL",
+            "floors": [],
+            "unit_ids": [],
+        }
+    ]
+    assert done.json()["data"]["page"]["notices"] == flow.notices_sent
 
 
 def test_retry_sends_a_given_up_message_once() -> None:
@@ -329,3 +417,37 @@ def test_a_visit_request_step_needs_work_and_a_manager_gives_or_marks_spam() -> 
         ("BOOK", {"visit_at": "2026-11-09T10:00", "note": "Bring the keys"}),
         ("NO_SHOW", {}),
     ]
+
+
+def test_a_telegram_qr_needs_the_lease_or_desk_right_and_shows_once() -> None:
+    """DL-214, API-TG-009: the people of a live Lease or stay, then one QR for one person."""
+    flow = InMemoryTelegram()
+    lease = uuid4()
+    people = f"{base(flow)}/link-people?lease_id={lease}"
+    assert client(flow, "telegram.read").get(people).status_code == 403
+    for right in ("leases.sign", "short_stays.desk"):
+        answer = client(flow, right).get(people)
+        assert answer.status_code == 200
+        assert answer.headers["Cache-Control"] == "private, no-store"
+        assert answer.json()["data"]["people"][0]["name"] == "Sao Rina"
+    desk = client(flow, "short_stays.desk")
+    assert desk.get(f"{base(flow)}/link-people").status_code == 400
+    both = f"{base(flow)}/link-people?lease_id={lease}&booking_id={uuid4()}"
+    assert desk.get(both).status_code == 400
+    url = f"{base(flow)}/link-codes"
+    body = {"booking_id": str(uuid4()), "customer_id": str(flow.customer_id)}
+    assert desk.post(url, json=body).status_code == 403  # no browser mutation checks
+    made = desk.post(url, json=body, headers=HEADERS)
+    assert made.status_code == 201 and made.headers["Cache-Control"] == "private, no-store"
+    data = made.json()["data"]
+    assert data["url"].startswith("https://t.me/ChetanaSupportBot?start=")
+    assert data["qr_svg"].startswith("<svg") and "<script" not in data["qr_svg"]
+    assert flow.codes == [(None, UUID(body["booking_id"]), flow.customer_id)]
+    stranger = {"lease_id": str(lease), "customer_id": str(uuid4())}
+    assert desk.post(url, json=stranger, headers=HEADERS).status_code == 422
+    assert (
+        desk.post(url, json={"customer_id": str(flow.customer_id)}, headers=HEADERS).status_code
+        == 400
+    )
+    flow.bot_ready = False
+    assert desk.post(url, json=body, headers=HEADERS).status_code == 409

@@ -57,11 +57,23 @@ class TelegramStore(Protocol):
 
     def invoice_reminders(self) -> int: ...
 
+    def receipts_queue(self) -> int: ...
+
+    def warnings_queue(self) -> int: ...
+
     def visit_requests_remove_old(self) -> int: ...
 
     def tenant_form_data(self) -> dict[str, Any]: ...
 
     def tenant_offline_data(self) -> dict[str, Any]: ...
+
+    def offline_clock(self) -> dict[str, Any]: ...
+
+    def tenant_link_code(self, user: int, code: str) -> dict[str, Any]: ...
+
+    def link_codes_offline(self) -> list[dict[str, Any]]: ...
+
+    def bot_name_set(self, bot: str, username: str) -> bool: ...
 
     def tenant_problem_report(
         self,
@@ -109,7 +121,11 @@ class TelegramStore(Protocol):
     def staff_form_data(self) -> dict[str, Any]: ...
 
     def staff_problem_report(
-        self, inbound_id: str, form: dict[str, Any], media_ids: list[str]
+        self,
+        inbound_id: str,
+        form: dict[str, Any],
+        media_ids: list[str],
+        relay_alerted: bool = False,
     ) -> dict[str, Any]: ...
 
     def staff_close_job(
@@ -312,6 +328,18 @@ class PostgresTelegramStore:
             self._one("SELECT app.telegram_invoice_reminders(%s, %s)", self._property, self._actor)
         )
 
+    def receipts_queue(self) -> int:
+        """Queue the Receipts of the last days not yet sent to someone linked (DL-215)."""
+        return int(
+            self._one("SELECT app.telegram_receipts_queue(%s, %s)", self._property, self._actor)
+        )
+
+    def warnings_queue(self) -> int:
+        """Queue the warnings staff recorded in the last days, once per linked tenant (DL-217)."""
+        return int(
+            self._one("SELECT app.telegram_warnings_queue(%s, %s)", self._property, self._actor)
+        )
+
     def visit_requests_remove_old(self) -> int:
         return int(
             self._one("SELECT app.visit_requests_remove_old(%s, %s)", self._property, self._actor)
@@ -330,6 +358,40 @@ class PostgresTelegramStore:
         )
         assert isinstance(result, dict)
         return result
+
+    def offline_clock(self) -> dict[str, Any]:
+        result = self._one("SELECT app.telegram_offline_clock(%s, %s)", self._property, self._actor)
+        assert isinstance(result, dict)
+        return result
+
+    def tenant_link_code(self, user: int, code: str) -> dict[str, Any]:
+        # DL-214: the Tenant bot's Start with the one-time code of a QR.
+        result = self._one(
+            "SELECT app.telegram_tenant_link_code(%s, %s, %s, %s)",
+            self._property,
+            user,
+            code,
+            self._actor,
+        )
+        assert isinstance(result, dict)
+        return result
+
+    def link_codes_offline(self) -> list[dict[str, Any]]:
+        result = self._one(
+            "SELECT app.telegram_link_codes_offline(%s, %s)", self._property, self._actor
+        )
+        assert isinstance(result, list)
+        return [item for item in result if isinstance(item, dict)]
+
+    def bot_name_set(self, bot: str, username: str) -> bool:
+        result = self._one(
+            "SELECT app.telegram_bot_name_set(%s, %s, %s, %s)",
+            self._property,
+            bot,
+            username,
+            self._actor,
+        )
+        return result is True
 
     def tenant_problem_report(
         self,
@@ -509,10 +571,21 @@ class PostgresTelegramStore:
         )
 
     def staff_problem_report(
-        self, inbound_id: str, form: dict[str, Any], media_ids: list[str]
+        self,
+        inbound_id: str,
+        form: dict[str, Any],
+        media_ids: list[str],
+        relay_alerted: bool = False,
     ) -> dict[str, Any]:
+        # An urgent report the relay already sent to the caretaker is saved without a second
+        # alert (DL-213, as DL-210 for the Tenant bot).
+        flag = (
+            " FROM (SELECT set_config('prm.relay_alerted', 'on', true)) AS flag"
+            if relay_alerted
+            else ""
+        )
         return self._staff_dict(
-            "SELECT app.telegram_staff_problem_report(%s, %s, %s::jsonb, %s::jsonb, %s)",
+            "SELECT app.telegram_staff_problem_report(%s, %s, %s::jsonb, %s::jsonb, %s)" + flag,
             self._property,
             inbound_id,
             json.dumps(form),

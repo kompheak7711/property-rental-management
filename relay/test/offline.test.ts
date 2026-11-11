@@ -1,15 +1,15 @@
-// The Tenant bot while the office is away (DL-210): the relay links a tenant with the scrambled
-// check codes, opens the Problem report form, answers a sent report at once, alerts the caretaker
-// on shift for an urgent one, and tells the office what it said. While the office pulls, the
-// relay answers nothing.
+// The Tenant bot answered by the relay (DL-210; DL-219: every message at once, app open or
+// closed): the relay links a tenant with the scrambled check codes, opens the Problem report
+// form, answers a sent report at once, alerts the caretaker on shift for an urgent one, answers
+// FAQ, My requests and Fixed or Not fixed, and tells the office what it said.
 
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { test } from "node:test";
 
 import { handle } from "../src/index.ts";
 import {
   linkCode,
-  OFFICE_AWAY_SECONDS,
   phoneE164,
   typedNameForms,
   unitKey,
@@ -43,6 +43,7 @@ const TEXTS = {
     linked: said("linked to Unit {unit}"),
     no_match: said("no match, {tries_left} tries left"),
     blocked: said("blocked"),
+    code_bad: said("this QR does not work"),
     link_first: said("link first"),
     contact_ask: said("type your message"),
     contact_text_only: said("text only"),
@@ -58,7 +59,36 @@ const TEXTS = {
         ],
       ],
     }),
-    office_away: said("office closed"),
+    faq_none: said("no FAQ yet"),
+    faq_list: {
+      km: {
+        text: "km pick a question",
+        markup: { keyboard: [[{ text: "Back to menu" }]] },
+        choices: true,
+      },
+      en: {
+        text: "pick a question",
+        markup: { keyboard: [[{ text: "Back to menu" }]] },
+        choices: true,
+      },
+    },
+    faq_answer: {
+      km: {
+        text: "km {question}: {answer}",
+        markup: { keyboard: [[{ text: "Back to menu" }]] },
+        choices: true,
+      },
+      en: {
+        text: "{question}: {answer}",
+        markup: { keyboard: [[{ text: "Back to menu" }]] },
+        choices: true,
+      },
+    },
+    check_fixed: said("thanks, report {number} is closed"),
+    check_not_fixed: said("report {number} is open again"),
+    check_nothing: said("no repair to check"),
+    my_requests: said("Unit {unit}\n{list}"),
+    my_none: said("no requests"),
     report_sent: said("We got your report. Our office will check it."),
     report_sent_urgent: said("We got your urgent report."),
   },
@@ -70,6 +100,9 @@ const TEXTS = {
     "button.contact": ["Contact office"],
     "button.faq": ["FAQ"],
     "button.back_menu": ["Back to menu"],
+    "button.my_requests": ["My requests"],
+    "button.fixed": ["Fixed"],
+    "button.not_fixed": ["Not fixed"],
   },
   types: {
     "t-water": { name_kh: "ទឹក", always_urgent: false },
@@ -214,28 +247,35 @@ test("phone numbers, Units and names are compared as the office does", () => {
   assert.deepEqual(typedNameForms("1234"), []);
 });
 
-test("while the office pulls, the relay answers nothing and only notes the language", async () => {
+test("DL-219: the relay answers at once even while the office pulls every few seconds", async () => {
   const env = await setUp();
   const { sent, fetcher } = telegramFake();
   const pull = await handle(
-    await officeRequest("GET", "/office/items?limit=50", NOW - 10),
+    await officeRequest("GET", "/office/items?limit=50", NOW - 1),
     env,
-    () => NOW - 10,
+    () => NOW - 1,
   );
   assert.equal(pull.status, 200);
-  await sendUpdate(env, message(1, { text: "English" }), fetcher);
-  await sendUpdate(env, message(2, { text: "/start" }), fetcher);
-  assert.equal(sent.length, 0);
+  await sendUpdate(env, message(1, { text: "/start" }), fetcher);
+  await sendUpdate(env, message(2, { text: "English" }), fetcher);
+  assert.deepEqual(
+    sent.map((item) => item.text),
+    ["km welcome", "hello"],
+  );
   const items = await sealedItems(env);
   assert.equal(items.length, 2);
-  assert.equal(items[0].relay, undefined);
+  assert.deepEqual(items[1].relay, {
+    answered: true,
+    step: "menu",
+    language: "en",
+  });
   const chat = env.DB.sqlite
     .prepare("SELECT language FROM chats WHERE user_id = ?")
     .get(TENANT) as { language: string };
   assert.equal(chat.language, "en");
 });
 
-test("the office away: a tenant links at night with phone, name and Unit, then opens the form", async () => {
+test("a tenant links with phone, name and Unit, then opens the form", async () => {
   const env = await setUp();
   const { sent, fetcher } = telegramFake();
   const steps: [unknown, string][] = [
@@ -251,7 +291,7 @@ test("the office away: a tenant links at night with phone, name and Unit, then o
     [message(5, { text: "kim dara" }), "your Unit?"],
     [message(6, { text: "Unit 305" }), "linked to Unit 305"],
     [message(7, { text: "Problem report" }), "what kind?"],
-    [message(8, { text: "FAQ" }), "office closed"],
+    [message(8, { text: "FAQ" }), "no FAQ yet"],
   ];
   for (const [update, expected] of steps) {
     assert.equal((await sendUpdate(env, update, fetcher)).status, 200);
@@ -276,7 +316,7 @@ test("the office away: a tenant links at night with phone, name and Unit, then o
       "link.unit",
       "menu",
       "menu",
-      null,
+      "menu",
     ],
   );
   assert.equal(items[1].relay.language, "en");
@@ -286,7 +326,7 @@ test("the office away: a tenant links at night with phone, name and Unit, then o
     name: "kim dara",
     unit: "Unit 305",
   });
-  assert.equal(items[7].relay.answered, false);
+  assert.equal(items[7].relay.answered, true);
   // The typed name and phone are gone once the link step is over.
   const chat = env.DB.sqlite
     .prepare("SELECT name, phone FROM chats WHERE user_id = ?")
@@ -392,7 +432,7 @@ test("an urgent report at night: the caretaker on shift and the Authorizer get t
       { answered: true, alerted: false },
     ],
   );
-  // With the office back, the form is only kept for it.
+  // DL-219: with the office open (it pulled a moment ago), the alert still goes out at once.
   sent.length = 0;
   await handle(
     await officeRequest("GET", "/office/items", NOW),
@@ -400,11 +440,22 @@ test("an urgent report at night: the caretaker on shift and the Authorizer get t
     () => NOW,
   );
   await post({ kind: "UNIT", problem_type_id: "t-water", urgent: true });
-  assert.equal(sent.length, 0);
+  assert.deepEqual(
+    sent.map((m) => [m.bot, m.chat_id]),
+    [
+      ["STAFF", AUTHORIZER],
+      ["STAFF", CARETAKER_ON],
+      ["TENANT", TENANT],
+    ],
+  );
+  assert.deepEqual((await sealedItems(env)).at(-1).relay, {
+    answered: true,
+    alerted: true,
+  });
 });
 
-test("the office's offline body is checked, and the office counts as away after 150 seconds", async () => {
-  const env = await setUp();
+test("the office's offline body is checked, and without it the relay leaves the answer to the office", async () => {
+  const env = testEnv(keys.publicPem);
   const { sent, fetcher } = telegramFake();
   const bad = await handle(
     await officeRequest("PUT", "/office/offline/tenant", NOW, { texts: [] }),
@@ -412,34 +463,93 @@ test("the office's offline body is checked, and the office counts as away after 
     () => NOW,
   );
   assert.equal(bad.status, 400);
-  const staff = await handle(
-    await officeRequest("PUT", "/office/offline/staff", NOW, {
+  const nobody = await handle(
+    await officeRequest("PUT", "/office/offline/nobody", NOW, {
       texts: {},
       links: {},
     }),
     env,
     () => NOW,
   );
-  assert.equal(staff.status, 400);
-  await handle(
-    await officeRequest("GET", "/office/items", NOW),
-    env,
-    () => NOW,
-  );
-  await sendUpdate(
-    env,
-    message(1, { text: "/start" }),
-    fetcher,
-    NOW + OFFICE_AWAY_SECONDS,
-  );
+  assert.equal(nobody.status, 400);
+  await sendUpdate(env, message(1, { text: "/start" }), fetcher);
   assert.equal(sent.length, 0);
-  await sendUpdate(
+  assert.equal((await sealedItems(env))[0].relay, undefined);
+});
+
+test("DL-219: FAQ, My requests, Fixed or Not fixed and a typed message are answered at once", async () => {
+  const env = await setUp();
+  const faqTexts = {
+    ...TEXTS,
+    faq: [
+      {
+        number: 1,
+        question_en: "Wi-Fi?",
+        question_km: "km Wi-Fi?",
+        answer_en: "Ask the desk.",
+        answer_km: "km Ask the desk.",
+      },
+    ],
+  };
+  await handle(
+    await officeRequest("PUT", "/office/offline/tenant", NOW - 900, {
+      texts: faqTexts,
+      links: await links(),
+    }),
     env,
-    message(2, { text: "/start" }),
-    fetcher,
-    NOW + OFFICE_AWAY_SECONDS + 1,
+    () => NOW - 900,
   );
-  assert.equal(sent.length, 1);
+  // The office's access list: the Unit, My requests in both languages, a repair to check.
+  await handle(
+    await officeRequest("PUT", "/office/access/tenant", NOW - 900, {
+      users: [
+        {
+          id: TENANT,
+          role: "TENANT",
+          data: {
+            unit: "305",
+            places: [],
+            requests: { en: "PR-7 Water: Done", km: "km PR-7 ទឹក" },
+            check: "PR-7",
+          },
+        },
+      ],
+    }),
+    env,
+    () => NOW - 900,
+  );
+  const { sent, fetcher } = telegramFake();
+  const steps: [string, string][] = [
+    ["English", "menu"],
+    ["FAQ", "pick a question"],
+    ["1. Wi-Fi?", "Wi-Fi?: Ask the desk."],
+    ["My requests", "Unit 305\nPR-7 Water: Done"],
+    ["Fixed", "thanks, report PR-7 is closed"],
+    ["Not fixed", "no repair to check"],
+    ["hello there", "menu"],
+  ];
+  let update = 1;
+  for (const [typed, expected] of steps) {
+    await sendUpdate(env, message(update++, { text: typed }), fetcher);
+    assert.equal(sent.at(-1)?.text, expected);
+  }
+  // The FAQ questions are buttons above Back to menu.
+  assert.deepEqual(sent[1]?.reply_markup, {
+    keyboard: [[{ text: "1. Wi-Fi?" }], [{ text: "Back to menu" }]],
+  });
+  const items = await sealedItems(env);
+  assert.deepEqual(
+    items.map((item) => item.relay.step),
+    ["menu", "faq", "faq", "menu", "menu", "menu", "menu"],
+  );
+  assert.deepEqual(items[4].relay.check, { fixed: true, number: "PR-7" });
+  assert.deepEqual(items[5].relay.check, { fixed: false, number: null });
+  // A person with no requests hears so.
+  env.DB.sqlite
+    .prepare("UPDATE access SET data = ? WHERE user_id = ?")
+    .run(JSON.stringify({ unit: "305", places: [] }), TENANT);
+  await sendUpdate(env, message(update++, { text: "My requests" }), fetcher);
+  assert.equal(sent.at(-1)?.text, "no requests");
 });
 
 test("a busy night: 60 items with photos are pulled and confirmed within the free plan's 50 queries", async () => {
@@ -492,4 +602,62 @@ test("a busy night: 60 items with photos are pulled and confirmed within the fre
     ).n,
     0,
   );
+});
+
+test("a QR scan at night links at once, only once, and not after it stops working (DL-214)", async () => {
+  const env = await setUp();
+  const code = "0123456789abcdef0123456789abcdef01234567";
+  const old = "fedcba9876543210fedcba9876543210fedcba98";
+  const hash = (text: string) =>
+    createHash("sha256").update(text).digest("hex");
+  const put = await handle(
+    await officeRequest("PUT", "/office/offline/tenant", NOW - 900, {
+      texts: TEXTS,
+      links: {
+        ...(await links()),
+        start_codes: {
+          [hash(code)]: [0, NOW + 3600],
+          [hash(old)]: [0, NOW - 1],
+        },
+      },
+    }),
+    env,
+    () => NOW - 900,
+  );
+  assert.equal(put.status, 200);
+  const { sent, fetcher } = telegramFake();
+  await sendUpdate(env, message(1, { text: `/start ${code}` }), fetcher);
+  // A new person: linked, then the language question.
+  assert.deepEqual(
+    sent.map((item) => item.text),
+    ["km linked to Unit 305", "km welcome"],
+  );
+  const access = env.DB.sqlite
+    .prepare("SELECT data FROM access WHERE bot = 'TENANT' AND user_id = ?")
+    .get(TENANT) as { data: string };
+  assert.equal(JSON.parse(access.data).unit, "305");
+  // Someone else with the same code, and an expired code, are refused.
+  const other = {
+    update_id: 2,
+    message: {
+      message_id: 2,
+      from: { id: 5151 },
+      chat: { id: 5151, type: "private" },
+      text: `/start ${code}`,
+    },
+  };
+  await sendUpdate(env, other, fetcher);
+  assert.deepEqual(
+    sent.slice(-2).map((item) => item.text),
+    ["km this QR does not work", "km welcome"],
+  );
+  await sendUpdate(env, message(3, { text: `/start ${old}` }), fetcher);
+  assert.equal(sent.at(-2)?.text, "km this QR does not work");
+  const items = await sealedItems(env);
+  assert.deepEqual(items[0].relay, {
+    answered: true,
+    step: "language",
+    code: { outcome: "LINKED" },
+  });
+  assert.deepEqual(items[1].relay.code, { outcome: "BAD" });
 });

@@ -17,7 +17,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from property_rental import telegram_relay_client
 from property_rental.operations_status import evaluate_warnings
 from property_rental.telegram_phone import normalize_phone
-from property_rental.telegram_pull_job import run_pull
+from property_rental.telegram_pull_job import ITEMS_EVERY_SECONDS, items_due, note_items, run_pull
 from property_rental.telegram_relay_client import RelayClient, RelayError, signature
 from property_rental.telegram_seal import seal_for_tests
 from property_rental.telegram_send_job import load_bot_tokens, run_send
@@ -133,6 +133,8 @@ class FakeStore:
         self.inquiry_answers: list[dict[str, Any]] = []
         self.reminder_runs = 0
         self.invoice_reminder_runs = 0
+        self.receipt_runs = 0
+        self.warning_runs = 0
         self.blocked = False
         # The Staff bot (migration 20270620_331); None is a job given no service actor.
         self.staff_ready = True
@@ -144,6 +146,14 @@ class FakeStore:
         self.staff_data: dict[str, Any] = {"choices": {}, "users": []}
         self.photos_due: list[dict[str, Any]] = []
         self.photos_removed: list[str] = []
+        # The Customer and Staff bots while the office is away (migration 20270711_383, DL-213).
+        self.clock: dict[str, Any] = {"timezone_name": "Asia/Phnom_Penh", "utc_offset_minutes": 420}
+        self.staff_join_state = "WAITING"
+        # The one-time QR (migration 20270712_384, DL-214).
+        self.code_answers: list[dict[str, Any]] = []
+        self.code_tries: list[tuple[int, str]] = []
+        self.start_codes: list[dict[str, Any]] = []
+        self.bot_names: dict[str, str] = {}
 
     def record_item(self, item: dict[str, Any]) -> dict[str, Any]:
         if item["relay_item_id"] in self.items:
@@ -224,6 +234,14 @@ class FakeStore:
         self.invoice_reminder_runs += 1
         return 0
 
+    def receipts_queue(self) -> int:
+        self.receipt_runs += 1
+        return 0
+
+    def warnings_queue(self) -> int:
+        self.warning_runs += 1
+        return 0
+
     def visit_requests_remove_old(self) -> int:
         return 0
 
@@ -232,6 +250,24 @@ class FakeStore:
 
     def tenant_offline_data(self) -> dict[str, Any]:
         return self.offline_data
+
+    def offline_clock(self) -> dict[str, Any]:
+        return self.clock
+
+    def tenant_link_code(self, user: int, code: str) -> dict[str, Any]:
+        self.code_tries.append((user, code))
+        answer = self.code_answers.pop(0)
+        if answer["result"] == "LINKED":
+            self.links[user] = {"name": answer["name"], "unit_number": answer["unit_number"]}
+        return answer
+
+    def link_codes_offline(self) -> list[dict[str, Any]]:
+        return self.start_codes
+
+    def bot_name_set(self, bot: str, username: str) -> bool:
+        changed = self.bot_names.get(bot) != username
+        self.bot_names[bot] = username
+        return changed
 
     def tenant_problem_report(
         self,
@@ -289,6 +325,9 @@ class FakeStore:
     def staff_join(self, user: int, name: str, phone: str) -> dict[str, Any]:
         self._staff_ready()
         self.staff_joins.append((user, name, phone))
+        if self.staff_join_state == "LINKED":
+            self.staff[user] = {"name_km": name}
+            return {"ok": True, "state": "LINKED"}
         self.staff_waiting.add(user)
         return {"ok": True, "state": "WAITING", "request_id": "r1"}
 
@@ -312,8 +351,13 @@ class FakeStore:
         return self.staff_data
 
     def staff_problem_report(
-        self, inbound_id: str, form: dict[str, Any], media_ids: list[str]
+        self,
+        inbound_id: str,
+        form: dict[str, Any],
+        media_ids: list[str],
+        relay_alerted: bool = False,
     ) -> dict[str, Any]:
+        self.relay_alerted.append(relay_alerted)
         self.staff_scans.append(("REPORT", 0, {"form": form, "media": media_ids}, inbound_id))
         return self.staff_answers.pop(0)
 
@@ -720,3 +764,17 @@ def test_the_office_names_itself_to_the_relay(monkeypatch: pytest.MonkeyPatch) -
     )
     assert status == 200
     assert seen == {"agent": "CHETANA-Residence-office/1", "signed": "s"}
+
+
+def test_the_items_are_collected_every_150_seconds(tmp_path: Path) -> None:
+    # DL-219: the relay answers at once; the job runs every 10 seconds but collects every 150.
+    start = datetime(2026, 11, 11, 7, 0, tzinfo=UTC)
+    assert ITEMS_EVERY_SECONDS == 150
+    assert items_due(tmp_path, start, 150) is True
+    note_items(tmp_path, start)
+    assert items_due(tmp_path, start + timedelta(seconds=10), 150) is False
+    assert items_due(tmp_path, start + timedelta(seconds=149), 150) is False
+    assert items_due(tmp_path, start + timedelta(seconds=150), 150) is True
+    # A clock set back, or 0 seconds, collects at once.
+    assert items_due(tmp_path, start - timedelta(seconds=5), 150) is True
+    assert items_due(tmp_path, start + timedelta(seconds=10), 0) is True

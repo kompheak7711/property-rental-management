@@ -398,6 +398,11 @@ database_test_suites='
   tests/test_v12_telegram_outbox_migration.py
   tests/test_v12_short_stay_early_check_out_migration.py
   tests/test_telegram_tenant_offline_migration.py
+  tests/test_telegram_offline_clock_migration.py
+  tests/test_telegram_link_qr_migration.py
+  tests/test_telegram_receipts_migration.py
+  tests/test_telegram_notices_migration.py
+  tests/test_telegram_warnings_migration.py
   tests/test_telegram_tenant_invoices_migration.py
   tests/test_aba_invoice_qr_migration.py
 '

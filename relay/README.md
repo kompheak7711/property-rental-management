@@ -2,7 +2,7 @@
 
 A small Cloudflare Worker that stands between Telegram and the office computer
 (bots plan, "The relay"). The office computer is never open to the internet: it
-pulls from the relay every minute.
+pulls from the relay every 150 seconds, and the relay answers every bot message at once (DL-219).
 
 What it does:
 
@@ -41,15 +41,15 @@ real secret: every key is made on the office computer and typed into
 Cloudflare, never into this repository or a chat.
 
 1. On the office computer, make the keys:
-   ```
-   openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:3072 -out office.pem
-   openssl pkey -in office.pem -pubout -out office.pub.pem
-   openssl rand -hex 32 > relay-pull.key
-   ```
-   Copy them into `/etc/prm/secrets/` (mode 0600, owner prm-ops) as
-   `prm_production_relay_office_private_key` and `prm_production_relay_pull_key`.
-   Each bot's token goes there too, as `prm_production_{customer|tenant|staff}_bot_token`.
-   Then delete `office.pem` and `relay-pull.key` from where you made them.
+    ```
+    openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:3072 -out office.pem
+    openssl pkey -in office.pem -pubout -out office.pub.pem
+    openssl rand -hex 32 > relay-pull.key
+    ```
+    Copy them into `/etc/prm/secrets/` (mode 0600, owner prm-ops) as
+    `prm_production_relay_office_private_key` and `prm_production_relay_pull_key`.
+    Each bot's token goes there too, as `prm_production_{customer|tenant|staff}_bot_token`.
+    Then delete `office.pem` and `relay-pull.key` from where you made them.
 2. In Cloudflare: create the D1 database `chetana-relay` and the R2 bucket
    `chetana-relay-media`. Put the database id in `wrangler.toml`.
 3. Create the tables: `npx wrangler d1 execute chetana-relay --remote --file schema.sql`.
@@ -84,18 +84,48 @@ After it, `Start test app.command` also runs the pull and send jobs every 10 sec
 (`scripts/local/telegram-jobs.sh`, log `.local/telegram.log`). Send `ping` to a bot to check
 the connection. Running the setup again keeps what is there and redoes the rest.
 
-## While the app is closed (DL-210)
+## The relay answers every message (DL-210, DL-219)
 
-When the office has not pulled for 150 seconds, the relay answers the Tenant bot itself, with
-the texts, buttons and scrambled Lease check codes the office sent (`relay/src/offline.ts`):
+Owner, 11/11/2026: "all telegram bot has to reply immediately even app open or close". The relay
+answers every bot message at once, with the texts, buttons and scrambled Lease check codes the
+office sent (`relay/src/offline.ts`), and keeps each message, form and photo for the office. The
+office collects them every 150 seconds (`property-rental-telegram-pull --items-every 150`; the job
+runs every 10 seconds for the rest). The Tenant bot answers:
 
 - Start, the language, Link my Lease (own phone, name and Unit, checked against keyed hashes;
-  5 wrong tries block for 24 hours), Contact office and the Problem report buttons;
+  5 wrong tries block for 24 hours), the one-time QR, Contact office and the Problem report buttons;
 - a sent report gets "We got your report. Our office will check it." at once, and an urgent one
   goes first to the Authorizers and the caretaker on shift on the Staff bot;
-- My requests, FAQ, Fixed and Not fixed get "Our office is closed now" and wait for the office.
+- FAQ (the questions the Owner approved for the Tenant bot), My requests (the lines the office
+  sends for each linked person in the access list, in both languages) and Fixed or Not fixed (the
+  newest Unit repair marked done, said once; the office closes or reopens it when it collects the
+  tap, and the tenant hears the office's answer only if it differs).
 
-Each item tells the office what the relay said; the app saves it without answering twice. The
-relay needs the `LINK_CHECK_KEY` secret (the office's `link-check.key`) to link anyone; the Mac
-setup makes both. After pulling a new version, run the setup again (it keeps the bot tokens) so
-the relay gets the new tables and code.
+Each item tells the office what the relay said; the app saves it without answering twice. Only
+`ping` (the setup test) and a message the relay has no texts for are left for the office. The
+relay needs the `LINK_CHECK_KEY` secret (the office's `link-check.key`) to link anyone by name;
+without it the office links them when it collects the message. The Mac setup makes both. After
+pulling a new version, run the setup again (it keeps the bot tokens) so the relay gets the new
+tables and code.
+
+## The Customer bot and the Staff bot (DL-213, DL-219)
+
+The relay answers these at once too. The office sends one body per bot (`PUT /office/offline/<bot>`):
+
+- Customer bot (`relay/src/offline_bots.ts`): Start, the language, FAQ, Contact office and every
+  step of Send an inquiry, then "We received your request"; the request number comes from the
+  office within 150 seconds. The inquiry in progress is kept for 30 minutes in `chat_requests`.
+- Staff bot (Khmer only): Start, share your phone, the hello for people on the access list; a
+  sent form gets "received" at once, and an urgent Problem report goes at once to the caretaker
+  on shift and the Authorizers.
+
+Each item carries what the relay did, so the app saves it without answering twice.
+
+## The one-time Telegram QR (DL-214)
+
+Staff show a QR on the Lease page (at signing) or the Booking page (at guest check-in). It opens
+the Tenant bot with `/start <code>`; the app links the person at once. The office sends the relay
+only the sha256 of each unused code, with its Unit and expiry (`start_codes` in the Tenant bot
+body), so a scan while the app is closed links at once too. `start_codes_used` keeps which
+account used a code, so a second account is refused. When the app opens it links the person in
+the database and answers again only when the database disagrees with the relay.

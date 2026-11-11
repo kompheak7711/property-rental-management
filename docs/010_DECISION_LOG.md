@@ -2929,6 +2929,103 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **Links:** DL-126, DL-210.
 - **Decision date:** 2026-11-08.
 
+## DL-213 — Telegram bots: the Customer bot and the Staff bot answer while the app is closed
+
+- **Type:** `OWNER DECISION` and `TECHNICAL DECISION`
+- **Status:** `BUILT ON BRANCH claude/telegram-offline-customer-staff; WAITS FOR THE OWNER'S TEST AND OK TO MERGE`
+- **Source:** the owner on 11 Nov 2026: "now CHETANA Residence support can work 24/7. let's make CHETANA Residence and CHETANA Staff work without rely on Property rental management app open." Technical choices by Claude under the owner's 2026-10-23 22:30 rule; no new business or money rule.
+- **(A) When.** As DL-210: only while the office has not pulled for 150 seconds. While the office pulls, the office answers everything and the relay only remembers the language a customer picks.
+- **(B) The Customer bot.** The relay answers Start, the language, the menu, FAQ (the questions the Owner approved for the Customer bot, sent by the office), Contact office (own phone first, then one message that waits for the office) and every step of Send an inquiry with the office's own rules: how to contact, the own phone, the email, the name, the Unit Type, the visit day (2 to 30 days ahead, Monday to Saturday, or Skip) and Morning or Afternoon, the move-in month (or Later), the note and the request to check. The visit days and months come from the Property's own date: the office sends the Property's distance from UTC (`app.telegram_offline_clock`). "Send an inquiry" gets at once: "Thank you. We received your request. Our office is closed now. We will send you the request number and call you when the office opens." Only the office gives request numbers, so the number comes when the app opens. The relay keeps the inquiry in progress for 30 minutes, as a link step (`chat_requests`); it does not know a phone shared in an earlier office session, so it may ask for the phone again.
+- **(C) The Staff bot (Khmer only).** The relay answers Start: a person on the Staff access list gets the hello with the Reports button; a person who shares their own phone hears "waiting for approval" (approval still needs the app); anyone else is asked to share their phone. A sent form gets "received" at once: Check in and Check out keep the time the relay received the scan, and the result (on time, late, needs check) comes when the app opens; other forms answer "Saved, the number comes when the office opens". An urgent Problem report (a type that is always urgent) goes first to the caretaker whose shift covers that moment and to the Owner and Managers (the Authorizers), with the type and the Unit or place, as DL-210 (D); the sender is not alerted.
+- **(D) When the app opens.** The pull job saves every item as before and does not answer twice. Customer bot: the language, the next step, the inquiry in progress and the Contact office message are saved without an answer; a sent inquiry is saved as a Visit request and only its number is sent ("We got your request. Number ..."), or the office's own answer when the database refuses it. Staff bot: a shared phone is saved as a join request; the hello is sent only when the database links the person at once. Forms get the office's normal answer (the check-in result, the report number), and an urgent report the relay already alerted is saved without a second alert (`prm.relay_alerted`).
+- **Open:** the native Khmer check of the new texts; staff join approval still needs the app; short-stay guests linking in the Tenant bot is DL-214.
+- **Built:** `relay/src/offline_bots.ts`, `relay/schema.sql` (`chat_requests`), migration `20270711_383` (DB-TG-020), `backend/src/property_rental/telegram_offline.py`, `telegram_customer_bot.py`, `telegram_staff_bot.py`.
+- **Links:** DL-171, DL-174, DL-175, DL-210.
+- **Decision date:** 2026-11-11.
+
+## DL-214 — Telegram bots: a one-time QR links tenants and short-stay guests
+
+- **Type:** `OWNER DECISION` and `TECHNICAL DECISION`
+- **Status:** `BUILT ON BRANCH claude/telegram-link-qr (on DL-213); WAITS FOR THE OWNER'S TEST AND OK TO MERGE`
+- **Source:** the owner on 11 Nov 2026 asked whether the support bot links short-stay guests, then suggested registering each customer's Telegram in the app; on the card "Add a Telegram QR at Lease signing and guest check-in?" the owner chose "Yes, QR for tenants and guests". Technical choices by Claude under the owner's 2026-10-23 22:30 rule.
+- **(A) The QR.** On a signed Lease (people with Sign Lease) and on a guest's live stay (the front desk), staff tap Show Telegram QR and pick the person. The QR opens the CHETANA Residence support bot with a one-time code; the person taps Start and is linked at once, with no phone, name or Unit to type. A code works once, for 24 hours. The app keeps only its sha256, so a QR is shown once and never read again; a second account that scans it is refused. Linking by phone, name and Unit stays.
+- **(B) Guests.** A guest's link is to the Booking. It works while the stay is live (checked in, or booked from the check-in day) and ends by itself at check-out (`STAY_ENDED`). Guests can use Contact office and Problem reports; guests get no Invoices or reminders on Telegram.
+- **(C) The bot's name.** The QR needs the bot's user name; the send job asks Telegram (getMe) once a day and saves it. Until then the page says the QR is not ready yet.
+- **(D) While the app is closed.** The office sends the relay the hashes of unused codes, so a scan at night links at once too (DL-210 rules). When the app opens it saves the link and answers again only when the database disagrees.
+- **Open:** the native Khmer check of the new texts; the Fixed / Not fixed check of a guest's report still follows Leases only.
+- **Built:** migration `20270712_384` (DB-TG-021), API-TG-009, `telegram_tenant_bot.py`, `telegram_offline.py`, `telegram_send_job.py` (`learn_bot_names`), `totp_qr.py` (`telegram_link_qr_svg`), `relay/src/offline.ts`, `relay/schema.sql` (`start_codes_used`), `frontend/src/telegram/TelegramQrCard.tsx` on the Lease and Booking pages.
+- **Next (owner card of 11 Nov 2026, "All three, in that order"):** the support bot also sends Receipts, then notices, then warnings, one at a time with an owner test after each.
+- **Links:** DL-128, DL-210, DL-211, DL-213.
+- **Decision date:** 2026-11-11.
+
+## DL-215 — Telegram bots: Receipts go to the people linked to the Lease or stay
+
+- **Type:** `OWNER DECISION` and `TECHNICAL DECISION`
+- **Status:** `BUILT ON BRANCH claude/telegram-receipts (on DL-214); THE OWNER CHOSE THE RECOMMENDED ANSWER ON 11 NOV 2026; WAITS FOR THE OWNER'S TEST AND OK TO MERGE`
+- **Source:** the owner on 11 Nov 2026: "CHETANA Residence support bot is also responsible for sending invoice, reminder, receipt, and any notice or warning", and on the card "Which should CHETANA Residence support send next, after the QR?": "All three, in that order" (Receipts, then notices, then warnings). Who gets a Receipt is the owner's card "Who should get Receipts on Telegram, and for which money?" (recommended: "Tenants and guests, with deposits"). Technical choices by Claude under the owner's 2026-10-23 22:30 rule.
+- **(A) Which Receipts.** Every Payment makes one Receipt (migration 40). Each Receipt goes on Telegram once, to each live link of the Lease the Payment names, of the Leases of the Invoices and late-payment charges it paid, of the stay whose Invoice it paid, and of the payer. Money for a Security Deposit is a Payment too, so its Receipt goes the same way. A short-stay cash deposit or card hold is not a Payment and makes no Receipt. A reversed Payment is not sent.
+- **(B) What it says.** The Receipt number (the Payment's document number), the Unit, the date, the amount received and the method (riel also shows its US dollar value), what it paid (each Invoice, each late-payment charge, the Security Deposit) and money not used yet. Labels are in the language the person chose.
+- **(C) When.** The pull job (about once a minute) queues the Receipts of the last 3 days that a linked person has not had yet, so what the money paid is final when the message is made. A person who links later (a guest who paid before the QR at check-in) also gets the Receipts of the day before the link.
+- **(D) The office.** Office › Telegram › Linked tenants shows "Receipts on Telegram": each Receipt of the last 45 days, who got it, and how many reached nobody.
+- **Owner's answer (11 Nov 2026, 05:11 UTC):** "Tenants and guests, with deposits", as built.
+- **Open:** the native Khmer check of the new texts; whether a reversed Payment should send a message.
+- **Built:** migration `20270713_385` (DB-TG-022), API-TG-010, `telegram_texts.py` (`tenant.receipt`), `telegram_store.py`, `telegram_pull_job.py`, `frontend/src/telegram/TelegramPages.tsx`.
+- **Links:** DL-211, DL-214.
+- **Decision date:** 2026-11-11.
+
+## DL-216 — Telegram bots: the office sends notices to linked tenants and guests
+
+- **Type:** `OWNER DECISION` and `TECHNICAL DECISION`
+- **Status:** `BUILT ON BRANCH claude/telegram-notices (on DL-215); WAITS FOR THE OWNER'S TEST AND OK TO MERGE`
+- **Source:** the owner on 11 Nov 2026: CHETANA Residence support sends "any notice or warning", and on the card "Which should CHETANA Residence support send next, after the QR?": "All three, in that order" (Receipts, then notices, then warnings). What a notice is, who may send one and who gets it are technical choices by Claude under the owner's 2026-10-23 22:30 rule: no money or Lease rule is involved.
+- **(A) What a notice is.** News from the office: a water or power cut, building work, a holiday. Not money and not a Lease letter: the warnings (late rent, Lease letters) are the next step and follow the owner's rules.
+- **(B) Who sends.** The Owner and Managers (`telegram.operate`) on the new tab Office › Telegram › Notices. They write it in English, Khmer or both, choose everyone linked, some floors or some Units, and confirm "Send this notice now?". A sent notice is kept as it was and cannot be changed or taken back.
+- **(C) Who gets it.** Each live link of the chosen Units, tenants and guests, once, in the language the person chose; a notice written in one language goes in that language to all. At most 1,500 characters.
+- **(D) The office list.** The notices of the last 90 days, who they were for, who sent them, and how many people got each one or were not reached.
+- **Open:** the native Khmer check of the new texts.
+- **Built:** migration `20270714_386` (DB-TG-023), API-TG-011, `telegram_texts.py` (`tenant.notice`), `telegram_api.py`, `frontend/src/telegram/TelegramPages.tsx` (`NoticesPageView`), `shell/navigation.ts`.
+- **Links:** DL-128, DL-214, DL-215.
+- **Decision date:** 2026-11-11.
+
+## DL-217 — Telegram bots: warnings go to the tenant when staff record them
+
+- **Type:** `OWNER DECISION` and `TECHNICAL DECISION`
+- **Status:** `BUILT ON BRANCH claude/telegram-warnings (on DL-216); WAITS FOR THE OWNER'S TEST AND OK TO MERGE`
+- **Source:** the owner on 11 Nov 2026: CHETANA Residence support sends "any notice or warning", and on the card "Which should CHETANA Residence support send next, after the QR?": "All three, in that order" (Receipts, then notices, then warnings). On the card "When should CHETANA Residence support send warnings to a tenant on Telegram?" the owner chose "When staff record it" (11 Nov 2026, 05:11 UTC): "The day-20 and day-30 late Rent letters and Lease warnings go to the tenant on Telegram as soon as staff record them. Paper stays the official copy." The owner did not choose the automatic "Your Rent is overdue" note the day after the Due Date. Technical choices by Claude under the owner's 2026-10-23 22:30 rule.
+- **(A) Which warnings.** The day-20 warning (`TWENTY_DAY_WARNING`) and the day-30 serious nonpayment (`THIRTY_DAY_SERIOUS_DEFAULT`) of a Rent nonpayment case (UI-108), and each Lease warning (UI-075). Cure and authorized follow-up events are not warnings and are not sent. Nothing changes in how staff record them, and nothing is sent by itself: only what staff record.
+- **(B) Who gets them.** Each live link of the Lease, once, in the language the person chose. Guests have no Lease and get none. A person who links later gets the warnings recorded from a day before the link, never older ones.
+- **(C) What it says.** For Rent: the Unit, the Invoice, its Due Date, the Rent still to pay when staff recorded it, and the date of the paper letter. For a Lease warning: its number, the Unit, its date, what happened and when, and the Lease rule, as staff wrote them. Every message says the paper letter is the official copy. No message says the Lease ends, adds a charge or names a penalty.
+- **(D) When.** The pull job (about once a minute) queues the warnings recorded in the last 3 days that a linked person has not had yet.
+- **(E) The office.** Office › Telegram › Linked tenants shows "Warnings on Telegram": each warning of the last 90 days, who got it, and how many reached nobody (those tenants need the letter by hand).
+- **Open:** the native Khmer check of the new texts.
+- **Built:** migration `20270715_387` (DB-TG-024), API-TG-012, `telegram_texts.py` (`tenant.rent_warning`, `tenant.rent_default`, `tenant.lease_warning`), `telegram_store.py`, `telegram_pull_job.py`, `frontend/src/telegram/TelegramPages.tsx`.
+- **Links:** DL-215, DL-216, UI-075, UI-108.
+- **Decision date:** 2026-11-11.
+
+## DL-218 — Telegram bots: the bots answer within seconds when the app is closed
+
+- **Type:** `TECHNICAL DECISION`
+- **Status:** `(A) STANDS FOR THE 10-SECOND TIMERS; (B) AND THE 30-SECOND AWAY RULE REPLACED BY DL-219 THE SAME DAY (NEVER MERGED)`
+- **Source:** the owner on 11 Nov 2026: "because this telegram bot can work without app, telegram bot should reply immediately right?" The coordinator added that a message must never wait for the app to open. Technical choices by Claude under the owner's 2026-10-23 22:30 rule (no money or Lease rule).
+- **(A) Away sooner.** The relay counts the office as away when it has not pulled for 30 seconds (was 150 seconds in DL-210 and DL-213). The office pulls every 10 seconds: the Mac test run already did, and `prm-telegram-pull.timer` and `prm-telegram-send.timer` on the office server now run every 10 seconds too (was every minute). A pull is one request, well inside the relay's free plan.
+- **(B) No message waits.** A message or form that comes while the office still looks open is kept for the office as before. If the office has not pulled since it came, 25 seconds later the relay answers it as when the office is away (for an urgent report, the caretaker on shift and the Authorizers get the alert), and adds what it said to the same sealed item, only while the office still has not pulled it. The office then saves it without answering twice. The relay keeps the message only in that request's memory for those seconds; nothing unsealed is stored.
+- **Built:** `relay/src/index.ts` (`answerLate`, `LATE_SECONDS`), `relay/src/offline.ts` (`OFFICE_AWAY_SECONDS`), `config/deployment/host/prm-telegram-*.timer`; relay tests. The owner reruns "Set up Telegram test.command" so the relay gets the new code.
+- **Links:** DL-210, DL-213.
+- **Decision date:** 2026-11-11.
+
+## DL-219 — Telegram bots: the relay answers every message at once; the app collects every 150 seconds
+
+- **Type:** `OWNER DECISION` and `TECHNICAL DECISION`
+- **Status:** `BUILT ON BRANCH claude/telegram-warnings (on DL-216); REPLACES DL-218 (B); WAITS FOR THE OWNER'S TEST AND OK TO MERGE`
+- **Source:** the owner on 11 Nov 2026: "all telegram bot has to reply immediately even app open or close. when customer complete inquiry and click send, or tenant (include short stay) send report, or start send report, it is going to store on cloud. Then if the application is opened, it is going to check every 150 seconds and receive all report." Technical choices by Claude under the owner's 2026-10-23 22:30 rule (no money or Lease rule).
+- **(A) One answerer.** The relay answers every message of the three bots at once, app open or closed, as DL-210 and DL-213 describe. There is no "office away" rule any more and no late answer (DL-218 (B) is removed). The relay keeps each message, form and photo sealed for the office as before, and says in the item what it answered, so the app saves the same steps without answering twice. Only `ping` (the setup test) and a message the relay has no texts for are answered by the app.
+- **(B) Collected every 150 seconds.** The pull job still runs every 10 seconds (DL-218 (A)), but collects the relay's items only every 150 seconds (`--items-every 150`). Each run still sends the relay what it needs when it changed (texts, access list, QR codes: a new QR works within 10 seconds) and queues Invoices, reminders, Receipts, notices and warnings. What only the app can say comes after the next collection, within 150 seconds: the Customer inquiry number, a tenant's report number, the Staff check-in result, and the answer to `ping`.
+- **(C) More answers in the relay.** The Tenant bot's body adds the FAQ the Owner approved for it. The access list adds, for each linked person, My requests in both languages and the newest Unit repair marked done. The relay answers FAQ, My requests and Fixed or Not fixed at once (it says a repair once). The app closes or reopens the repair when it collects the tap; the tenant gets the app's answer only when it differs from the relay's. A linked person who types anything else gets the menu, as the app answers. The "Our office is closed now" text is removed.
+- **(D) No name key, no name link.** Without the link check key the relay leaves a typed Lease link to the app (within 150 seconds) instead of saying "no match".
+- **Built:** `relay/src/index.ts`, `relay/src/offline.ts`, `relay/src/offline_bots.ts`, `telegram_offline.py`, `telegram_tenant_bot.py` (`relay_person`, the relay's Fixed or Not fixed), `telegram_pull_job.py` (`--items-every`, `ITEMS_EVERY_SECONDS`), `telegram_texts.py`, `scripts/local/telegram-setup.sh` ("Within 3 minutes"); relay and backend tests. The owner reruns "Set up Telegram test.command" so the relay gets the new code.
+- **Links:** DL-210, DL-213, DL-214, DL-218.
+- **Decision date:** 2026-11-11.
+
 ## DL-180 — ABA QR on every Invoice: the PDF on Telegram and the payment check
 
 - **Type:** `OWNER DECISION` and `TECHNICAL DECISION`
@@ -2940,6 +3037,6 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **(D) How a payment is known.** ABA PayWay calls the relay (`/aba/payway`); the relay keeps only the transaction id, sealed, as a hint. ABA's call is not signed, so no money is taken from it: the office asks ABA itself (Check transaction) and records only ABA's own answer. The pull job checks a hinted QR at once; the send job checks all open QRs every 10 minutes. The Payment's key comes from the transaction id, so it is never saved twice. The Mac is never opened to the internet.
 - **(E) Records.** `app.aba_qr_requests` (one row per QR: Invoice, transaction id, amount in cents, QR text, last moment it works) and `app.aba_qr_events` (CLOSED, PAID, PAYMENT_RECORDED, NEEDS_CHECK, EXPIRED, CHECK_FAILED). Both are append-only. The PayWay merchant id and API key are secret files on the office computer, never in the repository or the chat.
 - **Open:** the PayWay sandbox keys and a Payment Method for ABA KHQR mapped to ABA USD account 1020 (the operations file names it); the native Khmer check of the QR box words; ABA's fee and settlement times.
-- **Built:** migration `20270711_340`, `backend/src/property_rental/payway.py`, `invoice_pdf.py`, `aba_qr.py`, the Telegram send and pull jobs, `relay/src/index.ts` (`/aba/payway`).
+- **Built:** migration `20270716_340`, `backend/src/property_rental/payway.py`, `invoice_pdf.py`, `aba_qr.py`, the Telegram send and pull jobs, `relay/src/index.ts` (`/aba/payway`).
 - **Links:** DL-210, DL-211.
 - **Decision date:** 2026-11-11.
