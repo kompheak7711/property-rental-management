@@ -19,7 +19,7 @@ from collections.abc import Sequence
 from alembic import op
 
 revision: str = "20270626_360"
-down_revision: str | None = "20270715_387"
+down_revision: str | None = "20270716_390"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

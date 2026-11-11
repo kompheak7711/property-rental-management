@@ -25,7 +25,7 @@ def _migration() -> ModuleType:
 def test_360_follows_321_and_is_the_head() -> None:
     module = _migration()
     assert module.revision == "20270626_360"
-    assert module.down_revision == "20270715_387"
+    assert module.down_revision == "20270716_390"
     config = Config(str(Path(__file__).parents[1] / "alembic.ini"))
     assert ScriptDirectory.from_config(config).get_heads() == ["20270712_363"]
 
