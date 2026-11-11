@@ -543,7 +543,7 @@ test("staff forms at night: 'received' at once, and an urgent report reaches the
   assert.equal(sent.length, 0);
   const later = await sealedItems(env);
   assert.equal(later.at(-1).relay, undefined);
-  // And when it has been away again for 150 seconds, the relay answers again.
+  // And when it has been away again for 30 seconds, the relay answers again.
   await sendUpdate(
     env,
     "customer",

@@ -86,7 +86,7 @@ the connection. Running the setup again keeps what is there and redoes the rest.
 
 ## While the app is closed (DL-210)
 
-When the office has not pulled for 150 seconds, the relay answers the Tenant bot itself, with
+When the office has not pulled for 30 seconds (DL-218; it pulls every 10 seconds), the relay answers the Tenant bot itself, with
 the texts, buttons and scrambled Lease check codes the office sent (`relay/src/offline.ts`):
 
 - Start, the language, Link my Lease (own phone, name and Unit, checked against keyed hashes;
@@ -95,14 +95,17 @@ the texts, buttons and scrambled Lease check codes the office sent (`relay/src/o
   goes first to the Authorizers and the caretaker on shift on the Staff bot;
 - My requests, FAQ, Fixed and Not fixed get "Our office is closed now" and wait for the office.
 
-Each item tells the office what the relay said; the app saves it without answering twice. The
+Each item tells the office what the relay said; the app saves it without answering twice.
+A message that comes while the office still looks open is kept for the office; if the office
+has not pulled it 25 seconds later, the relay answers it then and adds what it said to the same
+sealed item (DL-218), so no message waits for the app to open again. The
 relay needs the `LINK_CHECK_KEY` secret (the office's `link-check.key`) to link anyone; the Mac
 setup makes both. After pulling a new version, run the setup again (it keeps the bot tokens) so
 the relay gets the new tables and code.
 
 ## The Customer bot and the Staff bot while the app is closed (DL-213)
 
-The same 150 seconds rule. The office sends one body per bot (`PUT /office/offline/<bot>`):
+The same 30 seconds rule. The office sends one body per bot (`PUT /office/offline/<bot>`):
 
 - Customer bot (`relay/src/offline_bots.ts`): Start, the language, FAQ, Contact office and every
   step of Send an inquiry, then "We received your request"; the request number comes from the

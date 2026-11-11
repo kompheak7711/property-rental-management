@@ -3001,3 +3001,15 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **Built:** migration `20270715_387` (DB-TG-024), API-TG-012, `telegram_texts.py` (`tenant.rent_warning`, `tenant.rent_default`, `tenant.lease_warning`), `telegram_store.py`, `telegram_pull_job.py`, `frontend/src/telegram/TelegramPages.tsx`.
 - **Links:** DL-215, DL-216, UI-075, UI-108.
 - **Decision date:** 2026-11-11.
+
+## DL-218 — Telegram bots: the bots answer within seconds when the app is closed
+
+- **Type:** `TECHNICAL DECISION`
+- **Status:** `BUILT ON BRANCH claude/telegram-warnings (on DL-216); WAITS FOR THE OWNER'S TEST AND OK TO MERGE`
+- **Source:** the owner on 11 Nov 2026: "because this telegram bot can work without app, telegram bot should reply immediately right?" The coordinator added that a message must never wait for the app to open. Technical choices by Claude under the owner's 2026-10-23 22:30 rule (no money or Lease rule).
+- **(A) Away sooner.** The relay counts the office as away when it has not pulled for 30 seconds (was 150 seconds in DL-210 and DL-213). The office pulls every 10 seconds: the Mac test run already did, and `prm-telegram-pull.timer` and `prm-telegram-send.timer` on the office server now run every 10 seconds too (was every minute). A pull is one request, well inside the relay's free plan.
+- **(B) No message waits.** A message or form that comes while the office still looks open is kept for the office as before. If the office has not pulled since it came, 25 seconds later the relay answers it as when the office is away (for an urgent report, the caretaker on shift and the Authorizers get the alert), and adds what it said to the same sealed item, only while the office still has not pulled it. The office then saves it without answering twice. The relay keeps the message only in that request's memory for those seconds; nothing unsealed is stored.
+- **Built:** `relay/src/index.ts` (`answerLate`, `LATE_SECONDS`), `relay/src/offline.ts` (`OFFICE_AWAY_SECONDS`), `config/deployment/host/prm-telegram-*.timer`; relay tests. The owner reruns "Set up Telegram test.command" so the relay gets the new code.
+- **Links:** DL-210, DL-213.
+- **Decision date:** 2026-11-11.
+

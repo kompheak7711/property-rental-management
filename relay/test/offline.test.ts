@@ -7,7 +7,7 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { test } from "node:test";
 
-import { handle } from "../src/index.ts";
+import { handle, type Later } from "../src/index.ts";
 import {
   linkCode,
   OFFICE_AWAY_SECONDS,
@@ -403,9 +403,42 @@ test("an urgent report at night: the caretaker on shift and the Authorizer get t
   );
   await post({ kind: "UNIT", problem_type_id: "t-water", urgent: true });
   assert.equal(sent.length, 0);
+  // DL-218: an urgent report just after the office closed still reaches the caretaker on shift.
+  const tasks: ((now: number) => Promise<void>)[] = [];
+  await handle(
+    new Request("https://relay.test/form/tenant", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        init_data: signIn,
+        form: { kind: "UNIT", problem_type_id: "t-water", urgent: true },
+        photos: [],
+      }),
+    }),
+    env,
+    () => NOW + 5,
+    fetcher,
+    (task) => {
+      tasks.push(task);
+    },
+  );
+  assert.equal(sent.length, 0);
+  await tasks[0]!(NOW + 30);
+  assert.deepEqual(
+    sent.map((m) => [m.bot, m.chat_id]),
+    [
+      ["STAFF", AUTHORIZER],
+      ["STAFF", CARETAKER_ON],
+      ["TENANT", TENANT],
+    ],
+  );
+  assert.deepEqual((await sealedItems(env)).at(-1).relay, {
+    answered: true,
+    alerted: true,
+  });
 });
 
-test("the office's offline body is checked, and the office counts as away after 150 seconds", async () => {
+test("the office's offline body is checked, and the office counts as away after 30 seconds", async () => {
   const env = await setUp();
   const { sent, fetcher } = telegramFake();
   const bad = await handle(
@@ -442,6 +475,68 @@ test("the office's offline body is checked, and the office counts as away after 
     NOW + OFFICE_AWAY_SECONDS + 1,
   );
   assert.equal(sent.length, 1);
+});
+
+test("DL-218: a message that came while the office looked open is answered 25 seconds later if the office has not pulled it", async () => {
+  const env = await setUp();
+  const { sent, fetcher } = telegramFake();
+  const tasks: ((now: number) => Promise<void>)[] = [];
+  const later: Later = (task) => {
+    tasks.push(task);
+  };
+  const post = (update: unknown, at: number) =>
+    handle(
+      new Request("https://relay.test/telegram/tenant", {
+        method: "POST",
+        headers: {
+          "x-telegram-bot-api-secret-token":
+            env.TENANT_WEBHOOK_SECRET as string,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify(update),
+      }),
+      env,
+      () => at,
+      fetcher,
+      later,
+    );
+  // The office pulls, then closes: a message 5 seconds later is kept for it.
+  await handle(
+    await officeRequest("GET", "/office/items", NOW),
+    env,
+    () => NOW,
+  );
+  await post(message(1, { text: "/start" }), NOW + 5);
+  assert.equal(sent.length, 0);
+  assert.equal(tasks.length, 1);
+  // 25 seconds later the office has not pulled: the relay answers and tells the office.
+  await tasks[0]!(NOW + 30);
+  assert.equal(sent.length, 1);
+  const items = await sealedItems(env);
+  assert.equal(items.length, 1);
+  assert.equal(items[0].update_id, 1);
+  assert.equal(items[0].relay.answered, true);
+  // While the office keeps pulling, a kept message is the office's: the relay stays quiet.
+  await post(message(2, { text: "/start" }), NOW + 40);
+  assert.equal(tasks.length, 1); // the office looked away at NOW + 40, so it answered at once
+  assert.equal(sent.length, 2);
+  await handle(
+    await officeRequest("GET", "/office/items", NOW + 50),
+    env,
+    () => NOW + 50,
+  );
+  await post(message(3, { text: "/start" }), NOW + 55);
+  assert.equal(tasks.length, 2);
+  await handle(
+    await officeRequest("GET", "/office/items", NOW + 60),
+    env,
+    () => NOW + 60,
+  );
+  await tasks[1]!(NOW + 80);
+  assert.equal(sent.length, 2);
+  const last = (await sealedItems(env)).at(-1);
+  assert.equal(last.update_id, 3);
+  assert.equal(last.relay, undefined);
 });
 
 test("a busy night: 60 items with photos are pulled and confirmed within the free plan's 50 queries", async () => {

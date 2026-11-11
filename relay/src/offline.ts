@@ -14,7 +14,9 @@
 import { sha256Hex } from "./seal.ts";
 import type { BotCode, Env } from "./types.ts";
 
-export const OFFICE_AWAY_SECONDS = 150; // the office pulls every 10 s (Mac) or 60 s (server)
+// DL-218 (owner 11 Nov 2026: the bot should reply at once when the app is closed): the office
+// pulls every 10 s (the Mac and the office server), so 30 s is three missed pulls.
+export const OFFICE_AWAY_SECONDS = 30;
 export const CHAT_STEP_SECONDS = 30 * 60; // a link step left for 30 minutes starts again
 export const LINK_TRIES = 5; // owner rule (2 Nov 2026): 5 wrong tries = 24 hours blocked
 export const LINK_BLOCK_SECONDS = 24 * 60 * 60;
