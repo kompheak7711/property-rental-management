@@ -87,3 +87,11 @@ CREATE TABLE IF NOT EXISTS link_tries (
   at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS link_tries_user ON link_tries (user_id, at);
+
+-- ABA PayWay "paid" hints (DL-180): only the transaction id, at most one a minute per
+-- transaction. Kept one hour.
+CREATE TABLE IF NOT EXISTS aba_hints (
+  tran_id TEXT NOT NULL,
+  minute INTEGER NOT NULL,
+  PRIMARY KEY (tran_id, minute)
+);

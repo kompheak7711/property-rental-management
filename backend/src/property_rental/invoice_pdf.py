@@ -213,7 +213,9 @@ def invoice_html(
     until = day_text(qr.valid_until)
     phone = f"<small>Phone {e(customer_phone)}</small>" if customer_phone else ""
     period_html = f"<small>{e(period)}</small>" if period else ""
-    unit_html = f"Unit {e(unit)}" if unit else ""
+    # A Unit number may be kept as "U203" or as "Unit 203": the page says "Unit" once.
+    unit_name = unit.strip().removeprefix("Unit ").strip() if unit else ""
+    unit_html = f"Unit {e(unit_name)}" if unit_name else ""
     style = STYLE.replace("FONT_DIR", ASSETS.as_uri())
     return (
         '<!doctype html><html lang="en"><head><meta charset="utf-8">'
