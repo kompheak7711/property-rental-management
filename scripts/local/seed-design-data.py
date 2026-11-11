@@ -358,6 +358,7 @@ class Seed:
 
     def rent_history(self) -> None:
         """This month's Rent Invoice of every signed Lease; most are paid in the past week."""
+        now = datetime.now(PHNOM_PENH) - timedelta(minutes=1)
         method = self.payment_method()
         period = self.today.replace(day=1)
         payments: list[tuple[datetime, Lease, UUID, UUID]] = []
@@ -371,7 +372,10 @@ class Seed:
                 continue
             key = (lease.unit, period.strftime("%Y-%m"))
             paid_on = self.today - timedelta(days=spread(key) % 7)
-            payments.append((at(paid_on, 8 + spread(key) % 9, spread(key) % 60), lease, invoice, line))
+            # The database refuses a payment confirmed in the future: a sample time later today
+            # moves back to a minute ago.
+            when = min(at(paid_on, 8 + spread(key) % 9, spread(key) % 60), now)
+            payments.append((when, lease, invoice, line))
         payments.sort(key=lambda payment: payment[0])
         for when, lease, invoice, line in payments:
             self.pay(lease, invoice, line, when, method)

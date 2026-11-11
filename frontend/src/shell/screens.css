@@ -3633,3 +3633,21 @@ html[lang="km"] .ui-factlist dt {
   margin: 0;
   padding-left: 20px;
 }
+
+/* DL-214: the one-time Telegram QR on a Lease or Booking page. White under the code, also in
+   dark mode, so the phone camera reads it. */
+.tg-qr-made {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+
+.tg-qr {
+  width: 220px;
+  height: 220px;
+  max-width: 100%;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+}
