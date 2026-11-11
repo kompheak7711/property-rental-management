@@ -1140,7 +1140,7 @@ describe("Daily and weekly rent: Short stays", () => {
       ]),
     );
     show({ api: fakeApi({ damageDue }) });
-    fireEvent.click(await screen.findByRole("button", { name: "Bookings" }));
+    fireEvent.click(await screen.findByRole("tab", { name: "Bookings" }));
     await screen.findByRole("table");
     expect(damageDue).not.toHaveBeenCalled();
     cleanup();
@@ -1148,7 +1148,7 @@ describe("Daily and weekly rent: Short stays", () => {
       api: fakeApi({ damageDue }),
       capabilities: new Set([...DESK, "damage_charges.bill"]),
     });
-    fireEvent.click(await screen.findByRole("button", { name: "Bookings" }));
+    fireEvent.click(await screen.findByRole("tab", { name: "Bookings" }));
     const title =
       "1 stay(s) wait for a damage decision. Open each booking and choose Charge the guest or No charge.";
     const due = await screen.findByRole("region", { name: title });
