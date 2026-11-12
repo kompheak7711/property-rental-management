@@ -290,6 +290,7 @@ function fakeApi(overrides: Partial<ShortStaysApi> = {}): ShortStaysApi {
       }),
     ),
     step: vi.fn(() => Promise.resolve(BOOKING)),
+    moveUnits: vi.fn(() => Promise.resolve([])),
     decide: vi.fn(() => Promise.resolve(BOOKING)),
     cleaning: vi.fn((_: string, day: string) =>
       Promise.resolve({ day, today: "2026-11-04", tasks: [] }),
