@@ -1,8 +1,12 @@
-// UI v81 shared layouts (owner 08/11/2026 06:55, point 1). TEST-FE-1917 to TEST-FE-1920.
+// UI v81 shared layouts (owner 08/11/2026 06:55, point 1). TEST-FE-1917 to TEST-FE-1920, and
+// TEST-FE-1940 (owner 12/11/2026 10:47: five cards in a row, the menu colour to the bottom).
+import { readFileSync } from "node:fs";
+
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
+  CardGrid,
   DetailLayout,
   FactList,
   FieldGrid,
@@ -178,6 +182,72 @@ describe("UI v81 shared layouts", () => {
     expect(rent?.querySelectorAll("dd")).toHaveLength(2);
     expect(screen.getByText("Fixed for the whole term")).toHaveClass(
       "ui-factlist-note",
+    );
+  });
+
+  it("TEST-FE-1940 (owner 12/11/2026 10:47) CardGrid `five` puts five cards in a row from an iPad up, with no card alone in the last row and no word of a card's name broken beside its number; the menu's colour fills its column to the bottom of the page on a wide screen", () => {
+    const { container, rerender } = render(
+      <CardGrid className="ui-home-kpis" five>
+        <span>One</span>
+      </CardGrid>,
+    );
+    expect(container.firstElementChild).toHaveClass(
+      "ui-kpis",
+      "ui-five",
+      "ui-home-kpis",
+    );
+    // The Tasks row stays four in a row.
+    rerender(
+      <CardGrid label="Tasks" tasks>
+        <span>One</span>
+      </CardGrid>,
+    );
+    const tasks = screen.getByRole("group", { name: "Tasks" });
+    expect(tasks).toHaveClass("ui-kpis", "ui-tasks");
+    expect(tasks).not.toHaveClass("ui-five");
+
+    // The look comes from the stylesheets.
+    const css = readFileSync("src/shell/screens.css", "utf8");
+    const block = (text: string, start: string) => {
+      const from = text.indexOf(start);
+      if (from < 0) throw new Error(`No block ${start}`);
+      return text.slice(from, text.indexOf("\n}\n", from));
+    };
+    const five = block(
+      css,
+      "@media (min-width: 700px) {\n  .ui-kpis.ui-five {",
+    );
+    expect(five).toContain("display: flex;");
+    expect(five).toContain("flex-wrap: wrap;");
+    // Five in a row: four gaps of 14px; the cards left over share the last row.
+    expect(five).toContain("flex: 1 1 calc((100% - 4 * 14px) / 5 - 1px);");
+    // One left over: the last six are 3 + 3. Two left over: the last seven are 4 + 3.
+    expect(five).toMatch(
+      /:has\(> :nth-child\(5n \+ 1\):last-child\)\s+> :nth-last-child\(-n \+ 6\),\s+\.ui-kpis\.ui-five:has\(> :nth-child\(5n \+ 2\):last-child\)\s+> :nth-last-child\(-n \+ 3\) \{\s+flex-basis: calc\(\(100% - 2 \* 14px\) \/ 3 - 1px\);/,
+    );
+    expect(five).toMatch(
+      /:has\(> :nth-child\(5n \+ 2\):last-child\)\s+> :nth-last-child\(-n \+ 7\) \{\s+flex-basis: calc\(\(100% - 3 \* 14px\) \/ 4 - 1px\);/,
+    );
+    // A name is as wide as its longest word, so the number goes under it before a word breaks.
+    const name = block(css, "\n.ui-kpi-head > .ui-kpi-label {");
+    expect(name).toContain("flex-basis: min-content;");
+    expect(name).toContain("overflow-wrap: break-word;");
+    expect(css).not.toContain("overflow-wrap: anywhere;\n}\n\n.ui-kpi-head");
+    // A very narrow card scales its number, so a long amount is not cut.
+    const narrow = block(css, "@container kpi (max-width: 130px) {");
+    expect(narrow).toContain("font-size: clamp(0.8rem, 13cqi, 1.05rem);");
+
+    const shell = readFileSync("src/shell/shell.css", "utf8");
+    const column = block(
+      shell,
+      "@media screen and (min-width: 1081px) {\n  .shell {",
+    );
+    expect(column).toContain(
+      "background: linear-gradient(var(--nav-bg), var(--nav-bg)) left top /",
+    );
+    expect(column).toContain("var(--nav-width) 100% no-repeat;");
+    expect(column).toMatch(
+      /html\.shell-rail \.shell \{\s+background-size: 84px 100%;/,
     );
   });
 });

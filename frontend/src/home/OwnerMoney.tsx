@@ -167,7 +167,7 @@ export function OwnerMoney({
       <div className="ui-chead">
         <h2 id="home-owner-money">{hmt(language, "om_t")}</h2>
       </div>
-      <CardGrid className="ui-home-kpis ui-om">
+      <CardGrid className="ui-home-kpis ui-om" five>
         <MoneyCard
           icon="payments"
           label={hmt(language, "om_cash")}

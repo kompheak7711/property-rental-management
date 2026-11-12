@@ -116,6 +116,8 @@ describe("Home Financial summary and Attendance (UI v81)", () => {
       "Spent this month$420.00Budget $600.00",
       "Profit this year$4,125.002026 so far",
     ]);
+    // Owner 12/11/2026 10:47: the five cards are one row from an iPad up.
+    expect(box.querySelector(".ui-kpis.ui-om")).toHaveClass("ui-five");
     expect(api.report).toHaveBeenCalledWith("property-1", "budget", {
       month: "2026-11-01",
     });

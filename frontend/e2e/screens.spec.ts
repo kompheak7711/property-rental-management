@@ -3,7 +3,9 @@
 // contrast under 4.5:1 (axe-core); cut-off text or numbers; a role badge inside a button; a
 // card alone in a grid row on a desktop; two stacked tables; and (owner 08/11/2026 09:57) any
 // visible text that is an internal ID or placeholder ("LEASE-" + hex, a UUID, "Primary Lease
-// Customer"...). The side menu is checked with the page. The problems are listed in the
+// Customer"...). Owner 12/11/2026 10:47: a five-in-a-row card grid (Home) holds five cards in
+// its first row from an iPad up, and on a wide screen the menu's colour fills its column to the
+// bottom of the page. The side menu is checked with the page. The problems are listed in the
 // failure message. A screenshot of each screen and size goes to e2e/results/shots.
 
 import { mkdirSync } from "node:fs";
@@ -18,7 +20,8 @@ import { SCREENS, SIZES } from "./screens";
 const SHOTS = join(import.meta.dirname, "results", "shots");
 
 /** Runs in the page: the layout checks that need the drawn boxes. */
-function audit(desktop: boolean): string[] {
+function audit(width: number): string[] {
+  const desktop = width >= 1024;
   const problems: string[] = [];
   const view = document.getElementById("shell-view") ?? document.body;
   const nav = document.getElementById("shell-nav");
@@ -136,6 +139,46 @@ function audit(desktop: boolean): string[] {
     }
   }
 
+  // 5b. Owner 12/11/2026 10:47: five cards in a row from an iPad up (Home).
+  if (width >= 700)
+    for (const grid of view.querySelectorAll<HTMLElement>(".ui-kpis.ui-five")) {
+      const cards = [...grid.children].filter(
+        (child): child is HTMLElement =>
+          child instanceof HTMLElement && visible(child),
+      );
+      const lead = cards[0];
+      if (lead === undefined || cards.length < 5) continue;
+      const top = Math.round(lead.getBoundingClientRect().top);
+      const first = cards.filter(
+        (card) => Math.round(card.getBoundingClientRect().top) === top,
+      ).length;
+      if (first !== 5)
+        problems.push(
+          `not five cards in the first row: ${describe(grid)} (${String(first)} of ${String(cards.length)})`,
+        );
+    }
+
+  // 5c. Owner 12/11/2026 10:47: on a wide screen (the menu beside the page) the menu's colour
+  //     fills its column to the bottom of the page, however long the page is.
+  if (width > 1080) {
+    const shell = document.querySelector<HTMLElement>(".shell");
+    const menu = document.querySelector<HTMLElement>(".shell-nav");
+    if (shell !== null && menu !== null) {
+      const paint = getComputedStyle(shell);
+      const colour = getComputedStyle(menu).backgroundColor;
+      const column = menu.getBoundingClientRect().width;
+      const bottom = shell.getBoundingClientRect().bottom + window.scrollY;
+      if (
+        !paint.backgroundImage.includes(colour) ||
+        paint.backgroundSize !== `${String(column)}px 100%` ||
+        bottom < document.documentElement.scrollHeight - 1
+      )
+        problems.push(
+          `the menu's colour does not fill its column to the bottom of the page (${paint.backgroundImage} ${paint.backgroundSize}, column ${String(column)}px, shell ends at ${String(Math.round(bottom))} of ${String(document.documentElement.scrollHeight)})`,
+        );
+    }
+  }
+
   // 6. Two stacked tables.
   const tables = [...view.querySelectorAll("table")]
     .filter(visible)
@@ -244,7 +287,7 @@ for (const screen of SCREENS) {
         fullPage: true,
       });
       const problems = [
-        ...(await page.evaluate(audit, width >= 1024)),
+        ...(await page.evaluate(audit, width)),
         ...(await contrast(page)),
       ];
       expect(

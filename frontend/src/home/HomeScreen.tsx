@@ -692,7 +692,11 @@ function Cards({
     );
   }
   if (shown.length === 0) return null;
-  return <CardGrid className="ui-home-kpis">{shown}</CardGrid>;
+  return (
+    <CardGrid className="ui-home-kpis" five>
+      {shown}
+    </CardGrid>
+  );
 }
 
 /** Home lists each repair cost still waiting for a Manager's check (mock-up round 32 A5). */

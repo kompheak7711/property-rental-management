@@ -578,8 +578,11 @@ describe("Home", () => {
     ).toEqual(["Receive payment", "Enter meter readings"]);
     const cards = document.querySelector(".ui-kpis.ui-home-kpis");
     expect(cards?.querySelectorAll(".ui-home-kpi")).toHaveLength(9);
+    // Owner 12/11/2026 10:47: the Home cards are five in a row; the Tasks cards stay four.
+    expect(cards).toHaveClass("ui-five");
     const tasks = screen.getByRole("group", { name: "Tasks" });
     expect(tasks).toHaveClass("ui-kpis", "ui-tasks");
+    expect(tasks).not.toHaveClass("ui-five");
     expect(within(tasks).getAllByRole("button")).toHaveLength(4);
   });
 

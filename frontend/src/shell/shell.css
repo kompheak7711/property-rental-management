@@ -132,6 +132,21 @@ html[lang="km"] body {
   min-height: 100dvh;
 }
 
+/* UI v81 round 10 (owner 12/11/2026 10:47): the menu's colour fills its column to the bottom of
+   the page. The menu itself stays in the window while the page scrolls; this paints the whole
+   column behind it, so a page longer than the window (or a long picture of it) never shows the
+   page colour under the menu. Not on paper, and not where the menu is a drawer. */
+@media screen and (min-width: 1081px) {
+  .shell {
+    background: linear-gradient(var(--nav-bg), var(--nav-bg)) left top /
+      var(--nav-width) 100% no-repeat;
+  }
+
+  html.shell-rail .shell {
+    background-size: 84px 100%;
+  }
+}
+
 .shell-icon {
   width: 20px;
   height: 20px;

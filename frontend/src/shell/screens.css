@@ -418,6 +418,45 @@
   }
 }
 
+/* UI v81 round 10 (owner 12/11/2026 10:47, "5 columns per row"): the Home cards and the
+   Financial summary (.ui-five) are five in a row on an iPad, a laptop and a large screen (700px
+   and up). Here the cards are a wrapping row, so the cards left over in the last row share its
+   width (8 = 5 + 3, 9 = 5 + 4). No card is alone: one left over makes the last six 3 + 3
+   (6 = 3 + 3, 11 = 5 + 3 + 3) and two left over make the last seven 4 + 3 (7 = 4 + 3,
+   12 = 5 + 4 + 3). Under 700px the rules above stay. The gap is the 14px of .ui-kpis; the 1px
+   taken off a card's width keeps five in a row when the widths are rounded. */
+@media (min-width: 700px) {
+  .ui-kpis.ui-five {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .ui-kpis.ui-five > * {
+    flex: 1 1 calc((100% - 4 * 14px) / 5 - 1px);
+    min-width: 0;
+  }
+
+  .ui-kpis.ui-five:has(> :nth-child(5n + 2):last-child)
+    > :nth-last-child(-n + 7) {
+    flex-basis: calc((100% - 3 * 14px) / 4 - 1px);
+  }
+
+  .ui-kpis.ui-five:has(> :nth-child(5n + 1):last-child)
+    > :nth-last-child(-n + 6),
+  .ui-kpis.ui-five:has(> :nth-child(5n + 2):last-child)
+    > :nth-last-child(-n + 3) {
+    flex-basis: calc((100% - 2 * 14px) / 3 - 1px);
+  }
+}
+
+/* Five in a row where the menu is a drawer (an upright iPad): a little less space inside a card,
+   so its name and number have more room. */
+@media (min-width: 700px) and (max-width: 1080px) {
+  .shell-view .ui-kpis.ui-five > .ui-kpi {
+    padding: 12px;
+  }
+}
+
 @media (max-width: 639px) {
   .ui-kpis {
     gap: 10px;
@@ -637,10 +676,15 @@
   min-width: 0;
 }
 
+/* Round 10 (owner 12/11/2026, five cards in a row): the name is at least as wide as its longest
+   word (and its icon), so a word is never broken beside the number; when the longest word and
+   the number do not fit side by side, the number goes under the name. Only a word longer than
+   the whole card breaks. The first line is for a browser that does not know the second. */
 .ui-kpi-head > .ui-kpi-label {
   flex: 1 1 calc(36px + 4.9em);
+  flex-basis: min-content;
   min-width: 0;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 .ui-kpi-head > .ui-kpi-label > :not(.ui-kpi-icon) {
@@ -661,9 +705,13 @@
   align-self: start;
 }
 
+/* Round 10: in a narrow card the name keeps at least seven tenths of the card, so a short count
+   stays beside it and an amount goes under it; the name is never a column of single words. */
 @container kpi (max-width: 200px) {
   .ui-kpi-head > .ui-kpi-label {
     flex-basis: 4.9em;
+    flex-basis: min-content;
+    min-width: 70cqi;
   }
 
   .ui-kpi-head .ui-kpi-icon {
@@ -672,6 +720,35 @@
 
   .ui-kpi.ui-kpi-top .ui-kpi-value {
     line-height: 1.3;
+  }
+}
+
+/* Round 10: a very narrow card (five in a row on an upright iPad, or beside the open menu on an
+   iPad on its side). The name and the note are a little smaller and may take one more line, and
+   the number scales with the card, so an amount of twelve characters ("$999,999.99") still
+   shows in full. The name keeps six tenths of the card here, so a count of four digits still
+   stays beside it. */
+@container kpi (max-width: 130px) {
+  .ui-kpi-head {
+    column-gap: 6px;
+  }
+
+  .ui-kpi-head > .ui-kpi-label {
+    min-width: 60cqi;
+    font-size: 0.84rem;
+  }
+
+  .ui-kpi-head > .ui-kpi-label > :not(.ui-kpi-icon) {
+    -webkit-line-clamp: 4;
+  }
+
+  .ui-kpi.ui-kpi-top .ui-kpi-value {
+    font-size: clamp(0.8rem, 13cqi, 1.05rem);
+  }
+
+  .ui-kpi.ui-kpi-top .ui-kpi-note {
+    font-size: 0.78rem;
+    -webkit-line-clamp: 5;
   }
 }
 

@@ -183,21 +183,29 @@ export function FactList({ facts }: { facts: readonly Fact[] }) {
 /**
  * The number cards of a page (round 3): twelve columns balanced by the number of cards so no
  * card is alone in a row on a desktop; two by two on a phone. `tasks` is the Home Tasks row
- * (four in a row, two by two on a phone). A `label` names the cards as one group; `className`
- * adds a page's own card rules (the Home cards, the Financial summary row).
+ * (four in a row, two by two on a phone). `five` (owner 12/11/2026, Home) puts five cards in a
+ * row from an iPad up; a narrower screen keeps the rules above. A `label` names the cards as one
+ * group; `className` adds a page's own card rules (the Home cards, the Financial summary row).
  */
 export function CardGrid({
   children,
   tasks = false,
+  five = false,
   label,
   className,
 }: {
   children: ReactNode;
   tasks?: boolean;
+  five?: boolean;
   label?: string;
   className?: string;
 }) {
-  const classes = ["ui-kpis", tasks ? "ui-tasks" : "", className ?? ""]
+  const classes = [
+    "ui-kpis",
+    tasks ? "ui-tasks" : "",
+    five ? "ui-five" : "",
+    className ?? "",
+  ]
     .filter((name) => name !== "")
     .join(" ");
   return (
