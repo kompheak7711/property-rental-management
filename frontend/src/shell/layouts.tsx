@@ -121,14 +121,18 @@ export function FormLayout({
   side,
   onSubmit,
   className,
+  label,
 }: {
   main: ReactNode;
   side: ReactNode;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   className?: string;
+  /** The form's name for a screen reader, when no title inside it names it. */
+  label?: string;
 }) {
   return (
     <form
+      aria-label={label}
       className={
         className === undefined ? "ui-formlayout" : `ui-formlayout ${className}`
       }

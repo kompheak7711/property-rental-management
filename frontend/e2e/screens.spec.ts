@@ -75,6 +75,21 @@ function audit(width: number): string[] {
     if (!visible(el)) continue;
     const style = getComputedStyle(el);
     const clips = (value: string) => value === "hidden" || value === "clip";
+    // A document sheet (an Invoice, a Receipt) is drawn scaled to its column (SheetFrame), so
+    // its frame always holds a box of the paper's own width. It is cut off only when the sheet
+    // as drawn runs past its frame.
+    if (el.classList.contains("ui-sheetwrap")) {
+      const sheet = el.querySelector(".ui-sheet");
+      if (sheet !== null) {
+        const drawn = sheet.getBoundingClientRect();
+        const frame = el.getBoundingClientRect();
+        if (drawn.right > frame.right + 1 || drawn.bottom > frame.bottom + 1)
+          problems.push(
+            `cut-off sheet in ${describe(el)} (drawn ${round(drawn)} in ${round(frame)})`,
+          );
+      }
+      continue;
+    }
     const clipped =
       (clips(style.overflowX) && el.scrollWidth > el.clientWidth + 1) ||
       (clips(style.overflowY) && el.scrollHeight > el.clientHeight + 1);

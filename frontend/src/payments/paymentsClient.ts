@@ -53,6 +53,12 @@ export interface ConfirmedPayment {
 export interface KhrRate {
   /** Riel for one dollar, after the markup and rounding up (BR-MONEY-005 to 008). */
   rate: number;
+  /** The published rate the app rate is worked out from ("4092.000000"), when the server names it. */
+  reference?: string;
+  /** When that rate applies from (RFC 3339), when the server names it. */
+  at?: string;
+  /** The markup the server adds to the published rate, in hundredths of a percent (50 = 0.5%). */
+  markupBp?: number;
 }
 
 /**
@@ -591,9 +597,23 @@ export function createPaymentsApi(
         "/api/v1/properties/" + encoded(propertyId) + "/payments/khr-preview",
         (body) => {
           const data = object(body.data);
-          return data.status === "available"
-            ? { rate: cents(data.system_rate_khr_per_usd) }
-            : null;
+          if (data.status !== "available") return null;
+          // The published rate and its time are shown beside the form only; the app rate is
+          // the one figure the form counts with.
+          return {
+            rate: cents(data.system_rate_khr_per_usd),
+            ...(typeof data.reference_rate_khr_per_usd === "string"
+              ? { reference: data.reference_rate_khr_per_usd }
+              : {}),
+            ...(typeof data.applicable_at === "string"
+              ? { at: data.applicable_at }
+              : {}),
+            ...(typeof data.markup_basis_points === "number" &&
+            Number.isSafeInteger(data.markup_basis_points) &&
+            data.markup_basis_points >= 0
+              ? { markupBp: data.markup_basis_points }
+              : {}),
+          };
         },
         { body: { usd_amount_cents: 100 }, key: "", preview: true },
         transmission,

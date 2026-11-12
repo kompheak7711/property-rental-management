@@ -5,9 +5,10 @@
 
 import "../shell/screens.css";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { CustomerApi } from "../customerClient";
+import type { CustomerLedgerApi } from "../customerLedgerClient";
 import type { InvoiceApi } from "../invoiceClient";
 import {
   type InvoicesData,
@@ -15,11 +16,13 @@ import {
   payerIds,
 } from "../invoices/invoicesData";
 import type { LeaseApi } from "../leaseClient";
+import type { reportsApi } from "../reportsClient";
 import { Icon } from "../shell/icons";
 import { todayInPhnomPenh } from "../shell/format";
 import { hashForPage } from "../shell/navigation";
 import { useHashDetail } from "../shell/useHashPage";
 import type { Language } from "../signInText";
+import type { PayerCardReads } from "./PayerCard";
 import type { PaymentsApi } from "./paymentsClient";
 import { PaymentsList } from "./PaymentsList";
 import { ReceiptPage } from "./ReceiptPage";
@@ -35,8 +38,12 @@ export interface PaymentsPageProps {
   paymentsApi: PaymentsApi;
   invoiceApi: Pick<InvoiceApi, "list">;
   leaseApi: Pick<LeaseApi, "list">;
-  customerApi: Pick<CustomerApi, "list">;
+  customerApi: Pick<CustomerApi, "list"> & Partial<Pick<CustomerApi, "get">>;
   capabilities: ReadonlySet<string> | null;
+  /** UI v81 batch 2: what the Customer card beside the form and the Receipt reads. */
+  ledgerApi?: Pick<CustomerLedgerApi, "read">;
+  actorId?: string;
+  reports?: Pick<typeof reportsApi, "customerPaidOnTime">;
 }
 
 export function PaymentsPage({
@@ -48,6 +55,9 @@ export function PaymentsPage({
   leaseApi,
   customerApi,
   capabilities,
+  ledgerApi,
+  actorId,
+  reports,
 }: PaymentsPageProps) {
   const detail = useHashDetail("payments");
   const receiving =
@@ -61,6 +71,20 @@ export function PaymentsPage({
     capabilities === null || capabilities.has(capability);
   const mayReceive = may("payments.record");
   const mayList = may("payments.read");
+  const mayCustomers = may("customers.read");
+  const mayInvoices = may("invoices.read");
+  const payerCard = useMemo<PayerCardReads | undefined>(() => {
+    const get = customerApi.get;
+    if (get === undefined) return undefined;
+    return {
+      customerApi: { get: (id) => get.call(customerApi, id) },
+      ledgerApi,
+      actorId,
+      reports,
+      mayCustomers,
+      mayInvoices,
+    };
+  }, [actorId, customerApi, ledgerApi, mayCustomers, mayInvoices, reports]);
   const [data, setData] = useState<InvoicesData | null>(null);
   const [failed, setFailed] = useState(false);
   const sequence = useRef(0);
@@ -124,6 +148,7 @@ export function PaymentsPage({
         key={`${propertyId}:${customerId}:${chargeId}`}
         language={language}
         onSaved={load}
+        payerCard={payerCard}
         propertyId={propertyId}
       />
     );
@@ -139,6 +164,7 @@ export function PaymentsPage({
         mayReprint={may("receipts.reprint")}
         namesFailed={failed}
         onRetryNames={load}
+        payerCard={payerCard}
         paymentId={receiptOf}
         propertyId={propertyId}
       />

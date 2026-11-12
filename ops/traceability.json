@@ -67630,6 +67630,76 @@
       "test_path": "frontend/src/customers/CustomersPage.test.tsx",
       "status": "implemented",
       "notes": "UI v81 round 11 Customers: \"#/customers?show=birthdays\" shows the coming birthdays above the Customers list; the plain address does not read them; Hide gives the plain address without a new history step."
+    },
+    {
+      "test_id": "TEST-FE-2128",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/payments/PaymentsBatch.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 module batch 2 Payments: Receive payment has Back to Payments on top, the title as the page's heading and one form named by it; the payer's Customer card and the riel rate card sit beside the form; the Customer card comes only with a chosen Customer."
+    },
+    {
+      "test_id": "TEST-FE-2129",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/payments/PaymentsBatch.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 module batch 2 Payments: the \"Exchange rate for riel\" card shows the published rate with its time, the server's markup, the app rate, the typed amount in riel or its worth in US dollars, and what each unpaid item costs in riel with the form's own rounding; no markup line is made up."
+    },
+    {
+      "test_id": "TEST-FE-2130",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/payments/PaymentsBatch.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 module batch 2 Payments: while the rate is read the rate card says so; with no rate it says Not available and to record in US dollars, and shows no riel amounts."
+    },
+    {
+      "test_id": "TEST-FE-2131",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/payments/PaymentsBatch.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 module batch 2 Payments: the client reads the app rate with the published rate, its time and the markup when the server names them, the app rate alone when it does not, and no rate when none is available; the preview sends no key."
+    },
+    {
+      "test_id": "TEST-FE-2132",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/payments/PaymentsBatch.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 module batch 2 Payments: the payer's Customer card names the Lease status and Unit from the newest signed Lease; a payer without a Lease shows the Unit alone; a deactivated Customer says so instead."
+    },
+    {
+      "test_id": "TEST-FE-2133",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/payments/PaymentsBatch.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 module batch 2 Payments: the Receipt page has Back to Payments on top, the Receipt number as the page's heading with its status and summary, the print buttons on the right, the sheet on the left and Paid for, the Customer card and Reprints beside it; an Invoice line names its Due date."
+    },
+    {
+      "test_id": "TEST-FE-2134",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/payments/PaymentsBatch.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 module batch 2 Payments: a switch button is 44 px tall on a computer and a phone, and the tighter look of a short desktop screen makes no button, switch, tab or number card shorter than 44 px; a form page can name its form for a screen reader."
     }
   ]
 }

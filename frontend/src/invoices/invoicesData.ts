@@ -26,6 +26,8 @@ export interface InvoicesData {
   customerUnits: ReadonlyMap<string, string>;
   /** Customer id → their newest signed Lease, which a one-time charge is billed under. */
   customerLeases: ReadonlyMap<string, string>;
+  /** The Leases that were read, for a page that shows a Lease's status beside a Customer. */
+  leases?: readonly LeaseResource[];
   /** What the person may do with Invoices, from the server. */
   capabilities: readonly string[];
 }
@@ -116,6 +118,7 @@ export async function loadInvoicesData(
     leaseNumbers,
     customerUnits,
     customerLeases,
+    leases,
     capabilities,
   };
 }

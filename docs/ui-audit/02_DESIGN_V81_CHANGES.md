@@ -818,3 +818,76 @@ Each card was clicked and its number compared with the list it opens: Leases end
 "Paid this month" opens the paid Invoices due this month, as in the design: the card's amount adds the Invoices due this month that are paid, not the money received this month, so the Invoices list is the list that matches it. Approvals opens the page, as in the design: it shows only what is waiting.
 
 Tests: TEST-FE-1942 (Home card addresses), 1943 (Financial summary), 1944 (the shared address code), 1945 (Invoices), 1946 (Short stays status row), 1947 (Products), 1948 (Birthdays list), 1949 (Units), 2120 (Leases), 2121 (Utilities), 2122 (Financial statements), 2123 (Problem reports), 2124 (Notices), 2125 (Viewing requests), 2126 (Attendance), 2127 (Customers page). TEST-FE-928, 1912, 1294 and 1931 now expect the new addresses.
+
+## Round 12: module batch 2, Payments (12/11/2026)
+
+Owner 12/11 14:41: "check all card is link to correct place. if all pass, start payment". The card links passed (round 11), so Payments is the second module batch, after Home. Its three screens are the Payments list, Receive payment and the Receipt page. Layout and display only: what the form checks and sends, every read, every rule and every figure are unchanged, and there is no database step.
+
+### What changed
+
+| Screen | Before | Now | Where |
+|---|---|---|---|
+| Receive payment | A title inside the page, the form in one card, a small Customer line under the Customer field | The shared page head: "Back to Payments" on top, the title as the page's heading, the sentence under it. The shared form layout: the fields card on the left, two short fields per row (one per row on a phone), and the design's side column on the right, which stays in view while the fields scroll: the payer's Customer card and the card "Exchange rate for riel" | `payments/ReceivePayment.tsx`, `shell/layouts.tsx` (`FormLayout` can name its form) |
+| Customer card beside the form | Not there | The same card as on the approved Lease page: name with the Lease status, "Primary Tenant · Unit", phone, Paid on time, Customer Credit, Unpaid Invoices, "Open Customer". It shows once a Customer is chosen. A payer without a Lease (a short-stay guest) shows the Unit alone; a deactivated Customer says so | `customers/CustomerSideCard.tsx` (new, shared; the Lease page's card now uses it), `payments/PayerCard.tsx` (new) |
+| "Exchange rate for riel" | The rate showed only as a line under the amount when Riel was chosen | A card, always: the ABA sell rate with its time, the server's markup ("Plus 0.5%"), the app rate ("4,113 ៛ = $1.00"), the typed amount in riel (or, for riel, its worth in US dollars), and for each unpaid item "To pay $350.00 in riel" with how the amount is reached ("$350.00 × 4,113 ៛ = 1,439,550 ៛", and ", rounded up" when it was). Every figure is the server's or uses the form's own rounding; the markup is read from the server's answer, never typed into the screen. With no rate the card says "Not available" and to record in US dollars. The form asks the server for the rate once when it opens (before: only when Riel was chosen); it is the same preview of one dollar, which saves nothing and needs the right to receive payments | `payments/RielRateCard.tsx` (new), `payments/paymentsClient.ts` (`khrRate` also reads the published rate, its time and the markup) |
+| Receipt page | Title and buttons in a plain row, the sheet and three cards | The shared page head: "Back to Payments" on top, "Receipt RCP260018" as the page's heading with its status and "Name · Unit · amount", Print Receipt and Reprint on the right. The shared record layout: the sheet on the left (about 60%), and on the right "Paid for", the payer's Customer card, "Reprints" and the note | `payments/ReceiptPage.tsx` |
+| "Paid for" on the Receipt page | A bare date under an Invoice line | "Due date 17/11/2026": the line says what the date is | same |
+| Buttons, switches and number cards on a short desktop screen | The tighter look made buttons 38 px, switch buttons 36 px and number cards 42 px tall; a switch button was 42 px (40 px on a phone) | Everything a person presses is at least 44 px tall on every screen size. The tighter look still saves room in the spacing | `shell/screens.css` |
+| Invoice number in "Paid for" | A 19 px tall link | Pressed on a 44 px area, in the same place | same |
+
+The Payments list keeps its structure, which already matches the design (title with the date range and Receive payment, the period switch, the number cards, the list with All and Not matched). Only its buttons, switches and cards grew to 44 px.
+
+### The 44 px rule and the list on a laptop
+
+The screen check found 36 to 42 px tall buttons, switches and number cards on the Payments list at 1366 × 768 and 1440 × 900, where the page uses the tighter look of round 3. The owner's rule (08/11/2026 06:55, point 4) fails a button, link or tab under 44 × 44 px, so the tighter look no longer makes them shorter. This is a shared rule: every list page gets it. Cost on the Payments list at 1440 × 900: the list area is about 20 px shorter and still shows five rows before it scrolls. At 1366 × 768 the page scrolls as before.
+
+The check itself learned one thing: a document sheet (an Invoice, a Receipt) is drawn scaled to its column, so its frame always holds a box of the paper's own width. The check now fails a sheet only when the sheet as drawn runs past its frame.
+
+### Earlier forms of Payments (open question 1)
+
+Each action of the folded "Earlier forms" box under the page was checked against the rebuilt screens. The box stays, because these actions exist only there:
+
+- Match money that is left on a payment to an Invoice, and take a match back.
+- Reverse a payment.
+- Customer Credit: keep an overpayment as Credit, use Credit on an Invoice, take either back.
+- Refund in US dollars, and a refund that came back.
+
+Receiving a payment, the list, the Receipt and Reprint are in the rebuilt screens. Design v81 has a Match page for a payment that is not matched yet. Moving the actions above is new screens over money actions, so it is its own step: see `01_UI_AUDIT_REPORT.md`, open question 16.
+
+### History
+
+A Receipt never changes, so the Receipt page has no History list, in the design or the app. Its only later steps are reprints, and the "Reprints" card names the person, the time and the reason of each. A payment's other steps (a match, a reversal) show on the Customer's full statement.
+
+### Sheets
+
+`/mnt/project-files/ui-design/module-sheets/`: `sheet-payments-<w>.png` (the list, This month), `sheet-receive-<w>.png` (Receive payment with Sok Dara · U203 chosen and $350.00 typed) and `sheet-receipt-<w>.png` (Receipt RCP260018: Rent, Services and a Deposit) at 390, 768, 1366, 1440 and 1920 (design left, app right). The review app has no riel rate source, so the rate card reads "Not available" on the sheets; its look with a rate was checked with a stubbed answer and is covered by TEST-FE-2129.
+
+Measured at 1440 × 900 (design | app): form card and side column 61% and 39% | 60% and 40%; the side column starts level with the form card, both. On the list: switch buttons 36 | 44 px, the Receive payment button 38 | 44 px, number cards 35 | 44 px (the owner's 44 px rule wins over the design's tighter look). On the form: the currency switch 42 | 44 px, buttons 44 px, both.
+
+### Every difference from design v81 left, with its reason
+
+| Screen | Part | Design v81 | App | Why |
+|---|---|---|---|---|
+| List | Line beside the title | "01/11/2026 to 03/11/2026 · As of 10:30" | The date range | The top bar shows the day and the time on every page |
+| List | Number cards | Eight, with "Move-out charges" and "Late-payment charges" | Eleven with icons: Short stay, Products, Damage and Other charges in place of Move-out charges; "Late-payment" | The owner's rounds 9 and 10 (12/11/2026) |
+| List | Height of the switches, the Receive payment button and the number cards on a laptop | 36, 38 and 35 px | 44 px | The owner's 44 px rule |
+| List | Under the list | Nothing | The folded "Earlier forms" box | Actions that exist only there (see above) |
+| Receive payment | Back link | "Back to Home" (the design was opened from Home) | "Back to Payments" | The page's parent, as on every form and record page (batch 1) |
+| Receive payment | Notice "Example values are filled in so you can try the steps." | Shown | Not shown | A notice of the design file only |
+| Receive payment | Hint under the amount | "Commas for thousands, a dot for cents. Example: 1,234.50" | No hint | The app's dollar field takes digits and a dot only, so the hint would be untrue. Taking commas changes what the form checks (01, open question 19) |
+| Receive payment | Amount field | "$" in its own box, the number on the right | "$" inside the field, the number on the left | The shared money field, as on the approved New Lease form |
+| Receive payment | Reference field | "ABA transaction ID" | "Transaction number or reference" | The app's name of the field since V1-058; it is for every method but cash, not only ABA |
+| Receive payment | Proof | "Upload proof" (a photo or PDF of the transfer) | Not there | A payment has no place to keep a file yet (01, open question 17) |
+| Receive payment | Payer note | Not there | Kept | A field the payment already stores (what the payer wrote in the transfer) |
+| Receive payment | Title of the tick list | "My profile" | "What this money pays for" | A text mix-up in the design file |
+| Receive payment, Receipt | Customer card, line under the name | "Primary Tenant · U203 · One Bedroom" | "Primary Tenant · U203" | The same card as the approved Lease page; the Unit type is on the Unit page |
+| Receive payment, Receipt | Customer card, under Unpaid Invoices | "Nothing unpaid." when $0.00 | The amount alone | The same card as the approved Lease page |
+| Receive payment | Rate card on the review app | A rate | "Not available" | The app has no rate source yet (01, open question 14). With a rate the card shows the design's lines |
+| Receive payment | Time of the rate | "Automatic, 03/11/2026, 08:00" | "Automatic, 12/11/2026 08:00" | The app's one way to write a moment |
+| Receipt | Buttons | "Move to correct Unit", Print Receipt, Reprint | Print Receipt, Reprint | Moving a payment to another Unit is not an app function; it is a money action that needs its own rule (01, open question 18) |
+| Receipt | Under a "Paid for" line | The moment the payment was received | "Due date" and the Invoice's Due Date | The Receipt read gives no time per line; the received time is on the sheet |
+| Receipt | Parts of a Rent Invoice | One line | Rent and Services under the Invoice | The owner's round 9 (12/11/2026) |
+
+### Tests and checks
+
+Tests: TEST-FE-2128 (Receive payment on the shared layout with the Customer card), 2129 and 2130 (the rate card with a rate, without one and while it is read), 2131 (the client reads the published rate, its time and the markup), 2132 (the payer's Customer card), 2133 (the Receipt page on the shared layout), 2134 (44 px in the tighter look; a form page names its form), all in `frontend/src/payments/PaymentsBatch.test.tsx`. TEST-FE-1921 (the Lease page's Customer card) passes on the shared card. TEST-FE-1938 now expects "Due date". The screen check has three new screens, `payments`, `receive-payment` and `receipt`, with the recorded answers in `frontend/e2e/fixtures/payments.har.json`: 10 screens × 5 sizes pass.

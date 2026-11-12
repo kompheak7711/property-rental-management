@@ -795,8 +795,8 @@ describe("UI v81 round 9 (owner 12/11/2026) the list and the Receipt page say th
     if (card === null) throw new Error("No Paid for card");
     const lines = Array.from(card.querySelectorAll(".ui-apps > li"));
     expect(lines.map((line) => line.textContent)).toEqual([
-      "INV260007 · Rent05/10/2026$400.00Rent$360.00Services$40.00",
-      "INV260019 · Short stay19/11/2026$52.80",
+      "INV260007 · RentDue date 05/10/2026$400.00Rent$360.00Services$40.00",
+      "INV260019 · Short stayDue date 19/11/2026$52.80",
       "Deposits$80.00",
     ]);
     const [rent, stay] = lines;

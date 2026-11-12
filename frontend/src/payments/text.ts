@@ -169,6 +169,24 @@ const TEXT = {
   rc_matched_to: ["Paid for", "បង់សម្រាប់"],
   fx_system: ["App rate (rounded up)", "អត្រាកម្មវិធី (បង្គត់ឡើង)"],
   fx_usd: ["Worth in US dollars", "តម្លៃជាដុល្លារ"],
+  // UI v81 module batch 2 (Payments): the "Exchange rate for riel" card, words of design v81.
+  fx_t: ["Exchange rate for riel", "អត្រាប្តូរប្រាក់រៀល"],
+  fx_aba: ["ABA sell rate", "អត្រាលក់ ABA"],
+  fx_src: ["Automatic, {0}", "ស្វ័យប្រវត្តិ {0}"],
+  fx_markup: ["Plus {0}%", "បូក {0}%"],
+  fx_khr_of: ["In riel at this rate", "ជារៀល តាមអត្រានេះ"],
+  fx_pay: ["To pay {0} in riel", "ដើម្បីបង់ {0} ជារៀល"],
+  fx_calc: ["{0} × {1} = {2}", "{0} × {1} = {2}"],
+  fx_calc_up: ["{0} × {1} = {2}, rounded up", "{0} × {1} = {2} បង្គត់ឡើង"],
+  fx_note: [
+    "The app works these out. Nobody can change them.",
+    "កម្មវិធីគណនាតួលេខទាំងនេះ។ គ្មាននរណាអាចកែបានទេ។",
+  ],
+  fx_usd_note: [
+    "Shown for every payment, so staff can tell a Customer the riel amount before they pay.",
+    "បង្ហាញសម្រាប់ការបង់ប្រាក់គ្រប់ពេល ដើម្បីឱ្យបុគ្គលិកប្រាប់អតិថិជនពីចំនួនរៀល មុនពេលបង់។",
+  ],
+  fx_none: ["Not available", "មិនទាន់មាន"], // the words of Settings › Exchange
   dlg_pay_t: ["Receive this payment?", "ទទួលការបង់ប្រាក់នេះ?"],
   // changed: the Receipt number is given by the server when it is saved
   dlg_pay_c: [

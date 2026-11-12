@@ -290,7 +290,8 @@
 }
 
 .ui-seg button {
-  min-height: 42px;
+  /* 44 px tall to press (the owner's 44 × 44 rule), on every screen size. */
+  min-height: 44px;
   padding: 0 14px;
   border: 0;
   border-right: 1px solid var(--btn-edge);
@@ -557,7 +558,7 @@
   }
 
   .ui-seg button {
-    min-height: 40px;
+    min-height: 44px;
     border: 1px solid var(--btn-edge);
     border-radius: 8px;
     background: var(--btn-bg);
@@ -933,18 +934,16 @@ body.ui-fit.ui-short .ui-card {
   padding: 12px 16px;
 }
 
+/* Module batch 2 (Payments, 12/11/2026): the tighter look of a short desktop screen saves room
+   in the spacing only. What a person presses (a button, a switch, a tab, a number card) stays
+   44 px tall (the owner's 44 × 44 rule). */
 body.ui-fit.ui-short .shell-view .ui-btn {
-  min-height: 38px;
   padding: 6px 14px;
 }
 
 body.ui-fit.ui-short .shell-view {
   gap: 8px;
   padding: 10px 24px;
-}
-
-body.ui-fit.ui-short .shell-tab {
-  min-height: 38px;
 }
 
 body.ui-fit.ui-short .shell-head {
@@ -962,11 +961,8 @@ body.ui-fit.ui-short .shell-head h1 {
   font-size: 1.25rem;
 }
 
-body.ui-fit.ui-short .shell-view .ui-seg button {
-  min-height: 36px;
-}
-
 body.ui-fit.ui-short .ui-kpis:not(.ui-tasks) .ui-kpi {
+  min-height: 44px;
   padding: 6px 12px;
 }
 
@@ -989,7 +985,7 @@ body.ui-fit.ui-short .ui-records {
 }
 
 body.ui-fit.ui-short .ui-records summary {
-  min-height: 36px;
+  min-height: 44px;
 }
 
 body.ui-fit.ui-short .ui-tfoot {
@@ -3877,7 +3873,8 @@ html[lang="km"] .ui-factlist dt {
 .shell-view a.ui-no,
 .shell-view .ui-factlist a,
 .shell-view .ui-line a,
-.shell-view .ui-kv a {
+.shell-view .ui-kv a,
+.shell-view .ui-apps a.ui-num {
   padding: 13px 6px;
   margin: -13px -6px;
 }
@@ -3906,4 +3903,61 @@ html[lang="km"] .ui-factlist dt {
   border: 1px solid var(--border);
   border-radius: 6px;
   background: #fff;
+}
+
+/* UI v81 module batch 2 (Payments, owner 12/11/2026): the "Exchange rate for riel" card beside
+   Receive payment (design v81 .fx, .fxpay): the rate lines in a sunken box, the app rate under a
+   rule, then what each unpaid item costs in riel, and the lock note. */
+.ui-well.ui-fx .line {
+  align-items: baseline;
+}
+
+.ui-well.ui-fx .line.total {
+  padding-top: 10px;
+  border-top: 1px solid var(--border-strong);
+}
+
+.ui-well.ui-fx .line.total b:first-child {
+  color: var(--text);
+}
+
+.ui-fxpay {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ui-fxpay li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+/* How the riel amount is reached, on its own line under the item (design v81). */
+.ui-fxpay li small {
+  flex: 0 0 100%;
+  color: var(--text-2);
+  font-size: 0.8125rem;
+}
+
+.ui-fxnote {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  margin: 0;
+}
+
+.ui-fxnote svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+/* A paragraph that is one of a card's own parts (a card is a grid with its own gaps) takes no
+   margin of its own, so the gap above and under it is the card's. */
+.ui-card > p.ui-tight {
+  margin: 0;
 }

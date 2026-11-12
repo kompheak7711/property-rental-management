@@ -1740,6 +1740,9 @@ export function App({
           leaseApi={leaseApi}
           paymentsApi={paymentsApi}
           propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
+          ledgerApi={ledgerApi ?? customerLedgerClient}
+          actorId={sessionActorId ?? undefined}
+          reports={reportsApi}
         />
         {/* V1-058 R5c: the payment list, matching, Credit and refunds stay in the earlier English
             forms, folded, until the next steps move them into the Payments screens. */}
