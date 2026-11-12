@@ -33,6 +33,9 @@ SANDBOX_HOST: Final = "checkout-sandbox.payway.com.kh"
 LIVE_HOST: Final = "checkout.payway.com.kh"
 QR_PATH: Final = "/api/payment-gateway/v1/payments/generate-qr"
 CHECK_PATH: Final = "/api/payment-gateway/v1/payments/check-transaction-2"
+# ABA's Check transaction only knows transactions made in the last 7 days; older ones are read
+# with Get a transaction details (same fields, at most 10 calls a minute).
+DETAIL_PATH: Final = "/api/payment-gateway/v1/payments/transaction-detail"
 CLOSE_PATH: Final = "/api/payment-gateway/v1/payments/close-transaction"
 RATE_PATH: Final = "/api/payment-gateway/v1/exchange-rate"
 # PayWay: a QR lives 3 minutes to 30 days, given in minutes.
@@ -251,8 +254,10 @@ def check_transaction(
     *,
     now: datetime | None = None,
     post_json: PostJson = _post_json,
+    older: bool = False,
 ) -> PayWayTransaction:
-    """What ABA says about one transaction (created in the last 7 days)."""
+    """What ABA says about one transaction: Check transaction for one made in the last 7 days,
+    Get a transaction details (``older``) for an older one."""
     if not TRAN_ID.fullmatch(tran_id):
         raise PayWayError("payway_tran_id_invalid")
     req_time = request_time(now)
@@ -262,7 +267,7 @@ def check_transaction(
         "tran_id": tran_id,
         "hash": sign(config.api_key, req_time, config.merchant_id, tran_id),
     }
-    document, status = _call(config, CHECK_PATH, body, post_json)
+    document, status = _call(config, DETAIL_PATH if older else CHECK_PATH, body, post_json)
     code = str(status.get("code"))
     if code == "6":
         return PayWayTransaction(tran_id, "NOT_FOUND", None, None, None, None, None)

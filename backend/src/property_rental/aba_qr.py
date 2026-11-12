@@ -152,6 +152,11 @@ def _date(value: Any) -> date:
     return date.fromisoformat(str(value)[:10])
 
 
+CHECK_WINDOW: Final = timedelta(days=7) - timedelta(hours=1)
+DETAIL_CALLS_PER_RUN: Final = 8
+NO_ANSWER_AFTER_EXPIRY: Final = timedelta(days=2)
+
+
 def _instant(value: Any) -> datetime:
     moment = datetime.fromisoformat(str(value))
     return moment if moment.tzinfo else moment.replace(tzinfo=UTC)
@@ -255,16 +260,27 @@ def check_payments(
     moment = now or datetime.now(UTC)
     calls: dict[str, Any] = {} if post_json is None else {"post_json": post_json}
     wanted = None if only is None else set(only)
+    detail_calls = 0
     for qr in store.to_check():
         tran_id = str(qr["tran_id"])
         if wanted is not None and tran_id not in wanted:
             continue
+        # A QR lives until its Due Date + 5 days, longer than ABA's 7-day Check window.
+        older = _instant(qr["created_at"]) < moment - CHECK_WINDOW
+        if older:
+            if detail_calls >= DETAIL_CALLS_PER_RUN:
+                continue  # the rest wait for the next run (ABA allows 10 a minute)
+            detail_calls += 1
         result.checked += 1
         try:
-            answer = payway.check_transaction(config, tran_id, now=moment, **calls)
+            answer = payway.check_transaction(config, tran_id, now=moment, older=older, **calls)
         except payway.PayWayError as error:
             result.failed += 1
             result.codes.append(error.code)
+            if _instant(qr["expires_at"]) + NO_ANSWER_AFTER_EXPIRY < moment:
+                # Never silently dropped: the staff look it up in PayWay.
+                store.record_event(tran_id, "NEEDS_CHECK", {"reason": "no_answer_after_expiry"})
+                result.needs_check += 1
             continue
         if not answer.paid:
             if answer.status in ("NOT_FOUND", "PENDING") and _instant(qr["expires_at"]) < moment:

@@ -66759,6 +66759,26 @@
       "notes": "DL-180 step 2: QR per Invoice message, PDF sending, payment check: only the hinted transactions are checked."
     },
     {
+      "test_id": "test_a_qr_older_than_abas_check_window_is_read_with_transaction_details",
+      "upstream_ids": [
+        "DL-180"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_aba_qr_jobs.py",
+      "status": "implemented",
+      "notes": "DL-180 (D): a QR older than ABA's 7-day Check window is read with Get a transaction details, at most 8 a run."
+    },
+    {
+      "test_id": "test_a_qr_abas_never_answers_for_goes_to_the_staff_after_it_expires",
+      "upstream_ids": [
+        "DL-180"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_aba_qr_jobs.py",
+      "status": "implemented",
+      "notes": "DL-180 (D): a QR ABA gives no answer for 2 days after it stops working goes to Needs check."
+    },
+    {
       "test_id": "test_abas_time_is_phnom_penh_time",
       "upstream_ids": [
         "DL-180"

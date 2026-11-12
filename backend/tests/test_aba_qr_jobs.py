@@ -103,7 +103,7 @@ class FakePayWay:
             }
         elif path == payway.CLOSE_PATH:
             answer = {"status": {"code": "00"}}
-        elif path == payway.CHECK_PATH:
+        elif path in (payway.CHECK_PATH, payway.DETAIL_PATH):
             answer = self.check or {"status": {"code": "6"}}
         else:
             return 404, b""
@@ -202,14 +202,20 @@ def test_a_payway_refusal_is_raised_so_the_message_waits() -> None:
     assert store.qrs == []
 
 
-def to_check(tran_id: str = "INV260015-1", amount: int = 35300) -> dict[str, Any]:
+def to_check(
+    tran_id: str = "INV260015-1",
+    amount: int = 35300,
+    created_at: str = "2026-11-10T03:00:00+00:00",
+    expires_at: str = "2026-11-14T16:59:59+00:00",
+) -> dict[str, Any]:
     return {
         "tran_id": tran_id,
         "invoice_id": INVOICE_ID,
         "customer_id": CUSTOMER_ID,
         "lease_id": None,
         "amount_usd_cents": amount,
-        "expires_at": "2026-11-14T16:59:59+00:00",
+        "created_at": created_at,
+        "expires_at": expires_at,
         "paid": False,
     }
 
@@ -341,6 +347,48 @@ def test_unpaid_expired_and_failed_checks() -> None:
         store=store, config=CONFIG, record_payment=None, now=NOW, post_json=down
     )
     assert (failed.failed, failed.codes) == (1, ["payway_http_503"])
+
+
+def test_a_qr_older_than_abas_check_window_is_read_with_transaction_details() -> None:
+    # Sent 10 days before its Due Date: the QR works for 15 days, ABA's Check knows 7.
+    old = (NOW - timedelta(days=9)).isoformat()
+    lasts = (NOW + timedelta(days=6)).isoformat()
+    store = FakeAba()
+    store.checks = [
+        to_check(f"INV2600{n:02d}-1", created_at=old, expires_at=lasts) for n in range(10)
+    ]
+    store.checks.append(to_check("INV260099-1"))
+    aba = aba_says("APPROVED", 0)
+
+    def answer(address: str, body: dict[str, Any]) -> tuple[int, bytes]:
+        assert aba.check is not None
+        aba.check["status"]["tran_id"] = body["tran_id"]
+        return aba(address, body)
+
+    result = aba_qr.check_payments(
+        store=store, config=CONFIG, record_payment=None, now=NOW, post_json=answer
+    )
+    # Eight older ones a run (ABA allows 10 a minute), the new one by Check; the rest next run.
+    assert aba.paths().count(payway.DETAIL_PATH) == 8
+    assert aba.paths().count(payway.CHECK_PATH) == 1
+    assert result.checked == 9 and result.needs_check == 9
+    assert {kind for _, kind, _ in store.events} == {"PAID", "NEEDS_CHECK"}
+
+
+def test_a_qr_abas_never_answers_for_goes_to_the_staff_after_it_expires() -> None:
+    def down(address: str, body: dict[str, Any]) -> tuple[int, bytes]:
+        return 503, b""
+
+    store = FakeAba()
+    store.checks = [to_check(expires_at=(NOW - timedelta(days=1)).isoformat())]
+    aba_qr.check_payments(store=store, config=CONFIG, record_payment=None, now=NOW, post_json=down)
+    assert store.events == [], "tried again while ABA may still answer"
+    store.checks = [to_check(expires_at=(NOW - timedelta(days=3)).isoformat())]
+    late = aba_qr.check_payments(
+        store=store, config=CONFIG, record_payment=None, now=NOW, post_json=down
+    )
+    assert (late.failed, late.needs_check) == (1, 1)
+    assert store.events == [("INV260015-1", "NEEDS_CHECK", {"reason": "no_answer_after_expiry"})]
 
 
 def test_only_the_hinted_transactions_are_checked() -> None:

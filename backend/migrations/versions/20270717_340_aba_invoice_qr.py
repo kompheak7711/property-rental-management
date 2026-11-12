@@ -43,7 +43,7 @@ TABLES = """
         qr_string text NOT NULL CHECK (qr_string LIKE '000201%' AND length(qr_string) <= 1000),
         expires_at timestamptz NOT NULL,
         created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
-        created_by uuid NOT NULL,
+        created_by uuid NOT NULL REFERENCES app.user_accounts (actor_id) ON DELETE RESTRICT,
         CHECK (expires_at > created_at)
     );
     CREATE INDEX aba_qr_requests_invoice_idx ON app.aba_qr_requests (invoice_id, created_at DESC);
@@ -57,7 +57,7 @@ TABLES = """
         details jsonb NOT NULL DEFAULT '{}'::jsonb CHECK (jsonb_typeof(details) = 'object'
             AND length(details::text) <= 4000),
         created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
-        created_by uuid NOT NULL
+        created_by uuid NOT NULL REFERENCES app.user_accounts (actor_id) ON DELETE RESTRICT
     );
     CREATE INDEX aba_qr_events_request_idx ON app.aba_qr_events (request_id, created_at);
     -- One final word per QR: it is paid (or needs a look), closed or expired only once.
@@ -182,8 +182,10 @@ FUNCTIONS = """
                 WHERE method.code = p_code AND method.accepted);
     END $$;
 
-    -- The QRs to ask ABA about: open ones made in the last 7 days (ABA's check window), and
-    -- paid ones whose Payment is not saved yet.
+    -- The QRs to ask ABA about, for their whole life and after: every QR with no closing event
+    -- (CLOSED, PAYMENT_RECORDED, NEEDS_CHECK, EXPIRED), paid ones whose Payment is not saved
+    -- yet included. The job closes each one: EXPIRED when ABA says unpaid after expires_at,
+    -- NEEDS_CHECK when ABA gives no answer for two days after it.
     CREATE FUNCTION app.aba_qr_to_check(p_property uuid, p_actor uuid)
     RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = pg_catalog AS $$
     DECLARE
@@ -204,8 +206,7 @@ FUNCTIONS = """
         WHERE request.property_id = p_property
           AND NOT EXISTS (SELECT 1 FROM app.aba_qr_events AS event
                           WHERE event.request_id = request.id
-                            AND event.kind IN ('CLOSED', 'PAYMENT_RECORDED', 'NEEDS_CHECK', 'EXPIRED'))
-          AND request.created_at > statement_timestamp() - interval '7 days';
+                            AND event.kind IN ('CLOSED', 'PAYMENT_RECORDED', 'NEEDS_CHECK', 'EXPIRED'));
         RETURN v_rows;
     END $$;
 """

@@ -78,6 +78,17 @@ def test_a_qr_is_kept_with_its_invoice_and_its_events_once(
     assert waiting and waiting[0]["customer_id"] == str(lease["customer"])
     assert waiting[0]["lease_id"] == str(lease["lease"]) and waiting[0]["paid"] is False
 
+    # A QR stays on the list for its whole life, also after ABA's 7-day Check window.
+    with psycopg.connect(db.owner_url) as owner:
+        owner.execute("ALTER TABLE app.aba_qr_requests DISABLE TRIGGER USER")
+        owner.execute(
+            "UPDATE app.aba_qr_requests SET created_at = created_at - interval '9 days' "
+            "WHERE tran_id = %s",
+            (made.tran_id,),
+        )
+        owner.execute("ALTER TABLE app.aba_qr_requests ENABLE TRIGGER USER")
+    assert made.tran_id in [qr["tran_id"] for qr in office.to_check()]
+
     assert office.record_event(made.tran_id, "PAID", {"apv": "654321"}) is True
     assert office.record_event(made.tran_id, "PAID", {"apv": "654321"}) is False, "kept once"
     assert [qr["paid"] for qr in office.to_check() if qr["tran_id"] == made.tran_id] == [True]
