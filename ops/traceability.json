@@ -67099,7 +67099,7 @@
       "notes": "Owner report 12 Nov 2026 (C): only a booked or checked-in guest stops a draft; after the booking is cancelled the same draft is saved, and another draft on the Unit holds no day."
     },
     {
-      "test_id": "TEST-FE-2100",
+      "test_id": "TEST-FE-2167",
       "upstream_ids": [
         "DL-223"
       ],
@@ -67109,7 +67109,7 @@
       "notes": "Lease client: a 409 LEASE_UNIT_BOOKED answer is a LeaseUnitBookedError that carries the server's words; any other 409 stays a conflict."
     },
     {
-      "test_id": "TEST-FE-2101",
+      "test_id": "TEST-FE-2168",
       "upstream_ids": [
         "DL-223"
       ],
@@ -67119,7 +67119,7 @@
       "notes": "New Lease: a draft over a short-stay booking shows the server's reason in place of the general words, reads nothing again, and other dates are a new request."
     },
     {
-      "test_id": "TEST-FE-2102",
+      "test_id": "TEST-FE-2169",
       "upstream_ids": [
         "DL-223"
       ],
@@ -67700,6 +67700,43 @@
       "test_path": "frontend/src/payments/PaymentsBatch.test.tsx",
       "status": "implemented",
       "notes": "UI v81 module batch 2 Payments: a switch button is 44 px tall on a computer and a phone, and the tighter look of a short desktop screen makes no button, switch, tab or number card shorter than 44 px; a form page can name its form for a screen reader."
+    },
+    {
+      "test_id": "TEST-FE-2100",
+      "upstream_ids": [
+        "TEST-117",
+        "API-058",
+        "UI-005"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/FinancialEvidencePaging.test.tsx",
+      "status": "implemented",
+      "notes": "Flaky test fix (TEST-FE-488): a Next press on the Payment reversal records in the same moment the table appears keeps the next page; the page reset no longer runs in a late effect."
+    },
+    {
+      "test_id": "TEST-FE-2101",
+      "upstream_ids": [
+        "TEST-117",
+        "API-058",
+        "UI-005"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/FinancialEvidencePaging.test.tsx",
+      "status": "implemented",
+      "notes": "Flaky test fix (TEST-FE-488): the reversal records go back to the first page only when the payment, view or revision changes."
+    },
+    {
+      "test_id": "TEST-FE-2102",
+      "upstream_ids": [
+        "BR-CUST-002",
+        "API-019",
+        "UI-103",
+        "SEC-044"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/CustomerManagement.test.tsx",
+      "status": "implemented",
+      "notes": "Flaky test fix (TEST-FE-087): Check the prior Customer command status pressed as soon as the command gate appears still finishes."
     }
   ]
 }

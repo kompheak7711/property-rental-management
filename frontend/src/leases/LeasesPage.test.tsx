@@ -930,7 +930,7 @@ describe("Lease actions", () => {
     expect(await screen.findByText("The draft was saved.")).toBeInTheDocument();
   });
 
-  it("TEST-FE-2102 Edit draft: dates that a short-stay guest has booked are refused with the reason; the dialog stays open and the Lease is not read again (DL-223)", async () => {
+  it("TEST-FE-2169 Edit draft: dates that a short-stay guest has booked are refused with the reason; the dialog stays open and the Lease is not read again (DL-223)", async () => {
     window.location.hash = "#/leases/lease-sign";
     const reason =
       "A short-stay guest has booked this Unit on some of these days. Nothing was saved. Choose another Unit, or a Start Date on the guest's check-out day or later (see Short stays).";
@@ -2271,7 +2271,7 @@ describe("New Lease and Renew", () => {
     });
   });
 
-  it("TEST-FE-2101 New Lease: a draft over a short-stay booking is refused with the reason, not the general words; nothing is read again, and other dates save (DL-223)", async () => {
+  it("TEST-FE-2168 New Lease: a draft over a short-stay booking is refused with the reason, not the general words; nothing is read again, and other dates save (DL-223)", async () => {
     const reason =
       "A short-stay guest has booked this Unit on some of these days. Nothing was saved. Choose another Unit, or a Start Date on the guest's check-out day or later (see Short stays).";
     const create = vi
