@@ -3071,3 +3071,19 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **Open:** the native Khmer check of the new texts; the owner's price rule if Extend is wanted on a moved stay.
 - **Links:** DL-223, DL-150 to DL-159 and DL-190 to DL-199 (short stays), DL-225.
 - **Decision date:** 2026-11-12.
+
+## DL-225 — Reserve Unit stops on a Unit a short-stay guest has booked, and says why
+
+- **Type:** `TECHNICAL DECISION UNDER THE OWNER'S RULE` (it applies the owner's existing rule that a short-stay booking wins; no new business or money rule).
+- **Status:** `BUILT ON BRANCH claude/project-thread-f4pu2d; WAITS FOR THE OWNER'S TEST AND MERGE OK`
+- **Source:** found by Claude on 12 Nov 2026 while fixing DL-223, and told to the owner the same day at 12:21 in the thread "Database v1.2 review" ("Reserve Unit has the same gap. A Unit with a booked guest can be reserved today, and then the guest cannot check in. I will make Reserve Unit stop the same way"). The owner's rule C of 3 Nov 2026: a short-stay booking wins over a new Lease. The owner can change this decision.
+- **What was wrong.** Make Reservation checked only that the Unit was Vacant. A Unit with a booked guest who has not checked in yet is still Vacant, so the Reservation was saved and its deposit was received. The Unit then became Reserved, which stops the guest's check-in, and the Lease that follows the Reservation was stopped only later (DL-223). The other direction was already right: a short-stay booking is refused on a Reserved Unit.
+- **(A) Reserve Unit stops.** A Reservation is refused when a booked or checked-in short-stay guest still has a night in the Unit from the Reservation Date (today) on. The answer is `RESERVATION_UNIT_BOOKED`: "A short-stay guest has booked this Unit. Nothing was saved and no money was taken. Reserve another Unit, or move the guest to another Unit first (Short stays, Change Unit)." Make Reservation saves the money and the Reservation in one step (DL-112), so the Payment of a refused Reservation is not saved.
+- **(B) After the guest is moved or the booking is cancelled** (Change Unit, DL-224; cancel or no-show) the Unit is reserved as usual.
+- **(C) What does not change.** A booking holds the nights from the check-in day up to, not including, the check-out day (as for a Lease), so a stay whose check-out day is today or earlier does not stop a Reservation. A Reservation saved before this change is not touched. A booking-site hold with no booking typed in here is not checked, as for a Lease (known limit; the calendar shows the hold).
+- **Database:** migration `20270721_376` adds one trigger function and one trigger on `app.reservations` (no table, column, grant or data change). Forward-only. See DB-SS-003.
+- **API:** `POST /properties/{property_id}/reservations` and `POST /properties/{property_id}/reservations/with-payment` answer 409 `RESERVATION_UNIT_BOOKED` (field `unit_id`). See docs/005.
+- **Screens:** Make Reservation shows the server's reason in place of the general "the Unit or the Customer changed meanwhile" words, in English and Khmer, and leaves the Unit and the Customer open to change.
+- **Open:** the native Khmer check of the new text.
+- **Links:** DL-223, DL-224, DL-112, DL-119, DL-150 to DL-159 (short stays).
+- **Decision date:** 2026-11-12.

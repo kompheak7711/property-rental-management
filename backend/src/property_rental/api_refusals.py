@@ -113,6 +113,17 @@ SIGNING_UNIT_BOOKED = Refusal(
     "or cancel this draft and make the Lease on another Unit.",
     ("DL-223",),
 )
+# DL-225 (12 Nov 2026): a booked short-stay guest also wins over a new Reservation, as over a
+# new Lease (DL-223).
+RESERVATION_UNIT_BOOKED = Refusal(
+    409,
+    "RESERVATION_UNIT_BOOKED",
+    "A short-stay guest has booked this Unit. Nothing was saved and no money was taken. "
+    "Reserve another Unit, or move the guest to another Unit first "
+    "(Short stays, Change Unit).",
+    ("DL-225",),
+    ("unit_id",),
+)
 # V1-061 (owner 2026-10-29, DL-111): Move out one occupant.
 OCCUPANT_PRIMARY_TENANT = Refusal(
     409,

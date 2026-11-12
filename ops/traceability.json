@@ -66692,6 +66692,121 @@
       "test_path": "frontend/src/shortstays/ChangeUnit.test.tsx",
       "status": "implemented",
       "notes": "A Refund of the discount Credit names the special discount in its reason; Change Unit shows its Khmer words."
+    },
+    {
+      "test_id": "test_migration_376_follows_change_unit_and_is_forward_only",
+      "upstream_ids": [
+        "DL-225"
+      ],
+      "test_level": "migration",
+      "test_path": "backend/tests/test_v12_reserve_unit_booked_guest_migration.py",
+      "status": "implemented",
+      "notes": "Migration 20270721_376 follows 20270720_375 and has no downgrade."
+    },
+    {
+      "test_id": "test_make_reservation_stops_on_a_unit_with_a_booked_guest_and_keeps_no_money",
+      "upstream_ids": [
+        "DL-225",
+        "DB-SS-003"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_v12_reserve_unit_booked_guest_migration.py",
+      "status": "implemented",
+      "notes": "Make Reservation on a Unit a short-stay guest has booked is refused: no Payment, no Reservation, the Unit stays Vacant and the booking stays; the API answer is RESERVATION_UNIT_BOOKED; another Unit is reserved as before."
+    },
+    {
+      "test_id": "test_the_unit_is_reserved_after_the_guest_moves_to_another_unit",
+      "upstream_ids": [
+        "DL-225",
+        "DL-224",
+        "DB-SS-003"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_v12_reserve_unit_booked_guest_migration.py",
+      "status": "implemented",
+      "notes": "After Change Unit moves the guest the Unit is reserved; the Unit the guest moved to is then the one that cannot be reserved."
+    },
+    {
+      "test_id": "test_the_unit_is_reserved_after_the_booking_is_cancelled",
+      "upstream_ids": [
+        "DL-225",
+        "DB-SS-003"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_v12_reserve_unit_booked_guest_migration.py",
+      "status": "implemented",
+      "notes": "A cancelled booking no longer stops a Reservation of its Unit."
+    },
+    {
+      "test_id": "test_a_stay_that_is_over_does_not_stop_a_reservation",
+      "upstream_ids": [
+        "DL-225",
+        "DB-SS-003"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_v12_reserve_unit_booked_guest_migration.py",
+      "status": "implemented",
+      "notes": "A booking holds the nights up to, not including, its check-out day: a stay with a night from today on stops a Reservation, a stay whose check-out day is today does not."
+    },
+    {
+      "test_id": "test_make_reservation_on_a_booked_unit_answers_the_reason_with_a_code",
+      "upstream_ids": [
+        "DL-225"
+      ],
+      "test_level": "API",
+      "test_path": "backend/tests/test_reservation_unit_booked_api.py",
+      "status": "implemented",
+      "notes": "Both Make Reservation requests answer 409 RESERVATION_UNIT_BOOKED with the fixed words and the rule DL-225."
+    },
+    {
+      "test_id": "TEST-FE-2103",
+      "upstream_ids": [
+        "DL-225"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/reservations/ReserveBookedUnit.test.tsx",
+      "status": "implemented",
+      "notes": "The Reservation client: a 409 RESERVATION_UNIT_BOOKED answer of Make Reservation with its money becomes an error with the code and the server's words."
+    },
+    {
+      "test_id": "TEST-FE-2104",
+      "upstream_ids": [
+        "DL-225"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/reservations/ReserveBookedUnit.test.tsx",
+      "status": "implemented",
+      "notes": "The Reservation client: Make Reservation without money in the same step is refused the same way."
+    },
+    {
+      "test_id": "TEST-FE-2105",
+      "upstream_ids": [
+        "DL-225"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/reservations/ReserveBookedUnit.test.tsx",
+      "status": "implemented",
+      "notes": "The Reservation client: any other conflict stays the general conflict, also when its answer cannot be read."
+    },
+    {
+      "test_id": "TEST-FE-2106",
+      "upstream_ids": [
+        "DL-225"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/reservations/ReserveBookedUnit.test.tsx",
+      "status": "implemented",
+      "notes": "Make Reservation shows the server's reason in place of the general conflict words, keeps the Unit and the Customer open, looks up nothing, and saves once the guest has moved."
+    },
+    {
+      "test_id": "TEST-FE-2107",
+      "upstream_ids": [
+        "DL-225"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/reservations/ReserveBookedUnit.test.tsx",
+      "status": "implemented",
+      "notes": "The Khmer screen has Khmer words for RESERVATION_UNIT_BOOKED, with the name of Change Unit."
     }
   ]
 }
