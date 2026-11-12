@@ -21,6 +21,7 @@ import type { CustomerCommandGate } from "../customers/commands";
 import { NewCustomerDialog } from "../customers/CustomerDialogs";
 import {
   LeaseUnavailableError,
+  LeaseUnitBookedError,
   type LeaseApi,
   type LeaseDraftSource,
   type LeaseResource,
@@ -219,6 +220,8 @@ export function LeaseForm({
   const [confirm, setConfirm] = useState<LeaseDraftSource | null>(null);
   const [busy, setBusy] = useState(false);
   const [outcome, setOutcome] = useState<"unknown" | "refused" | null>(null);
+  // DL-223: a short-stay guest has booked the Unit on a day of the Lease (the server's words).
+  const [booked, setBooked] = useState<string | null>(null);
   // V1-060 B7: the draft is saved first, then its Security Deposit (DL-101). When only the draft
   // is saved, the dialog stays: Try again saves only the Security Deposit, and Close opens the
   // draft (Edit draft can add it there).
@@ -756,6 +759,7 @@ export function LeaseForm({
     const chosen = request.current;
     setBusy(true);
     setOutcome(null);
+    setBooked(null);
     void api
       .create(propertyId, { ...confirm, event_id: chosen.event }, chosen.key)
       .then(
@@ -763,6 +767,11 @@ export function LeaseForm({
         async (error: unknown) => {
           if (error instanceof LeaseUnavailableError) {
             setOutcome("unknown");
+            return;
+          }
+          // The booking wins (DL-223): nothing was saved, so there is no draft to look for.
+          if (error instanceof LeaseUnitBookedError) {
+            setBooked(serverWords(language, error));
             return;
           }
           // An earlier try whose answer was lost may have saved this Lease already (the id is
@@ -1364,6 +1373,7 @@ export function LeaseForm({
             }
             setConfirm(null);
             setOutcome(null);
+            setBooked(null);
           }}
           onSubmit={(event) => {
             event.preventDefault();
@@ -1402,6 +1412,12 @@ export function LeaseForm({
                   outcome === "unknown" ? "unknown" : "draft_refused",
                 )}
               </p>
+            </div>
+          )}
+          {booked !== null && (
+            <div className="ui-notice warn" role="alert">
+              <Icon name="alert" />
+              <p>{booked}</p>
             </div>
           )}
           {depositIssue !== null && (
