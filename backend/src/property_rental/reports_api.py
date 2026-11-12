@@ -142,10 +142,6 @@ def create_reports_router(
         return {"data": page, "meta": {"request_id": request.state.request_id}}
 
     @router.get(
-        "/properties/{property_id}/reports/totals/{report}",
-        summary="A Totals by Unit and month report",
-    )
-    @router.get(
         "/properties/{property_id}/birthdays",
         summary="The coming birthdays of the tenants and occupants of active Leases",
     )
@@ -169,6 +165,10 @@ def create_reports_router(
         response.headers["Cache-Control"] = "private, no-store"
         return {"data": page, "meta": {"request_id": request.state.request_id}}
 
+    @router.get(
+        "/properties/{property_id}/reports/totals/{report}",
+        summary="A Totals by Unit and month report",
+    )
     def totals(
         property_id: UUID,
         report: TotalsReport,

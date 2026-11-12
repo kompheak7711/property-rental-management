@@ -706,3 +706,33 @@ A Lease with two Monthly services (U406L0024) was drafted from a Booking and sig
 | Reports › Payments register | "Move-out charges" | "Move-out charges" (not changed yet) | Its own report read; Reports batch (01, open question 15) |
 
 Tests: TEST-FE-914 updated (the category cards); new TEST-FE-1937 (cards, names, Paid for cells, card filter), 1938 (parts on the Receipt page; printed Receipt unchanged) and 1939 (the client reads the new kinds and parts and refuses the old kind); database tests `test_payments_paid_for_migration.py` (three) and `test_payments_summary_migration.py` (kinds and parts).
+
+## Fixes after the first full check on GitHub (12/11/2026)
+
+No screen design changes. The full check on GitHub ran on this branch for the first time and found three faults that this branch had brought in. All three are put right; nothing else changes.
+
+### 1. The four "Totals by Unit and month" reports open again
+
+Reports › Total Income, Total Rent, Total Utilities and Total Paid Income did not open on this branch since round 4 (08/11): the page showed an error. In `backend/src/property_rental/reports_api.py` the route line for these reports had been left above the Birthdays function, so the Totals function had no address. The line is back above `totals`. Checked in the review app: Total Income opens with its Units and months.
+
+### 2. The Home read keeps four earlier fixes (migration 20270714_365)
+
+Round 4 added the "Paid on time" and "Birthdays" cards with migration 20270710_361. That step replaced the Home read (`app.home_page`) with a whole new text written from an old version (migration 222), so the four changes made after it were lost on this branch:
+
+| Earlier step | What it does | What was wrong on this branch |
+|---|---|---|
+| 20270319_238 (DL-098, owner 26/10 "Meters decide") | The "Refund due by" to-do of a Unit with no Meter counts from the final inspection alone | The to-do did not show for such a Unit |
+| 20270323_242 (V1-060) | A Refund draft the read does not understand counts as waiting with no amount | One such draft stopped the whole Home page |
+| 20270324_243 (V1-060 speed) | The two Invoice lists are read once | Slower Home page; same figures |
+| 20270408_258 (DL-116, owner 31/10) | A Unit not for rent is not counted | It was counted in the Units card and in the missing Meter readings |
+
+Migration 20270714_365 follows 20270713_364. It reads the function text the database holds, puts the seven exact texts of those four steps back (each old text must be there exactly once) and checks that the Paid on time card and the Birthdays section are still there. After it, the Home read is the same as before round 4 plus the three round 4 additions, with the same owner, privileges and settings. Read only: no table, row, amount or document changes. Forward-only. Migration 361 is not edited, because it is already applied on the test computers.
+
+Rule for later steps on this branch: change a database function from the text the database holds (as migrations 364 and 365 do). Never replace it with a whole text copied from an old migration.
+
+### 3. Two tests brought up to date
+
+- `test_local_run_scripts.py`: the list of local scripts names `seed-design-data.sh` (round 6b).
+- `test_lease_timeline_restricted_migration.py`: a person who may read Leases only gets the same History steps as before, and each step now carries the name of the person who recorded it (round 5b, "History names the person").
+
+Tests: new database tests `test_home_page_earlier_fixes_migration.py` (four); the earlier tests of the four steps pass again (`test_final_settlement_preview_migration.py`, `test_v1_060_release_migration.py`, `test_unit_for_rent_migration.py`, `test_reports_home_migration.py`); `test_report_totals.py` passes again.

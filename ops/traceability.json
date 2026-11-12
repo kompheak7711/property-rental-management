@@ -66963,7 +66963,7 @@
       "test_level": "migration",
       "test_path": "backend/tests/test_payments_paid_for_migration.py",
       "status": "implemented",
-      "notes": "UI v81 round 9 (migration 20270713_364): the Payments paid-for migration follows 20270712_363, is the head on ui-v81 and is forward-only."
+      "notes": "UI v81 round 9 (migration 20270713_364): the Payments paid-for migration follows 20270712_363 and is forward-only; the head on ui-v81 is 20270714_365."
     },
     {
       "test_id": "test_a_short_stay_and_its_damage_count_under_the_type_of_their_invoice",
@@ -66986,6 +66986,53 @@
       "test_path": "backend/tests/test_payments_paid_for_migration.py",
       "status": "implemented",
       "notes": "UI v81 round 9 (migration 20270713_364): money paid to a miscellaneous one-time charge counts under Other charges; no MOVEOUT kind is returned; the Receipt read names the Invoice type MISCELLANEOUS with its part."
+    },
+    {
+      "test_id": "test_migration_365_follows_the_payments_paid_for_and_is_forward_only",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "migration",
+      "test_path": "backend/tests/test_home_page_earlier_fixes_migration.py",
+      "status": "implemented",
+      "notes": "UI v81 (migration 20270714_365): the Home page earlier-fixes migration follows 20270713_364, is the head on ui-v81 and is forward-only."
+    },
+    {
+      "test_id": "test_the_migration_puts_the_four_fixes_back_and_keeps_the_ui_v81_cards",
+      "upstream_ids": [
+        "UI-008",
+        "DL-098",
+        "DL-096",
+        "DL-116"
+      ],
+      "test_level": "migration",
+      "test_path": "backend/tests/test_home_page_earlier_fixes_migration.py",
+      "status": "implemented",
+      "notes": "UI v81 (migration 20270714_365): on a database at 20270713_364 app.home_page has none of the changes of migrations 238, 242, 243 and 258 (migration 20270710_361 dropped them); after the step it is the same text with each of the seven old texts changed once, the paid_on_time card and the birthdays section still there, and the same owner, privileges and settings."
+    },
+    {
+      "test_id": "test_the_home_page_at_the_head_holds_every_fix_once",
+      "upstream_ids": [
+        "UI-008",
+        "DL-098",
+        "DL-096",
+        "DL-116"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_home_page_earlier_fixes_migration.py",
+      "status": "implemented",
+      "notes": "UI v81 (migration 20270714_365): at the head app.home_page holds each of the seven put-back texts once, none of the old texts, and the two UI v81 parts."
+    },
+    {
+      "test_id": "test_a_unit_not_for_rent_is_not_counted_in_the_home_units_card",
+      "upstream_ids": [
+        "UI-008",
+        "DL-116"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_home_page_earlier_fixes_migration.py",
+      "status": "implemented",
+      "notes": "UI v81 (migration 20270714_365, DL-116): setting a Unit not for rent takes one from the Home Units total and setting it back for rent adds it again."
     }
   ]
 }
