@@ -457,6 +457,26 @@
   }
 }
 
+/* UI v81 round 10 (owner 12/11/2026 11:03): on a large screen (1600px and up) the eleven Payments
+   cards are two rows, six and five, so they keep their full height and the table still has
+   room (shell/tableFit.ts). The amount scales with the screen, so a long amount is not cut in
+   the narrower card. */
+@media (min-width: 1600px) {
+  .ui-kpis.ui-kpis-pay {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .ui-kpis.ui-kpis-pay > * {
+    flex: 1 1 calc((100% - 5 * 14px) / 6 - 1px);
+    min-width: 0;
+  }
+
+  .ui-kpis.ui-kpis-pay .ui-kpi-value {
+    font-size: clamp(1.3rem, 1.35vw, 1.75rem);
+  }
+}
+
 @media (max-width: 639px) {
   .ui-kpis {
     gap: 10px;
@@ -836,6 +856,39 @@ body.ui-fit .ui-kpis {
 
 body.ui-fit .ui-kpi {
   padding: 12px 14px;
+}
+
+/* Round 10 (owner 12/11/2026 11:03): the middle look of a large screen (shell/tableFit.ts). The
+   name and the number share one line and the note stays under them, so a card is shorter but
+   still says everything. */
+body.ui-fit.ui-mid .ui-kpis:not(.ui-tasks) .ui-kpi {
+  grid-template-rows: auto 1fr;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 10px;
+  align-items: center;
+  min-height: 0;
+}
+
+body.ui-fit.ui-mid .ui-kpis:not(.ui-tasks) .ui-kpi .ui-kpi-value {
+  font-size: 1.3rem;
+}
+
+body.ui-fit.ui-mid .ui-kpis:not(.ui-tasks) .ui-kpi .ui-kpi-note {
+  grid-column: 1 / -1;
+  align-self: start;
+}
+
+/* The middle look keeps the page title and its line of text on one line, level with the
+   page's button, so the table has that room. */
+body.ui-fit.ui-mid .shell-head {
+  align-items: center;
+}
+
+body.ui-fit.ui-mid .shell-head-text {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  align-items: baseline;
 }
 
 /* A short desktop screen (under 1000px tall): the number cards take one line each, so at least

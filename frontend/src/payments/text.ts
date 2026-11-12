@@ -287,7 +287,8 @@ const TEXT = {
     "Trash Collection and other Services",
     "ការប្រមូលសំរាម និងសេវាផ្សេងទៀត",
   ],
-  c_LATE: ["Late-payment charges", "ថ្លៃពិន័យបង់យឺត"],
+  // Owner 12/11/2026 11:03: the card is "Late-payment" (it was "Late-payment charges").
+  c_LATE: ["Late-payment", "ថ្លៃពិន័យបង់យឺត"],
   // new: the app adds the charge itself (DL-076, slice 11g); no manager confirms it.
   c_LATE_s: [
     "Added by the app after the Due Date",

@@ -1,11 +1,15 @@
 // UI v81 round 3: a list page's main table scrolls in its own area; the page top stays in place.
 
+import { readFileSync } from "node:fs";
+
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
   holdsFold,
   installTableFit,
+  largeCardsLook,
   mainTableBox,
+  plainRowsHeight,
   planFit,
   scrollKey,
 } from "./tableFit";
@@ -200,5 +204,73 @@ describe("tableFit", () => {
     expect(rules.classList.contains("ui-tscroll")).toBe(true);
     expect(document.body.classList.contains("ui-fit")).toBe(true);
     again();
+  });
+
+  it("TEST-FE-1941 (owner 12/11/2026 11:03) on a large screen the number cards are as tall as the first screen allows: full height while six ordinary rows of the table show, then the middle look (name and number on one line, the note under them) while three show, and one line each only below that; the Payments cards are six in a row there", () => {
+    // Headings 46px and rows 68px: six rows need 454px, three need 250px.
+    const rowsHeight = (rows: number) => 46 + 68 * rows;
+    // 2560 x 1300, the table starts 683px down with full cards: 617px for the table.
+    expect(
+      largeCardsLook({
+        height: 1300,
+        tableTopFull: 683,
+        tableTopMid: () => {
+          throw new Error("not measured when the full look fits");
+        },
+        rowsHeight,
+      }),
+    ).toBe("full");
+    // 1920 x 1080: 381px with full cards is under six rows; the middle look leaves 487px.
+    expect(
+      largeCardsLook({
+        height: 1080,
+        tableTopFull: 699,
+        tableTopMid: () => 593,
+        rowsHeight,
+      }),
+    ).toBe("mid");
+    // 1920 x 900: the middle look still shows three rows.
+    expect(
+      largeCardsLook({
+        height: 900,
+        tableTopFull: 699,
+        tableTopMid: () => 593,
+        rowsHeight,
+      }),
+    ).toBe("mid");
+    // 1920 x 820: under three rows even with the middle look, so one line each.
+    expect(
+      largeCardsLook({
+        height: 820,
+        tableTopFull: 699,
+        tableTopMid: () => 593,
+        rowsHeight,
+      }),
+    ).toBe("line");
+
+    // An ordinary row is the table's shortest row (the test window draws no boxes: 0px each).
+    document.body.innerHTML = `<div class="ui-tablewrap" id="list"><table><thead><tr><th>A</th></tr></thead><tbody><tr><td>1</td></tr><tr><td>2</td></tr></tbody></table></div>
+      <div class="ui-tablewrap" id="none"><table><tbody></tbody></table></div>`;
+    expect(plainRowsHeight(byId("list"), 3)).toBe(0);
+    expect(plainRowsHeight(byId("none"), 3)).toBe(0);
+
+    // The looks come from the stylesheet.
+    const css = readFileSync("src/shell/screens.css", "utf8");
+    const block = (start: string) => {
+      const from = css.indexOf(start);
+      if (from < 0) throw new Error(`No block ${start}`);
+      return css.slice(from, css.indexOf("\n}\n", from));
+    };
+    const pay = block("@media (min-width: 1600px) {\n  .ui-kpis.ui-kpis-pay {");
+    expect(pay).toContain("flex-wrap: wrap;");
+    expect(pay).toContain("flex: 1 1 calc((100% - 5 * 14px) / 6 - 1px);");
+    const mid = block("\nbody.ui-fit.ui-mid .ui-kpis:not(.ui-tasks) .ui-kpi {");
+    expect(mid).toContain("grid-template-columns: minmax(0, 1fr) auto;");
+    // The note stays in the middle look, under the name and the number.
+    const note = block(
+      "\nbody.ui-fit.ui-mid .ui-kpis:not(.ui-tasks) .ui-kpi .ui-kpi-note {",
+    );
+    expect(note).toContain("grid-column: 1 / -1;");
+    expect(note).not.toContain("display: none");
   });
 });

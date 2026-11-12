@@ -736,3 +736,25 @@ Rule for later steps on this branch: change a database function from the text th
 - `test_lease_timeline_restricted_migration.py`: a person who may read Leases only gets the same History steps as before, and each step now carries the name of the person who recorded it (round 5b, "History names the person").
 
 Tests: new database tests `test_home_page_earlier_fixes_migration.py` (four); the earlier tests of the four steps pass again (`test_final_settlement_preview_migration.py`, `test_v1_060_release_migration.py`, `test_unit_for_rent_migration.py`, `test_reports_home_migration.py`); `test_report_totals.py` passes again.
+
+## Round 10: Home card rows, the menu colour, the Payments cards (12/11/2026)
+
+Owner 12/11 10:47 ("Large screen, Laptop, iPad: why don't you arrange 5 columns per row for card? The background colour of the navigation menu should fill to the bottom of the page") and 11:03 ("Why is the height of the cards in the Payments page short (1 line) even on a large screen? Rename the card Late-payment charges to Late-payment").
+
+| What | Before | After | Where |
+|---|---|---|---|
+| Home cards per row | Four per row on a computer (15 cards = 4 + 4 + 4 + 3), three on a tablet; the Financial summary 3 + 2 | Five per row from an iPad up (700 px): the Financial summary is one row of five and the fifteen cards are three rows of five. A phone keeps two per row. With fewer cards (a role that sees fewer) no card is alone: one left over makes the last six 3 + 3, two left over make the last seven 4 + 3 | `shell/layouts.tsx` (`CardGrid five`), `shell/screens.css` (`.ui-kpis.ui-five`), `home/HomeScreen.tsx`, `home/OwnerMoney.tsx` |
+| A name beside its number | A long word could break in the middle beside the number ("Customer / s owe") in a narrow card | The name is as wide as its longest word. In a narrow card the name keeps most of the width: a short count stays beside it and an amount goes under it, at the right. On an upright iPad the text is a little smaller and the amount scales with the card, so twelve characters ("$999,999.99") show in full | `shell/screens.css` (`.ui-kpi-head`, the card's own size rules) |
+| The icon circle of a Home card | Shown on a computer | Shown on a large screen; left out on a laptop and an iPad, where five cards per row leave no room for it | Existing narrow-card rule |
+| Tasks cards | Four per row | Unchanged (there are four) | - |
+| Menu colour | The menu stays in the window while the page scrolls, but the column under it was the page colour, which showed in a picture of a long page | The whole column is painted in the menu colour, to the bottom of the page, also with the menu collapsed. Not where the menu is a drawer, and not on paper | `shell/shell.css` (`.shell`) |
+| Payments card name | Late-payment charges | Late-payment (the Khmer name is unchanged). The "Paid for" column of the list uses the same name. The Receipt page line ("Late-payment charge") and the Reports register are unchanged | `payments/text.ts` |
+| Payments cards on a large screen | One line each whenever the window was under 1000 px tall, or when fewer than eight rows of the list would show; with eleven cards in three rows that was every large screen | From 1600 px wide the eleven cards are two rows (six and five). They are full height while six rows of the list show on the first screen; otherwise the name and the amount share one line and the note stays under them; one line each only when even that leaves fewer than three rows (a window under about 850 px tall). When the table area would hold fewer than four rows the page scrolls as usual and the headings stick | `shell/tableFit.ts` (`largeCardsLook`), `shell/screens.css` (`.ui-kpis-pay`, `body.ui-mid`) |
+| Other list pages on a large screen | One line cards under 1000 px tall | The same large-screen rule: full-height cards while six rows show (Invoices at 1920 × 1080: full cards, five rows in the table area) | `shell/tableFit.ts` |
+| Laptop screens (under 1600 px wide) | One-line cards under 1000 px tall or under eight rows | Unchanged | - |
+
+Measured on the review data (Payments, 18 payments): 2560 × 1300 full cards, 5 rows; 1920 × 1200 full cards, 4 rows; 1920 × 1080 name and amount on one line with the note, 4 rows; 1920 × 950 the same, 4 rows, the page scrolls; 1920 × 820 one line each, 4 rows; 1440 × 900 one line each, 5 rows (as before).
+
+Trade-off told to the owner: on a 1080 px screen the list showed eight rows with one-line cards; with the taller cards it shows four at a time.
+
+Checks: the screen check now fails when a five-in-a-row grid does not hold five cards in its first row from 700 px, and when the menu colour does not fill its column on a wide screen. Tests TEST-FE-1940 (`shell/layouts.test.tsx`), TEST-FE-1941 (`shell/tableFit.test.ts`); TEST-FE-1925, 1907 and 1937 extended.

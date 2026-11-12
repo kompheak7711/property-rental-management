@@ -692,7 +692,8 @@ describe("UI v81 round 9 (owner 12/11/2026) the list and the Receipt page say th
       "Rent",
       "Utilities",
       "Services",
-      "Late-payment charges",
+      // Owner 12/11/2026 11:03: the card is named "Late-payment" (it was "Late-payment charges").
+      "Late-payment",
       "Deposits",
       "Short stay",
       "Products",

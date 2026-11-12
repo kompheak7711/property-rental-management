@@ -1,6 +1,11 @@
 // UI v81 round 3 (owner 07/11/2026 17:30): on a list page the table scrolls and the top stays in
 // place.
 //
+// Owner 12/11/2026 11:03: on a large screen (1600px wide and up) the number cards are as tall as
+// the first screen allows: full height, then the middle look (the name and the number on one
+// line, the note under them), and one line each only when even that leaves fewer than three rows
+// of the table (see largeCardsLook).
+//
 // On a screen at least 1024px wide and 700px tall the page fits the screen: the title, tabs,
 // filters and number cards stay where they are and only the page's main table scrolls, in its own
 // area that fills the rest of the screen, with its column headings stuck at the top of that area.
@@ -23,6 +28,40 @@ export const SHORT_HEIGHT = 1000;
 export const MIN_TABLE_HEIGHT = 240;
 /** Rows a desktop list should show; a tall screen that shows fewer takes the tighter look. */
 export const MIN_ROWS = 8;
+/**
+ * A large screen (owner 12/11/2026 11:03, "why are the Payments cards one line even on a large
+ * screen?"): from this width the window's height alone no longer decides. The number cards keep
+ * their full height while the first screen still shows LARGE_FULL_ROWS ordinary rows of the
+ * table. With fewer, the cards take the middle look (the name and the number on one line, the
+ * note under them), and only when even that leaves fewer than LARGE_MIN_ROWS rows do they take
+ * one line each.
+ */
+export const LARGE_WIDTH = 1600;
+export const LARGE_FULL_ROWS = 6;
+export const LARGE_MIN_ROWS = 3;
+
+/** The look of the number cards: full height, the middle look, or one line each. */
+export type CardsLook = "full" | "mid" | "line";
+
+export interface LargeScreen {
+  /** The height of the browser window. */
+  height: number;
+  /** The table's top edge from the top of the page with the cards at full height. */
+  tableTopFull: number;
+  /** The same with the cards in the middle look (measured only when it is needed). */
+  tableTopMid: () => number;
+  /** The height of the column headings and `rows` ordinary rows. */
+  rowsHeight: (rows: number) => number;
+}
+
+/** The look of the number cards on a large screen, from what the first screen would show. */
+export function largeCardsLook(screen: LargeScreen): CardsLook {
+  if (screen.height - screen.tableTopFull >= screen.rowsHeight(LARGE_FULL_ROWS))
+    return "full";
+  if (screen.height - screen.tableTopMid() >= screen.rowsHeight(LARGE_MIN_ROWS))
+    return "mid";
+  return "line";
+}
 
 export interface FitMeasure {
   /** The screen (the browser window's inner size). */
@@ -68,6 +107,17 @@ export function rowsHeight(box: HTMLElement, rows: number): number {
   const row = box.querySelector<HTMLElement>("tbody tr");
   if (row === null) return 0;
   return (head === null ? 0 : head.offsetHeight) + row.offsetHeight * rows;
+}
+
+/** The height of the column headings and `rows` rows as tall as the table's shortest row. */
+export function plainRowsHeight(box: HTMLElement, rows: number): number {
+  const head = box.querySelector<HTMLElement>("thead");
+  const heights = Array.from(
+    box.querySelectorAll<HTMLElement>("tbody tr"),
+    (row) => row.offsetHeight,
+  );
+  if (heights.length === 0) return 0;
+  return (head === null ? 0 : head.offsetHeight) + Math.min(...heights) * rows;
 }
 
 export function scrollKey(hash: string): string {
@@ -199,7 +249,7 @@ export function installTableFit(): () => void {
       current = box;
     }
     if (box === null) {
-      root.classList.remove("ui-fit", "ui-short");
+      root.classList.remove("ui-fit", "ui-mid", "ui-short");
       return;
     }
     const folds = holdsFold(box);
@@ -207,11 +257,14 @@ export function installTableFit(): () => void {
       !folds &&
       window.innerWidth >= FIT_MIN_WIDTH &&
       window.innerHeight >= FIT_MIN_HEIGHT;
-    // Measure with the fitted spacing on, since it moves the table.
+    const large = window.innerWidth >= LARGE_WIDTH;
+    // Measure with the fitted spacing on, since it moves the table. A laptop under 1000px tall
+    // starts with the tighter look; a large screen starts with its cards at full height.
     root.classList.toggle("ui-fit", fitScreen);
+    root.classList.remove("ui-mid");
     root.classList.toggle(
       "ui-short",
-      fitScreen && window.innerHeight < SHORT_HEIGHT,
+      fitScreen && !large && window.innerHeight < SHORT_HEIGHT,
     );
     box.classList.remove("ui-tflow");
     box.classList.toggle("ui-tscroll", fitScreen);
@@ -229,9 +282,38 @@ export function installTableFit(): () => void {
       });
     };
     let plan = measure();
-    // A tall screen whose table area would still show fewer than MIN_ROWS rows (two rows of
-    // cards, a tall head) takes the tighter look of a short screen too, then measures again.
-    if (
+    if (fitScreen && large) {
+      // Owner 12/11/2026 11:03: a large screen keeps its cards as tall as the first screen
+      // allows (see largeCardsLook); then the page is measured again.
+      const tableTop = () => box.getBoundingClientRect().top + window.scrollY;
+      const look = largeCardsLook({
+        height: window.innerHeight,
+        tableTopFull: tableTop(),
+        tableTopMid: () => {
+          root.classList.add("ui-mid");
+          return tableTop();
+        },
+        rowsHeight: (rows) => plainRowsHeight(box, rows),
+      });
+      root.classList.toggle("ui-mid", look === "mid");
+      root.classList.toggle("ui-short", look === "line");
+      if (look !== "full") plan = measure();
+      // A table area that would hold fewer than four ordinary rows shows less than the page
+      // scrolling as usual does (what sits under the table then leaves the first screen), so
+      // the page scrolls and the headings stick.
+      if (
+        look !== "line" &&
+        plan.mode === "fit" &&
+        plan.maxHeight < plainRowsHeight(box, LARGE_MIN_ROWS + 1)
+      )
+        plan =
+          box.scrollWidth > box.clientWidth + 1
+            ? { mode: "plain" }
+            : { mode: "flow" };
+    } else if (
+      // A tall laptop screen whose table area would still show fewer than MIN_ROWS rows (two
+      // rows of cards, a tall head) takes the tighter look of a short screen too, then measures
+      // again.
       plan.mode === "fit" &&
       !root.classList.contains("ui-short") &&
       plan.maxHeight < rowsHeight(box, MIN_ROWS)
@@ -248,7 +330,7 @@ export function installTableFit(): () => void {
     } else {
       // No room for a table area (tall blocks above the list): the page scrolls and the headings
       // stick under the top bar. A fitting screen keeps its tighter spacing.
-      if (!fitScreen) root.classList.remove("ui-fit", "ui-short");
+      if (!fitScreen) root.classList.remove("ui-fit", "ui-mid", "ui-short");
       box.classList.remove("ui-tscroll");
       box.classList.toggle("ui-tflow", plan.mode === "flow");
     }
@@ -299,6 +381,6 @@ export function installTableFit(): () => void {
     window.cancelAnimationFrame(queued);
     window.clearTimeout(restoreTimer);
     clear(current);
-    root.classList.remove("ui-fit", "ui-short");
+    root.classList.remove("ui-fit", "ui-mid", "ui-short");
   };
 }

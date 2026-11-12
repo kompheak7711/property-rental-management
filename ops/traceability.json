@@ -67033,6 +67033,16 @@
       "test_path": "backend/tests/test_home_page_earlier_fixes_migration.py",
       "status": "implemented",
       "notes": "UI v81 (migration 20270714_365, DL-116): setting a Unit not for rent takes one from the Home Units total and setting it back for rent adds it again."
+    },
+    {
+      "test_id": "TEST-FE-1940",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shell/layouts.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 round 10 (owner 12/11/2026 10:47): CardGrid five puts five cards in a row from 700px with no card alone in the last row; a card's name is never broken beside its number; on a wide screen the menu's colour fills its column to the bottom of the page."
     }
   ]
 }
