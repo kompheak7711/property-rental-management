@@ -3,6 +3,7 @@
 - ``generate_qr``: a KHQR for one Invoice, with the USD amount and our transaction id inside.
 - ``check_transaction``: what ABA says about a transaction (paid, waiting, cancelled ...).
 - ``close_transaction``: cancel an old QR when a new one replaces it (a part payment).
+- ``exchange_rate``: ABA's own USD Sell rate in riel (DL-181), as on ababank.com.
 
 PayWay's documents: developer.payway.com.kh (QR API, Check transaction, Close transaction).
 Every call is signed with the merchant's API key: base64 of HMAC-SHA512 over the request
@@ -23,6 +24,7 @@ import urllib.request
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any, Final
 
@@ -32,6 +34,7 @@ LIVE_HOST: Final = "checkout.payway.com.kh"
 QR_PATH: Final = "/api/payment-gateway/v1/payments/generate-qr"
 CHECK_PATH: Final = "/api/payment-gateway/v1/payments/check-transaction-2"
 CLOSE_PATH: Final = "/api/payment-gateway/v1/payments/close-transaction"
+RATE_PATH: Final = "/api/payment-gateway/v1/exchange-rate"
 # PayWay: a QR lives 3 minutes to 30 days, given in minutes.
 MIN_LIFETIME_MINUTES: Final = 3
 MAX_LIFETIME_MINUTES: Final = 30 * 24 * 60
@@ -304,6 +307,57 @@ def close_transaction(
     }
     _, status = _call(config, CLOSE_PATH, body, post_json)
     return str(status.get("code")) in ("00", "0", "5")
+
+
+@dataclass(frozen=True)
+class PayWayRate:
+    """ABA's Sell rate: riel for one US dollar, exactly as ABA wrote it."""
+
+    sell_khr_per_usd: Decimal
+    read_at: datetime
+
+
+def _rate(value: Any) -> Decimal | None:
+    if isinstance(value, bool) or not isinstance(value, (str, int, float)):
+        return None
+    text = format(value, "f") if isinstance(value, float) else str(value).strip()
+    if not re.fullmatch(r"\d{1,6}(?:\.\d{1,6})?", text):
+        return None
+    try:
+        rate = Decimal(text)
+    except InvalidOperation:
+        return None
+    # A US dollar has cost between 3,000 and 6,000 riel for decades; anything else is not it.
+    return rate if Decimal(3000) <= rate <= Decimal(6000) else None
+
+
+def exchange_rate(
+    config: PayWayConfig,
+    *,
+    now: datetime | None = None,
+    post_json: PostJson = _post_json,
+) -> PayWayRate:
+    """ABA's USD Sell rate in riel. Raises a fixed code when ABA gives no usable USD rate."""
+    moment = now or datetime.now(UTC)
+    req_time = request_time(moment)
+    body = {
+        "req_time": req_time,
+        "merchant_id": config.merchant_id,
+        "hash": sign(config.api_key, req_time, config.merchant_id),
+    }
+    document, status = _call(config, RATE_PATH, body, post_json)
+    if str(status.get("code")) not in ("00", "0"):
+        raise PayWayError(f"payway_refused_{_safe_code(status.get('code'))}")
+    rates = document.get("exchange_rates")
+    if not isinstance(rates, dict):
+        raise PayWayError("payway_bad_answer")
+    usd = rates.get("usd") or rates.get("USD")
+    if not isinstance(usd, dict):
+        raise PayWayError("payway_rate_no_usd")
+    sell = _rate(usd.get("sell"))
+    if sell is None:
+        raise PayWayError("payway_rate_odd")
+    return PayWayRate(sell, moment)
 
 
 def _safe_code(value: Any) -> str:

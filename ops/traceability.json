@@ -66740,6 +66740,78 @@
       "test_path": "backend/tests/test_aba_invoice_qr_migration.py",
       "status": "implemented",
       "notes": "DL-180 migration 20270716_340: ABA QR records and the QR payment: an approved qr is saved as a payment into its invoice once."
+    },
+    {
+      "test_id": "test_abas_usd_sell_rate_is_read_exactly",
+      "upstream_ids": [
+        "DL-181",
+        "BR-MONEY-005",
+        "BR-MONEY-008"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_aba_rate.py",
+      "status": "implemented",
+      "notes": "DL-181 ABA riel rate from ABA PayWay: abas usd sell rate is read exactly."
+    },
+    {
+      "test_id": "test_no_usable_usd_rate_is_a_fixed_code",
+      "upstream_ids": [
+        "DL-181",
+        "BR-MONEY-005",
+        "BR-MONEY-008"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_aba_rate.py",
+      "status": "implemented",
+      "notes": "DL-181 ABA riel rate from ABA PayWay: no usable usd rate is a fixed code."
+    },
+    {
+      "test_id": "test_the_rate_is_asked_at_most_once_an_hour",
+      "upstream_ids": [
+        "DL-181",
+        "BR-MONEY-005",
+        "BR-MONEY-008"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_aba_rate.py",
+      "status": "implemented",
+      "notes": "DL-181 ABA riel rate from ABA PayWay: the rate is asked at most once an hour."
+    },
+    {
+      "test_id": "test_without_abas_answer_the_rate_is_not_available_and_staff_type_it",
+      "upstream_ids": [
+        "DL-181",
+        "BR-MONEY-005",
+        "BR-MONEY-008"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_aba_rate.py",
+      "status": "implemented",
+      "notes": "DL-181 ABA riel rate from ABA PayWay: without abas answer the rate is not available and staff type it."
+    },
+    {
+      "test_id": "test_an_old_rate_is_never_used_after_the_hour",
+      "upstream_ids": [
+        "DL-181",
+        "BR-MONEY-005",
+        "BR-MONEY-008"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_aba_rate.py",
+      "status": "implemented",
+      "notes": "DL-181 ABA riel rate from ABA PayWay: an old rate is never used after the hour."
+    },
+    {
+      "test_id": "test_the_rate_is_off_until_the_payway_keys_are_saved",
+      "upstream_ids": [
+        "DL-181",
+        "BR-MONEY-005",
+        "BR-MONEY-008"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_aba_rate.py",
+      "status": "implemented",
+      "notes": "DL-181 ABA riel rate from ABA PayWay: the rate is off until the payway keys are saved."
     }
   ]
 }

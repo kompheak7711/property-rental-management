@@ -3040,3 +3040,14 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **Built:** migration `20270716_340`, `backend/src/property_rental/payway.py`, `invoice_pdf.py`, `aba_qr.py`, the Telegram send and pull jobs, `relay/src/index.ts` (`/aba/payway`).
 - **Links:** DL-210, DL-211.
 - **Decision date:** 2026-11-11.
+
+## DL-181 — ABA's riel rate comes from ABA PayWay
+
+- **Type:** `OWNER DECISION` and `TECHNICAL DECISION`
+- **Status:** `BUILT ON BRANCH claude/project-thread-g09i9g; WAITS FOR THE OWNER'S TEST AND OK TO MERGE`
+- **Source:** the owner on 11 Nov 2026 (Settings review): the Exchange card must always show its rate. The app had no rate source (`UnavailableExchangeRateProvider`), so only the hand-typed fallback worked. On 12 Nov 2026 the owner chose "ABA PayWay rate API" on the card "Where should the app read ABA's riel Sell rate from?".
+- **Decision:** the API asks ABA PayWay's Exchange rate service (the same rates as ababank.com) for the USD Sell rate, with the PayWay merchant id and API key already kept for DL-180. It asks at most once an hour and keeps the answer in memory; after a failed try it waits 5 minutes before asking again. The rule does not change: the System Exchange Rate is ABA's Sell rate times 1.005, rounded up to a whole riel, kept with each riel Payment when it is confirmed (BR-MONEY-005 to 007). When ABA cannot be asked, or gives no usable USD rate (between 3,000 and 6,000 riel), the rate is "not available" and an authorized user types ABA's rate as before (BR-MONEY-008). A rate older than one hour is never used.
+- **Open:** ABA's documentation example lists other currencies in riel but not USD; the owner's sandbox test shows whether USD is in the answer.
+- **Built:** `backend/src/property_rental/payway.py` (`exchange_rate`), `aba_rate.py`, settings `APP_ABA_PAYWAY_HOST`, `APP_ABA_PAYWAY_MERCHANT_ID_FILE`, `APP_ABA_PAYWAY_API_KEY_FILE`, `scripts/local/start-api.sh`.
+- **Links:** DL-180, BR-MONEY-005, BR-MONEY-006, BR-MONEY-007, BR-MONEY-008.
+- **Decision date:** 2026-11-12.
