@@ -95,7 +95,12 @@ def _post_json(address: str, body: dict[str, Any]) -> tuple[int, bytes]:
         address,
         data=json.dumps(body).encode("utf-8"),
         method="POST",
-        headers={"Content-Type": "application/json", "Accept": "application/json"},
+        headers={
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            # Python's own name ("Python-urllib/3.x") is refused by some bank firewalls.
+            "User-Agent": "CHETANA-Residence/1.0",
+        },
     )
     try:
         with urllib.request.urlopen(
