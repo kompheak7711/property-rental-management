@@ -5695,6 +5695,16 @@ DL-118. Migration `20270421_271`, forward-only.
 - `app.properties` gets `description` (at most 500) and `business_name` (at most 255); `app.property_configuration` shows them. `app.update_property_details(property, name, description, address, business_name, expected_version, actor)` (runtime) changes them at the expected version with the audit event `property.details_changed`.
 - Business rules seeded for Billing, Reservations, Prices, Quotations and the Riel rate (DL-118 (B)). `app.one_time_charge_due_days(property, on)` reads the Property's `one_time_charge_due_days` for issuing, corrections and scheduled utility items (one place for a later rule); `app.late_payment_rate_basis_points` reads `LATE_PAYMENT_PERCENT`. A trigger keeps the rules the app reads in range (22023).
 
+## DB-BS-002 — Simpler Invoice types (DL-221)
+
+Migration `20270716_390`, forward-only.
+
+- `app.invoice_types` gets `in_use` (boolean, default true). `FIRST_RENT` and `SERVICES` are `in_use` false; `RENT` is named "Rent"; `MISCELLANEOUS` is named "Other charges" (ថ្លៃផ្សេងៗ); new rows `SHORT_STAY` (late payment false) and `PRODUCTS` (late payment true). Order: Rent, Utilities, Short stay, Products, Damage, Other charges.
+- `app.invoice_type_of(invoice)` (SECURITY DEFINER, no PUBLIC execute) answers the type of one Invoice: `RENT` for the RENT and SERVICE_CHARGES categories, `UTILITIES`, `DAMAGE` for DAMAGE_CHARGES and a short-stay damage, `SHORT_STAY` for a stay, `PRODUCTS` for an Invoice linked from `app.quotations.invoice_id`, else `MISCELLANEOUS`. `app.invoice_type_late_payment(invoice)` reads its switch; the automatic late-payment charge, its validation, a person's late-payment decision (validate and finalize) and the review snapshot now use it. `app.invoice_type_code(category, rent_kind)` maps the first Rent to `RENT`.
+- `app.set_invoice_type_late_payment` refuses a type that is not `in_use` (22023).
+- `app.invoice_resource_snapshot`, `app.receive_payment_payable` and `app.payment_receipt_lines` add `invoice_type` next to `short_stay`.
+- Follow-up on branch `ui-v81` (migration `20270713_364`, read only, after `20270712_363`; comes to main with design v81, PR #14): `app.payments_period_summary` no longer has the kind `MOVEOUT` ("Move-out charges"). The money paid to Damage and Miscellaneous lines is split by the DL-221 type of the Invoice it paid (`app.invoice_type_of`) into `SHORT_STAY`, `PRODUCTS`, `DAMAGE` and `OTHER` ("Other charges"); the four add up to what `MOVEOUT` was. The ten kinds are `RENT`, `UTIL`, `SVC`, `LATE`, `DEPOSIT`, `SHORT_STAY`, `PRODUCTS`, `DAMAGE`, `OTHER`, `CREDIT`. `app.payment_receipt_lines` gives each `INVOICE` line `parts`: the money this payment paid to that Invoice by line category (`RENT`, `SERVICE_CHARGES`, `UTILITIES`, `DAMAGE_CHARGES`, `MISCELLANEOUS_CHARGES`), adding up to the line's amount. No table, row, amount, document or ledger entry changes; a printed Receipt is not touched.
+
 ## DB-RS-001 — Reservations read their business rules (V1.1 step 2b)
 
 Added by DL-119 (migration `20270422_272`, forward-only).
@@ -5768,6 +5778,19 @@ Added by DL-132 (migration `20270512_292`, forward-only).
 - `app.problem_report_inspection_links` (`report_id` primary key, `finding_id` unique, created at and by): append-only, no truncate. One report per finding.
 - `app.add_problem_report` takes the source `INSPECTION` only with a `finding_id`: a Unit Problem in the inspected Lease's Unit, from an inspection not replaced, and a finding with no report yet (22023 or 55000 otherwise). `app.problem_report_json` gains `finding` (inspection, Lease, day, number and text).
 - `app.problem_report_finding(property, actor, finding)` (`problem_reports.add`, runtime): what the form copies (Unit, text, day), whether the inspection was replaced, and the report the finding already has.
+
+## DB-PR-005 — Problem reports from a short-stay room check, and the damage charge
+
+Added by DL-222 (migration `20270716_391`, forward-only).
+
+- `app.problem_reports.source` also takes `ROOM_CHECK` (the check constraint is widened; no row changes).
+- `app.short_stay_problem_reports` (`report_id` primary key, `booking_id`, created at and by): append-only, no truncate, runtime read only. `app.add_problem_report` takes the source `ROOM_CHECK` only with a `booking_id` (`app.problem_report_booking_for`): a Unit Problem in the stay's Unit, the stay checked out and its room check still to do (22023 or 55000 otherwise). `app.problem_report_json` gains `stay` (booking, number, guest, dates).
+- `app.check_short_stay_room` takes `problems` (at most 20; each `problem_type_id`, `description`, `urgent`) and refuses `damage` and `damage_usd_cents`; each problem is a Problem report made by `app.add_problem_report` (needs `problem_reports.add` too, 42501 otherwise). The event `ROOM_CHECKED` lists the reports.
+- `app.short_stay_damage_decisions` (`booking_id` primary key, `outcome` `CHARGE` or `NO_CHARGE`, `damage_id` unique and set only for a charge, optional `note`, decided at and by): append-only, no truncate, runtime read only.
+- `app.decide_short_stay_charge(property, booking, decision, actor, correlation)` (`damage_charges.bill`, runtime): `{"charge": true, "description", "amount_usd_cents"}` or `{"charge": false, "note"?}`; only after the room check reported a problem and once per stay (55000). A charge is a `short_stay_damages` row decided at once (`APPROVED`): from the held deposit first, the rest a Damage Invoice for the guest. Events `DAMAGE_CHARGED` and `NO_DAMAGE_CHARGE`; audit `short_stay.damage_charged` and `short_stay.no_damage_charge`.
+- `app.decide_short_stay_damage` (a charge still `WAITING` from before) checks `damage_charges.bill` instead of `short_stays.approve`. `app.end_short_stay_deposit` also waits while the room check's problems have no decision; a kept deposit says "Kept for the damage charge".
+- `app.short_stay_booking_json` gains `problems` (report, number, text, type, Urgent, status), `damage_decision` and `damage_due` (problems reported and no decision yet).
+- `app.short_stay_damage_due(property, actor)` (`damage_charges.bill`, runtime): the stays whose room check reported problems and that have no decision yet (booking, number, guest, Unit, number of problems).
 
 ## DB-TG-001 — Telegram bots shared base (bots step 1)
 

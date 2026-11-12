@@ -121,7 +121,7 @@ def lease_state(db: BookingDatabase, lease: object) -> tuple[object, ...] | None
 def test_migration_374_follows_the_head_of_main_and_is_forward_only() -> None:
     config = Config(str(Path(__file__).parents[1] / "alembic.ini"))
     revision = ScriptDirectory.from_config(config).get_revision(REVISION)
-    assert revision is not None and revision.down_revision == "20270715_387"
+    assert revision is not None and revision.down_revision == "20270716_391"
     with pytest.raises(RuntimeError, match="forward-only"):
         revision.module.downgrade()
 

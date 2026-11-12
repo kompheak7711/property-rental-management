@@ -116,7 +116,7 @@ describe("Lease API client", () => {
     expect(fetcher).toHaveBeenCalledTimes(1);
   });
 
-  it("TEST-FE-2100 a draft refused because a short-stay guest has booked the Unit carries the server's reason; any other refusal of that kind stays a conflict (DL-223)", async () => {
+  it("TEST-FE-2167 a draft refused because a short-stay guest has booked the Unit carries the server's reason; any other refusal of that kind stays a conflict (DL-223)", async () => {
     const booked = {
       error: {
         code: "LEASE_UNIT_BOOKED",
