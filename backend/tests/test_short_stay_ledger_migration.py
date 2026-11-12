@@ -31,22 +31,22 @@ from test_short_stay_booking_migration import (
 from test_short_stay_cancel_migration import CANCEL, CREDIT, WHY, paid_stay
 from test_short_stay_check_in_migration import (
     BILL,
+    CHARGE,
     CHECK_IN,
     CHECK_OUT,
-    DECIDE,
     DEPOSIT,
     END_DEPOSIT,
     ROOM,
     TICKS,
     guest_with_id,
     pay,
+    problem_type,
     read,
 )
 
 REVISION = "20270609_319"
 DUE = "SELECT app.short_stay_credits_due(%s, %s)"
 END_CREDIT = "SELECT app.end_short_stay_credit(%s, %s, %s, NULL)"
-APPROVE = json.dumps({"approve": True, "note": "Photo on file"})
 
 
 @pytest.fixture(scope="module")
@@ -59,7 +59,7 @@ def stay_database(migrated_database_url: str) -> Iterator[BookingDatabase]:
 def a_stay_with_damage(
     db: BookingDatabase, unit: uuid.UUID, start: int, deposit: dict[str, str], damage: int
 ) -> tuple[str, dict[str, Any]]:
-    """A guest who paid, stayed 2 nights, left damage the Manager approved; the deposit ended."""
+    """A guest who paid, stayed 2 nights, left damage that was charged; the deposit ended."""
     guest = guest_with_id(db)
     made = run(
         db.runtime_url,
@@ -75,22 +75,10 @@ def a_stay_with_damage(
         db.runtime_url, CHECK_IN, db.property_id, made, TICKS, read(db, made)["version"], db.staff
     )
     run(db.runtime_url, CHECK_OUT, db.property_id, made, inside["version"], db.staff)
-    checked = run(
-        db.runtime_url,
-        ROOM,
-        db.property_id,
-        made,
-        json.dumps({"damage": "Broken lamp", "damage_usd_cents": damage}),
-        db.staff,
-    )
-    run(
-        db.runtime_url,
-        DECIDE,
-        db.property_id,
-        checked["damages"][0]["damage_id"],
-        APPROVE,
-        db.manager,
-    )
+    lamp = {"problem_type_id": problem_type(db), "description": "Broken lamp"}
+    run(db.runtime_url, ROOM, db.property_id, made, json.dumps({"problems": [lamp]}), db.staff)
+    charge = {"charge": True, "description": "Broken lamp", "amount_usd_cents": damage}
+    run(db.runtime_url, CHARGE, db.property_id, made, json.dumps(charge), db.manager)
     return made, run(db.runtime_url, END_DEPOSIT, db.property_id, made, db.staff)
 
 
@@ -120,7 +108,7 @@ def test_migration_350_names_short_stay_invoices() -> None:
     scripts = ScriptDirectory.from_config(config)
     revision = scripts.get_revision("20270610_350")
     assert revision is not None and revision.down_revision == REVISION
-    assert scripts.get_heads() == ["20270716_340"]
+    assert scripts.get_heads() == ["20270717_340"]
     with pytest.raises(NotImplementedError, match="forward-only"):
         revision.module.downgrade()
 
@@ -235,6 +223,20 @@ def test_short_stay_money_posts_to_rent_damage_cash_and_bank(
 
         assert kind(invoice["invoice_id"]) == "SHORT_STAY"
         assert kind(damage_invoice[0]) == "SHORT_STAY_DAMAGE"
+
+        # DL-221 (owner 11/11/2026): a stay is the type Short stay (late payment No) and its
+        # damage is the type Damage, with the Damage switch.
+        def invoice_type(invoice_id: object) -> tuple[object, object, object]:
+            found = connection.execute(
+                "SELECT app.invoice_resource_snapshot(%s) ->> 'invoice_type', "
+                "app.invoice_type_of(%s), app.invoice_type_late_payment(%s)",
+                (invoice_id, invoice_id, invoice_id),
+            ).fetchone()
+            assert found is not None
+            return found[0], found[1], found[2]
+
+        assert invoice_type(invoice["invoice_id"]) == ("SHORT_STAY", "SHORT_STAY", False)
+        assert invoice_type(damage_invoice[0]) == ("DAMAGE", "DAMAGE", True)
         other = connection.execute(
             "SELECT id FROM app.invoices WHERE id NOT IN "
             "(SELECT invoice_id FROM app.short_stay_invoice_accounts) LIMIT 1"
@@ -252,6 +254,9 @@ def test_short_stay_money_posts_to_rent_damage_cash_and_bank(
         assert [
             item["short_stay"] for item in payable[0]["items"] if item["kind"] == "INVOICE"
         ] == ["SHORT_STAY_DAMAGE"]
+        assert [
+            item["invoice_type"] for item in payable[0]["items"] if item["kind"] == "INVOICE"
+        ] == ["DAMAGE"]
         receipt = connection.execute(
             "SELECT allocation.payment_id FROM app.payment_allocations AS allocation "
             "WHERE allocation.invoice_id = %s LIMIT 1",
@@ -264,6 +269,7 @@ def test_short_stay_money_posts_to_rent_damage_cash_and_bank(
         ).fetchone()
         assert printed is not None
         assert [line.get("short_stay") for line in printed[0]["lines"]] == ["SHORT_STAY"]
+        assert [line.get("invoice_type") for line in printed[0]["lines"]] == ["SHORT_STAY"]
         connection.rollback()
 
 

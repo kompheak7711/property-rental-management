@@ -1,4 +1,4 @@
-"""ABA QR records (migration 20270716_340, DL-180): the QR of each Invoice message, its events,
+"""ABA QR records (migration 20270717_340, DL-180): the QR of each Invoice message, its events,
 the QRs to check with ABA and a QR payment saved through Receive payment."""
 
 from __future__ import annotations
