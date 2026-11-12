@@ -67043,6 +67043,90 @@
       "test_path": "frontend/src/shell/layouts.test.tsx",
       "status": "implemented",
       "notes": "UI v81 round 10 (owner 12/11/2026 10:47): CardGrid five puts five cards in a row from 700px with no card alone in the last row; a card's name is never broken beside its number; on a wide screen the menu's colour fills its column to the bottom of the page."
+    },
+    {
+      "test_id": "test_migration_374_follows_the_head_of_main_and_is_forward_only",
+      "upstream_ids": [
+        "DL-223"
+      ],
+      "test_level": "migration",
+      "test_path": "backend/tests/test_v12_lease_draft_short_stay_migration.py",
+      "status": "implemented",
+      "notes": "Owner report 12 Nov 2026: migration 374 follows the head of main and is forward-only."
+    },
+    {
+      "test_id": "test_a_lease_draft_over_a_booked_night_is_not_saved",
+      "upstream_ids": [
+        "DL-223",
+        "DB-SS-001"
+      ],
+      "test_level": "API",
+      "test_path": "backend/tests/test_v12_lease_draft_short_stay_migration.py",
+      "status": "implemented",
+      "notes": "Owner report 12 Nov 2026 (A): a new Lease draft over a night a short-stay guest has booked answers 409 LEASE_UNIT_BOOKED and saves nothing; a Lease from the check-out day, or on another Unit, is saved."
+    },
+    {
+      "test_id": "test_edit_draft_does_not_move_a_lease_onto_booked_nights",
+      "upstream_ids": [
+        "DL-223",
+        "DB-SS-001"
+      ],
+      "test_level": "API",
+      "test_path": "backend/tests/test_v12_lease_draft_short_stay_migration.py",
+      "status": "implemented",
+      "notes": "Owner report 12 Nov 2026 (A): Edit draft cannot move a Lease onto booked nights (409 LEASE_UNIT_BOOKED, the draft is unchanged); a change that keeps the Lease off those nights is saved."
+    },
+    {
+      "test_id": "test_a_booking_made_after_the_draft_wins_and_signing_says_why",
+      "upstream_ids": [
+        "DL-223",
+        "DB-SS-001"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_v12_lease_draft_short_stay_migration.py",
+      "status": "implemented",
+      "notes": "Owner report 12 Nov 2026 (B): a guest may book a Unit that has a draft; Sign Lease then answers 409 SIGNING_UNIT_BOOKED with the reason, saves no Lease change and no Payment, and the draft is still cancelled the usual way."
+    },
+    {
+      "test_id": "test_a_cancelled_booking_frees_its_nights_for_a_lease_draft",
+      "upstream_ids": [
+        "DL-223",
+        "DB-SS-001"
+      ],
+      "test_level": "API",
+      "test_path": "backend/tests/test_v12_lease_draft_short_stay_migration.py",
+      "status": "implemented",
+      "notes": "Owner report 12 Nov 2026 (C): only a booked or checked-in guest stops a draft; after the booking is cancelled the same draft is saved, and another draft on the Unit holds no day."
+    },
+    {
+      "test_id": "TEST-FE-2100",
+      "upstream_ids": [
+        "DL-223"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/leaseClient.test.tsx",
+      "status": "implemented",
+      "notes": "Lease client: a 409 LEASE_UNIT_BOOKED answer is a LeaseUnitBookedError that carries the server's words; any other 409 stays a conflict."
+    },
+    {
+      "test_id": "TEST-FE-2101",
+      "upstream_ids": [
+        "DL-223"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/leases/LeasesPage.test.tsx",
+      "status": "implemented",
+      "notes": "New Lease: a draft over a short-stay booking shows the server's reason in place of the general words, reads nothing again, and other dates are a new request."
+    },
+    {
+      "test_id": "TEST-FE-2102",
+      "upstream_ids": [
+        "DL-223"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/leases/LeasesPage.test.tsx",
+      "status": "implemented",
+      "notes": "Edit draft: dates a short-stay guest has booked are refused with the reason; the dialog stays open, the Lease is not read again, and a later Start Date is saved."
     }
   ]
 }

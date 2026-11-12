@@ -6006,3 +6006,12 @@ Added by DL-217 (migration `20270715_387`, forward-only).
 - `app.telegram_warnings_queue(property, actor)` (`telegram.operate`, granted to `prm_runtime`, run by the pull job) queues `tenant.rent_warning`, `tenant.rent_default` or `tenant.lease_warning` for the Lease warnings and day-20 and day-30 Rent events recorded in the last 3 days, for each live link of their Lease not yet sent that warning and linked no later than a day after it was recorded.
 - `app.telegram_warnings_since(property, since)` and `app.telegram_warning_details(kind, source)` (internal) list the warnings and build the fields (`unit`, `invoice`, `due`, `amount`, `date` for Rent; `sequence`, `unit`, `date`, `when`, `text`, `rule` for a Lease warning).
 - `app.telegram_warnings_page(property, actor)` (`telegram.read`) lists the warnings of the last 90 days with who got them.
+
+## DB-SS-001 — A Lease, draft or signed, never takes a night a short-stay guest has booked (DL-223)
+
+Added by DL-223 (migration `20270719_374`, forward-only; no table, column, grant or data change).
+
+- The rule of migration `20270531_310`: one Unit never has a short-stay booking and a Lease on the same night. A booking (`app.short_stay_bookings`, status `BOOKED` or `CHECKED_IN`) holds the nights from `check_in_on` up to, not including, `check_out_on`; a Lease holds every day from `start_date` to `end_date` (or its `actual_termination_date`). The booking wins over a new Lease.
+- `app.guard_lease_short_stay_nights()` (the `BEFORE INSERT OR UPDATE OF status, unit_id, start_date, end_date, actual_termination_date` trigger `leases_short_stay_nights` on `app.leases`) now checks a `DRAFTED` Lease as well as a `SIGNED` or `TERMINATED` one. It locks the Unit row and raises `23P01` "A daily or weekly guest has booked this Unit on one of these days; offer another Unit or a later Start Date". A Lease with no Start Date holds no day and is not checked; a draft with no End Date is checked from its Start Date on; a `CANCELLED` Lease is not checked, so a draft can always be cancelled.
+- A draft still holds no day against a booking: `app.guard_short_stay_nights()` and `app.short_stay_blockers()` look only at signed and terminated Leases, so a guest may book a Unit that has a draft. That draft is then refused when it is edited or signed, until its days are free.
+- The API maps the message to `LEASE_UNIT_BOOKED` (new draft, Edit draft, renewal) and `SIGNING_UNIT_BOOKED` (Sign Lease).
