@@ -67470,6 +67470,166 @@
       "test_path": "frontend/src/reservations/ReserveBookedUnit.test.tsx",
       "status": "implemented",
       "notes": "The Khmer screen has Khmer words for RESERVATION_UNIT_BOOKED, with the name of Change Unit."
+    },
+    {
+      "test_id": "TEST-FE-1942",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/home/HomeScreen.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 round 11 Home (owner 12/11/2026 14:41: \"check all card is link to correct place\"): each of the fifteen cards opens the part of its page that the card counts, named by a word in the address (\"#/invoices?show=overdue\"); Approvals, which has one view, opens the page."
+    },
+    {
+      "test_id": "TEST-FE-1943",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/home/OwnerMoney.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 round 11 Home: each Financial summary card opens the statement its number comes from (Balance sheet, Accounts receivable aging twice, Budget vs actual, Profit and loss)."
+    },
+    {
+      "test_id": "TEST-FE-1944",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shell/showFromAddress.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 round 11: a list opens on the part its address names and follows each later address of its own page; a choice by hand is kept in the address without a new history step and keeps the history state; a record's address or another page's address changes nothing. Display only."
+    },
+    {
+      "test_id": "TEST-FE-1945",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/invoices/InvoicesPage.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 round 11 Invoices: \"?show=overdue\" opens the Overdue card and \"?show=paid&period=month\" the paid Invoices due this month; a card or period chosen by hand is kept in the address and Show all gives the plain address."
+    },
+    {
+      "test_id": "TEST-FE-1946",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shortstays/ShortStaysPage.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 round 11 Short stays: the Bookings list has a status row with a count each (All, Booked, Checked in, and any other status a booking has); \"?show=booked\" and \"?show=checked_in\" open the list on that status; the choice is kept in the address."
+    },
+    {
+      "test_id": "TEST-FE-1947",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/products/ProductsPage.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 round 11 Products: a row above the list shows every product or only the ones low on stock and still sold, with a count each; \"?show=low\" opens the list on Low stock; the choice is kept in the address."
+    },
+    {
+      "test_id": "TEST-FE-1948",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/customers/Birthdays.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 round 11 Customers: the coming birthdays list (today and the next 7 days, what Home's card counts, then later this month) with the role, Unit and how soon; only the day and month show; each row opens the Customer and the Unit; Hide; a failed read offers Retry."
+    },
+    {
+      "test_id": "TEST-FE-1949",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/units/UnitsPage.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 round 11 Units: \"#/units?show=vacant\" opens the Vacant card on every floor and type; a card chosen by hand is kept in the address and Show all gives the plain address."
+    },
+    {
+      "test_id": "TEST-FE-2120",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/leases/LeasesPage.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 round 11 Leases: \"#/leases?show=ending\" opens the Ending soon card; a card chosen by hand is kept in the address."
+    },
+    {
+      "test_id": "TEST-FE-2121",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/utilities/UtilitiesPage.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 round 11 Utilities: \"#/utilities?show=missing\" opens This month on every floor with Only not read ticked."
+    },
+    {
+      "test_id": "TEST-FE-2122",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/ledger/LedgerPage.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 round 11 Financial statements: \"#/statements?show=...\" opens that statement and reads only it; a statement chosen by hand is kept in the address; a card's address reads its statement for this month."
+    },
+    {
+      "test_id": "TEST-FE-2123",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/problems/ProblemReportsPage.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 round 11 Problem reports: \"#/problems?show=open\" opens the Open reports of every kind and type; a tab chosen by hand is kept in the address."
+    },
+    {
+      "test_id": "TEST-FE-2124",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/letters/LettersPage.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 round 11 Notices: \"#/letters?show=due\" opens the Rent letters on the Notices due card; a card chosen by hand is kept in the address."
+    },
+    {
+      "test_id": "TEST-FE-2125",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/telegram/TelegramPages.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 round 11 Viewing requests: \"#/visitreqs?show=waiting\" opens the Awaiting first contact card; a card chosen by hand is kept in the address."
+    },
+    {
+      "test_id": "TEST-FE-2126",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/hr/HrPages.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 round 11 Attendance: \"#/attendance?show=day\" opens the daily sheet, also when another view was open; a view chosen by hand is kept in the address."
+    },
+    {
+      "test_id": "TEST-FE-2127",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/customers/CustomersPage.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 round 11 Customers: \"#/customers?show=birthdays\" shows the coming birthdays above the Customers list; the plain address does not read them; Hide gives the plain address without a new history step."
     }
   ]
 }

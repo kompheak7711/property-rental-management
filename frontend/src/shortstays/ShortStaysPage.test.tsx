@@ -2250,4 +2250,84 @@ describe("Daily and weekly rent: Short stays", () => {
     ).toBeInTheDocument();
     expect(screen.queryByLabelText(/^ID or passport number/)).toBeNull();
   });
+
+  it('TEST-FE-1946 (owner 12/11/2026: "check all card is link to correct place") the Bookings list has a status row with a count each; "?show=booked" and "?show=checked_in" open the list on that status, and a status chosen by hand is kept in the address', async () => {
+    const stay = (id: string, number: string, status: Booking["status"]) => ({
+      ...BOOKING,
+      booking_id: id,
+      booking_number: number,
+      status,
+    });
+    const api = fakeApi({
+      list: vi.fn(() =>
+        Promise.resolve([
+          stay("b-1", "ST260001", "BOOKED"),
+          stay("b-2", "ST260002", "BOOKED"),
+          stay("b-3", "ST260003", "CHECKED_IN"),
+          stay("b-4", "ST260004", "CANCELLED"),
+        ]),
+      ),
+    });
+    const numbers = () =>
+      screen
+        .getAllByRole("row")
+        .slice(1)
+        .map((row) => within(row).getAllByRole("link")[0]?.textContent);
+
+    // Home's "Short stays checked in" card.
+    window.location.hash = "#/shortstays?show=checked_in";
+    show({ api });
+    const row = await screen.findByRole("group", { name: "Status" });
+    expect(
+      screen
+        .getByRole("tab", { name: "Bookings" })
+        .getAttribute("aria-selected"),
+    ).toBe("true");
+    // Booked and Checked in always show; another status shows only when a booking has it.
+    expect(
+      within(row)
+        .getAllByRole("button")
+        .map((button) => [
+          button.textContent,
+          button.getAttribute("aria-pressed"),
+        ]),
+    ).toEqual([
+      ["All 4", "false"],
+      ["Booked 2", "false"],
+      ["Checked in 1", "true"],
+      ["Cancelled 1", "false"],
+    ]);
+    expect(numbers()).toEqual(["ST260003"]);
+    expect(screen.getByText("1 booking")).toBeInTheDocument();
+
+    // Home's "Short stay bookings" card, opened while the page is on screen.
+    go("#/shortstays?show=booked");
+    await waitFor(() => {
+      expect(numbers()).toEqual(["ST260001", "ST260002"]);
+    });
+    expect(screen.getByText("2 bookings")).toBeInTheDocument();
+
+    // By hand: the address follows, and All gives the plain address again.
+    fireEvent.click(within(row).getByRole("button", { name: "Cancelled 1" }));
+    expect(numbers()).toEqual(["ST260004"]);
+    expect(window.location.hash).toBe("#/shortstays?show=cancelled");
+    fireEvent.click(within(row).getByRole("button", { name: "All 4" }));
+    expect(numbers()).toHaveLength(4);
+    expect(window.location.hash).toBe("#/shortstays");
+    cleanup();
+
+    // A status no booking has says so, and the row still offers the others.
+    window.location.hash = "#/shortstays?show=checked_in";
+    show({
+      api: fakeApi({
+        list: vi.fn(() => Promise.resolve([stay("b-1", "ST260001", "BOOKED")])),
+      }),
+    });
+    expect(
+      await screen.findByText("No bookings with this status."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Booked 1" }),
+    ).toBeInTheDocument();
+  });
 });

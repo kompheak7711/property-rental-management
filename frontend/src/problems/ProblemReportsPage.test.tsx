@@ -330,6 +330,34 @@ describe("Building › Problem reports (V1.1 part 7, DL-124)", () => {
     ).toBe("#/problems/new");
   });
 
+  it('TEST-FE-2123 (owner 12/11/2026: "check all card is link to correct place") "#/problems?show=open" opens the Open reports of every kind and type, and "?show=late" the Late ones; a tab chosen by hand is kept in the address (Open has the plain address)', async () => {
+    window.location.hash = "#/problems?show=late";
+    show(apiOf(), new Set(["problem_reports.read"]));
+    expect(
+      await screen.findByRole("button", { name: "Late 1", pressed: true }),
+    ).toBeTruthy();
+    expect(screen.getByText("1 report")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Done 1" }));
+    expect(window.location.hash).toBe("#/problems?show=done");
+    fireEvent.click(screen.getByRole("button", { name: "Open 3" }));
+    expect(window.location.hash).toBe("#/problems");
+
+    // Home's card, opened while one kind is chosen: the Open reports of every kind show.
+    fireEvent.change(screen.getByLabelText("Kind"), {
+      target: { value: "BUILDING" },
+    });
+    expect(screen.getByText("1 report")).toBeTruthy();
+    window.location.hash = "#/problems?show=open";
+    window.dispatchEvent(new HashChangeEvent("hashchange"));
+    expect(await screen.findByText("3 reports")).toBeTruthy();
+    expect(
+      screen
+        .getByRole("button", { name: "Open 3" })
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
+  });
+
   it("TEST-FE-1221 New Problem report checks the form, Safety is always urgent, the Building kind asks for the shared place and floor, and Same problem saves it joined to an open report here", async () => {
     window.location.hash = "#/problems/new";
     const api = apiOf();

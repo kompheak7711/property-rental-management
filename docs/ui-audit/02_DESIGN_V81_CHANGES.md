@@ -758,3 +758,63 @@ Measured on the review data (Payments, 18 payments): 2560 × 1300 full cards, 5 
 Trade-off told to the owner: in a browser window on a 1080 px screen (about 950 px tall) the list showed six rows with one-line cards; with the taller cards it shows four at a time.
 
 Checks: the screen check now fails when a five-in-a-row grid does not hold five cards in its first row from 700 px, and when the menu colour does not fill its column on a wide screen. Tests TEST-FE-1940 (`shell/layouts.test.tsx`), TEST-FE-1941 (`shell/tableFit.test.ts`); TEST-FE-1925, 1907 and 1937 extended.
+
+## Round 11: each Home card opens the part it counts (12/11/2026)
+
+Owner 12/11 14:41: "check all card is link to correct place. if all pass, start payment".
+
+### What the check found
+
+Every card on Home was clicked on the review app (15 cards and the 5 Financial summary cards, as the Owner). All 20 opened the right page. None opened the part the card counts: the page showed its whole list, so the number on the card and the list did not match. The Birthdays card opened the Customers list, which has no birthdays. Four Financial summary cards opened Profit and loss whatever they showed, and "Spent this month" opened the Budget page where budgets are typed.
+
+Design v81 opens a filtered view from its money, Lease and Meter cards (`kpi('invoices','open')`, `'month:paid'`, `'overdue'`, `kpi('leases','ending')`, `kpi('readings','missing')`), a Birthdays page from the Birthdays card, and the statement behind each Financial summary card. The app now does the same, and does it for the other cards too (Units, Viewing requests, Short stays, Notices, Problem reports, Low stock, Attendance), where the design opens the whole page.
+
+### How it works
+
+The part is a word in the address: `#/invoices?show=overdue`. The page reads the word when it opens and each time such an address is opened again, so a second card works while the page is on screen. A part chosen by hand on the page is written to the address too, without a new history step, so Back from a record returns to the same part and the address can be kept as a bookmark. An unknown word is ignored. Shared code: `shell/useHashPage.ts` (`useShowFromAddress`, `useHashShow`, `showInAddress`, `hashForShow`). Display only: no read, rule, permission or figure changed.
+
+| Home card | Opens | What shows there | Where |
+|---|---|---|---|
+| Vacant Units | `#/units?show=vacant` | The Vacant card, every floor and type | `units/UnitsList.tsx` |
+| Viewing requests waiting | `#/visitreqs?show=waiting` | The Awaiting first contact card | `telegram/TelegramPages.tsx` |
+| Leases ending soon | `#/leases?show=ending` | The Ending soon card | `leases/LeasesList.tsx` |
+| Short stay bookings | `#/shortstays?show=booked` | The Bookings list on status Booked | `shortstays/ShortStaysPage.tsx` |
+| Short stays checked in | `#/shortstays?show=checked_in` | The Bookings list on status Checked in | `shortstays/ShortStaysPage.tsx` |
+| Pending payment | `#/invoices?show=open` | The Total unpaid card, every type | `invoices/InvoicesList.tsx` |
+| Paid this month | `#/invoices?show=paid&period=month` | The Total paid card for Invoices due this month | `invoices/InvoicesList.tsx` |
+| Overdue | `#/invoices?show=overdue` | The Total overdue card | `invoices/InvoicesList.tsx` |
+| Approvals | `#/approvals` | The page (it has one view: everything waiting) | - |
+| Meter readings missing | `#/utilities?show=missing` | This month, every floor, "Only not read" ticked | `utilities/UtilitiesPage.tsx` |
+| Notices due | `#/letters?show=due` | The Notices due card | `letters/LettersPage.tsx` |
+| Problem reports | `#/problems?show=open` | The Open tab, every kind and type | `problems/ProblemReportsPage.tsx` |
+| Birthdays | `#/customers?show=birthdays` | The coming birthdays above the Customers list | `customers/Birthdays.tsx` (new) |
+| Low stock | `#/products?show=low` | Only the products low on stock and still sold | `products/ProductsPage.tsx` |
+| Attendance | `#/attendance?show=day` | The daily sheet | `hr/AttendancePage.tsx` |
+| Cash and bank today | `#/statements?show=balance-sheet` | Balance sheet, today | `ledger/LedgerPage.tsx` |
+| Customers owe, Owed over 30 days | `#/statements?show=customer-aging` | Accounts receivable aging | `ledger/LedgerPage.tsx` |
+| Spent this month | `#/statements?show=budget` | Budget vs actual, this month | `ledger/LedgerPage.tsx` |
+| Profit this year | `#/statements?show=profit-and-loss` | Profit and loss, this month with the year to date | `ledger/LedgerPage.tsx` |
+
+### New on the pages
+
+- **Short stays › Bookings: a status row.** "All n · Booked n · Checked in n", and any other status a booking has (Checked out, Cancelled, No-show), each with its count. The list had no way to show one status, so the two Home cards had nothing to open. With no booking of the chosen status the list says "No bookings with this status."
+- **Products: "All n · Low stock n".** Low stock counts what Home counts: products the server marks low and that are still sold. With none it says "No product is low on stock."
+- **Customers: the coming birthdays.** A card right under the page title (so it is on the first screen of a phone too), only while the address asks for it: "Today and the next 7 days" (the same people Home counts) and "Later this month". Each line has the name, Primary Tenant or Occupant, the Unit (a link), the day and month and "today", "tomorrow" or "in n days", and an arrow to the Customer. The year and the age never show. "Hide" closes it. It uses the read that already exists (`GET /properties/{id}/birthdays`, with the right to read Customers). The design has a Birthdays tab; a list fits what the read gives (the next birthday of each person), and a full tab can come with the Customers batch.
+- **Financial statements** read the statement the address names first, so opening a card does not read Profit and loss before it.
+
+### Checked on the review app (12/11/2026, Owner, 1440 × 900)
+
+Meter readings missing: before the reading day the Utilities page has no list to enter readings (it opens on the reading day, an existing rule), so the card lands on This month with the line "Reading day is 24/11/2026. The list to enter the readings opens that day." On the reading day it lands on the list of Meters not read yet.
+
+Each card was clicked and its number compared with the list it opens: Leases ending soon 4 and 4 rows; Short stay bookings 2 and 2 rows; Short stays checked in 1 and 1 row; Pending payment $1,130.00 and "Total unpaid $1,130.00" with 3 rows; Paid this month $5,948.47 and "Total paid $5,948.47" under This month; Overdue $1,130.00 with 3 rows; Low stock 3 and 3 rows; Birthdays 4 and 4 lines. Back returns to Home from every card. No page error.
+
+### Every difference from design v81 left, with its reason
+
+| Design v81 | App | Why |
+|---|---|---|
+| Birthdays is its own page | A list above the Customers list | The read gives the coming birthdays only; no new page or menu item is added outside a module batch |
+| Units, Viewing requests, Notices and Repairs cards open the whole page | They open the part the card counts | The owner's check: the list must match the number on the card |
+
+"Paid this month" opens the paid Invoices due this month, as in the design: the card's amount adds the Invoices due this month that are paid, not the money received this month, so the Invoices list is the list that matches it. Approvals opens the page, as in the design: it shows only what is waiting.
+
+Tests: TEST-FE-1942 (Home card addresses), 1943 (Financial summary), 1944 (the shared address code), 1945 (Invoices), 1946 (Short stays status row), 1947 (Products), 1948 (Birthdays list), 1949 (Units), 2120 (Leases), 2121 (Utilities), 2122 (Financial statements), 2123 (Problem reports), 2124 (Notices), 2125 (Viewing requests), 2126 (Attendance), 2127 (Customers page). TEST-FE-928, 1912, 1294 and 1931 now expect the new addresses.

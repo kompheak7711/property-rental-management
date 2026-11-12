@@ -39,6 +39,9 @@ const TEXT = {
   pr_service: ["Service", "សេវា"],
   pr_discontinued: ["Discontinued", "ឈប់លក់"],
   pr_low: ["Low stock", "ស្តុកតិច"],
+  // UI v81 round 11: the row above the list that shows every product or only the low ones.
+  pr_all: ["All", "ទាំងអស់"],
+  pr_low_none: ["No product is low on stock.", "គ្មានផលិតផលណាស្តុកតិចទេ។"],
   pr_no_price: [
     "No price until the first Purchase",
     "គ្មានតម្លៃរហូតដល់ការទិញលើកដំបូង",

@@ -7,7 +7,7 @@ import { useState } from "react";
 import { dayText, todayInPhnomPenh } from "../shell/format";
 import { Icon, type ShellIcon } from "../shell/icons";
 import { hashForPage } from "../shell/navigation";
-import { openPageInAddress } from "../shell/useHashPage";
+import { openPageInAddress, useShowFromAddress } from "../shell/useHashPage";
 import { Chip, CountCard, type Tone } from "../shell/ui";
 import type { Language } from "../signInText";
 import type { UnitStatus } from "../unitClient";
@@ -72,7 +72,20 @@ export function UnitsList({
   const khmer = language === "km";
   const [floor, setFloor] = useState("all");
   const [type, setType] = useState("all");
-  const [card, setCard] = useState<UnitCard | "all">("all");
+  const [card, setCardState] = useState<UnitCard | "all">("all");
+  // UI v81 round 11: Home's "Vacant Units" card opens "#/units?show=vacant" (every floor and
+  // type, as the card counts them); a card chosen by hand is kept in the address too.
+  const keepShow = useShowFromAddress("units", (show) => {
+    const asked = CARDS.find(([value]) => value === show)?.[0];
+    if (asked === undefined && show !== "all") return;
+    setCardState(asked ?? "all");
+    setFloor("all");
+    setType("all");
+  });
+  const setCard = (next: UnitCard | "all") => {
+    setCardState(next);
+    keepShow(next === "all" ? null : next);
+  };
 
   // Floors in the Settings order, then any floor a Unit uses that is not in the list.
   const floorOrder = (data.lists?.lists.FLOOR ?? []).map(

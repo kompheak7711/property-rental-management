@@ -16,7 +16,11 @@ import {
 } from "../shell/format";
 import { Icon } from "../shell/icons";
 import { hashForPage } from "../shell/navigation";
-import { useHashDetail } from "../shell/useHashPage";
+import {
+  showInAddress,
+  useHashDetail,
+  useShowFromAddress,
+} from "../shell/useHashPage";
 import { Chip, Dialog } from "../shell/ui";
 import type { Language } from "../signInText";
 import {
@@ -1519,9 +1523,29 @@ function StatementsTab({
   api: LedgerApi;
 }) {
   const today = todayInPhnomPenh();
-  const [chosen, setChosen] = useState<StatementKey>("profit-and-loss");
+  // The statement the address names is the first one read (no read of another one before it).
+  const [chosen, setChosenState] = useState<StatementKey>(
+    () =>
+      STATEMENTS.find(
+        (statement) => statement === showInAddress("statements"),
+      ) ?? "profit-and-loss",
+  );
   const [month, setMonth] = useState(`${today.slice(0, 7)}-01`);
   const [asOf, setAsOf] = useState(today);
+  // UI v81 round 11: Home's Financial summary cards open their own statement for today
+  // ("#/statements?show=balance-sheet", "customer-aging", "budget", "profit-and-loss"); a
+  // statement chosen by hand is kept in the address too.
+  const keepShow = useShowFromAddress("statements", (show) => {
+    const asked = STATEMENTS.find((statement) => statement === show);
+    if (asked === undefined) return;
+    setChosenState(asked);
+    setMonth(`${today.slice(0, 7)}-01`);
+    setAsOf(today);
+  });
+  const setChosen = (next: StatementKey) => {
+    setChosenState(next);
+    keepShow(next === "profit-and-loss" ? null : next);
+  };
   const [from, setFrom] = useState(`${today.slice(0, 7)}-01`);
   const [to, setTo] = useState(today);
   const [busy, setBusy] = useState(false);

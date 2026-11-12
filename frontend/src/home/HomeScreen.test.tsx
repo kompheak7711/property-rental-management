@@ -180,14 +180,17 @@ describe("Home", () => {
     expect(screen.queryByText("Paid on time")).toBeNull();
     expect(screen.queryByText("Occupancy")).toBeNull();
     expect(card(/Birthdays/).textContent).toContain("3Today to 10/11/2026");
-    // The Customers page Birthdays tab comes with the Customers batch; until then the card opens
-    // the Customers list.
-    expect(card(/Birthdays/).getAttribute("href")).toBe("#/customers");
+    // UI v81 round 11: each card opens the part of the page that it counts (TEST-FE-1942).
+    expect(card(/Birthdays/).getAttribute("href")).toBe(
+      "#/customers?show=birthdays",
+    );
     // Only the vacant Units are counted; the note says how many Units there are.
     expect(card(/Vacant Units/).textContent).toBe(
       "Vacant Units123 Units · 1 reserved",
     );
-    expect(card(/Vacant Units/).getAttribute("href")).toBe("#/units");
+    expect(card(/Vacant Units/).getAttribute("href")).toBe(
+      "#/units?show=vacant",
+    );
     expect(card(/Approvals/).textContent).toContain(
       "1 to confirm · Refunds pending $5.00",
     );
@@ -198,7 +201,9 @@ describe("Home", () => {
     expect(card(/Paid this month/).textContent).toContain(
       "$3,716.2040% of $9,111.25 due in November",
     );
-    expect(card(/Overdue/).getAttribute("href")).toBe("#/invoices");
+    expect(card(/Overdue/).getAttribute("href")).toBe(
+      "#/invoices?show=overdue",
+    );
     expect(card(/Leases ending soon/).textContent).toContain(
       "End before 02/01/2027",
     );
@@ -206,7 +211,7 @@ describe("Home", () => {
     expect(card(/Meter readings missing/).textContent).toContain(
       "Reading day 24/11/2026",
     );
-    expect(card(/Notices due/).getAttribute("href")).toBe("#/letters");
+    expect(card(/Notices due/).getAttribute("href")).toBe("#/letters?show=due");
     expect(
       screen.getByText(
         "Rent and Utility Invoices made on 25/10/2026 06:00 · ABA exchange rate updated on 03/11/2026 08:00 · Next Invoices: 25/11/2026",
@@ -277,7 +282,7 @@ describe("Home", () => {
     expect(labels.slice(-2)).toEqual(["Problem reports", "Birthdays"]);
     const visits = card(/Viewing requests waiting/);
     expect(visits.textContent).toContain("21 late · 2 visits this week");
-    expect(visits.getAttribute("href")).toBe("#/visitreqs");
+    expect(visits.getAttribute("href")).toBe("#/visitreqs?show=waiting");
     expect(visits.className).toContain("err");
   });
 
@@ -539,7 +544,7 @@ describe("Home", () => {
     expect(await screen.findByText("1 urgent · 2 late")).toBeTruthy();
     expect(summary).toHaveBeenCalledWith("property-1");
     expect(card(/Problem reports/).getAttribute("href")).toBe(
-      hashForPage("problems"),
+      "#/problems?show=open",
     );
     expect(screen.queryByText("Repair costs to check")).toBeNull();
     cleanup();
@@ -707,24 +712,24 @@ describe("Home", () => {
     // Booked and not checked in yet; one of the three arrives on the business date.
     const booked = card(/Short stay bookings/);
     expect(booked.textContent).toBe("Short stay bookings31 arrives today");
-    expect(booked.getAttribute("href")).toBe("#/shortstays");
+    expect(booked.getAttribute("href")).toBe("#/shortstays?show=booked");
     // Staying now; nobody checks out on the business date.
     const staying = card(/Short stays checked in/);
     expect(staying.textContent).toBe(
       "Short stays checked in2None check out today",
     );
-    expect(staying.getAttribute("href")).toBe("#/shortstays");
+    expect(staying.getAttribute("href")).toBe("#/shortstays?show=checked_in");
     const low = card(/Low stock/);
     expect(low.textContent).toBe(
       "Low stock2Products at or below the reorder level",
     );
-    expect(low.getAttribute("href")).toBe("#/products");
+    expect(low.getAttribute("href")).toBe("#/products?show=low");
     // Three people need a look: two scans to check, two with no check-out (one has both).
     const attendance = card(/Attendance/);
     expect(attendance.textContent).toBe(
       "Attendance3Needs check 2 · No check-out 2",
     );
-    expect(attendance.getAttribute("href")).toBe("#/attendance");
+    expect(attendance.getAttribute("href")).toBe("#/attendance?show=day");
     expect(attendance).toHaveClass("warn");
     // The old banner above the cards is gone.
     expect(screen.queryByText(/Attendance needs attention/)).toBeNull();
@@ -786,5 +791,75 @@ describe("Home", () => {
     const bars = document.querySelectorAll(".ui-home-meter");
     expect(bars).toHaveLength(1);
     expect(bars[0]?.closest("a")?.textContent).toContain("Paid this month");
+  });
+
+  it('TEST-FE-1942 (owner 12/11/2026: "check all card is link to correct place") each Home card opens the part of its page that the card counts, named by a word in the address; Approvals, which has one view, opens the page', async () => {
+    render(
+      <HomeScreen
+        active
+        capabilities={
+          new Set([
+            "reports.home",
+            "visit_requests.read",
+            "short_stays.read",
+            "problem_reports.read",
+            "products.read",
+            "hr.attendance.read",
+          ])
+        }
+        homeApi={{ home: vi.fn(() => Promise.resolve(PAGE)) }}
+        language="en"
+        propertyId="property-1"
+        {...({
+          problemsApi: {
+            summary: vi.fn().mockResolvedValue({
+              open: 4,
+              urgent: 0,
+              late: 0,
+              costs_to_check: [],
+            }),
+          },
+          visitsApi: {
+            visitRequests: vi
+              .fn()
+              .mockResolvedValue({ today: "2026-11-03", requests: [] }),
+          },
+          shortStaysApi: { list: vi.fn().mockResolvedValue([]) },
+          productsApi: {
+            catalogue: vi
+              .fn()
+              .mockResolvedValue({ rules: {}, categories: [], products: [] }),
+          },
+          attendanceApi: { day: vi.fn().mockResolvedValue({ people: [] }) },
+        } as object)}
+      />,
+    );
+    const addresses = () =>
+      Array.from(document.querySelectorAll(".ui-home-kpis a.ui-home-kpi")).map(
+        (link) => [
+          link.querySelector(".ui-kpi-label")?.textContent,
+          link.getAttribute("href"),
+        ],
+      );
+    await waitFor(() => {
+      expect(addresses()).toEqual([
+        ["Vacant Units", "#/units?show=vacant"],
+        ["Viewing requests waiting", "#/visitreqs?show=waiting"],
+        ["Leases ending soon", "#/leases?show=ending"],
+        ["Short stay bookings", "#/shortstays?show=booked"],
+        ["Short stays checked in", "#/shortstays?show=checked_in"],
+        ["Pending payment", "#/invoices?show=open"],
+        // The paid Invoices of this month: the list the card's amount adds up.
+        ["Paid this month", "#/invoices?show=paid&period=month"],
+        ["Overdue", "#/invoices?show=overdue"],
+        ["Approvals", "#/approvals"],
+        ["Meter readings missing", "#/utilities?show=missing"],
+        ["Notices due", "#/letters?show=due"],
+        ["Problem reports", "#/problems?show=open"],
+        ["Birthdays", "#/customers?show=birthdays"],
+        ["Low stock", "#/products?show=low"],
+        ["Attendance", "#/attendance?show=day"],
+      ]);
+    });
   });
 });

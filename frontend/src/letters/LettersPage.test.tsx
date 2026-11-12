@@ -339,6 +339,28 @@ describe("Letters page (V1-058 R3)", () => {
     expect(screen.getAllByRole("row")).toHaveLength(2);
   });
 
+  it('TEST-FE-2124 (owner 12/11/2026: "check all card is link to correct place") "#/letters?show=due" opens the Rent letters on the Notices due card; a card chosen by hand is kept in the address', async () => {
+    window.location.hash = "#/letters?show=due";
+    setup();
+    expect(
+      await screen.findByRole("button", {
+        name: /^Notices due: 2\./,
+        pressed: true,
+      }),
+    ).toBeTruthy();
+    expect(screen.getByText("Showing: Notices due")).toBeTruthy();
+    // U101 and U104 are due; U102 and U103 have their letter.
+    expect(screen.getAllByRole("row")).toHaveLength(3);
+    expect(rowOf("U101")).toBeTruthy();
+    expect(rowOf("U104")).toBeTruthy();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /^Day-30 letter given/ }),
+    );
+    expect(window.location.hash).toBe("#/letters?show=w30");
+    expect(screen.getAllByRole("row")).toHaveLength(2);
+  });
+
   it("TEST-FE-863 Record letter opens the case once, needs a letter number for day 20, and sends the very same request on Try again", async () => {
     const { api } = setup();
     await screen.findByText("Rent arrears after day 20");

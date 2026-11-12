@@ -7,7 +7,7 @@ import type { LeaseResource } from "../leaseClient";
 import { dayText, usdFromCents } from "../shell/format";
 import { Icon, type ShellIcon } from "../shell/icons";
 import { hashForPage } from "../shell/navigation";
-import { openPageInAddress } from "../shell/useHashPage";
+import { openPageInAddress, useShowFromAddress } from "../shell/useHashPage";
 import { Chip, CountCard, type Tone } from "../shell/ui";
 import type { Language } from "../signInText";
 import {
@@ -87,7 +87,17 @@ export function LeasesList({
   deposits: Map<string, DepositCell> | null;
   today: string;
 }) {
-  const [card, setCard] = useState<LeaseCard | "all">("all");
+  const [card, setCardState] = useState<LeaseCard | "all">("all");
+  // UI v81 round 11: Home's "Leases ending soon" card opens "#/leases?show=ending"; a card
+  // chosen by hand is kept in the address too, so Back from a Lease returns to it.
+  const keepShow = useShowFromAddress("leases", (show) => {
+    const asked = CARDS.find(([value]) => value === show)?.[0];
+    if (asked !== undefined || show === "all") setCardState(asked ?? "all");
+  });
+  const setCard = (next: LeaseCard | "all") => {
+    setCardState(next);
+    keepShow(next === "all" ? null : next);
+  };
   const renewed = renewedIds(data.leases);
   const kind = (lease: LeaseResource) =>
     kindOf(lease, today, renewed.has(lease.lease_id));

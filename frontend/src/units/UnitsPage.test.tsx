@@ -568,6 +568,34 @@ describe("Units list", () => {
       expect(client.get).toHaveBeenCalledTimes(2);
     });
   });
+
+  it('TEST-FE-1949 (owner 12/11/2026: "check all card is link to correct place") "#/units?show=vacant" opens the list on the Vacant card, on every floor and type; a card chosen by hand is kept in the address and Show all gives the plain address again', async () => {
+    window.location.hash = "#/units?show=vacant";
+    show(unitApi());
+    expect(await screen.findByText(/Showing: Vacant\./)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^Vacant: 1/ })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    // Only U201 is Vacant.
+    expect(screen.getAllByRole("row")).toHaveLength(2);
+    expect(rowOf("U201")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /^Unavailable: 1/ }));
+    expect(window.location.hash).toBe("#/units?show=na");
+    expect(rowOf("U202")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Show all" }));
+    expect(window.location.hash).toBe("#/units");
+    expect(screen.getAllByRole("row")).toHaveLength(5);
+
+    // The card's address opened again while a floor is chosen: every floor shows again.
+    fireEvent.click(screen.getByRole("button", { name: "Floor 1" }));
+    expect(screen.getByText("2 Units")).toBeInTheDocument();
+    window.location.hash = "#/units?show=vacant";
+    window.dispatchEvent(new HashChangeEvent("hashchange"));
+    expect(await screen.findByText(/Showing: Vacant\./)).toBeInTheDocument();
+    expect(rowOf("U201")).toBeInTheDocument();
+  });
 });
 
 describe("Unit page", () => {

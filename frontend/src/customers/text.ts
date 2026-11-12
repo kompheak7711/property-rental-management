@@ -71,6 +71,21 @@ const TEXT = {
   n1: ["1 Customer", "អតិថិជន 1"],
   n: ["{0} Customers", "អតិថិជន {0}"],
   none: ["No Customers match.", "គ្មានអតិថិជនត្រូវនឹងការស្វែងរកទេ។"],
+  // UI v81 round 11: the coming birthdays (mock-up i18n bd_*; the lines marked "new" are not
+  // in the mock-up).
+  bd_title: ["Birthdays", "ថ្ងៃកំណើត"],
+  bd_week: ["Today and the next 7 days", "ថ្ងៃនេះ និង ៧ ថ្ងៃបន្ទាប់"],
+  bd_later: ["Later this month", "ក្រោយមកក្នុងខែនេះ"],
+  bd_none: ["No birthdays in these days.", "គ្មានថ្ងៃកំណើតក្នុងថ្ងៃទាំងនេះទេ។"],
+  bd_primary: ["Primary Tenant", "អ្នកជួលចម្បង"],
+  bd_occupant: ["Occupant", "អ្នកស្នាក់នៅ"],
+  bd_today: ["today", "ថ្ងៃនេះ"], // new
+  bd_tomorrow: ["tomorrow", "ថ្ងៃស្អែក"], // new
+  bd_in: ["in {0} days", "ក្នុង {0} ថ្ងៃទៀត"], // new
+  bd_hide: ["Hide", "លាក់"], // new
+  bd_open: ["Open Customer", "បើកអតិថិជន"], // new
+  bd_loading: ["Loading the birthdays…", "កំពុងផ្ទុកថ្ងៃកំណើត…"], // new
+  bd_failed: ["The birthdays could not be loaded.", "មិនអាចអានថ្ងៃកំណើតបានទេ។"], // new
   // new
   money_later: [
     "Unpaid and Customer Credit for each Customer show on the Customer page. The list columns come with Invoices and Payments (step R5).",

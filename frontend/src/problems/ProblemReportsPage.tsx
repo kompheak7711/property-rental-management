@@ -11,7 +11,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Icon, type ShellIcon } from "../shell/icons";
 import { hashForPage } from "../shell/navigation";
-import { openPageInAddress, useHashDetail } from "../shell/useHashPage";
+import {
+  openPageInAddress,
+  useHashDetail,
+  useShowFromAddress,
+} from "../shell/useHashPage";
 import { Chip, type Tone } from "../shell/ui";
 import type { Language } from "../signInText";
 import { MonthlyReport } from "./MonthlyReport";
@@ -162,9 +166,27 @@ export function ProblemReportsPage({
     capabilities === null || capabilities.has(capability);
   const [reports, setReports] = useState<ProblemReport[] | null>(null);
   const [failed, setFailed] = useState(false);
-  const [tab, setTab] = useState<Tab>("open");
+  const [tab, setTabState] = useState<Tab>("open");
   const [kind, setKind] = useState("");
   const [type, setType] = useState("");
+  // UI v81 round 11: Home's "Problem reports" card opens "#/problems?show=open" (every kind and
+  // type, as the card counts them); a tab chosen by hand is kept in the address too.
+  const keepShow = useShowFromAddress("problems", (show) => {
+    if (
+      show !== "open" &&
+      show !== "urgent" &&
+      show !== "late" &&
+      show !== "done"
+    )
+      return;
+    setTabState(show);
+    setKind("");
+    setType("");
+  });
+  const setTab = (next: Tab) => {
+    setTabState(next);
+    keepShow(next === "open" ? null : next);
+  };
   const [flash, setFlash] = useState<string | null>(null);
   const sequence = useRef(0);
   const moment = now ?? new Date();

@@ -1254,4 +1254,53 @@ describe("Invoices page (V1-058 R5)", () => {
       ).getAttribute("href"),
     ).toBe("#/leases/lease-101");
   });
+
+  it('TEST-FE-1945 (owner 12/11/2026: "check all card is link to correct place") the list opens on the card its address names: "?show=overdue" shows the overdue Invoices and "?show=paid&period=month" the paid Invoices due this month; a card or a period chosen by hand is kept in the address, and Show all gives the plain address again', async () => {
+    window.location.hash = "#/invoices?show=overdue";
+    show();
+    expect(await screen.findByText("Showing: Total overdue.")).toBeTruthy();
+    expect(
+      screen
+        .getByRole("button", { name: /^Total overdue/ })
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
+    expect(rows()).toEqual([
+      "INV260001Sok DaraU101Rent05/10/2026$450.00$450.00Overdue",
+    ]);
+    cleanup();
+
+    // Home's "Paid this month": the paid Invoices due in October, of every type.
+    const list = [
+      ...invoices(),
+      invoice("inv-p1", "INV260006", {
+        customer: "cust-chan",
+        lease: "lease-201",
+        status: "PAID",
+        total: 5000,
+        paid: 5000,
+      }),
+    ];
+    window.location.hash = "#/invoices?show=paid&period=month";
+    show({ invoices: invoiceApi(list) });
+    expect(await screen.findByText("Showing: Total paid.")).toBeTruthy();
+    expect(screen.getByText("Invoices due in October 2026")).toBeTruthy();
+    expect(
+      screen
+        .getByRole("button", { name: "This month" })
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
+    // INV260003 is paid too, but is due in November.
+    expect(rows()).toEqual([
+      "INV260006Chan VannaU201Rent05/10/2026$50.00$0.00Paid",
+    ]);
+
+    // By hand: another card, then every month, then the whole list.
+    fireEvent.click(screen.getByRole("button", { name: /^Total overdue/ }));
+    expect(window.location.hash).toBe("#/invoices?show=overdue&period=month");
+    fireEvent.click(screen.getByRole("button", { name: "All" }));
+    expect(window.location.hash).toBe("#/invoices?show=overdue");
+    fireEvent.click(screen.getByRole("button", { name: "Show all" }));
+    expect(window.location.hash).toBe("#/invoices");
+    expect(rows()).toHaveLength(6);
+  });
 });

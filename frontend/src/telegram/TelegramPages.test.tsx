@@ -1438,6 +1438,60 @@ describe("Office › Telegram", () => {
     expect(screen.queryByText("VR260003")).toBeNull();
   });
 
+  it('TEST-FE-2125 (owner 12/11/2026: "check all card is link to correct place") "#/visitreqs?show=waiting" opens Viewing requests on the Awaiting first contact card; a card chosen by hand is kept in the address', async () => {
+    const waiting: VisitRequest = {
+      ...FIRST,
+      id: "vr-4",
+      number: "VR260004",
+      joined: [],
+    };
+    const booked: VisitRequest = {
+      ...FIRST,
+      ...WORK,
+      id: "vr-3",
+      number: "VR260003",
+      status: "VISIT_BOOKED",
+      staff_id: "staff-1",
+      staff: "Dara",
+      visit_local: "2026-11-07T09:00",
+      visit_staff: "Dara",
+      to_send: [],
+      joined: [],
+    };
+    const api = fakeApi({
+      visitRequests: vi.fn(() =>
+        Promise.resolve({ ...PAGE_FACTS, requests: [waiting, booked] }),
+      ),
+    });
+    window.location.hash = "#/visitreqs?show=waiting";
+    render(
+      <VisitRequestsPageView
+        active
+        api={api}
+        capabilities={new Set(["visit_requests.read"])}
+        language="en"
+        propertyId="prop-1"
+      />,
+    );
+    expect(
+      await screen.findByRole("button", {
+        name: /^Awaiting first contact: 1\./,
+        pressed: true,
+      }),
+    ).toBeTruthy();
+    expect(screen.getByText("Showing: Awaiting first contact")).toBeTruthy();
+    expect(screen.getByText("VR260004")).toBeTruthy();
+    expect(screen.queryByText("VR260003")).toBeNull();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /^Viewings booked: 1\./ }),
+    );
+    expect(window.location.hash).toBe("#/visitreqs?show=booked");
+    expect(screen.getByText("VR260003")).toBeTruthy();
+    expect(screen.queryByText("VR260004")).toBeNull();
+    window.location.hash = "";
+  });
+
   it("TEST-FE-1513 a Visit request opens with Take; the person who has it records calls, books a visit Monday to Saturday and closes it; a Manager gives it and marks Spam with a note; the history is shown", async () => {
     const fresh: VisitRequestDetail = {
       ...FIRST,

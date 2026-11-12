@@ -12,6 +12,7 @@ import { DateInput } from "../shell/DateInput";
 import { dayText, momentText } from "../shell/format";
 import { Icon } from "../shell/icons";
 import { Chip, Dialog } from "../shell/ui";
+import { useShowFromAddress } from "../shell/useHashPage";
 import type { Language } from "../signInText";
 import {
   addDays,
@@ -83,7 +84,17 @@ export function AttendancePage({
   active,
   api = defaultHrApi,
 }: AttendancePageProps) {
-  const [view, setView] = useState<View>("day");
+  const [view, setViewState] = useState<View>("day");
+  // UI v81 round 11: Home's "Attendance" card opens "#/attendance?show=day", the daily sheet
+  // (the card counts today's lines to check); a view chosen by hand is kept in the address too.
+  const keepShow = useShowFromAddress("attendance", (show) => {
+    const asked = VIEWS.find((which) => which === show);
+    if (asked !== undefined) setViewState(asked);
+  });
+  const setView = (next: View) => {
+    setViewState(next);
+    keepShow(next === "day" ? null : next);
+  };
   if (propertyId === "") return <NoProperty language={language} />;
   const ready = active && propertyId !== "";
   return (

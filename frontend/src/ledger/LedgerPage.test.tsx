@@ -715,4 +715,44 @@ describe("Financial statements", () => {
     expect(screen.getByText("2 waiting")).toBeInTheDocument();
     expect(screen.getByText("Does not match")).toBeInTheDocument();
   });
+
+  it('TEST-FE-2122 (owner 12/11/2026: "check all card is link to correct place") "#/statements?show=…" opens that statement and reads only it; a statement chosen by hand is kept in the address (Profit and loss has the plain address); opening a card\'s address again reads its statement for this month', async () => {
+    const api = fakeApi();
+    window.location.hash = "#/statements?show=customer-aging";
+    show("statements", api);
+    expect(
+      await screen.findByRole("button", {
+        name: "Accounts receivable aging",
+        pressed: true,
+      }),
+    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(api.report).toHaveBeenCalledWith("prop-1", "customer-aging", {});
+    });
+    // Profit and loss, the statement the page opens on by itself, was never read.
+    expect(api.report).not.toHaveBeenCalledWith(
+      "prop-1",
+      "profit-and-loss",
+      expect.anything(),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Balance sheet" }));
+    expect(window.location.hash).toBe("#/statements?show=balance-sheet");
+    fireEvent.click(screen.getByRole("button", { name: "Profit and loss" }));
+    expect(window.location.hash).toBe("#/statements");
+
+    // Home's "Spent this month" card.
+    window.location.hash = "#/statements?show=budget";
+    window.dispatchEvent(new HashChangeEvent("hashchange"));
+    await waitFor(() => {
+      expect(api.report).toHaveBeenLastCalledWith("prop-1", "budget", {
+        month: expect.stringMatching(/^\d{4}-\d{2}-01$/) as unknown,
+      });
+    });
+    expect(
+      screen
+        .getByRole("button", { name: "Budget vs actual" })
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
+  });
 });

@@ -42,6 +42,9 @@ const TEXT = {
   c_status: ["Status", "ស្ថានភាព"],
   c_source: ["Booked by", "កក់តាម"],
   none: ["No bookings yet.", "មិនទាន់មានការកក់នៅឡើយទេ។"],
+  // UI v81 round 11: the status row above the Bookings list.
+  f_all: ["All", "ទាំងអស់"], // new
+  f_none: ["No bookings with this status.", "គ្មានការកក់ដែលមានស្ថានភាពនេះទេ។"], // new
   n1: ["1 booking", "ការកក់ 1"],
   n: ["{0} bookings", "ការកក់ {0}"],
   nights1: ["1 night", "1 យប់"],

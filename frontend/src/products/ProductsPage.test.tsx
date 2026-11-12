@@ -22,6 +22,7 @@ import { ProductsPage, type ProductsTab } from "./ProductsPage";
 
 afterEach(() => {
   cleanup();
+  window.history.replaceState(null, "", "#/");
 });
 
 function product(extra: Partial<Product>): Product {
@@ -579,5 +580,66 @@ describe("Building › Products (V1.1 part 4, DL-121)", () => {
     expect(quantityFromText("2.5", "METRE")).toBe("2.5");
     expect(quantityFromText("0", "METRE")).toBeNull();
     expect(quantityFromText("1.2345", "KILOGRAM")).toBeNull();
+  });
+
+  it('TEST-FE-1947 (owner 12/11/2026: "check all card is link to correct place") a row above the Products list shows every product or only the ones low on stock and still sold, with a count each; "?show=low" opens the list on Low stock, and the choice is kept in the address', async () => {
+    const names = () =>
+      screen
+        .getAllByRole("row")
+        .slice(1)
+        .map((row) => row.querySelector("b")?.textContent);
+    // A product that is low but no longer sold is not counted, as on Home.
+    const gone = product({
+      product_id: "p-gone",
+      sku: "P0005",
+      name_en: "Gone bulb",
+      name_kh: null,
+      low_stock: true,
+      discontinued: true,
+    });
+    const catalogue = { ...CATALOGUE, products: [...CATALOGUE.products, gone] };
+    window.history.replaceState(null, "", "#/products?show=low");
+    show(
+      "products",
+      apiOf({ catalogue: vi.fn(() => Promise.resolve(catalogue)) }),
+      STAFF,
+    );
+    const table = await screen.findByRole("region", { name: "Products" });
+    const low = await within(table).findByRole("button", {
+      name: "Low stock 1",
+      pressed: true,
+    });
+    const all = within(table).getByRole("button", { name: "All 5" });
+    expect(names()).toEqual(["Kettle"]);
+
+    fireEvent.click(all);
+    expect(all.getAttribute("aria-pressed")).toBe("true");
+    expect(names()).toHaveLength(5);
+    expect(window.location.hash).toBe("#/products");
+    fireEvent.click(low);
+    expect(names()).toEqual(["Kettle"]);
+    expect(window.location.hash).toBe("#/products?show=low");
+    cleanup();
+
+    // Nothing low: the list says so; with no product at all there is no row to choose from.
+    const fine = { ...CATALOGUE, products: [FAN] };
+    show(
+      "products",
+      apiOf({ catalogue: vi.fn(() => Promise.resolve(fine)) }),
+      STAFF,
+    );
+    expect(await screen.findByText("No product is low on stock.")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Low stock 0" })).toBeTruthy();
+    cleanup();
+    window.history.replaceState(null, "", "#/products");
+    show(
+      "products",
+      apiOf({
+        catalogue: vi.fn(() => Promise.resolve({ ...CATALOGUE, products: [] })),
+      }),
+      STAFF,
+    );
+    await screen.findByRole("region", { name: "Products" });
+    expect(screen.queryByRole("button", { name: /^Low stock/ })).toBeNull();
   });
 });

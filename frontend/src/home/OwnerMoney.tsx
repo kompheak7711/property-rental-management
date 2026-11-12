@@ -10,7 +10,8 @@ import type { LedgerApi, Report } from "../ledger/ledgerClient";
 import { usdFromCents } from "../shell/format";
 import { Icon, type ShellIcon } from "../shell/icons";
 import { CardGrid } from "../shell/layouts";
-import { type PageId, hashForPage } from "../shell/navigation";
+import type { PageId } from "../shell/navigation";
+import { hashForShow } from "../shell/useHashPage";
 import type { Language } from "../signInText";
 import { hmt } from "./text";
 
@@ -81,6 +82,7 @@ function MoneyCard({
   value,
   note,
   page,
+  show,
 }: {
   icon: ShellIcon;
   tone: string;
@@ -88,11 +90,13 @@ function MoneyCard({
   value: number | null;
   note: string;
   page: PageId;
+  /** UI v81 round 11: the statement the card's number comes from, so the card opens it. */
+  show: string;
 }) {
   return (
     <a
       className={`ui-kpi ui-home-kpi ui-kpi-top ${value === null ? "none" : tone}`}
-      href={hashForPage(page)}
+      href={hashForShow(page, show)}
     >
       {/* Owner 12/11/2026: the number sits at the top right, beside the name. */}
       <span className="ui-kpi-head">
@@ -173,6 +177,7 @@ export function OwnerMoney({
           label={hmt(language, "om_cash")}
           note={hmt(language, "om_cash_s")}
           page="statements"
+          show="balance-sheet"
           tone="brand"
           value={numbers.cash}
         />
@@ -181,6 +186,7 @@ export function OwnerMoney({
           label={hmt(language, "om_owe")}
           note={hmt(language, "om_owe_s")}
           page="statements"
+          show="customer-aging"
           tone={(numbers.owe ?? 0) > 0 ? "warn" : "ok"}
           value={numbers.owe}
         />
@@ -189,6 +195,7 @@ export function OwnerMoney({
           label={hmt(language, "om_over")}
           note={hmt(language, "om_owe_s")}
           page="statements"
+          show="customer-aging"
           tone={(numbers.over30 ?? 0) > 0 ? "err" : "ok"}
           value={numbers.over30}
         />
@@ -200,7 +207,8 @@ export function OwnerMoney({
               ? hmt(language, "om_spent_s", usdFromCents(numbers.budget ?? 0))
               : hmt(language, "om_nobudget")
           }
-          page="budget"
+          page="statements"
+          show="budget"
           tone={(numbers.budget ?? 0) > 0 && over ? "err" : "info"}
           value={numbers.spent}
         />
@@ -209,6 +217,7 @@ export function OwnerMoney({
           label={hmt(language, "om_profit")}
           note={hmt(language, "om_profit_s", numbers.year)}
           page="statements"
+          show="profit-and-loss"
           tone={(numbers.profit ?? 0) >= 0 ? "ok" : "err"}
           value={numbers.profit}
         />

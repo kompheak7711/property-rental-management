@@ -1,5 +1,5 @@
 // UI v81 (design v81 Home; owner 12/11/2026): the Financial summary box and what the
-// Attendance card counts. TEST-FE-1907, TEST-FE-1908.
+// Attendance card counts. TEST-FE-1907, TEST-FE-1908, TEST-FE-1943.
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -121,6 +121,39 @@ describe("Home Financial summary and Attendance (UI v81)", () => {
     expect(api.report).toHaveBeenCalledWith("property-1", "budget", {
       month: "2026-11-01",
     });
+  });
+
+  it("TEST-FE-1943 (owner 12/11/2026) each Financial summary card opens the statement its number comes from: the Balance sheet, Accounts receivable aging (both owed cards), Budget vs actual, and Profit and loss", async () => {
+    const api = {
+      report: vi.fn((_: string, name: ReportName) =>
+        REPORTS[name] === undefined
+          ? Promise.reject(new Error("not read"))
+          : Promise.resolve(REPORTS[name]),
+      ),
+    };
+    render(
+      <OwnerMoney
+        active
+        api={api}
+        language="en"
+        propertyId="property-1"
+        today="2026-11-07"
+      />,
+    );
+    const box = await screen.findByRole("region", {
+      name: "Financial summary",
+    });
+    expect(
+      within(box)
+        .getAllByRole("link")
+        .map((card) => card.getAttribute("href")),
+    ).toEqual([
+      "#/statements?show=balance-sheet",
+      "#/statements?show=customer-aging",
+      "#/statements?show=customer-aging",
+      "#/statements?show=budget",
+      "#/statements?show=profit-and-loss",
+    ]);
   });
 
   it("TEST-FE-1908 the Attendance card counts the people to check: scans to check and people with no check-out, a person with both once", () => {

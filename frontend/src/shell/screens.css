@@ -2523,6 +2523,11 @@ a.ui-kpi.ui-home-kpi {
   margin: 0;
   padding: 10px 24px 14px;
 }
+/* UI v81 round 11: a switch row inside a pad0 card (Products: All, Low stock) lines up with
+   the text above it. */
+.ui-card.pad0 > .ui-filters.pad {
+  padding: 0 24px 14px;
+}
 /* The reason under a draft's name: one line; Open shows it in full. */
 .ui-sub2.ui-clip {
   max-width: 30ch;

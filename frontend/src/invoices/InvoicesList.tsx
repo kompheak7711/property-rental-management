@@ -12,7 +12,7 @@ import {
 import { dayText, usdFromCents } from "../shell/format";
 import { Icon, type ShellIcon } from "../shell/icons";
 import { hashForPage } from "../shell/navigation";
-import { openPageInAddress } from "../shell/useHashPage";
+import { openPageInAddress, useShowFromAddress } from "../shell/useHashPage";
 import { Chip, CountCard, type Tone } from "../shell/ui";
 import type { Language } from "../signInText";
 import { monthText } from "../utilities/text";
@@ -96,10 +96,41 @@ export function InvoicesList({
   /** V1.1 part 6: New Quotation shows only to a person who may make one. */
   canCreate: boolean;
 }) {
-  const [period, setPeriod] = useState<InvoicePeriod>("all");
+  const [period, setPeriodState] = useState<InvoicePeriod>("all");
   const [picked, setPicked] = useState(today.slice(0, 7));
   const [type, setType] = useState<InvoiceTypeCode | "all">("all");
-  const [card, setCard] = useState<InvoiceCard>("all");
+  const [card, setCardState] = useState<InvoiceCard>("all");
+  // UI v81 round 11: Home's money cards open their own part of this list: "Pending payment"
+  // "#/invoices?show=open", "Overdue" "?show=overdue", "Paid this month"
+  // "?show=paid&period=month" (every type, as the cards count them; such an address never
+  // names one Customer). A card or period chosen by hand is kept in the address too, so Back
+  // from an Invoice returns to it.
+  const keepShow = useShowFromAddress("invoices", (show, query) => {
+    const asked = CARDS.find(([value]) => value === show)?.[0];
+    if (asked === undefined) return;
+    const months = query.get("period");
+    setCardState(asked);
+    setPeriodState(months === "month" || months === "last" ? months : "all");
+    setType("all");
+  });
+  const keep = (nextCard: InvoiceCard, nextPeriod: InvoicePeriod) => {
+    const months =
+      nextPeriod === "month" || nextPeriod === "last"
+        ? { period: nextPeriod }
+        : undefined;
+    keepShow(
+      nextCard === "all" && months === undefined ? null : nextCard,
+      months,
+    );
+  };
+  const setCard = (next: InvoiceCard) => {
+    setCardState(next);
+    keep(next, period);
+  };
+  const setPeriod = (next: InvoicePeriod) => {
+    setPeriodState(next);
+    keep(card, next);
+  };
 
   const month = periodMonth(period, today, picked);
   const base = filtered(data.invoices, month, type, customerId);

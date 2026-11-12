@@ -13,7 +13,7 @@ import { measurementUnitLabel } from "../measurementUnits";
 import { dayText, todayInPhnomPenh } from "../shell/format";
 import { Icon } from "../shell/icons";
 import { hashForPage } from "../shell/navigation";
-import { useHashDetail } from "../shell/useHashPage";
+import { useHashDetail, useShowFromAddress } from "../shell/useHashPage";
 import { Chip } from "../shell/ui";
 import type { Language } from "../signInText";
 import type { UnitApi, UnitResource } from "../unitClient";
@@ -270,6 +270,14 @@ function ReadingsTab({
   const [type, setType] = useState<UtilityType>("ELECTRICITY");
   const [floor, setFloor] = useState("all");
   const [onlyMissing, setOnlyMissing] = useState(false);
+  // UI v81 round 11: Home's "Meter readings missing" card opens "#/utilities?show=missing":
+  // this month, every floor, and only the Meters not read yet once the reading day has come.
+  useShowFromAddress("utilities", (show) => {
+    if (show !== "missing") return;
+    setPeriod("month");
+    setFloor("all");
+    setOnlyMissing(true);
+  });
   const [toast, setToast] = useState<{
     ok: boolean;
     text: string;

@@ -9,6 +9,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { dayText } from "../shell/format";
 import { Icon } from "../shell/icons";
 import { Chip } from "../shell/ui";
+import { useShowFromAddress } from "../shell/useHashPage";
 import type { Language } from "../signInText";
 import {
   MarkUpDialog,
@@ -341,6 +342,21 @@ function ProductsTable({
   onOpen: (open: Open) => void;
 }) {
   const rules = catalogue.rules;
+  // UI v81 round 11: Home's "Low stock" card opens "#/products?show=low": only the products
+  // the server marks as low on stock and still sold (what the card counts).
+  const [lowOnly, setLowOnlyState] = useState(false);
+  const keepShow = useShowFromAddress("products", (show) => {
+    if (show === "low" || show === "all") setLowOnlyState(show === "low");
+  });
+  const setLowOnly = (next: boolean) => {
+    setLowOnlyState(next);
+    keepShow(next ? "low" : null);
+  };
+  const isLow = (product: (typeof catalogue.products)[number]) =>
+    product.low_stock && !product.discontinued;
+  const listed = catalogue.products.filter(
+    (product) => !lowOnly || isLow(product),
+  );
   return (
     <section aria-labelledby="products-title" className="ui-card pad0">
       <header className="ui-chead pad">
@@ -372,8 +388,40 @@ function ProductsTable({
           dollars(rules.price_round_up_usd_cents),
         )}
       </p>
-      {catalogue.products.length === 0 ? (
-        <p className="ui-muted pad">{pt(language, "pr_none")}</p>
+      {catalogue.products.length > 0 && (
+        <div className="ui-filters pad">
+          <div
+            aria-label={pt(language, "pr_stock")}
+            className="ui-seg"
+            role="group"
+          >
+            {([false, true] as const).map((value) => (
+              <button
+                aria-pressed={lowOnly === value}
+                key={String(value)}
+                onClick={() => {
+                  setLowOnly(value);
+                }}
+                type="button"
+              >
+                {pt(language, value ? "pr_low" : "pr_all")}{" "}
+                <span className="ui-num">
+                  {value
+                    ? catalogue.products.filter(isLow).length
+                    : catalogue.products.length}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      {listed.length === 0 ? (
+        <p className="ui-muted pad">
+          {pt(
+            language,
+            catalogue.products.length === 0 ? "pr_none" : "pr_low_none",
+          )}
+        </p>
       ) : (
         <div className="ui-tablewrap">
           <table className="ui-table">
@@ -393,7 +441,7 @@ function ProductsTable({
               </tr>
             </thead>
             <tbody>
-              {catalogue.products.map((product) => {
+              {listed.map((product) => {
                 const name = productName(product, language);
                 return (
                   <tr key={product.product_id}>

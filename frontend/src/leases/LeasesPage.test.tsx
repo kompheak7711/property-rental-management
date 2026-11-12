@@ -461,6 +461,28 @@ describe("Leases list", () => {
     fireEvent.click(screen.getByRole("link", { name: "U202" }));
     expect(window.location.hash).toBe("#/leases/lease-U202");
   });
+
+  it('TEST-FE-2120 (owner 12/11/2026: "check all card is link to correct place") "#/leases?show=ending" opens the list on the Ending soon card; a card chosen by hand is kept in the address, and choosing it again gives the plain address', async () => {
+    window.location.hash = "#/leases?show=ending";
+    show(api());
+    const ending = await screen.findByRole("button", {
+      name: /^Ending soon: 1\./,
+      pressed: true,
+    });
+    // Only the Lease of U102 ends soon.
+    expect(screen.getByText("1 Lease")).toBeInTheDocument();
+    expect(rowOf("U102")).toBeInTheDocument();
+    expect(screen.queryByText("Tenant U101")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /^Drafts: 2\./ }));
+    expect(window.location.hash).toBe("#/leases?show=draft");
+    expect(screen.getByText("2 Leases")).toBeInTheDocument();
+    fireEvent.click(ending);
+    expect(window.location.hash).toBe("#/leases?show=ending");
+    fireEvent.click(ending);
+    expect(window.location.hash).toBe("#/leases");
+    expect(screen.getByText("7 Leases")).toBeInTheDocument();
+  });
 });
 
 describe("Lease page", () => {

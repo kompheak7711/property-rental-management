@@ -787,6 +787,35 @@ describe("HRIS phase 6 screens", () => {
     });
   });
 
+  it('TEST-FE-2126 (owner 12/11/2026: "check all card is link to correct place") "#/attendance?show=day" opens the daily sheet, also when another view was open; a view chosen by hand is kept in the address (the daily sheet has the plain address)', async () => {
+    const api = fakeApi();
+    window.history.replaceState(null, "", "#/attendance?show=week");
+    render(
+      <AttendancePage active api={api} language="en" propertyId={PROPERTY} />,
+    );
+    expect(
+      await screen.findByRole("button", { name: "Weekly plan", pressed: true }),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByText("Too few days off (minimum 1)"),
+    ).toBeInTheDocument();
+
+    // Home's Attendance card.
+    window.history.pushState(null, "", "#/attendance?show=day");
+    window.dispatchEvent(new HashChangeEvent("hashchange"));
+    expect(await screen.findByText("Late 20 min")).toBeInTheDocument();
+    expect(
+      screen
+        .getByRole("button", { name: "Daily sheet" })
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
+
+    fireEvent.click(screen.getByRole("button", { name: "Overtime" }));
+    expect(window.location.hash).toBe("#/attendance?show=ot");
+    fireEvent.click(screen.getByRole("button", { name: "Daily sheet" }));
+    expect(window.location.hash).toBe("#/attendance");
+  });
+
   it("TEST-FE-1400 Add employee needs the ID details and photo; only the caretaker picks a shift", async () => {
     const api = fakeApi();
     render(

@@ -11,7 +11,7 @@ import { leaseNo, loadLeasesData } from "../leases/leasesData";
 import { dayText, todayInPhnomPenh, usdFromCents } from "../shell/format";
 import { Icon } from "../shell/icons";
 import { hashForPage } from "../shell/navigation";
-import { useHashDetail } from "../shell/useHashPage";
+import { useHashDetail, useShowFromAddress } from "../shell/useHashPage";
 import { Chip, CountCard } from "../shell/ui";
 import type { Language } from "../signInText";
 import { RecordLetterDialog, RecordWarningDialog } from "./LettersDialogs";
@@ -268,7 +268,17 @@ function RentLettersTab({
   canTerminate: boolean;
   onChanged: () => void;
 }) {
-  const [card, setCard] = useState<RentCard | "all">("all");
+  const [card, setCardState] = useState<RentCard | "all">("all");
+  // UI v81 round 11: Home's "Notices due" card opens "#/letters?show=due"; a card chosen by
+  // hand is kept in the address too.
+  const keepShow = useShowFromAddress("letters", (show) => {
+    if (show === "due" || show === "w20" || show === "w30" || show === "all")
+      setCardState(show);
+  });
+  const setCard = (next: RentCard | "all") => {
+    setCardState(next);
+    keepShow(next === "all" ? null : next);
+  };
   const [recording, setRecording] = useState<RentRow | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const today = data.businessDate;

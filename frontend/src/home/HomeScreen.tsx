@@ -33,6 +33,7 @@ import {
   queryFromHash,
 } from "../shell/navigation";
 import { CardGrid, PageHeader } from "../shell/layouts";
+import { hashForShow } from "../shell/useHashPage";
 import type { Language } from "../signInText";
 import { monthText } from "../utilities/text";
 import {
@@ -338,7 +339,8 @@ function Card({
   value,
   note,
   page,
-  tab,
+  show,
+  more,
   meter,
   empty,
 }: {
@@ -348,8 +350,13 @@ function Card({
   value: string;
   note: string;
   page: PageId;
-  /** UI v81 round 4: the sub-tab of that page the card opens ("?tab="). */
-  tab?: string;
+  /**
+   * UI v81 round 11 (owner 12/11/2026): the part of that page the card counts, so the card
+   * opens it and not the whole list ("#/invoices?show=overdue"). `more` holds further words
+   * ("period=month"). Left out when the page has one view.
+   */
+  show?: string;
+  more?: Record<string, string>;
   /** 0 to 100 for the bar under the note; none when the card has no bar. */
   meter?: number;
   empty: boolean;
@@ -358,9 +365,7 @@ function Card({
     <a
       className={`ui-kpi ui-home-kpi ui-kpi-top ${empty ? "none" : tone}`}
       href={
-        tab === undefined
-          ? hashForPage(page)
-          : `${hashForPage(page)}?tab=${encodeURIComponent(tab)}`
+        show === undefined ? hashForPage(page) : hashForShow(page, show, more)
       }
     >
       {/* Owner 12/11/2026: the number sits at the top right, beside the name. */}
@@ -422,6 +427,7 @@ function Cards({
         label={hmt(language, "k_vac")}
         note={hmt(language, "k_vac_s", units.total, units.reserved)}
         page="units"
+        show="vacant"
         tone="brand"
         value={String(units.vacant)}
       />,
@@ -436,6 +442,7 @@ function Cards({
         label={hmt(language, "n_vr")}
         note={hmt(language, "n_vr_s", visits.late, visits.visitsThisWeek)}
         page="visitreqs"
+        show="waiting"
         tone={visits.late > 0 ? "err" : "brand"}
         value={String(visits.waiting)}
       />,
@@ -451,6 +458,7 @@ function Cards({
         label={hmt(language, "n_lease")}
         note={hmt(language, "n_lease_s", dayText(renewal.end_on_or_before))}
         page="leases"
+        show="ending"
         tone="info"
         value={String(renewal.count)}
       />,
@@ -475,6 +483,7 @@ function Cards({
           stays.arriveToday,
         )}
         page="shortstays"
+        show="booked"
         tone="info"
         value={String(stays.booked)}
       />,
@@ -489,6 +498,7 @@ function Cards({
           stays.outToday,
         )}
         page="shortstays"
+        show="checked_in"
         tone="ok"
         value={String(stays.checkedIn)}
       />,
@@ -508,6 +518,7 @@ function Cards({
           pending.invoice_count,
         )}
         page="invoices"
+        show="open"
         tone="warn"
         value={usdFromCents(pending.amount_usd_cents)}
       />,
@@ -533,7 +544,9 @@ function Cards({
               ? hmt(language, "k_paid_s", percent, usdFromCents(billed), month)
               : hmt(language, "k_paid_none")
           }
+          more={{ period: "month" }}
           page="invoices"
+          show="paid"
           tone="ok"
           value={usdFromCents(settled)}
         />,
@@ -571,6 +584,7 @@ function Cards({
           overdue.invoice_count,
         )}
         page="invoices"
+        show="overdue"
         tone="err"
         value={usdFromCents(overdue.amount_usd_cents)}
       />,
@@ -610,6 +624,7 @@ function Cards({
         label={hmt(language, "n_read")}
         note={hmt(language, "n_read_s", dayText(readings.reading_date))}
         page="utilities"
+        show="missing"
         tone="info"
         value={String(readings.count)}
       />,
@@ -625,6 +640,7 @@ function Cards({
         label={hmt(language, "n_letters")}
         note={hmt(language, "n_letters_s")}
         page="letters"
+        show="due"
         tone="err"
         value={String(letters.count)}
       />,
@@ -639,6 +655,7 @@ function Cards({
         label={hmt(language, "n_problems")}
         note={hmt(language, "n_problems_s", problems.urgent, problems.late)}
         page="problems"
+        show="open"
         tone={problems.urgent > 0 || problems.late > 0 ? "err" : "info"}
         value={String(problems.open)}
       />,
@@ -654,6 +671,7 @@ function Cards({
         label={hmt(language, "n_bday")}
         note={hmt(language, "n_week_s", dayText(birthdays.to))}
         page="customers"
+        show="birthdays"
         tone="info"
         value={String(birthdays.count)}
       />,
@@ -668,6 +686,7 @@ function Cards({
         label={hmt(language, "n_low")}
         note={hmt(language, "n_low_s")}
         page="products"
+        show="low"
         tone="warn"
         value={String(lowStock)}
       />,
@@ -686,6 +705,7 @@ function Cards({
             : hmt(language, "at_0")
         }
         page="attendance"
+        show="day"
         tone={attendance.total > 0 ? "warn" : "ok"}
         value={String(attendance.total)}
       />,

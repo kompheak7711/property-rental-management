@@ -17,7 +17,11 @@ import {
 import { dayText, todayInPhnomPenh, usdFromCents } from "../shell/format";
 import { Icon } from "../shell/icons";
 import { hashForPage } from "../shell/navigation";
-import { openPageInAddress, useHashDetail } from "../shell/useHashPage";
+import {
+  openPageInAddress,
+  useHashDetail,
+  useShowFromAddress,
+} from "../shell/useHashPage";
 import { Chip, type Tone } from "../shell/ui";
 import type { Language } from "../signInText";
 import { BookingDetail } from "./BookingDetail";
@@ -105,6 +109,16 @@ function weekday(language: Language, day: string): string {
 
 type Tab = "cal" | "list" | "clean" | "quotes" | "report" | "sites";
 
+// UI v81 round 11: the Bookings list can show one status. The word in the address is the
+// status in small letters ("#/shortstays?show=booked", "?show=checked_in").
+const LIST_STATUSES: readonly BookingStatus[] = [
+  "BOOKED",
+  "CHECKED_IN",
+  "CHECKED_OUT",
+  "CANCELLED",
+  "NO_SHOW",
+];
+
 export function ShortStaysPage({
   language,
   propertyId,
@@ -118,7 +132,24 @@ export function ShortStaysPage({
   const may = (capability: string) =>
     capabilities === null || capabilities.has(capability);
   const today = todayInPhnomPenh(now);
-  const [tab, setTab] = useState<Tab>("cal");
+  const [tab, setTabState] = useState<Tab>("cal");
+  const [status, setStatusState] = useState<BookingStatus | "all">("all");
+  // UI v81 round 11: Home's two Short stays cards open the Bookings list on their status
+  // ("Short stay bookings" on Booked, "Short stays checked in" on Checked in).
+  const keepShow = useShowFromAddress("shortstays", (show) => {
+    const asked = LIST_STATUSES.find((value) => value.toLowerCase() === show);
+    if (asked === undefined && show !== "all") return;
+    setTabState("list");
+    setStatusState(asked ?? "all");
+  });
+  const setTab = (next: Tab) => {
+    setTabState(next);
+    keepShow(next === "list" && status !== "all" ? status.toLowerCase() : null);
+  };
+  const setStatus = (next: BookingStatus | "all") => {
+    setStatusState(next);
+    keepShow(next === "all" ? null : next.toLowerCase());
+  };
   const [from, setFrom] = useState(today);
   const [calendar, setCalendar] = useState<StayCalendar | null>(null);
   const [bookings, setBookings] = useState<Booking[] | null>(null);
@@ -442,6 +473,9 @@ export function ShortStaysPage({
       </>
     );
 
+  const listed = (bookings ?? []).filter(
+    (booking) => status === "all" || booking.status === status,
+  );
   const listView =
     bookings === null ? (
       loading
@@ -454,9 +488,50 @@ export function ShortStaysPage({
         {may("damage_charges.bill") && (
           <DamageDue api={api} language={language} propertyId={propertyId} />
         )}
+        {bookings.length > 0 && (
+          <div className="ui-filters">
+            <div
+              aria-label={st(language, "c_status")}
+              className="ui-seg"
+              role="group"
+            >
+              {(["all", ...LIST_STATUSES] as const)
+                .filter(
+                  (value) =>
+                    value === "all" ||
+                    value === "BOOKED" ||
+                    value === "CHECKED_IN" ||
+                    value === status ||
+                    bookings.some((booking) => booking.status === value),
+                )
+                .map((value) => (
+                  <button
+                    aria-pressed={status === value}
+                    key={value}
+                    onClick={() => {
+                      setStatus(value);
+                    }}
+                    type="button"
+                  >
+                    {value === "all"
+                      ? st(language, "f_all")
+                      : st(language, `st_${value}`)}{" "}
+                    <span className="ui-num">
+                      {value === "all"
+                        ? bookings.length
+                        : bookings.filter((booking) => booking.status === value)
+                            .length}
+                    </span>
+                  </button>
+                ))}
+            </div>
+          </div>
+        )}
         <div className="ui-card pad0">
-          {bookings.length === 0 ? (
-            <p className="ui-empty">{st(language, "none")}</p>
+          {listed.length === 0 ? (
+            <p className="ui-empty">
+              {st(language, bookings.length === 0 ? "none" : "f_none")}
+            </p>
           ) : (
             <>
               <div className="ui-tablewrap">
@@ -477,7 +552,7 @@ export function ShortStaysPage({
                     </tr>
                   </thead>
                   <tbody>
-                    {bookings.map((booking) => (
+                    {listed.map((booking) => (
                       <tr
                         className="ui-row"
                         key={booking.booking_id}
@@ -549,9 +624,9 @@ export function ShortStaysPage({
                 </table>
               </div>
               <div className="ui-tfoot">
-                {bookings.length === 1
+                {listed.length === 1
                   ? st(language, "n1")
-                  : st(language, "n", bookings.length)}
+                  : st(language, "n", listed.length)}
               </div>
             </>
           )}

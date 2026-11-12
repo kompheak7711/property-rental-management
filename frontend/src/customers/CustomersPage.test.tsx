@@ -19,6 +19,8 @@ import {
 import type { CustomerLedgerApi } from "../customerLedgerClient";
 import type { LeaseApi, LeaseResource } from "../leaseClient";
 import type { ReservationApi, ReservationResource } from "../reservationClient";
+import { todayInPhnomPenh } from "../shell/format";
+import type { BirthdaysApi } from "./Birthdays";
 import { CustomersPage } from "./CustomersPage";
 import type { CustomerCommandGate } from "./commands";
 
@@ -272,12 +274,14 @@ function show(
     reservations?: ReservationApi;
     ledger?: CustomerLedgerApi;
     onOpenLedger?: ((customerId: string) => void) | null;
+    birthdays?: BirthdaysApi;
   } = {},
 ) {
   return render(
     <CustomersPage
       active
       actorId="actor-1"
+      birthdaysApi={options.birthdays}
       capabilities={null}
       customerApi={options.customers ?? customerApi()}
       gate={options.gate ?? commandGate()}
@@ -387,6 +391,49 @@ describe("Customers list", () => {
         "Your account cannot read Leases or Reservations.",
       ),
     ).toBeInTheDocument();
+  });
+
+  it('TEST-FE-2127 (owner 12/11/2026: "check all card is link to correct place") "#/customers?show=birthdays" shows the coming birthdays above the Customers list; the plain address does not read them; Hide closes the card and gives the plain address without a new history step', async () => {
+    const birthdays = {
+      birthdays: vi.fn().mockResolvedValue({
+        items: [
+          {
+            customer_id: "customer-1",
+            customer_name: "Sok Dara",
+            role: "PRIMARY",
+            unit_id: "unit-u101",
+            unit_number: "U101",
+            birthday: todayInPhnomPenh(),
+          },
+        ],
+      }),
+    };
+    show({ birthdays });
+    expect(await screen.findByText("6 Customers")).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: /^Birthdays/ })).toBeNull();
+    expect(birthdays.birthdays).not.toHaveBeenCalled();
+
+    // Home's Birthdays card.
+    window.history.pushState(null, "", "#/customers?show=birthdays");
+    window.dispatchEvent(new HashChangeEvent("hashchange"));
+    const card = await screen.findByRole("region", { name: "Birthdays 1" });
+    expect(birthdays.birthdays).toHaveBeenCalledWith("property-1");
+    expect(within(card).getByText("Sok Dara")).toBeInTheDocument();
+    expect(within(card).getByText("today")).toBeInTheDocument();
+    // The card is above the table of Customers, and the list is still whole.
+    const table = screen.getByRole("table");
+    expect(
+      card.compareDocumentPosition(table) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(screen.getByText("6 Customers")).toBeInTheDocument();
+
+    const steps = window.history.length;
+    fireEvent.click(within(card).getByRole("button", { name: "Hide" }));
+    await waitFor(() => {
+      expect(screen.queryByRole("region", { name: /^Birthdays/ })).toBeNull();
+    });
+    expect(window.location.hash).toBe("#/customers");
+    expect(window.history.length).toBe(steps);
   });
 });
 

@@ -818,6 +818,44 @@ describe("Utilities page (V1-058 R4)", () => {
     fireEvent.change(box, { target: { value: "U101" } });
     expect(screen.getByRole("button", { name: "All Units" })).toBeTruthy();
   });
+
+  it('TEST-FE-2121 (owner 12/11/2026: "check all card is link to correct place") "#/utilities?show=missing" opens This month on every floor with Only not read ticked, so the list is the Meters still to read; opening it again puts the floor back to all floors', async () => {
+    window.location.hash = "#/utilities?show=missing";
+    show();
+    expect(await screen.findByText("1 of 6 meters read")).toBeTruthy();
+    const onlyMissing =
+      screen.getByLabelText<HTMLInputElement>("Only not read");
+    await waitFor(() => {
+      expect(onlyMissing.checked).toBe(true);
+    });
+    expect(
+      screen
+        .getByRole("button", { name: "This month" })
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
+    // The electricity Meter of U102 is read already; the one of U101 is not.
+    expect(screen.queryByText("U102", { selector: "b" })).toBeNull();
+    expect(screen.getByText("U101", { selector: "b" })).toBeTruthy();
+    expect(screen.getByText("U201", { selector: "b" })).toBeTruthy();
+
+    // By hand: one floor and every Meter. The card's address then shows the missing ones of
+    // every floor again.
+    fireEvent.change(screen.getByLabelText("All floors"), {
+      target: { value: "2" },
+    });
+    fireEvent.click(onlyMissing);
+    expect(screen.queryByText("U101", { selector: "b" })).toBeNull();
+    window.location.hash = "#/utilities?show=missing";
+    window.dispatchEvent(new HashChangeEvent("hashchange"));
+    await waitFor(() => {
+      expect(onlyMissing.checked).toBe(true);
+    });
+    expect(screen.getByLabelText<HTMLSelectElement>("All floors").value).toBe(
+      "all",
+    );
+    expect(screen.getByText("U101", { selector: "b" })).toBeTruthy();
+    expect(screen.queryByText("U102", { selector: "b" })).toBeNull();
+  });
 });
 
 describe("Utilities Meters tab (V1-058 R4b)", () => {

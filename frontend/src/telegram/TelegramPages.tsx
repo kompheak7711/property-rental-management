@@ -50,7 +50,7 @@ import {
   type VisitRequestsPage,
   type VisitStepBody,
 } from "./telegramClient";
-import { openPageInAddress } from "../shell/useHashPage";
+import { openPageInAddress, useShowFromAddress } from "../shell/useHashPage";
 import { hasText, type TelegramTextKey, tt } from "./text";
 import { PageHead } from "../shell/pageHead";
 
@@ -2622,7 +2622,17 @@ export function VisitRequestsPageView({
     active,
     api.visitRequests,
   );
-  const [card, setCard] = useState<VisitCard>("all");
+  const [card, setCardState] = useState<VisitCard>("all");
+  // UI v81 round 11: Home's "Viewing requests waiting" card opens "#/visitreqs?show=waiting"; a
+  // card chosen by hand is kept in the address too.
+  const keepShow = useShowFromAddress("visitreqs", (show) => {
+    const asked = VISIT_CARDS.find(([value]) => value === show)?.[0];
+    if (asked !== undefined || show === "all") setCardState(asked ?? "all");
+  });
+  const setCard = (next: VisitCard) => {
+    setCardState(next);
+    keepShow(next === "all" ? null : next);
+  };
   const [openId, setOpenId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
