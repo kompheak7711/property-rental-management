@@ -681,9 +681,10 @@ describe("Unit page", () => {
     expect(
       await screen.findByRole("heading", { name: "U101" }),
     ).toBeInTheDocument();
+    // Owner 14/11/2026: no line under the title; the Unit details card has these facts.
     expect(
-      screen.getByText("Floor 1 · Studio · 36 m² · CHETANA Residence"),
-    ).toBeInTheDocument();
+      screen.queryByText("Floor 1 · Studio · 36 m² · CHETANA Residence"),
+    ).toBeNull();
     for (const name of [
       "Unit details",
       "Current Lease",
