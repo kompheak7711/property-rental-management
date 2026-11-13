@@ -590,13 +590,40 @@ form.ss-form .ui-date input {
   justify-self: stretch;
 }
 
-/* On a phone the five Short stays tabs take two rows, so none is hidden off the edge. */
+/* Owner 13/11/2026: the Short stays tabs, and the Week / 2 weeks / Month switch, each have the
+   same width. */
+.ui-subtabs[role="tablist"]:has(#shortstays-cal) {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 10rem));
+}
+
+.ui-subtabs[role="tablist"]:has(#shortstays-cal) [role="tab"] {
+  justify-content: center;
+}
+
+.ss-views {
+  display: inline-grid;
+  grid-template-columns: repeat(3, 6.5rem);
+}
+
+.ss-views > button {
+  justify-content: center;
+}
+
 @media (max-width: 640px) {
   .ui-subtabs[role="tablist"]:has(#shortstays-cal) {
-    flex-wrap: wrap;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     margin-right: 0;
     margin-left: 0;
     padding: 2px 0;
     overflow: visible;
+  }
+
+  .ui-subtabs[role="tablist"]:has(#shortstays-cal) [role="tab"] {
+    padding: 0 6px;
+  }
+
+  .ss-views {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }

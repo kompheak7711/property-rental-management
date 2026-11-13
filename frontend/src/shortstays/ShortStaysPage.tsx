@@ -316,7 +316,7 @@ export function ShortStaysPage({
             </div>
             <div
               aria-label={st(language, "v_label")}
-              className="ui-seg"
+              className="ui-seg ss-views"
               role="group"
             >
               {(Object.keys(VIEWS) as View[]).map((value) => (
