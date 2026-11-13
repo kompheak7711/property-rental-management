@@ -82,12 +82,8 @@ const TEXT = {
   change_status: ["Change status", "ប្តូរស្ថានភាព"],
   update_unit: ["Update Unit", "ធ្វើបច្ចុប្បន្នភាពបន្ទប់"],
   details: ["Unit details", "ព័ត៌មានលម្អិតបន្ទប់"],
-  no_photo: ["No photo of this Unit yet.", "មិនទាន់មានរូបថតបន្ទប់នេះទេ។"],
+  no_photo: ["No photo yet", "មិនទាន់មានរូបថតទេ"],
   // new
-  photo_later: [
-    "Adding a photo comes with the file storage step.",
-    "ការបន្ថែមរូបថតនឹងមកជាមួយជំហានរក្សាទុកឯកសារ។",
-  ],
   size: ["Size", "ទំហំ"],
   m2: ["{0} m²", "{0} ម²"],
   beds: ["Bedrooms", "បន្ទប់គេង"],
@@ -169,10 +165,14 @@ const TEXT = {
   end: ["End Date", "ថ្ងៃបញ្ចប់"],
   invoices: ["Invoices for this Unit", "វិក្កយបត្រសម្រាប់បន្ទប់នេះ"],
   // new
-  invoices_later: [
-    "Unpaid Invoices for this Unit show here when Invoices are rebuilt (step R5).",
-    "វិក្កយបត្រមិនទាន់បង់សម្រាប់បន្ទប់នេះនឹងបង្ហាញនៅទីនេះ ពេលរៀបចំវិក្កយបត្រឡើងវិញ (ជំហាន R5)។",
+  // Property fix 5 (owner 14/11/2026): the current Lease's unpaid Invoices. Khmer new.
+  inv_none: ["No unpaid Invoices.", "គ្មានវិក្កយបត្រមិនទាន់បង់ទេ។"],
+  inv_no_lease: ["No Lease is running.", "គ្មានកិច្ចសន្យាជួលកំពុងដំណើរការទេ។"],
+  inv_failed: [
+    "The Invoices could not be loaded.",
+    "មិនអាចអានវិក្កយបត្របានទេ។",
   ],
+  inv_due: ["due {0}", "ផុតកំណត់ {0}"],
   history: ["History", "ប្រវត្តិ"],
   // new
   history_none: ["No history yet.", "មិនទាន់មានប្រវត្តិ។"],

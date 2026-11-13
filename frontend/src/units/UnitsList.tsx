@@ -136,7 +136,9 @@ export function UnitsList({
           </div>
         )}
       </PageHead>
-      <div className="ui-filters">
+      {/* Property fix 6 (owner 14/11/2026): on a phone the floor buttons share the width
+          equally and the type list is full width. */}
+      <div className="ui-filters ui-filters-even">
         <div aria-label={ut(language, "floor")} className="ui-seg" role="group">
           {["all", ...floors].map((value) => (
             <button
@@ -172,7 +174,9 @@ export function UnitsList({
           ))}
         </select>
       </div>
-      <div className="ui-kpis">
+      {/* Property fix 7 (owner 14/11/2026): on an iPad the four cards stay one row of small
+          cards, as on a laptop. */}
+      <div className="ui-kpis ui-kpis-row">
         {CARDS.map(([value, icon, tone]) => (
           <CountCard
             icon={icon}
@@ -214,7 +218,9 @@ export function UnitsList({
         ) : (
           <>
             <div className="ui-tablewrap">
-              <table className="ui-table">
+              {/* Property fix 6: on a phone each Unit is one card line: number, type and
+                  floor, status, and the date it runs until. */}
+              <table className="ui-table ui-pcards ui-unitlist">
                 <thead>
                   <tr>
                     <th scope="col">{ut(language, "col_unit")}</th>
@@ -262,14 +268,23 @@ export function UnitsList({
                             {unit.unit_number}
                           </a>
                         </td>
-                        <td>{floorText(language, unit.floor)}</td>
-                        <td>{typeName(data.lists, unit.unit_type, khmer)}</td>
-                        <td>
+                        <td className="pc-small">
+                          {floorText(language, unit.floor)}
+                        </td>
+                        <td className="pc-small">
+                          {typeName(data.lists, unit.unit_type, khmer)}
+                        </td>
+                        <td className="pc-end">
                           <UnitChip language={language} status={unit.status} />
                         </td>
-                        <td className="ui-num">
+                        <td className="ui-num pc-full pc-small pc-later">
                           {lease?.end_date != null ? (
-                            dayText(lease.end_date)
+                            <>
+                              <span className="pc-label">
+                                {ut(language, "until")}{" "}
+                              </span>
+                              {dayText(lease.end_date)}
+                            </>
                           ) : reservation !== null ? (
                             <>
                               {dayText(reservation.effective_expiration_date)}
@@ -319,7 +334,7 @@ export function NotForRentCard({
         </div>
       </div>
       <div className="ui-tablewrap">
-        <table className="ui-table">
+        <table className="ui-table ui-pcards">
           <thead>
             <tr>
               <th scope="col">{ut(language, "col_unit")}</th>
@@ -349,12 +364,14 @@ export function NotForRentCard({
                     {unit.unit_number}
                   </a>
                 </td>
-                <td>{floorText(language, unit.floor)}</td>
-                <td>{typeName(data.lists, unit.unit_type, khmer)}</td>
-                <td>
+                <td className="pc-small">{floorText(language, unit.floor)}</td>
+                <td className="pc-small">
+                  {typeName(data.lists, unit.unit_type, khmer)}
+                </td>
+                <td className="pc-end">
                   <Chip tone="neutral">{ut(language, "fr_no")}</Chip>
                 </td>
-                <td className="ui-num">
+                <td className="ui-num pc-full pc-small pc-later">
                   {ut(
                     language,
                     "fr_places",

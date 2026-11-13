@@ -32,6 +32,8 @@ const TEXT = {
   pr_mark_up: ["Mark-up", "ការបូកបន្ថែម"],
   pr_price: ["Price", "តម្លៃ"],
   pr_actions: ["Actions", "សកម្មភាព"],
+  // Property fix 1 (owner 14/11/2026): the row menu's button. Khmer new.
+  pr_change: ["Change", "កែប្រែ"],
   pr_edit: ["Edit", "កែ"],
   pr_prices: ["Prices", "តម្លៃ"],
   pr_set_mark_up: ["Mark-up", "ការបូកបន្ថែម"],
@@ -128,6 +130,8 @@ const TEXT = {
   sm_PURCHASE: ["Purchase", "ការទិញ"],
   sm_ADJUSTMENT_IN: ["Adjustment in", "កែតម្រូវចូល"],
   sm_ADJUSTMENT_OUT: ["Adjustment out", "កែតម្រូវចេញ"],
+  // Property fix 9: a move shown as one row. Khmer new.
+  sm_moved: ["Moved", "បានផ្ទេរ"],
   sm_TRANSFER_OUT: ["Transfer out", "ផ្ទេរចេញ"],
   sm_TRANSFER_IN: ["Transfer in", "ផ្ទេរចូល"],
   sm_SALE: ["Sale", "ការលក់"],

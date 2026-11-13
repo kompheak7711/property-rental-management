@@ -1,8 +1,10 @@
 // V1-058 R2: small pieces the rebuilt screens share (mock-up app.css: chip, kpi, dialog).
 
 import {
+  type CSSProperties,
   FormEvent,
   ReactNode,
+  useCallback,
   useEffect,
   useId,
   useRef,
@@ -707,5 +709,95 @@ export function Skeleton({
         <span className="ui-skeleton-line" key={index} />
       ))}
     </div>
+  );
+}
+
+/**
+ * Property fix 1 (owner 14/11/2026): a row's buttons in one small menu ("Change ▾"), so a table
+ * row stays one line high. The list is drawn fixed on the screen under (or over) its button, so
+ * a table box that scrolls never cuts it. It closes after a choice, a click outside, Escape, or
+ * when the page scrolls.
+ */
+export function RowMenu({
+  label,
+  name,
+  children,
+}: {
+  /** The button's word. */
+  label: string;
+  /** What the menu is for, for screen readers ("Change: Pillow"). */
+  name: string;
+  /** The menu's buttons. */
+  children: ReactNode;
+}) {
+  const box = useRef<HTMLDetailsElement>(null);
+  const [place, setPlace] = useState<CSSProperties | null>(null);
+  const close = useCallback(() => {
+    if (box.current !== null) box.current.open = false;
+    setPlace(null);
+  }, []);
+  useEffect(() => {
+    if (place === null) return;
+    const outside = (event: PointerEvent) => {
+      if (
+        event.target instanceof Node &&
+        box.current?.contains(event.target) !== true
+      )
+        close();
+    };
+    const key = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      close();
+      box.current?.querySelector("summary")?.focus();
+    };
+    document.addEventListener("pointerdown", outside);
+    document.addEventListener("keydown", key);
+    window.addEventListener("scroll", close, true);
+    window.addEventListener("resize", close);
+    return () => {
+      document.removeEventListener("pointerdown", outside);
+      document.removeEventListener("keydown", key);
+      window.removeEventListener("scroll", close, true);
+      window.removeEventListener("resize", close);
+    };
+  }, [place, close]);
+  return (
+    <details
+      className="ui-rowmenu"
+      onClick={(event) => {
+        // A choice inside the list closes the menu; the dialog it opens takes over.
+        if (
+          event.target instanceof HTMLElement &&
+          event.target.closest(".ui-rowmenu-list button") !== null
+        )
+          close();
+      }}
+      onToggle={(event) => {
+        const details = event.currentTarget;
+        if (!details.open) {
+          setPlace(null);
+          return;
+        }
+        const rect = details.querySelector("summary")?.getBoundingClientRect();
+        if (rect === undefined) return;
+        const right = Math.max(8, window.innerWidth - rect.right);
+        setPlace(
+          rect.bottom + 180 > window.innerHeight
+            ? { right, bottom: window.innerHeight - rect.top + 4 }
+            : { right, top: rect.bottom + 4 },
+        );
+      }}
+      ref={box}
+    >
+      <summary aria-label={name} className="ui-btn">
+        {label}
+        <Icon name="chevron" small />
+      </summary>
+      {place !== null && (
+        <div className="ui-rowmenu-list" style={place}>
+          {children}
+        </div>
+      )}
+    </details>
   );
 }

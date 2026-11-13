@@ -4094,3 +4094,299 @@ table.ui-table.ui-meters-unit td {
     min-width: 0;
   }
 }
+
+/* Property fix 1 (owner 14/11/2026): a row's buttons in one small menu. The list is fixed on
+   the screen (placed by RowMenu), so a scrolling table box never cuts it. */
+.ui-rowmenu > summary {
+  list-style: none;
+  white-space: nowrap;
+}
+.ui-rowmenu > summary::-webkit-details-marker {
+  display: none;
+}
+.ui-rowmenu > summary svg {
+  transform: rotate(90deg);
+}
+.ui-rowmenu-list {
+  position: fixed;
+  z-index: 40;
+  display: grid;
+  gap: 4px;
+  min-width: 180px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+.ui-rowmenu-list .ui-btn {
+  justify-content: flex-start;
+  width: 100%;
+  border-color: transparent;
+}
+.ui-rowmenu-list .ui-btn:hover {
+  border-color: var(--border);
+}
+
+/* Property fixes 1, 3, 6, 9 (owner 14/11/2026): on a phone a list table becomes one card per
+   row. Cells marked pc-full take the whole line, pc-hide stay hidden, pc-end sit at the right;
+   the column headings stay for screen readers only. */
+@media (max-width: 639px) {
+  table.ui-table.ui-pcards,
+  table.ui-table.ui-pcards tbody {
+    display: block;
+    min-width: 0;
+  }
+  table.ui-table.ui-pcards thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  table.ui-table.ui-pcards tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 10px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  table.ui-table.ui-pcards tr:last-child {
+    border-bottom: 0;
+  }
+  table.ui-table.ui-pcards td {
+    display: block;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    white-space: normal;
+  }
+  table.ui-table.ui-pcards td.pc-full {
+    flex: 1 1 100%;
+  }
+  table.ui-table.ui-pcards td.pc-hide {
+    display: none;
+  }
+  table.ui-table.ui-pcards td.pc-end {
+    margin-left: auto;
+    text-align: right;
+  }
+  table.ui-table.ui-pcards td.pc-small {
+    color: var(--muted);
+    font-size: 0.875rem;
+  }
+}
+
+/* Property fix 1: on a phone the stock words show beside the number ("In stock 8 Set"). */
+.ui-pcards .pc-label {
+  display: none;
+}
+@media (max-width: 639px) {
+  .ui-pcards .pc-label {
+    display: inline;
+  }
+  table.ui-table.ui-pcards td.pc-name {
+    flex: 1 1 60%;
+  }
+}
+/* Property fix 9: a long Details text wraps in its cell instead of running off the table. */
+table.ui-table td.ui-wrapcell {
+  min-width: 180px;
+  white-space: normal;
+}
+/* Property fix 10: every Unit card has the same Place column, and Holds lists one item a line. */
+table.ui-table.ui-loclist {
+  table-layout: fixed;
+  width: 100%;
+}
+table.ui-table.ui-loclist th:first-child {
+  width: 34%;
+}
+@media (max-width: 639px) {
+  table.ui-table.ui-loclist th:first-child {
+    width: 40%;
+  }
+}
+table.ui-table.ui-loclist td {
+  vertical-align: top;
+  white-space: normal;
+}
+ul.ui-holds {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+/* A small grey second line inside a table cell (Property fixes 3 and 9). */
+.ui-subline {
+  display: block;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  line-height: 1.35;
+}
+table.ui-table td.pc-name.ui-wrapcell {
+  min-width: 220px;
+}
+table.ui-table.ui-loclist {
+  min-width: 0;
+}
+table.ui-table.ui-loclist td,
+ul.ui-holds li {
+  overflow-wrap: break-word;
+  white-space: normal;
+}
+@media (max-width: 639px) {
+  /* Full-line cells come after the first line (number and status). */
+  table.ui-table.ui-pcards td.pc-later {
+    order: 2;
+  }
+}
+/* Property fix 3: the problem's type and words wrap within the table. */
+table.ui-table.ui-problist {
+  min-width: 0;
+}
+/* Property fix 4: a small box (the Monthly report's month) at the right end of the tab row. */
+.ui-headfield {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ui-headfield label {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+/* Property fix 3: on an iPad the Problem reports list leaves out Person in charge and Age. */
+@media (max-width: 1080px) {
+  table.ui-table.ui-problist .ui-wide {
+    display: none;
+  }
+}
+
+/* Property fix 8 (owner 14/11/2026): the New Problem report form. Its text box has the same
+   look as the other boxes (not the typewriter font), and each problem type is a tile: the
+   circle, the icon and the name together, 4 in a row on a laptop, 2 on a phone. */
+.ui-pageform textarea {
+  width: 100%;
+  min-height: 92px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--input);
+  color: var(--text);
+  font: inherit;
+  resize: vertical;
+}
+.ui-tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+@media (max-width: 1023px) {
+  .ui-tiles {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 639px) {
+  .ui-tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.ui-chk.ui-tile {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  align-content: center;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+.ui-chk.ui-tile:has(input:checked) {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+.ui-chk.ui-tile .ui-tile-name {
+  display: inline-flex;
+  align-items: center;
+  flex: 1 1 0;
+  gap: 6px;
+  min-width: 0;
+}
+.ui-chk.ui-tile .ui-sub2 {
+  flex-basis: 100%;
+  margin-left: 28px;
+}
+/* Property fix 5 (owner 14/11/2026): with no photo the photo box is a low strip. */
+.ui-photo.ui-photo-small {
+  aspect-ratio: auto;
+  min-height: 88px;
+}
+ul.ui-unitinv {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+ul.ui-unitinv li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+}
+ul.ui-unitinv li b {
+  margin-left: auto;
+}
+
+/* Property fixes 3 and 6 (owner 14/11/2026): on a phone a filter row's buttons share the width
+   equally (2 a row for 4 or 2 buttons, 3 a row for 5 or 6) and its list box is full width. */
+@media (max-width: 639px) {
+  .ui-filters.ui-filters-even {
+    display: grid;
+    gap: 8px;
+  }
+  .ui-filters.ui-filters-even .ui-seg {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    width: 100%;
+  }
+  .ui-filters.ui-filters-even .ui-seg:has(> :nth-child(5)) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .ui-filters.ui-filters-even .ui-seg > button {
+    justify-content: center;
+    width: 100%;
+    margin: 0;
+  }
+  .shell-view .ui-filters.ui-filters-even select.ui-sel {
+    width: 100%;
+  }
+}
+
+/* Property fix 7: an iPad keeps four small cards in one row (the laptop's short look). */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .ui-kpis.ui-kpis-row:not(.ui-om):not(.ui-tasks):has(
+      > :nth-child(n):last-child
+    )
+    > :nth-child(n) {
+    grid-column: span 3;
+  }
+  .ui-kpis.ui-kpis-row .ui-kpi {
+    grid-template-rows: auto;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 8px;
+    align-items: center;
+    min-height: 44px;
+    padding: 8px 12px;
+  }
+  .ui-kpis.ui-kpis-row .ui-kpi .ui-kpi-note {
+    display: none;
+  }
+  .ui-kpis.ui-kpis-row .ui-kpi .ui-kpi-value {
+    font-size: 1.1rem;
+  }
+}

@@ -64,7 +64,14 @@ type TextKey = keyof typeof TEXT;
 
 // What the device remembers about the menu (the same keys as the design, app23.js).
 /** Pages whose tab row is their head (owner 13/11/2026 23:44): no title or sub-line on show. */
-const TABBED_HEAD: ReadonlySet<string> = new Set(["invoices", "quotations"]);
+// Property fix 2 (owner 14/11/2026): Products, Stock movements and Storage locations too.
+const TABBED_HEAD: ReadonlySet<string> = new Set([
+  "invoices",
+  "quotations",
+  "products",
+  "stock",
+  "locations",
+]);
 
 const RAIL_KEY = "chetana-rail";
 const GROUPS_KEY = "chetana-navgrp";
