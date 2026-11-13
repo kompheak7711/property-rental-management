@@ -874,7 +874,7 @@ const TEXT = {
   rm_RESERVED: ["Reserved", "បានកក់ទុក"],
   rm_UNDER_MAINTENANCE: ["Repair", "កំពុងជួសជុល"],
   rm_OUT_OF_SERVICE: ["Closed", "បិទ"],
-  kp_full: ["Full tonight", "ពេញយប់នេះ"],
+  kp_full: ["Tonight", "យប់នេះ"], // owner 14/11/2026: was "Full tonight"
   kp_full_v: ["{0} of {1}", "{0} នៃ {1}"],
   kp_full_s: ["{0} free", "ទំនេរ {0}"],
   kp_arrive: ["Arriving today", "មកដល់ថ្ងៃនេះ"],

@@ -2482,7 +2482,7 @@ describe("Daily and weekly rent: Short stays", () => {
 
     it("TEST-FE-2180 shows the quick numbers: full tonight, arriving, leaving, not paid; booking sites only to the Owner and the Manager", async () => {
       show();
-      const full = (await screen.findByText("Full tonight")).closest("div");
+      const full = (await screen.findByText("Tonight")).closest("div");
       expect(full).toHaveTextContent("0 of 2");
       expect(full).toHaveTextContent("2 free");
       // Owner 13/11/2026 evening: Not paid yet opens the Not paid panel from the right.
