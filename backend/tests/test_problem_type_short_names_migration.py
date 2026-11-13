@@ -14,16 +14,21 @@ from test_lease_api_migration import migrated_database_url as migrated_database_
 
 REVISION = "20270725_411"
 PREVIOUS = "20270724_401"
+# Owner 14/11/2026: a long name takes two boxes, so 412 puts Safety back before Other.
+SAFETY_BACK = "20270725_412"
 
 
-def test_migration_411_follows_401_is_the_head_and_is_forward_only() -> None:
+def test_migrations_411_and_412_follow_401_and_are_forward_only() -> None:
     config = Config(str(Path(__file__).parents[1] / "alembic.ini"))
     scripts = ScriptDirectory.from_config(config)
     revision = scripts.get_revision(REVISION)
     assert revision is not None and revision.down_revision == PREVIOUS
-    assert scripts.get_heads() == [REVISION]
-    with pytest.raises(NotImplementedError, match="forward-only"):
-        revision.module.downgrade()
+    safety = scripts.get_revision(SAFETY_BACK)
+    assert safety is not None and safety.down_revision == REVISION
+    assert scripts.get_heads() == [SAFETY_BACK]
+    for step in (revision, safety):
+        with pytest.raises(NotImplementedError, match="forward-only"):
+            step.module.downgrade()
 
 
 def test_the_types_have_the_short_names_and_the_new_order(migrated_database_url: str) -> None:
@@ -38,12 +43,12 @@ def test_the_types_have_the_short_names_and_the_new_order(migrated_database_url:
         (3, "AIR_CONDITIONER", "Air conditioner"),
         (4, "DOOR_LOCK", "Door/Lock"),
         (5, "FURNITURE", "Furniture/appliance"),
-        (6, "SAFETY", "Safety (fire, gas, smoke)"),
-        (7, "WINDOW", "Window"),
-        (8, "INTERNET", "Internet"),
-        (9, "PESTS", "Pests"),
-        (10, "CLEANING", "Cleaning"),
-        (11, "NOISE", "Noise"),
+        (6, "WINDOW", "Window"),
+        (7, "INTERNET", "Internet"),
+        (8, "PESTS", "Pests"),
+        (9, "CLEANING", "Cleaning"),
+        (10, "NOISE", "Noise"),
+        (11, "SAFETY", "Safety (fire, gas, smoke)"),
         (12, "OTHER", "Other"),
     ]
     # The Khmer names and Safety's "always urgent" stay as they were.
