@@ -331,16 +331,6 @@ export function UnitDetail({
     (["VACANT", "CLEANING", "UNDER_MAINTENANCE"].includes(unit.status) ||
       (unit.status === "RESERVED" && reservation !== null && draft === null));
   const type = typeName(lists, unit.unit_type, khmer);
-  const sub = [
-    floorText(language, unit.floor),
-    type,
-    unit.size_square_metres === null
-      ? null
-      : ut(language, "m2", Number(unit.size_square_metres)),
-    "CHETANA Residence",
-  ]
-    .filter((part) => part !== null)
-    .join(" · ");
 
   const fact = (label: string, value: ReactNode) => (
     <div className="ui-fact" key={label}>
@@ -598,7 +588,6 @@ export function UnitDetail({
           </>
         }
         numeric
-        summary={sub}
         title={unit.unit_number}
       />
       {warning !== null && (
