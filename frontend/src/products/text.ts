@@ -175,8 +175,6 @@ const TEXT = {
   e_reason: ["Enter the reason.", "សូមបញ្ចូលមូលហេតុ។"],
   // Locations tab
   lo_title: ["Storage locations", "ទីតាំង"],
-  lo_unit: ["Unit {0}", "បន្ទប់ {0}"],
-  lo_not_for_rent: ["Not for rent", "មិនជួល"],
   lo_place: ["Place", "ទីតាំង"],
   lo_holds: ["Holds", "មាន"],
   lo_empty: ["Empty", "ទទេ"],

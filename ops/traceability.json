@@ -69995,7 +69995,7 @@
       "notes": "Receive payment in riel and the rate confirm no longer multiply by 1.005 or write 50; the unused Settings rule Riel rate: ABA Sell rate plus is removed."
     },
     {
-      "test_id": "test_migration_410_follows_the_riel_rate_join",
+      "test_id": "test_migration_410_follows_the_problem_type_order",
       "upstream_ids": [
         "DL-236",
         "DB-HK-001"
@@ -70003,7 +70003,7 @@
       "test_level": "integration",
       "test_path": "backend/tests/test_housekeeping_task_assign_migration.py",
       "status": "implemented",
-      "notes": "Migration 20270725_410 follows the ui-v81 riel rate join 20270724_401 and is forward-only."
+      "notes": "Migration 20270725_410 follows 20270725_412 (Problem type order) on ui-v81 and is forward-only."
     },
     {
       "test_id": "test_a_task_is_given_to_one_person_and_names_who_finished_it",

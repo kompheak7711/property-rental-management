@@ -57,11 +57,11 @@ def only(found: dict[str, Any]) -> dict[str, Any]:
     return dict(tasks[0])
 
 
-def test_migration_410_follows_the_riel_rate_join() -> None:
+def test_migration_410_follows_the_problem_type_order() -> None:
     config = Config(str(Path(__file__).parents[1] / "alembic.ini"))
     scripts = ScriptDirectory.from_config(config)
     revision = scripts.get_revision(REVISION)
-    assert revision is not None and revision.down_revision == "20270724_401"
+    assert revision is not None and revision.down_revision == "20270725_412"
     with pytest.raises(RuntimeError, match="forward-only"):
         revision.module.downgrade()
 

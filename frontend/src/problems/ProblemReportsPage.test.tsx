@@ -373,6 +373,58 @@ describe("Building › Problem reports (V1.1 part 7, DL-124)", () => {
     expect(whereText("en", { ...BP1, floor: null })).toBe("Lift");
   });
 
+  it("TEST-FE-2214 (owner 14/11/2026) the New Problem report form: a long type name takes two boxes, Yes and No sit in one row, and Save is the last button", async () => {
+    window.location.hash = "#/problems/new";
+    const api = apiOf({
+      choices: vi.fn(() =>
+        Promise.resolve({
+          ...CHOICES,
+          types: [
+            WATER,
+            {
+              ...WATER,
+              id: "t-air",
+              code: "AIR_CONDITIONER",
+              name_en: "Air conditioner",
+            },
+            {
+              ...WATER,
+              id: "t-furniture",
+              code: "FURNITURE",
+              name_en: "Furniture/appliance",
+            },
+            SAFETY,
+          ],
+        }),
+      ),
+    });
+    show(api, STAFF);
+    const save = await screen.findByRole("button", { name: "Save report" });
+    // A long name takes two boxes on one line instead of breaking.
+    const tiles = [...document.querySelectorAll(".ui-tile")];
+    expect(
+      tiles.map((tile) => [
+        tile.querySelector(".ui-tile-name > span")?.textContent,
+        tile.className.replace("ui-chk ui-tile", "").trim(),
+      ]),
+    ).toEqual([
+      ["Water", ""],
+      ["Air conditioner", "ui-tile-long"],
+      ["Furniture/appliance", "ui-tile-long"],
+      ["Safety (fire, gas, smoke)", "ui-tile-wide"],
+    ]);
+    const urgent = screen.getByRole("group", { name: "Is it urgent?" });
+    expect(urgent.classList.contains("ui-radios-row")).toBe(true);
+    expect(within(urgent).getAllByRole("radio")).toHaveLength(2);
+    const buttons = within(element(save.closest(".ui-actions"))).getAllByRole(
+      "button",
+    );
+    expect(buttons.map((button) => button.textContent)).toEqual([
+      "Cancel",
+      "Save report",
+    ]);
+  });
+
   it("TEST-FE-1221 New Problem report checks the form, Safety is always urgent, the Building kind asks for the shared place and floor, and Same problem saves it joined to an open report here", async () => {
     window.location.hash = "#/problems/new";
     const api = apiOf();

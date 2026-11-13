@@ -6067,7 +6067,7 @@ Migration `20270724_393_riel_rate_no_markup` (on `20270723_392`). Forward-only. 
 
 ## DB-HK-001 — A Housekeeping task is given to one person (DL-236)
 
-Migration `20270725_410_housekeeping_task_assign` (Leasing range, on `20270724_401`). Forward-only. No money, Invoice or Unit status change; no task made before is changed.
+Migration `20270725_410_housekeeping_task_assign` (Leasing range, on `20270725_412`). Forward-only. No money, Invoice or Unit status change; no task made before is changed.
 
 - `app.housekeeping_tasks` gets `assigned_to`, `assigned_at` and `assigned_by` (each a nullable `uuid`/`timestamptz`; the two ids reference `app.actor_identities`, `ON DELETE RESTRICT`). `housekeeping_tasks_assign_shape` keeps `assigned_at` and `assigned_by` both set or both empty, and a task given to a person always has them. Partial index `housekeeping_tasks_assigned_idx` on `assigned_to`.
 - `app.protect_short_stay_step()` (the step guard of migration `20270602_312`) also lets a `TO_DO` task change only `assigned_to`, `assigned_at`, `assigned_by` and its `version` (plus one). Every other rule of the guard is unchanged.

@@ -237,12 +237,12 @@ export function QuotationsPage({
               icon={icon}
               key={value}
               label={qt(language, key)}
-              note={qt(language, `${key}_s` as QuotationsTextKey)}
               onPress={() => {
                 setCard(card === value && value !== "all" ? "all" : value);
               }}
               pressed={card === value}
               tone={count === 0 && value !== "all" ? "none" : tone}
+              top
               value={count}
             />
           );

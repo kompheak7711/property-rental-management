@@ -592,8 +592,9 @@ describe("Building › Products (V1.1 part 4, DL-121)", () => {
   it("TEST-FE-1146 Locations: the warehouse shows every place with what it holds, a Unit for rent only when it holds items, and Add place gives the next number", async () => {
     const api = apiOf();
     show("locations", api, MANAGER);
-    const warehouse = await screen.findByRole("region", { name: /Unit W01/ });
-    expect(within(warehouse).getByText("Not for rent")).toBeTruthy();
+    // Owner 14/11/2026: the card is named by the Unit number only, with no "Not for rent".
+    const warehouse = await screen.findByRole("region", { name: "W01" });
+    expect(within(warehouse).queryByText("Not for rent")).toBeNull();
     const first = within(warehouse).getByText("Cabinet 1").closest("tr");
     expect(
       [...(first?.querySelectorAll("ul.ui-holds li") ?? [])].map(
@@ -602,8 +603,8 @@ describe("Building › Products (V1.1 part 4, DL-121)", () => {
     ).toEqual(["P0001 Fan × 2", "P0003 Old lamp × 2"]);
     const second = within(warehouse).getByText("Cabinet 2").closest("tr");
     expect(second?.textContent).toContain("Empty");
-    expect(screen.getByRole("region", { name: "Unit U101" })).toBeTruthy();
-    expect(screen.queryByRole("region", { name: "Unit U102" })).toBeNull();
+    expect(screen.getByRole("region", { name: "U101" })).toBeTruthy();
+    expect(screen.queryByRole("region", { name: "U102" })).toBeNull();
     fireEvent.click(
       within(warehouse).getByRole("button", { name: "Add place: W01" }),
     );
@@ -626,7 +627,7 @@ describe("Building › Products (V1.1 part 4, DL-121)", () => {
     );
     cleanup();
     show("locations", apiOf(), STAFF);
-    await screen.findByRole("region", { name: /Unit W01/ });
+    await screen.findByRole("region", { name: "W01" });
     expect(screen.queryByRole("button", { name: /Add place/ })).toBeNull();
   });
 

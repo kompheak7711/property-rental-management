@@ -30,7 +30,7 @@ day off); the task then names who finished it. No money, Invoice or Unit status 
 Forward-only.
 
 Revision ID: 20270725_410
-Revises: 20270724_401
+Revises: 20270725_412
 """
 
 from collections.abc import Sequence
@@ -38,7 +38,7 @@ from collections.abc import Sequence
 from alembic import op
 
 revision: str = "20270725_410"
-down_revision: str | None = "20270724_401"
+down_revision: str | None = "20270725_412"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

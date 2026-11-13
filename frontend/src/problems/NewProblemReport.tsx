@@ -61,6 +61,13 @@ function BackToList({ language }: { language: Language }) {
   return <BackLink language={language} parent="problems" />;
 }
 
+/** Owner 14/11/2026: a type name too long for one box takes two boxes on one line instead of
+ *  breaking ("Air conditioner" on a phone; "Safety (fire, gas, smoke)" everywhere). */
+function tileWidth(name: string): string {
+  if (name.length > 20) return " ui-tile-wide";
+  return name.length > 11 ? " ui-tile-long" : "";
+}
+
 /** DL-132: reads the finding, then opens the form filled from it. */
 export function NewProblemReportFromFinding({
   findingId,
@@ -317,7 +324,7 @@ export function NewProblemReportForm({
       {/* Property fix 4 (owner 14/11/2026): Back on top, then the form's own title. */}
       <PageHeader back={back} title={pt(language, "add_t")} />
       <form
-        className="ui-card ui-form ui-pageform"
+        className="ui-card ui-form ui-pageform ui-probform"
         noValidate
         onSubmit={submit}
       >
@@ -356,7 +363,7 @@ export function NewProblemReportForm({
                 </label>
               ))}
             </fieldset>
-            <fieldset className="ui-radios">
+            <fieldset className="ui-radios ui-radios-row">
               <legend>{pt(language, "add_how")}</legend>
               {(["PHONE", "WALKIN", "SEEN"] as const).map((value) => (
                 <label className="ui-chk" key={value}>
@@ -534,7 +541,10 @@ export function NewProblemReportForm({
           </legend>
           <div className="ui-tiles">
             {choices.types.map((entry, index) => (
-              <label className="ui-chk ui-tile" key={entry.id}>
+              <label
+                className={`ui-chk ui-tile${tileWidth(typeName(language, entry))}`}
+                key={entry.id}
+              >
                 <input
                   checked={typeId === entry.id}
                   disabled={busy}
@@ -547,7 +557,7 @@ export function NewProblemReportForm({
                 />
                 <span className="ui-tile-name">
                   <Icon name={typeIcon(entry)} small />
-                  {typeName(language, entry)}
+                  <span>{typeName(language, entry)}</span>
                 </span>
                 {entry.always_urgent && (
                   <span className="ui-sub2 warn">{pt(language, "always")}</span>
@@ -594,7 +604,7 @@ export function NewProblemReportForm({
           />
         </div>
         <div className="ui-row2">
-          <fieldset className="ui-radios">
+          <fieldset className="ui-radios ui-radios-row">
             <legend>{pt(language, "add_urgent")}</legend>
             {yesNo("np-urgent", isUrgent, setUrgent, always)}
             <Missing
@@ -604,14 +614,14 @@ export function NewProblemReportForm({
             />
           </fieldset>
           {kind === "UNIT" && (
-            <fieldset className="ui-radios">
+            <fieldset className="ui-radios ui-radios-row">
               <legend>{pt(language, "add_enter")}</legend>
               {yesNo("np-enter", mayEnter, setMayEnter)}
             </fieldset>
           )}
         </div>
         {kind === "UNIT" && (
-          <fieldset className="ui-radios">
+          <fieldset className="ui-radios ui-radios-row">
             <legend>{pt(language, "add_best")}</legend>
             {(["AM", "PM", "ANY"] as const).map((value) => (
               <label className="ui-chk" key={value}>
