@@ -14,7 +14,9 @@ import {
 import { DateInput, isDay } from "../shell/DateInput";
 import { dayText } from "../shell/format";
 import { Icon } from "../shell/icons";
+import { PageHeader, RightNote } from "../shell/layouts";
 import { hashForPage } from "../shell/navigation";
+import { PageHead } from "../shell/pageHead";
 import { Chip, CountCard, Dialog } from "../shell/ui";
 import type { Language } from "../signInText";
 import type { UnitResource } from "../unitClient";
@@ -100,15 +102,17 @@ function ManagerButton({
   primary?: boolean;
 }) {
   return (
-    <button
-      className={`ui-btn${primary ? " primary" : ""}`}
-      onClick={onClick}
-      type="button"
-    >
-      <Icon name={icon} />
-      {label}
-      <span className="ui-badge">{utt(language, "manager")}</span>
-    </button>
+    <>
+      <button
+        className={`ui-btn${primary ? " primary" : ""}`}
+        onClick={onClick}
+        type="button"
+      >
+        <Icon name={icon} />
+        {label}
+      </button>
+      <RightNote>{utt(language, "manager_only")}</RightNote>
+    </>
   );
 }
 
@@ -168,20 +172,24 @@ export function MetersTab({
 
   return (
     <>
-      {canManage && (
-        <div className="ui-actions">
-          <ManagerButton
-            icon="plus"
-            label={utt(language, "mt_add")}
-            language={language}
-            onClick={() => {
-              setToast(null);
-              setAdding(true);
-            }}
-            primary
-          />
-        </div>
-      )}
+      {/* UI v81 Utilities batch: Add meter is the page's button, on the right of the head. */}
+      <PageHead
+        actions={
+          canManage ? (
+            <ManagerButton
+              icon="plus"
+              label={utt(language, "mt_add")}
+              language={language}
+              onClick={() => {
+                setToast(null);
+                setAdding(true);
+              }}
+              primary
+            />
+          ) : undefined
+        }
+        sub={<p>{utt(language, "sub")}</p>}
+      />
       <div className="ui-filters">
         <UnitBox
           customers={data.customers}
@@ -491,38 +499,44 @@ export function MeterDetail({
 
   return (
     <>
-      {back}
-      <div className="ui-hrow">
-        <h2 className="ui-num" data-record-title="">
-          {meter.serial_number}
-        </h2>
-        <StateChip language={language} meter={meter} />
-        {canManage && meter.current && readings.length > 0 && (
-          <div className="ui-actions">
-            {meterState(meter) === "working" && (
+      {/* UI v81 Utilities batch: the shared record head, Back on top, the serial as the
+          page's heading and the buttons on the right with "Manager only" beside them. */}
+      <PageHeader
+        actions={
+          canManage &&
+          meter.current &&
+          readings.length > 0 && (
+            <>
+              {meterState(meter) === "working" && (
+                <ManagerButton
+                  icon="alert"
+                  label={utt(language, "mt_report")}
+                  language={language}
+                  onClick={() => {
+                    setToast(null);
+                    setReporting(true);
+                  }}
+                />
+              )}
               <ManagerButton
-                icon="alert"
-                label={utt(language, "mt_report")}
+                icon="swap"
+                label={utt(language, "replace")}
                 language={language}
                 onClick={() => {
                   setToast(null);
-                  setReporting(true);
+                  setReplacing(true);
                 }}
+                primary={meterState(meter) === "broken"}
               />
-            )}
-            <ManagerButton
-              icon="swap"
-              label={utt(language, "replace")}
-              language={language}
-              onClick={() => {
-                setToast(null);
-                setReplacing(true);
-              }}
-              primary={meterState(meter) === "broken"}
-            />
-          </div>
-        )}
-      </div>
+            </>
+          )
+        }
+        back={back}
+        badge={<StateChip language={language} meter={meter} />}
+        numeric
+        summary={`${utt(language, meter.utility_type)} · ${owner?.unit_number ?? "—"}${who !== null && !who.muted ? ` · ${who.text}` : ""}`}
+        title={meter.serial_number}
+      />
       {toast !== null && (
         <div className={`ui-notice ${toast.ok ? "ok" : "warn"}`} role="status">
           <Icon name={toast.ok ? "check" : "alert"} />

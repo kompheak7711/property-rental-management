@@ -728,6 +728,16 @@ html[lang="km"] .shell-grph {
   line-height: 1.25;
 }
 
+/* UI v81 Utilities batch: the buttons in the head sit in one row with a gap, and a "Manager
+   only" note beside a button is centred on it. */
+.shell-head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
 .shell-head-sub:empty,
 .shell-head-actions:empty {
   display: none;

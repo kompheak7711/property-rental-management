@@ -362,9 +362,10 @@ describe("Utilities page (V1-058 R4)", () => {
     // The replaced meter of U201 is not on the list; the new one is.
     expect(within(rowOf("U201")).getByText("EL-U201")).toBeTruthy();
     expect(screen.queryByText("EL-OLD-201")).toBeNull();
+    // UI v81 Utilities batch: the switch says how many are left, in the design's words.
     expect(
       screen.getByRole("button", { name: /Electricity/ }).textContent,
-    ).toContain("1/3");
+    ).toContain("2 to read");
 
     fireEvent.change(screen.getByLabelText("All floors"), {
       target: { value: "2" },
@@ -1924,5 +1925,50 @@ describe("Utilities Import readings (V1-058 R4c)", () => {
       urgent: false,
       unit_id: "unit-U101",
     });
+  });
+});
+
+describe("Utilities on design v81 (UI v81 module batch 4)", () => {
+  it("TEST-FE-2139 Import is the page's button in the head on reading day, not in the filter row, and the progress line says how many are left", async () => {
+    show();
+    await screen.findAllByText(/meters read/);
+    const head = document.querySelector(".ui-head");
+    if (!(head instanceof HTMLElement)) throw new Error("no head");
+    expect(within(head).getByText("Meter readings and meters")).toBeTruthy();
+    expect(within(head).getByRole("button", { name: "Import" })).toBeTruthy();
+    const filters = document.querySelector(".ui-filters");
+    if (!(filters instanceof HTMLElement)) throw new Error("no filters");
+    expect(
+      within(filters).queryByRole("button", { name: "Import" }),
+    ).toBeNull();
+    const line = document.querySelector(".ui-progline");
+    if (!(line instanceof HTMLElement)) throw new Error("no progress");
+    expect(line.querySelector(".ui-chip")?.textContent).toMatch(
+      /^\d+ to read$/,
+    );
+  });
+
+  it("TEST-FE-2140 Add meter is the page's button in the head, with Manager only beside it and not inside it; the meter page has the shared record head and does the same for Replace meter", async () => {
+    window.location.hash = "#/utilities/meters";
+    show();
+    await screen.findByText("7 meters");
+    const head = document.querySelector(".ui-head");
+    if (!(head instanceof HTMLElement)) throw new Error("no head");
+    const add = within(head).getByRole("button", { name: "Add meter" });
+    expect(add.textContent).not.toMatch(/Manager/);
+    expect(add.nextElementSibling?.textContent).toBe("Manager only");
+    window.location.hash = "#/utilities/meter%3Ael-101";
+    window.dispatchEvent(new HashChangeEvent("hashchange"));
+    const replace = await screen.findByRole("button", {
+      name: "Replace meter",
+    });
+    expect(replace.nextElementSibling?.textContent).toBe("Manager only");
+    // The meter page has the shared record head: Back on top, the serial as the h1.
+    const record = replace.closest("header.ui-pagehead");
+    if (!(record instanceof HTMLElement)) throw new Error("no record head");
+    expect(record.firstElementChild?.textContent).toMatch(/Back to Meters/);
+    expect(
+      within(record).getByRole("heading", { level: 1, name: "EL-U101" }),
+    ).toBeTruthy();
   });
 });

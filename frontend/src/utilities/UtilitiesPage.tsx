@@ -141,9 +141,13 @@ export function UtilitiesPage({
 
   return (
     <>
-      <PageHead>
-        <p>{utt(language, "sub")}</p>
-      </PageHead>
+      {/* The readings and Meters tabs draw the head themselves, with their button on the
+          right, and a meter page has its own record head (UI v81 Utilities batch). */}
+      {data === null && (
+        <PageHead>
+          <p>{utt(language, "sub")}</p>
+        </PageHead>
+      )}
       {tab !== "meter" && (
         <nav aria-label={utt(language, "sub")} className="ui-subtabs">
           <a
@@ -293,8 +297,11 @@ function ReadingsTab({
       const rows = entryRows(data, kind, readingDay).filter(working);
       return [
         kind,
-        [rows.filter((row) => row.saved !== null).length, rows.length],
-      ];
+        [rows.filter((row) => row.saved !== null).length, rows.length] as [
+          number,
+          number,
+        ],
+      ] as const;
     }),
   );
   const floors = [...new Set(data.units.map((item) => item.floor))].sort(
@@ -311,6 +318,24 @@ function ReadingsTab({
 
   return (
     <>
+      {/* UI v81 Utilities batch: Import is the page's button, on the right of the head. */}
+      <PageHead
+        actions={
+          (entry && canSave) || earlyImport ? (
+            <button
+              className="ui-btn"
+              onClick={() => {
+                setImporting(true);
+              }}
+              type="button"
+            >
+              <Icon name="upload" small />
+              {utt(language, "im_btn")}
+            </button>
+          ) : undefined
+        }
+        sub={<p>{utt(language, "sub")}</p>}
+      />
       <div className="ui-filters">
         <UnitBox
           customers={data.customers}
@@ -386,7 +411,9 @@ function ReadingsTab({
                 {entry && (
                   <span className="ui-num ui-muted">
                     {" "}
-                    {read}/{all}
+                    {read < all
+                      ? utt(language, "to_read", all - read)
+                      : utt(language, "all_read")}
                   </span>
                 )}
               </button>
@@ -423,31 +450,7 @@ function ReadingsTab({
               />
               {utt(language, "only_missing")}
             </label>
-            {canSave && (
-              <button
-                className="ui-btn ui-push"
-                onClick={() => {
-                  setImporting(true);
-                }}
-                type="button"
-              >
-                <Icon name="upload" small />
-                {utt(language, "im_btn")}
-              </button>
-            )}
           </>
-        )}
-        {earlyImport && (
-          <button
-            className="ui-btn ui-push"
-            onClick={() => {
-              setImporting(true);
-            }}
-            type="button"
-          >
-            <Icon name="upload" small />
-            {utt(language, "im_btn")}
-          </button>
         )}
       </div>
       {importing && (
@@ -626,6 +629,9 @@ function EntryList({
           <b id="ut-progress" tabIndex={-1}>
             {utt(language, "progress", read, all)}
           </b>
+          {read < all && (
+            <Chip tone="warn">{utt(language, "to_read", all - read)}</Chip>
+          )}
           <div
             aria-label={utt(language, "progress", read, all)}
             aria-valuemax={all}
