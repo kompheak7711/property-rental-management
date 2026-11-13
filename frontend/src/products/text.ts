@@ -33,7 +33,8 @@ const TEXT = {
   pr_price: ["Price", "តម្លៃ"],
   pr_actions: ["Actions", "សកម្មភាព"],
   // Property fix 1 (owner 14/11/2026): the row menu's button. Khmer new.
-  pr_change: ["Change", "កែប្រែ"],
+  // Owner 14/11/2026: the row menu is "Edit" (shorter); its first choice is "Details".
+  pr_details: ["Details", "ព័ត៌មានលម្អិត"],
   pr_edit: ["Edit", "កែ"],
   pr_prices: ["Prices", "តម្លៃ"],
   pr_set_mark_up: ["Mark-up", "ការបូកបន្ថែម"],

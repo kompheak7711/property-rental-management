@@ -251,9 +251,9 @@ function show(
 }
 
 // Property fix 1 (owner 14/11/2026): a product's Edit, Mark-up, Cost and Prices buttons sit
-// in its one "Change" menu, so a test opens that menu first.
-async function openChange(scope: HTMLElement, name: string) {
-  const summary = within(scope).getByLabelText(`Change: ${name}`);
+// in its one "Edit" menu, so a test opens that menu first.
+async function openEdit(scope: HTMLElement, name: string) {
+  const summary = within(scope).getByLabelText(`Edit: ${name}`);
   fireEvent.click(summary);
   await waitFor(() => {
     expect(
@@ -291,12 +291,12 @@ describe("Building › Products (V1.1 part 4, DL-121)", () => {
     const service = within(table).getByText("Room cleaning").closest("tr");
     expect(service?.textContent).toContain("Service");
     // Staff see the products and their prices, but add and change nothing.
-    await openChange(table, "Fan");
+    await openEdit(table, "Fan");
     expect(
       within(table).queryByRole("button", { name: "Add product" }),
     ).toBeNull();
     expect(
-      within(table).queryByRole("button", { name: "Edit: Fan" }),
+      within(table).queryByRole("button", { name: "Details: Fan" }),
     ).toBeNull();
     expect(
       within(table).queryByRole("button", { name: "Mark-up: Fan" }),
@@ -312,17 +312,17 @@ describe("Building › Products (V1.1 part 4, DL-121)", () => {
 
     show("products", apiOf(), MANAGER);
     const managed = await screen.findByRole("region", { name: "Products" });
-    await openChange(managed, "Fan");
+    await openEdit(managed, "Fan");
     expect(
       within(managed).getByRole("button", { name: "Add product" }),
     ).toBeTruthy();
     expect(
-      within(managed).getByRole("button", { name: "Edit: Fan" }),
+      within(managed).getByRole("button", { name: "Details: Fan" }),
     ).toBeTruthy();
     expect(
       within(managed).queryByRole("button", { name: "Mark-up: Fan" }),
     ).toBeNull();
-    await openChange(managed, "Room cleaning");
+    await openEdit(managed, "Room cleaning");
     expect(
       within(managed).getByRole("button", { name: "Cost: Room cleaning" }),
     ).toBeTruthy();
@@ -379,8 +379,8 @@ describe("Building › Products (V1.1 part 4, DL-121)", () => {
       "Room cleaning deep added.",
     );
 
-    await openChange(table, "Fan");
-    fireEvent.click(screen.getByRole("button", { name: "Edit: Fan" }));
+    await openEdit(table, "Fan");
+    fireEvent.click(screen.getByRole("button", { name: "Details: Fan" }));
     dialog = screen.getByRole("dialog", { name: "Edit P0001" });
     // An Item stays an Item.
     expect(
@@ -405,7 +405,7 @@ describe("Building › Products (V1.1 part 4, DL-121)", () => {
       });
     });
 
-    await openChange(table, "Fan");
+    await openEdit(table, "Fan");
     fireEvent.click(
       await screen.findByRole("button", { name: "Mark-up: Fan" }),
     );

@@ -514,19 +514,19 @@ function ProductsTable({
                       {/* Property fix 1 (owner 14/11/2026): the row's buttons in one small
                           menu, so every row stays one line high. */}
                       <RowMenu
-                        label={pt(language, "pr_change")}
-                        name={`${pt(language, "pr_change")}: ${name}`}
+                        label={pt(language, "pr_edit")}
+                        name={`${pt(language, "pr_edit")}: ${name}`}
                       >
                         {may("products.manage") && (
                           <button
-                            aria-label={`${pt(language, "pr_edit")}: ${name}`}
+                            aria-label={`${pt(language, "pr_details")}: ${name}`}
                             className="ui-btn"
                             onClick={() => {
                               onOpen({ kind: "edit", product });
                             }}
                             type="button"
                           >
-                            {pt(language, "pr_edit")}
+                            {pt(language, "pr_details")}
                           </button>
                         )}
                         {may("products.prices") && (
