@@ -74,6 +74,23 @@
   }
 }
 
+/* iPad: the guests of today on the left, Rooms to clean and Not paid beside them, so the chart
+   is not pushed far down. */
+@media (min-width: 641px) and (max-width: 1100px) {
+  .ss-today {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    align-items: start;
+  }
+
+  .ss-today > .ui-notice {
+    grid-column: 1 / -1;
+  }
+
+  .ss-today > section:first-of-type {
+    grid-row: span 2;
+  }
+}
+
 .ss-kpis {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -109,11 +126,8 @@ a.ss-kpi > b {
 }
 
 a.ss-kpi > span + span {
-  overflow: hidden;
   color: var(--text-2);
   font-size: 0.78rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 a.ss-kpi.warn {
@@ -301,6 +315,7 @@ tr.ss-grp > th.ss-unitcol {
 }
 
 tr.ss-grp > td.full {
+  background: var(--warn-bg);
   color: var(--warn);
 }
 
@@ -597,4 +612,15 @@ form.ss-form .ui-date input {
 }
 .ss-pricemsg > .ss-message {
   justify-self: stretch;
+}
+
+/* On a phone the five Short stays tabs take two rows, so none is hidden off the edge. */
+@media (max-width: 640px) {
+  .ui-subtabs[role="tablist"]:has(#shortstays-cal) {
+    flex-wrap: wrap;
+    margin-right: 0;
+    margin-left: 0;
+    padding: 2px 0;
+    overflow: visible;
+  }
 }

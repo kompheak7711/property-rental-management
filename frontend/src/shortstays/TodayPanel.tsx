@@ -345,8 +345,10 @@ export function TodayPanel({
                 return (
                   <li key={booking.booking_id}>
                     <a href={open(booking)}>
-                      <b>{booking.guest_name}</b> ·{" "}
-                      <span className="ui-num">{booking.unit_number}</span>
+                      <span>
+                        <b>{booking.guest_name}</b> ·{" "}
+                        <span className="ui-num">{booking.unit_number}</span>
+                      </span>
                       <span className={`ui-sub2${note.warn ? " ss-warn" : ""}`}>
                         {note.text}
                       </span>
@@ -367,8 +369,10 @@ export function TodayPanel({
               {leaving.map((booking) => (
                 <li key={booking.booking_id}>
                   <a href={open(booking)}>
-                    <b>{booking.guest_name}</b> ·{" "}
-                    <span className="ui-num">{booking.unit_number}</span>
+                    <span>
+                      <b>{booking.guest_name}</b> ·{" "}
+                      <span className="ui-num">{booking.unit_number}</span>
+                    </span>
                     <span className="ui-sub2">
                       {st(language, "td_by", timeText(booking.check_out_time))}
                     </span>

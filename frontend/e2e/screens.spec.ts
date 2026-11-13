@@ -275,6 +275,9 @@ for (const screen of SCREENS) {
     }) => {
       await page.setViewportSize({ width, height });
       await replay(page, screen.fixture);
+      // A screen whose made-up data is for one day opens on that day.
+      if (screen.clock !== undefined)
+        await page.clock.setFixedTime(new Date(screen.clock));
       if (screen.storage !== undefined)
         await page.addInitScript((entries: Record<string, string>) => {
           for (const [key, value] of Object.entries(entries))

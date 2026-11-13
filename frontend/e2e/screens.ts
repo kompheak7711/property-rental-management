@@ -17,6 +17,8 @@ export interface Screen {
   storage?: Readonly<Record<string, string>>;
   /** "menu": the ☰ button is pressed where it shows (phone, tablet), so the drawer is open. */
   open?: "menu";
+  /** The moment the browser's clock shows, for a fixture made for one day. */
+  clock?: string;
 }
 
 /** Every menu group folded (the keys of AppShell's chetana-navgrp). */
@@ -118,6 +120,16 @@ export const SCREENS: readonly Screen[] = [
     hash: "#/quotations/new",
     fixture: "invoices",
     ready: "New Quotation",
+  },
+  // Leasing batch (owner 13/11/2026, design FINAL): the Short stays Calendar as a booking chart
+  // with the quick numbers and the Today panel. Made-up guests for 13/11/2026
+  // (e2e/fixtures/shortstays.har.json).
+  {
+    name: "shortstays-calendar",
+    hash: "#/shortstays",
+    fixture: "shortstays",
+    ready: "Chan Sophea",
+    clock: "2026-11-13T03:00:00Z",
   },
 ];
 
