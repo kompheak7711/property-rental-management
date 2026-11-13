@@ -4342,8 +4342,19 @@ table.ui-table.ui-problist {
 }
 .ui-chk.ui-tile .ui-tile-name > span {
   min-width: 0;
-  -webkit-hyphens: auto;
-  hyphens: auto;
+}
+/* Owner 14/11/2026: a long name takes two boxes of the row (on a phone a whole row); empty
+   boxes left before it are filled by the next short names. */
+.ui-tiles:has(> .ui-tile-long, > .ui-tile-wide) {
+  grid-auto-flow: row dense;
+}
+.ui-tiles > .ui-tile-wide {
+  grid-column: span 2;
+}
+@media (max-width: 639px) {
+  .ui-tiles > .ui-tile-long {
+    grid-column: span 2;
+  }
 }
 /* Owner 14/11/2026: a short choice (Yes/No, the best time, how we heard) sits in one row of
    equal boxes; a long list of choices wraps to the next row. */

@@ -373,7 +373,7 @@ describe("Building › Problem reports (V1.1 part 7, DL-124)", () => {
     expect(whereText("en", { ...BP1, floor: null })).toBe("Lift");
   });
 
-  it('TEST-FE-2214 (owner 14/11/2026) the New Problem report form: a long type name may break after "/" or with a hyphen, Yes and No sit in one row, and Save is the last button', async () => {
+  it("TEST-FE-2214 (owner 14/11/2026) the New Problem report form: a long type name takes two boxes, Yes and No sit in one row, and Save is the last button", async () => {
     window.location.hash = "#/problems/new";
     const api = apiOf({
       choices: vi.fn(() =>
@@ -400,16 +400,19 @@ describe("Building › Problem reports (V1.1 part 7, DL-124)", () => {
     });
     show(api, STAFF);
     const save = await screen.findByRole("button", { name: "Save report" });
-    const names = [...document.querySelectorAll(".ui-tile-name > span")];
-    expect(names.map((name) => name.textContent)).toEqual([
-      "Water",
-      "Air con\u00addi\u00adtion\u00ader",
-      "Furniture/ap\u00adpli\u00adance",
-      "Safety (fire, gas, smoke)",
+    // A long name takes two boxes on one line instead of breaking.
+    const tiles = [...document.querySelectorAll(".ui-tile")];
+    expect(
+      tiles.map((tile) => [
+        tile.querySelector(".ui-tile-name > span")?.textContent,
+        tile.className.replace("ui-chk ui-tile", "").trim(),
+      ]),
+    ).toEqual([
+      ["Water", ""],
+      ["Air conditioner", "ui-tile-long"],
+      ["Furniture/appliance", "ui-tile-long"],
+      ["Safety (fire, gas, smoke)", "ui-tile-wide"],
     ]);
-    expect(names[2]?.querySelector("wbr")).not.toBeNull();
-    // The radio's name is still the plain words for a screen reader.
-    expect(screen.getByRole("radio", { name: /Air con.*er/ })).toBeTruthy();
     const urgent = screen.getByRole("group", { name: "Is it urgent?" });
     expect(urgent.classList.contains("ui-radios-row")).toBe(true);
     expect(within(urgent).getAllByRole("radio")).toHaveLength(2);

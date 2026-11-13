@@ -5,13 +5,7 @@
 // DL-132: "#/problems/finding:<id>" makes the report from a move-out inspection finding: the
 // Unit and the text come from the finding and the source is Inspection.
 
-import {
-  type FormEvent,
-  Fragment,
-  useCallback,
-  useEffect,
-  useState,
-} from "react";
+import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { BackLink } from "../shell/backNav";
 import { PageHeader } from "../shell/layouts";
 
@@ -67,23 +61,14 @@ function BackToList({ language }: { language: Language }) {
   return <BackLink language={language} parent="problems" />;
 }
 
-/** DL-132: reads the finding, then opens the form filled from it. */
-/** Owner 14/11/2026 ("Air con-ditioner"): places where a long English word may break with a
- *  hyphen. Chrome hyphenates a word only when it cannot fit a line by itself, so it would put
- *  "Air" alone on a line; these soft hyphens let the line fill first on every browser. */
-const SOFT_BREAKS: Record<string, string> = {
-  conditioner: "con\u00addi\u00adtion\u00ader",
-  appliance: "ap\u00adpli\u00adance",
-  electricity: "elec\u00adtric\u00adi\u00adty",
-};
-
-function softBreaks(name: string): string {
-  return name.replace(/[a-z]+/gi, (word) => {
-    const soft = SOFT_BREAKS[word.toLowerCase()];
-    return soft === undefined ? word : `${word.slice(0, 1)}${soft.slice(1)}`;
-  });
+/** Owner 14/11/2026: a type name too long for one box takes two boxes on one line instead of
+ *  breaking ("Air conditioner" on a phone; "Safety (fire, gas, smoke)" everywhere). */
+function tileWidth(name: string): string {
+  if (name.length > 20) return " ui-tile-wide";
+  return name.length > 11 ? " ui-tile-long" : "";
 }
 
+/** DL-132: reads the finding, then opens the form filled from it. */
 export function NewProblemReportFromFinding({
   findingId,
   ...form
@@ -556,7 +541,10 @@ export function NewProblemReportForm({
           </legend>
           <div className="ui-tiles">
             {choices.types.map((entry, index) => (
-              <label className="ui-chk ui-tile" key={entry.id}>
+              <label
+                className={`ui-chk ui-tile${tileWidth(typeName(language, entry))}`}
+                key={entry.id}
+              >
                 <input
                   checked={typeId === entry.id}
                   disabled={busy}
@@ -569,21 +557,7 @@ export function NewProblemReportForm({
                 />
                 <span className="ui-tile-name">
                   <Icon name={typeIcon(entry)} small />
-                  <span>
-                    {/* A long name may break after "/" (Furniture/ appliance). */}
-                    {softBreaks(typeName(language, entry))
-                      .split("/")
-                      .map((part, at) => (
-                        <Fragment key={at}>
-                          {at > 0 && (
-                            <>
-                              /<wbr />
-                            </>
-                          )}
-                          {part}
-                        </Fragment>
-                      ))}
-                  </span>
+                  <span>{typeName(language, entry)}</span>
                 </span>
                 {entry.always_urgent && (
                   <span className="ui-sub2 warn">{pt(language, "always")}</span>
