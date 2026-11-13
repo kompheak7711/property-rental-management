@@ -69935,6 +69935,32 @@
       "notes": "Owner 14/11/2026 00:37 (Leasing thread): the Short stays Calendar leaves out a Unit not for rent and a Unit leased for every day shown; a Unit whose tenant moves out within the days shown stays with its Lease bar. Tonight shows only the number taken, and each card's number sits at its top right."
     },
     {
+      "test_id": "TEST-FE-2204",
+      "upstream_ids": [
+        "UI-008",
+        "PR-SS-STEP5",
+        "DL-236",
+        "API-HK-001"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shortstays/ShortStaysPage.test.tsx",
+      "status": "implemented",
+      "notes": "Owner 13/11/2026 (Leasing thread, DL-236): the front desk gives a Housekeeping task to a person with Assign to; My tasks shows only the tasks given to the person reading; a finished task says Done by and the person's name."
+    },
+    {
+      "test_id": "TEST-FE-2205",
+      "upstream_ids": [
+        "UI-008",
+        "PR-SS-STEP5",
+        "DL-236",
+        "API-HK-001"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shortstays/ShortStaysPage.test.tsx",
+      "status": "implemented",
+      "notes": "Owner 13/11/2026 (Leasing thread, DL-236): a housekeeper without the front desk right sees Given to and the person's name, or Not given to anyone yet, and no Assign to box."
+    },
+    {
       "test_id": "test_new_rate_records_have_no_markup_and_old_records_keep_theirs",
       "upstream_ids": [
         "DL-228",
@@ -69956,6 +69982,29 @@
       "test_path": "backend/tests/test_riel_rate_no_markup_migration.py",
       "status": "implemented",
       "notes": "Receive payment in riel and the rate confirm no longer multiply by 1.005 or write 50; the unused Settings rule Riel rate: ABA Sell rate plus is removed."
+    },
+    {
+      "test_id": "test_migration_410_follows_the_riel_rate_join",
+      "upstream_ids": [
+        "DL-236",
+        "DB-HK-001"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_housekeeping_task_assign_migration.py",
+      "status": "implemented",
+      "notes": "Migration 20270725_410 follows the ui-v81 riel rate join 20270724_401 and is forward-only."
+    },
+    {
+      "test_id": "test_a_task_is_given_to_one_person_and_names_who_finished_it",
+      "upstream_ids": [
+        "DL-236",
+        "DB-HK-001",
+        "API-HK-001"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_housekeeping_task_assign_migration.py",
+      "status": "implemented",
+      "notes": "The front desk gives a task still to do to a person who may do housekeeping, to another, or to nobody; the History keeps each change; anyone with the housekeeping right finishes it and the list names who did; a finished task, an unknown person and a bad answer are refused."
     },
     {
       "test_id": "TEST-FE-2190",

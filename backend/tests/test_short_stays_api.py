@@ -217,6 +217,12 @@ def test_each_step_of_a_stay_needs_its_own_right() -> None:
             {"skip": True, "note": "Do not disturb"},
             "short_stays.housekeeping",
         ),
+        # DL-236: the front desk gives a task to one person.
+        (
+            f"{base(flow)}/housekeeping/{uuid4()}/assign",
+            {"actor_id": str(uuid4())},
+            "short_stays.desk",
+        ),
         (f"{booking}/cancel", {"version": 7, "reason": "Flight changed"}, "short_stays.desk"),
         (f"{booking}/credit", {"amount_usd_cents": 2000, "note": "Sick"}, "short_stays.credit"),
         (f"{booking}/lease", {"lease_id": str(uuid4())}, "short_stays.desk"),
@@ -259,6 +265,7 @@ def test_each_step_of_a_stay_needs_its_own_right() -> None:
         "fee",
         "extend",
         "finish_task",
+        "assign_task",
         "cancel",
         "credit",
         "link_lease",
@@ -279,6 +286,12 @@ def test_each_step_of_a_stay_needs_its_own_right() -> None:
     ):
         assert desk.post(f"{booking}/deposit", json=wrong, headers=HEADERS).status_code == 422
     assert desk.post(f"{booking}/check-in", json={"version": 3}, headers=HEADERS).status_code == 422
+    # DL-236: a task is given to a person by id, or to nobody; nothing else is sent.
+    assign = f"{base(flow)}/housekeeping/{uuid4()}/assign"
+    assert desk.post(assign, json={"actor_id": "Sokha"}, headers=HEADERS).status_code == 422
+    assert desk.post(assign, json={"name": "Sokha"}, headers=HEADERS).status_code == 422
+    assert desk.post(assign, json={"actor_id": None}, headers=HEADERS).status_code == 200
+    assert flow.calls[-1][0] == "assign_task" and flow.calls[-1][1][1] == {}
     # DL-222: the room check reports problems, never a cost.
     cleaner = client(flow, "short_stays.housekeeping")
     for wrong_check in (

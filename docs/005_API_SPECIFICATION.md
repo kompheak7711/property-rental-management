@@ -2336,3 +2336,7 @@ Refusals: 403 (no right), 422 (no words, words too long, an unknown audience, or
 ### API-TG-012 Warnings on Telegram — 2026-11-11
 
 Added by DL-217 (migration `20270715_387`, DB-TG-024). `GET /api/v1/properties/{property_id}/telegram/warnings` (`telegram.read`, `Cache-Control: private, no-store`) answers `warnings` (the late Rent letters and Lease warnings of the last 90 days, each with `id`, `kind` (`RENT_20`, `RENT_30` or `LEASE_WARNING`), `unit_number`, `customer` (the Lease's primary tenant), `recorded_at` and `sent`, as API-TG-008) and `rules` (`days`). Refusals: 403 (no right).
+
+### API-HK-001 Give a Housekeeping task to a person — 2026-11-13
+
+Added by DL-236 (migration `20270725_410`, DB-HK-001). `GET /api/v1/properties/{property_id}/short-stays/housekeeping` also answers `cleaners` (each `actor_id`, `name`) and, for each task, `assigned_to`, `assigned_name`, `mine` and `done_by_name`. `POST /api/v1/properties/{property_id}/short-stays/housekeeping/{task_id}/assign` (`short_stays.desk`, browser mutation check; body `actor_id`, a person's id or `null` for nobody; unknown fields 422) answers the list of the task's day. Refusals: 403 (no right), 409 (the task is already done), 422 (an unknown task, or a person who may not do housekeeping at the Property).

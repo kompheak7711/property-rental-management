@@ -30,7 +30,10 @@ approval; a damage charge that still waits from before is decided with the same 
 (`POST .../bookings/{id}/unit`, `short_stays.desk`; the guest keeps the agreed price) and the
 Owner's or Manager's special discount after a move (`POST .../bookings/{id}/move-discount`,
 `short_stays.approve`). The database functions check the rights again, price the stay from the
-owner's rules and keep one booking per Unit and night.
+owner's rules and keep one booking per Unit and night. DL-236 (migration 20270725_410): the
+front desk gives a Housekeeping task to one person, or to nobody
+(`POST .../housekeeping/{id}/assign`, `short_stays.desk`); the day's list names who it is given to,
+who finished it, and the people a task may be given to.
 """
 
 from __future__ import annotations
@@ -82,6 +85,7 @@ Action = Literal[
     "fee",
     "extend",
     "finish_task",
+    "assign_task",
     "cancel",
     "credit",
     "link_lease",
@@ -112,6 +116,8 @@ ACTION_SQL: dict[str, str] = {
     "fee": "SELECT app.add_short_stay_fee(%(p)s, %(t)s, %(b)s ->> 'kind', %(v)s, %(a)s, %(c)s)",
     "extend": "SELECT app.extend_short_stay(%(p)s, %(t)s, %(b)s, %(v)s, %(a)s, %(c)s)",
     "finish_task": "SELECT app.finish_housekeeping_task(%(p)s, %(t)s, %(b)s, %(a)s, %(c)s)",
+    # DL-236 (migration 20270725_410): the front desk gives a task to one person, or to nobody.
+    "assign_task": "SELECT app.assign_housekeeping_task(%(p)s, %(t)s, %(b)s, %(a)s, %(c)s)",
     # Step 4b (migration 20270604_314).
     "cancel": "SELECT app.cancel_short_stay(%(p)s, %(t)s, %(b)s, %(v)s, %(a)s, %(c)s)",
     "credit": "SELECT app.give_short_stay_credit(%(p)s, %(t)s, %(b)s, %(a)s, %(c)s)",
@@ -449,6 +455,14 @@ class Finish(BaseModel):
     # A skipped clean says why ("do not disturb"); the database refuses one without a note.
     skip: bool = False
     note: Note | None = None
+
+
+class Assign(BaseModel):
+    """DL-236: the person a Housekeeping task is given to; no person gives it to nobody."""
+
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    actor_id: Id | None = None
 
 
 class Cancel(Version):
@@ -863,6 +877,12 @@ def create_short_stays_router(
         property_id: UUID, task_id: UUID, body: Finish, request: Request
     ) -> Json:
         return act(request, property_id, SHORT_STAYS_HOUSEKEEPING, "finish_task", task_id, body)
+
+    @router.post("/housekeeping/{task_id}/assign")
+    def assign_housekeeping_task(
+        property_id: UUID, task_id: UUID, body: Assign, request: Request
+    ) -> Json:
+        return act(request, property_id, SHORT_STAYS_DESK, "assign_task", task_id, body)
 
     return router
 

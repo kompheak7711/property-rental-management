@@ -548,6 +548,20 @@ const TEXT = {
   ],
   cl_finished: ["Finished ({0})", "បានបញ្ចប់ ({0})"],
   cl_finished_list: ["Finished", "បានបញ្ចប់"],
+  // DL-236 (owner 14/11/2026): a task is given to one person.
+  cl_assign: ["Assign to", "ផ្ដល់ការងារឱ្យ"],
+  cl_nobody: ["Nobody yet", "មិនទាន់មាននរណាម្នាក់"],
+  cl_nobody_yet: ["Not given to anyone yet", "មិនទាន់ផ្ដល់ឱ្យនរណាម្នាក់"],
+  cl_given: ["Given to {0}", "ផ្ដល់ឱ្យ {0}"],
+  cl_done_by: ["Done by {0}", "ធ្វើដោយ {0}"],
+  cl_not_by: ["Marked not cleaned by {0}", "{0} បានកត់ថាមិនបានសម្អាត"],
+  cl_whose: ["Whose tasks", "ការងាររបស់អ្នកណា"],
+  cl_all: ["All tasks", "ការងារទាំងអស់"],
+  cl_mine: ["My tasks", "ការងាររបស់ខ្ញុំ"],
+  cl_mine_none: [
+    "No tasks are given to you on this day.",
+    "មិនមានការងារផ្ដល់ឱ្យអ្នកក្នុងថ្ងៃនេះទេ។",
+  ],
   cl_done_b: ["Cleaned", "បានសម្អាត"], // owner 14/11/2026: was "Done"
   cl_skip: ["Not cleaned today", "មិនបានសម្អាតថ្ងៃនេះ"], // owner 14/11/2026: was "Skip"
   cl_reason: ["Why it is not cleaned", "មូលហេតុដែលមិនបានសម្អាត"],

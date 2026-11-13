@@ -574,12 +574,26 @@ export interface CleaningTask {
   guest_name: string | null;
   /** Due on an earlier day and not done yet (shown today). */
   late: boolean;
+  /** DL-236: the person the task is given to (null: nobody yet). */
+  assigned_to: string | null;
+  assigned_name: string | null;
+  /** Given to the person reading the list ("My tasks"). */
+  mine: boolean;
+  /** The person who ticked it done or not cleaned. */
+  done_by_name: string | null;
+}
+
+/** DL-236: a person a Housekeeping task may be given to. */
+export interface Cleaner {
+  actor_id: string;
+  name: string;
 }
 
 export interface CleaningDay {
   day: string;
   today: string;
   tasks: CleaningTask[];
+  cleaners: Cleaner[];
 }
 
 export interface NewBooking {
@@ -627,6 +641,12 @@ export interface ShortStaysApi {
     propertyId: string,
     taskId: string,
     finish: { skip: boolean; note?: string },
+  ) => Promise<CleaningDay>;
+  /** DL-236: gives a task still to do to one person, or to nobody (short_stays.desk). */
+  assignTask: (
+    propertyId: string,
+    taskId: string,
+    actorId: string | null,
   ) => Promise<CleaningDay>;
   siteCalendars: (propertyId: string) => Promise<SiteCalendar[]>;
   saveSiteCalendar: (
@@ -1292,7 +1312,15 @@ export function cleaningOf(value: unknown): CleaningDay {
         booking_number: maybeText(task.booking_number),
         guest_name: maybeText(task.guest_name),
         late: task.late === true,
+        assigned_to: maybeText(task.assigned_to),
+        assigned_name: maybeText(task.assigned_name),
+        mine: task.mine === true,
+        done_by_name: maybeText(task.done_by_name),
       };
+    }),
+    cleaners: list(row.cleaners ?? []).map((entry) => {
+      const person = record(entry);
+      return { actor_id: text(person.actor_id), name: text(person.name) };
     }),
   };
 }
@@ -1370,6 +1398,13 @@ export const shortStaysApi: ShortStaysApi = {
       await request(
         `${base(propertyId)}/housekeeping/${encodeURIComponent(taskId)}`,
         post(finish),
+      ),
+    ),
+  assignTask: async (propertyId, taskId, actorId) =>
+    cleaningOf(
+      await request(
+        `${base(propertyId)}/housekeeping/${encodeURIComponent(taskId)}/assign`,
+        post({ actor_id: actorId }),
       ),
     ),
   siteCalendars: async (propertyId) =>

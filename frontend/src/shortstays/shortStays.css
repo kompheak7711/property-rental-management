@@ -589,6 +589,40 @@ a.ss-tasklink {
   min-width: 44px;
 }
 
+/* DL-236: the person a task is given to (a box for the front desk). */
+.ss-assign {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin-top: 4px;
+}
+
+.ss-assign > span {
+  color: var(--text-2);
+}
+
+.ss-assign > select {
+  min-width: 12rem;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 6px 36px 6px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background-color: var(--input);
+  color: var(--text);
+  font: inherit;
+}
+
+.ss-given {
+  margin: 0;
+  color: var(--text-2);
+}
+
+.ss-whose {
+  margin-left: auto;
+}
+
 .ss-taskdo {
   display: flex;
   gap: 8px;

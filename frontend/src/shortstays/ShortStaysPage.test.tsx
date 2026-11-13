@@ -26,6 +26,8 @@ import { SiteCalendars } from "./SiteCalendars";
 import { WeekReport as WeekReportView } from "./WeekReport";
 import {
   type Booking,
+  type CleaningDay,
+  type CleaningTask,
   type GuestHistory,
   type NewBooking,
   type PriceLine,
@@ -357,11 +359,17 @@ function fakeApi(overrides: Partial<ShortStaysApi> = {}): ShortStaysApi {
     moveUnits: vi.fn(() => Promise.resolve([])),
     decide: vi.fn(() => Promise.resolve(BOOKING)),
     cleaning: vi.fn((_: string, day: string) =>
-      Promise.resolve({ day, today: "2026-11-04", tasks: [] }),
+      Promise.resolve({ day, today: "2026-11-04", tasks: [], cleaners: [] }),
     ),
     finishTask: vi.fn(() =>
-      Promise.resolve({ day: "2026-11-04", today: "2026-11-04", tasks: [] }),
+      Promise.resolve({
+        day: "2026-11-04",
+        today: "2026-11-04",
+        tasks: [],
+        cleaners: [],
+      }),
     ),
+    assignTask: vi.fn(() => Promise.reject(new Error("not used"))),
     siteCalendars: vi.fn(() => Promise.resolve([])),
     saveSiteCalendar: vi.fn(() => Promise.reject(new Error("not used"))),
     guest: vi.fn((_: string, customerId: string) =>
@@ -1295,6 +1303,10 @@ describe("Daily and weekly rent: Short stays", () => {
           booking_number: "ST260001",
           guest_name: "Lim Dara",
           late: false,
+          assigned_to: null,
+          assigned_name: null,
+          mine: false,
+          done_by_name: null,
         },
         {
           task_id: "t-2",
@@ -1309,8 +1321,13 @@ describe("Daily and weekly rent: Short stays", () => {
           booking_number: "ST260009",
           guest_name: "Meas Rina",
           late: true,
+          assigned_to: null,
+          assigned_name: null,
+          mine: false,
+          done_by_name: null,
         },
       ],
+      cleaners: [],
     };
     const cleaning = vi.fn(() => Promise.resolve(day));
     const finishTask = vi.fn(() => Promise.resolve(day));
@@ -2724,6 +2741,10 @@ describe("Daily and weekly rent: Short stays", () => {
         booking_number: `ST26000${id}`,
         guest_name: "Lim Dara",
         late,
+        assigned_to: null,
+        assigned_name: null,
+        mine: false,
+        done_by_name: null,
       });
       const day = {
         day: "2026-11-04",
@@ -2733,6 +2754,7 @@ describe("Daily and weekly rent: Short stays", () => {
           task("2", "U502", "DONE", false),
           task("3", "U503", "TO_DO", true),
         ],
+        cleaners: [],
       };
       show({
         api: fakeApi({ cleaning: vi.fn(() => Promise.resolve(day)) }),
@@ -2747,11 +2769,13 @@ describe("Daily and weekly rent: Short stays", () => {
         expect.stringContaining("U503"),
         expect.stringContaining("U501"),
       ]);
-      expect(rows[0]).toHaveClass("late");
-      expect(within(rows[0]).getByText("Late")).toBeInTheDocument();
-      expect(
-        within(rows[0]).getByRole("link", { name: "ST260003" }),
-      ).toHaveClass("ss-tasklink");
+      const [first] = rows;
+      if (!first) throw new Error("no Housekeeping rows");
+      expect(first).toHaveClass("late");
+      expect(within(first).getByText("Late")).toBeInTheDocument();
+      expect(within(first).getByRole("link", { name: "ST260003" })).toHaveClass(
+        "ss-tasklink",
+      );
       expect(screen.getByText("Finished (1)")).toBeInTheDocument();
       const done = screen.getByRole("list", { name: "Finished" });
       expect(done.closest("details")).not.toHaveAttribute("open");
@@ -2815,6 +2839,135 @@ describe("Daily and weekly rent: Short stays", () => {
       ).toBeInTheDocument();
       expect(within(table).queryByRole("row", { name: /U601/ })).toBeNull();
       expect(within(table).queryByRole("row", { name: /U603/ })).toBeNull();
+    });
+
+    it("TEST-FE-2204 (DL-236) the front desk gives a task to one person; My tasks shows only the reader's; a finished task names who did it", async () => {
+      const task = (
+        id: string,
+        unit: string,
+        extra: Partial<CleaningTask> = {},
+      ): CleaningTask => ({
+        task_id: id,
+        kind: "DAILY_CLEAN",
+        task_on: "2026-11-04",
+        status: "TO_DO",
+        note: null,
+        done_at: null,
+        unit_id: `u-${unit}`,
+        unit_number: unit,
+        booking_id: `b-${id}`,
+        booking_number: `ST26000${id}`,
+        guest_name: "Lim Dara",
+        late: false,
+        assigned_to: null,
+        assigned_name: null,
+        mine: false,
+        done_by_name: null,
+        ...extra,
+      });
+      const cleaners = [
+        { actor_id: "a-1", name: "Chan Thida" },
+        { actor_id: "a-2", name: "Sok Mony" },
+      ];
+      const day = (tasks: CleaningTask[]): CleaningDay => ({
+        day: "2026-11-04",
+        today: "2026-11-04",
+        tasks,
+        cleaners,
+      });
+      const first = day([
+        task("1", "U501"),
+        task("2", "U502", {
+          assigned_to: "a-2",
+          assigned_name: "Sok Mony",
+          mine: true,
+        }),
+        task("3", "U503", {
+          status: "DONE",
+          done_at: "2026-11-04T02:00:00Z",
+          done_by_name: "Chan Thida",
+        }),
+      ]);
+      const given = day([
+        task("1", "U501", { assigned_to: "a-1", assigned_name: "Chan Thida" }),
+        ...first.tasks.slice(1),
+      ]);
+      const assignTask = vi.fn(() => Promise.resolve(given));
+      show({
+        api: fakeApi({
+          cleaning: vi.fn(() => Promise.resolve(first)),
+          assignTask,
+        }),
+        capabilities: new Set([...DESK, "short_stays.housekeeping"]),
+      });
+      fireEvent.click(
+        await screen.findByRole("link", { name: "Housekeeping" }),
+      );
+      const list = await screen.findByRole("list", { name: "Housekeeping" });
+      const u501 = within(list).getAllByRole("listitem")[0];
+      if (u501 === undefined) throw new Error("No row");
+      const box = within(u501).getByRole("combobox", { name: /Assign to/ });
+      expect(
+        within(box)
+          .getAllByRole("option")
+          .map((option) => option.textContent),
+      ).toEqual(["Nobody yet", "Chan Thida", "Sok Mony"]);
+      fireEvent.change(box, { target: { value: "a-1" } });
+      await waitFor(() => {
+        expect(assignTask).toHaveBeenCalledWith("p-1", "1", "a-1");
+      });
+      await waitFor(() => {
+        expect(
+          screen.getAllByRole("combobox", { name: /Assign to/ })[0],
+        ).toHaveValue("a-1");
+      });
+      expect(screen.getByText("Done by Chan Thida")).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: "My tasks" }));
+      const mine = screen.getByRole("list", { name: "Housekeeping" });
+      expect(
+        within(mine)
+          .getAllByRole("listitem")
+          .map((row) => row.textContent),
+      ).toEqual([expect.stringContaining("U502")]);
+    });
+
+    it("TEST-FE-2205 (DL-236) a housekeeper without the desk right sees who a task is given to, with no box", async () => {
+      const day: CleaningDay = {
+        day: "2026-11-04",
+        today: "2026-11-04",
+        cleaners: [{ actor_id: "a-1", name: "Chan Thida" }],
+        tasks: [
+          {
+            task_id: "1",
+            kind: "DAILY_CLEAN",
+            task_on: "2026-11-04",
+            status: "TO_DO",
+            note: null,
+            done_at: null,
+            unit_id: "u-501",
+            unit_number: "U501",
+            booking_id: "b-1",
+            booking_number: "ST260001",
+            guest_name: "Lim Dara",
+            late: false,
+            assigned_to: "a-1",
+            assigned_name: "Chan Thida",
+            mine: true,
+            done_by_name: null,
+          },
+        ],
+      };
+      show({
+        api: fakeApi({ cleaning: vi.fn(() => Promise.resolve(day)) }),
+        capabilities: new Set(["short_stays.read", "short_stays.housekeeping"]),
+      });
+      fireEvent.click(
+        await screen.findByRole("link", { name: "Housekeeping" }),
+      );
+      expect(
+        await screen.findByText("Given to Chan Thida"),
+      ).toBeInTheDocument();
+      expect(screen.queryByRole("combobox", { name: /Assign to/ })).toBeNull();
     });
 
     it("TEST-FE-2202 the Short stays tabs are the page head's links, as on Invoices, with the open one marked", async () => {

@@ -6064,3 +6064,14 @@ Migration `20270724_393_riel_rate_no_markup` (on `20270723_392`). Forward-only. 
 - `app.confirm_khr_payment(...)` (Receive payment in riel) and `app.execute_exchange_rate(...)` (rate confirm) write 0 and the System Rate `ceil(reference)`. Signatures and grants are unchanged.
 - The unused Settings rule `RIEL_RATE_MARK_UP` ("Riel rate: ABA Sell rate plus", seeded at 0.5% by migration 271, `used_by_app` false) and its values are removed, as migration 267 removed the asset life rules.
 
+
+## DB-HK-001 — A Housekeeping task is given to one person (DL-236)
+
+Migration `20270725_410_housekeeping_task_assign` (Leasing range, on `20270724_401`). Forward-only. No money, Invoice or Unit status change; no task made before is changed.
+
+- `app.housekeeping_tasks` gets `assigned_to`, `assigned_at` and `assigned_by` (each a nullable `uuid`/`timestamptz`; the two ids reference `app.actor_identities`, `ON DELETE RESTRICT`). `housekeeping_tasks_assign_shape` keeps `assigned_at` and `assigned_by` both set or both empty, and a task given to a person always has them. Partial index `housekeeping_tasks_assigned_idx` on `assigned_to`.
+- `app.protect_short_stay_step()` (the step guard of migration `20270602_312`) also lets a `TO_DO` task change only `assigned_to`, `assigned_at`, `assigned_by` and its `version` (plus one). Every other rule of the guard is unchanged.
+- `app.short_stay_cleaners(p_property)` (`STABLE`, `SECURITY DEFINER`, no `PUBLIC` execute): the people a task may be given to, as `[{actor_id, name}]` by name: active accounts that hold `short_stays.housekeeping` at the Property.
+- `app.short_stay_housekeeping(...)` (the day's list) also answers `cleaners`, and for each task `assigned_to`, `assigned_name`, `mine` (given to the person reading) and `done_by_name`.
+- `app.assign_housekeeping_task(p_property, p_task, p_assign jsonb, p_actor, p_correlation)` (`short_stays.desk`; `prm_runtime` execute): `p_assign` holds only `actor_id` (a person's id, or `null` for nobody). The task must be `TO_DO` (else `55000` "This task is already done") and the person one of `app.short_stay_cleaners` (else `22023` "This person may not do housekeeping here"). The same person again changes nothing. The History keeps `short_stay.task_assigned` with the person before and after. It answers the list of the task's day.
+- Anyone with `short_stays.housekeeping` may still finish any task; the task then names who finished it.

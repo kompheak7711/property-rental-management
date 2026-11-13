@@ -3198,3 +3198,14 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **Database:** migration `20270724_393` (DB-BS-005). **API:** `markup_basis_points` is 0 on new previews and records (API-058 amendment). **Screens:** "Fixed markup" shows "None" on new records and "0.5%" on older ones; the Settings Exchange note no longer says "plus 0.5%".
 - **Links:** DL-060, DL-121, DL-181, BR-MONEY-004, BR-MONEY-007.
 - **Decision date:** 2026-11-13.
+
+## DL-236 — A Housekeeping task is given to one person
+
+- **Source:** the owner on 13 Nov 2026 in the thread "Improve the Leasing screen": "no assign to task to who?". On the decision card the owner chose "Yes, assign to a person".
+- **Before.** A Housekeeping task belonged to nobody. Anyone with the housekeeping right ticked any task, and the list did not say who did it.
+- **Now.** The front desk (`short_stays.desk`) gives a task still to do to one person who may tick Housekeeping tasks at the Property, to another person, or to nobody. The housekeeper can show only "My tasks". A finished task names the person who finished it ("Done by"). Anyone with the housekeeping right may still finish any task (a colleague covers a day off). A finished task is not given to anyone any more. The History keeps each change of person.
+- **Not changed.** No money, Invoice or Unit status. Tasks made before stay given to nobody.
+- **Next.** The Staff bot on Telegram tells the person when a task is given to them (same batch).
+- **Database:** migration `20270725_410` (DB-HK-001). **API:** API-HK-001. **Screens:** Housekeeping tab: "Assign to" box for the front desk, "All tasks / My tasks", "Given to", "Done by".
+- **Links:** DL-222, PR-SS-STEP5.
+- **Decision date:** 2026-11-13.
