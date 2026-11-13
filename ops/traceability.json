@@ -69943,6 +69943,37 @@
       "test_path": "frontend/src/home/HomeScreen.test.tsx",
       "status": "implemented",
       "notes": "Home screen review (owner 14/11/2026): the two head buttons share one equal-width group; a warning about the automatic jobs is a slim bar under the title, a calm jobs line stays under the Tasks."
+    },
+    {
+      "test_id": "TEST-FE-2230",
+      "upstream_ids": [
+        "UI-093",
+        "DL-114"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/settings/SettingsPage.test.tsx",
+      "status": "implemented",
+      "notes": "Administration screen review (owner 13/11/2026, fix 10): Users and access \u203a History lists the access changes newest first, with names, plain action words and a Refused chip; the earlier English forms show only on this tab."
+    },
+    {
+      "test_id": "TEST-FE-2231",
+      "upstream_ids": [
+        "UI-093"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/settings/SettingsPage.test.tsx",
+      "status": "implemented",
+      "notes": "Administration screen review (owner 13/11/2026, fix 5): Users and access follows the address, so the side menu's Roles opens Roles on the open page."
+    },
+    {
+      "test_id": "TEST-FE-2232",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/telegram/TelegramPages.test.tsx",
+      "status": "implemented",
+      "notes": "Administration screen review (owner 13/11/2026, fix 7): Telegram Linked tenants shows the 5 newest paper-copy Invoices and a Show all button that opens the whole list."
     }
   ]
 }
