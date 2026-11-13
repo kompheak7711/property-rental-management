@@ -117,7 +117,7 @@ function MoneyCard({
 }
 
 /**
- * The Owner's money on Home ("Financial summary"): five cards, shown to the Owner only
+ * The Owner's money on Home ("Financial summary"): four cards (owner 14/11/2026), shown to the Owner only
  * (ledger.owner_money with ledger.read). Owner 12/11/2026: the box no longer says so in words.
  */
 export function OwnerMoney({
@@ -181,14 +181,7 @@ export function OwnerMoney({
           tone="brand"
           value={numbers.cash}
         />
-        <MoneyCard
-          icon="customers"
-          label={hmt(language, "om_owe")}
-          page="statements"
-          show="customer-aging"
-          tone={(numbers.owe ?? 0) > 0 ? "warn" : "ok"}
-          value={numbers.owe}
-        />
+        {/* Owner 14/11/2026: no "Customers owe" card; it is the same number as Pending payment. */}
         <MoneyCard
           icon="history"
           label={hmt(language, "om_over")}
