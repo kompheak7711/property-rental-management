@@ -201,6 +201,8 @@ export function holdsFold(box: HTMLElement): boolean {
 export function installTableFit(): () => void {
   const root = document.body;
   let current: HTMLElement | null = null;
+  /** The page whose list was last fitted (its cards keep their look while the list is empty). */
+  let fittedPage: string | null = null;
   let queued = 0;
   let key = scrollKey(window.location.hash);
   let pending = readSaved(key);
@@ -248,10 +250,16 @@ export function installTableFit(): () => void {
       clear(current);
       current = box;
     }
+    const listPage = window.location.hash.split("?")[0] ?? "";
     if (box === null) {
-      root.classList.remove("ui-fit", "ui-mid", "ui-short");
+      // Owner 13/11/2026: a number card that filters the list (Payments › Late-payment, Utilities,
+      // Other charges) can leave the list empty. The cards then keep the look they had, so they
+      // do not grow. Another address (a record page too), or a list that never had rows, drops the fitted look.
+      if (listPage !== fittedPage)
+        root.classList.remove("ui-fit", "ui-mid", "ui-short");
       return;
     }
+    fittedPage = listPage;
     const folds = holdsFold(box);
     const fitScreen =
       !folds &&

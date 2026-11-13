@@ -180,13 +180,41 @@ export function PaymentsList({
     openPageInAddress("payments", false, `receipt:${paymentId}`);
   };
 
+  // Owner 13/11/2026 (Operations screen): no date line under the title; the period switch sits
+  // beside the title instead (it wraps under it on a narrow screen).
+  const periodSwitch = (
+    <div
+      aria-label={pyt(language, "pc_period")}
+      className="ui-seg ui-headseg"
+      role="group"
+    >
+      {(
+        [
+          ["all", "f_all"],
+          ["today", "pc_today"],
+          ["month", "pc_month"],
+          ["last", "pc_last"],
+          ["pick", "pc_pick"],
+        ] as const
+      ).map(([value, key]) => (
+        <button
+          aria-pressed={period === value}
+          key={value}
+          onClick={() => {
+            setPeriod(value);
+            setCard("all");
+          }}
+          type="button"
+        >
+          {pyt(language, key)}
+        </button>
+      ))}
+    </div>
+  );
+
   const head = (
     <PageHead>
-      <div>
-        <p className="ui-num">
-          {pyt(language, "pc_range", dayText(from), dayText(to))}
-        </p>
-      </div>
+      {periodSwitch}
       {mayReceive && (
         <div className="ui-actions">
           <a
@@ -201,36 +229,9 @@ export function PaymentsList({
     </PageHead>
   );
 
-  const filters = (
+  const filters = period === "pick" && (
     <div className="ui-filters">
-      <div
-        aria-label={pyt(language, "pc_period")}
-        className="ui-seg"
-        role="group"
-      >
-        {(
-          [
-            ["all", "f_all"],
-            ["today", "pc_today"],
-            ["month", "pc_month"],
-            ["last", "pc_last"],
-            ["pick", "pc_pick"],
-          ] as const
-        ).map(([value, key]) => (
-          <button
-            aria-pressed={period === value}
-            key={value}
-            onClick={() => {
-              setPeriod(value);
-              setCard("all");
-            }}
-            type="button"
-          >
-            {pyt(language, key)}
-          </button>
-        ))}
-      </div>
-      {period === "pick" && (
+      {
         <form className="ui-pick" noValidate onSubmit={pick}>
           <label>
             {pyt(language, "pc_from")}{" "}
@@ -272,7 +273,7 @@ export function PaymentsList({
             </p>
           )}
         </form>
-      )}
+      }
     </div>
   );
 

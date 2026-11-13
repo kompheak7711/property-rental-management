@@ -748,6 +748,48 @@ html[lang="km"] .shell-grph {
   color: var(--text-2);
 }
 
+/* Owner 13/11/2026 (Operations screen, Payments): a period switch sent as the sub-line sits on
+   the title's row, to the right of the title, and wraps under it on a narrow screen. */
+.shell-head-text:has(> .shell-head-sub > .ui-headseg) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  align-items: center;
+}
+
+body .shell-head-sub > .ui-headseg {
+  margin: 0;
+  color: inherit;
+}
+
+/* When the head wraps, the page's buttons stay on the right. */
+.shell-head:has(.ui-headseg) > .shell-head-actions {
+  margin-left: auto;
+}
+
+/* Owner 13/11/2026: the buttons of that switch share its width equally. On a phone they are
+   chips that wrap, and each row of chips fills the width. */
+.shell-head-sub > .ui-headseg {
+  display: inline-grid;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
+}
+
+@media (max-width: 639px) {
+  .shell-head-text:has(> .shell-head-sub > .ui-headseg),
+  .shell-head-sub:has(> .ui-headseg) {
+    width: 100%;
+  }
+
+  .shell-head-sub > .ui-headseg {
+    display: flex;
+  }
+
+  .shell-head-sub > .ui-headseg button {
+    flex: 1 1 auto;
+  }
+}
+
 html[lang="km"] .shell-head h1 {
   line-height: 1.5;
 }
