@@ -686,11 +686,15 @@ describe("UI v81 round 9 (owner 12/11/2026) the list and the Receipt page say th
     );
     await screen.findByText("RCP260020");
 
-    // The cards, in order: the four types stand where Move-out charges stood.
+    // The cards, in order: the four types stand where Move-out charges stood. Operations fix 1:
+    // the $0.00 cards are folded until "More cards" is pressed.
+    fireEvent.click(screen.getByRole("button", { name: /More cards/ }));
     expect(
-      Array.from(document.querySelectorAll(".ui-kpis-pay .ui-kpi-label")).map(
-        (label) => label.textContent,
-      ),
+      Array.from(
+        document.querySelectorAll(
+          ".ui-kpis-pay .ui-kpi:not(.ui-kpi-more) .ui-kpi-label",
+        ),
+      ).map((label) => label.textContent),
     ).toEqual([
       "Total received",
       "Rent",
@@ -981,5 +985,43 @@ describe("UI v81 round 9 (owner 12/11/2026) the list and the Receipt page say th
     } finally {
       vi.unstubAllGlobals();
     }
+  });
+});
+
+describe("Operations screen (owner 13/11/2026)", () => {
+  it("TEST-FE-2195 (owner 13/11/2026) the $0.00 cards fold behind one More cards card; a pressed card stays shown", async () => {
+    showList(
+      api({
+        ...SUMMARY,
+        kinds: {
+          ...SUMMARY.kinds,
+          SHORT_STAY: { cents: 5_280, payments: 1 },
+        },
+      }),
+    );
+    await screen.findByRole("button", { name: /More cards/ });
+    const labels = () =>
+      Array.from(
+        document.querySelectorAll(
+          ".ui-kpis-pay .ui-kpi:not(.ui-kpi-more) .ui-kpi-label",
+        ),
+      ).map((label) => label.textContent);
+    const folded = labels();
+    expect(folded).toContain("Total received");
+    expect(folded).toContain("Short stay");
+    expect(folded).not.toContain("Products");
+    expect(folded.length).toBeLessThan(11);
+
+    fireEvent.click(screen.getByRole("button", { name: /More cards/ }));
+    expect(labels()).toHaveLength(11);
+    expect(screen.getByRole("button", { name: /Fewer cards/ })).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+
+    // A card pressed while shown stays on screen after folding again.
+    fireEvent.click(screen.getByRole("button", { name: /^Products:/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Fewer cards/ }));
+    expect(labels()).toContain("Products");
   });
 });

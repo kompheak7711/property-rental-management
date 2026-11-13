@@ -241,6 +241,16 @@ export function InvoicesList({
             </span>
           )}
           <span className="ui-sub2">{unitOf(data, invoice)}</span>
+          {/* Operations fix 3 (owner 13/11/2026): on a phone the status and the balance sit
+              under the Customer, so the row never runs past the screen. */}
+          <span className="ui-phone ui-invstate">
+            <InvoiceChip language={language} state={state} />
+            {!draft && state !== "void" && state !== "paid" && (
+              <span className="ui-num">
+                {usdFromCents(Math.max(0, cents(invoice.outstanding_balance)))}
+              </span>
+            )}
+          </span>
         </td>
         <td className="ui-wide">{ivt(language, invoiceType(invoice))}</td>
         <td className={draft ? "ui-wide ui-muted" : "ui-wide ui-num"}>
@@ -258,13 +268,8 @@ export function InvoicesList({
             usdFromCents(Math.max(0, cents(invoice.outstanding_balance)))
           )}
         </td>
-        <td>
+        <td className="ui-wide">
           <InvoiceChip language={language} state={state} />
-          {!draft && state !== "void" && state !== "paid" && (
-            <span className="ui-sub2 ui-phone ui-num">
-              {usdFromCents(Math.max(0, cents(invoice.outstanding_balance)))}
-            </span>
-          )}
         </td>
       </tr>
     );
@@ -441,7 +446,9 @@ export function InvoicesList({
                     <th className="r ui-wide" scope="col">
                       {ivt(language, "col_balance")}
                     </th>
-                    <th scope="col">{ivt(language, "col_status")}</th>
+                    <th className="ui-wide" scope="col">
+                      {ivt(language, "col_status")}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>

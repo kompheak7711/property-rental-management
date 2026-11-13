@@ -594,7 +594,14 @@ describe("Utilities page (V1-058 R4)", () => {
     expect(screen.queryByText("U101", { selector: "b" })).toBeNull();
     expect(screen.queryByRole("textbox", { name: /New reading/ })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: /Water/ }));
-    expect(screen.getByText("No readings in October 2026.")).toBeTruthy();
+    // Operations fix 5 (owner 13/11/2026): with no Water reading in October yet, the list shows
+    // the last month that has them, and the note says so.
+    expect(
+      screen.getByText(
+        /Until then, this list shows the last readings, September 2026\./,
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByText("No readings in October 2026.")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: /Electricity/ }));
 
     fireEvent.click(screen.getByRole("button", { name: "Choose month" }));
@@ -885,9 +892,10 @@ describe("Utilities Meters tab (V1-058 R4b)", () => {
       "WA-U101",
       "EL-U102",
       "WA-U102",
+      // Operations fix 6: one row for each Unit, the replaced meter under the Unit's new one.
       "EL-U201",
-      "WA-U201",
       "EL-OLD-201",
+      "WA-U201",
     ]);
     expect(screen.getByText("Replaced 24/08/2026")).toBeTruthy();
     expect(screen.getByText("7 meters")).toBeTruthy();
@@ -1433,6 +1441,30 @@ describe("Utilities Meters tab (V1-058 R4b)", () => {
     await waitFor(() => {
       expect(units.list).toHaveBeenCalledTimes(2);
     });
+  });
+  it("TEST-FE-2197 (owner 13/11/2026) the Meters list has one row for each Unit with its Electricity and Water meters side by side, and a type card shows only that type's column", async () => {
+    openMeters();
+    show();
+    await screen.findByRole("button", { name: /^Electricity meters: 3/ });
+    const table = screen.getByRole("table");
+    expect(
+      within(table)
+        .getAllByRole("columnheader")
+        .map((cell) => cell.textContent?.trim()),
+    ).toEqual(["Unit", "Electricity", "Water"]);
+    // Three Units, three rows (the replaced U201 meter sits in the U201 row).
+    expect(within(table).getAllByRole("row")).toHaveLength(4);
+    const u201 = within(table).getByText("U201").closest("tr");
+    expect(u201).not.toBeNull();
+    expect(within(u201 as HTMLElement).getByText("EL-OLD-201")).toBeTruthy();
+    expect(within(u201 as HTMLElement).getByText("WA-U201")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: /^Water meters: 3/ }));
+    expect(
+      within(screen.getByRole("table"))
+        .getAllByRole("columnheader")
+        .map((cell) => cell.textContent?.trim()),
+    ).toEqual(["Unit", "Water"]);
   });
 });
 

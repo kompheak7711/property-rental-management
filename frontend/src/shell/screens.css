@@ -564,6 +564,16 @@
     background: var(--btn-bg);
   }
 
+  /* Operations fix 2 (owner 13/11/2026): the desktop rule that drops the last segment's right
+     edge left the last chip open on its right side, so it looked cut. */
+  .ui-seg button:last-child {
+    border-right: 1px solid var(--btn-edge);
+  }
+
+  .ui-seg button[aria-pressed="true"]:last-child {
+    border-right-color: var(--primary);
+  }
+
   .ui-seg button[aria-pressed="true"] {
     border-color: var(--primary);
     background: var(--selected);
@@ -2052,6 +2062,16 @@ table.ui-table.ui-invlist .ui-phone {
   table.ui-table.ui-invlist .ui-phone {
     display: block;
     white-space: normal;
+  }
+  table.ui-table.ui-invlist {
+    min-width: 0;
+  }
+  table.ui-table.ui-invlist .ui-phone.ui-invstate {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    align-items: center;
+    margin-top: 4px;
   }
 }
 
@@ -3966,4 +3986,111 @@ html[lang="km"] .ui-factlist dt {
    margin of its own, so the gap above and under it is the card's. */
 .ui-card > p.ui-tight {
   margin: 0;
+}
+
+/* Operations fix 4 (owner 13/11/2026): on a phone the Approvals table is a list of cards, so
+   the amount and the Review button never sit off the screen. The column headings stay for
+   screen readers only. */
+@media (max-width: 639px) {
+  table.ui-table.ui-applist,
+  table.ui-table.ui-applist tbody {
+    display: block;
+    min-width: 0;
+  }
+
+  table.ui-table.ui-applist thead,
+  table.ui-table.ui-applist thead th {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    padding: 0;
+    border: 0;
+  }
+
+  table.ui-table.ui-applist tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  table.ui-table.ui-applist tr:last-child {
+    border-bottom: 0;
+  }
+
+  table.ui-table.ui-applist td {
+    display: block;
+    padding: 0;
+    border: 0;
+    white-space: normal;
+  }
+
+  table.ui-table.ui-applist td:nth-child(1) {
+    grid-column: 1 / -1;
+  }
+
+  table.ui-table.ui-applist td:nth-child(2) {
+    grid-row: 2;
+    grid-column: 1;
+  }
+
+  table.ui-table.ui-applist td:nth-child(4) {
+    grid-row: 2;
+    grid-column: 2;
+    font-weight: 700;
+  }
+
+  table.ui-table.ui-applist td:nth-child(3) {
+    grid-row: 3;
+    grid-column: 1;
+  }
+
+  table.ui-table.ui-applist td:nth-child(5) {
+    grid-row: 3;
+    grid-column: 2;
+    text-align: right;
+  }
+
+  table.ui-table.ui-applist td:nth-child(6) {
+    grid-column: 1 / -1;
+    margin-top: 4px;
+  }
+
+  table.ui-table.ui-applist td:nth-child(6) .ui-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  table.ui-table.ui-applist .ui-clip {
+    white-space: normal;
+  }
+}
+
+/* Operations fix 6 (owner 13/11/2026): Meters, one row for each Unit. A cell holds the Unit's
+   meter of that kind (a replaced one under it): number, last reading, state. */
+table.ui-table.ui-meters-unit td {
+  vertical-align: top;
+  white-space: normal;
+}
+
+.ui-metercell {
+  display: grid;
+  gap: 2px;
+  justify-items: start;
+}
+
+.ui-metercell + .ui-metercell {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+}
+
+@media (max-width: 639px) {
+  table.ui-table.ui-meters-unit {
+    min-width: 0;
+  }
 }

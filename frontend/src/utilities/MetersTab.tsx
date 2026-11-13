@@ -163,6 +163,18 @@ export function MetersTab({
       }) ||
       left.utility_type.localeCompare(right.utility_type),
   );
+  // One group for each Unit, in the order of its first (most urgent) meter.
+  const groups: { unitId: string; meters: UtilityMeter[] }[] = [];
+  for (const meter of rows) {
+    const group = groups.find((item) => item.unitId === meter.unit_id);
+    if (group === undefined)
+      groups.push({ unitId: meter.unit_id, meters: [meter] });
+    else group.meters.push(meter);
+  }
+  const TYPES_SHOWN: readonly UtilityType[] =
+    card === "ELECTRICITY" || card === "WATER"
+      ? [card]
+      : ["ELECTRICITY", "WATER"];
   const cardName = (value: Card) =>
     value === "ELECTRICITY"
       ? utt(language, "mt_c_el")
@@ -276,78 +288,81 @@ export function MetersTab({
         ) : (
           <>
             <div className="ui-tablewrap">
-              <table className="ui-table ui-meters">
+              {/* Operations fix 6 (owner 13/11/2026): one row for each Unit, its Electricity
+                  and Water meters side by side; Units with a broken meter come first. */}
+              <table className="ui-table ui-meters ui-meters-unit">
                 <thead>
                   <tr>
-                    <th scope="col">{utt(language, "meter_kind")}</th>
-                    <th className="ui-wide" scope="col">
-                      {utt(language, "col_type")}
-                    </th>
-                    <th className="ui-wide" scope="col">
-                      {utt(language, "mt_installed")}
-                    </th>
-                    <th className="r" scope="col">
-                      {utt(language, "mt_last")}
-                    </th>
-                    <th scope="col">{utt(language, "col_status")}</th>
+                    <th scope="col">{utt(language, "unit")}</th>
+                    {TYPES_SHOWN.map((type) => (
+                      <th key={type} scope="col">
+                        <Icon
+                          name={type === "ELECTRICITY" ? "zap" : "drop"}
+                          small
+                        />{" "}
+                        {utt(language, type)}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((meter) => {
-                    const owner = units.get(meter.unit_id);
-                    const last = data.readings.get(meter.id)?.[0];
+                  {groups.map(({ unitId, meters }) => {
+                    const owner = units.get(unitId);
                     const who =
                       owner === undefined
                         ? null
                         : whoText(language, data, owner);
                     return (
-                      <tr key={meter.id}>
+                      <tr key={unitId}>
                         <td>
-                          <a
-                            className="ui-no ui-num"
-                            href={hashForPage("utilities", `meter:${meter.id}`)}
-                          >
-                            {meter.serial_number}
-                          </a>
-                          <span className="ui-sub2">
-                            {owner?.unit_number ?? "—"}
-                            {who !== null && !who.muted && ` · ${who.text}`}
-                          </span>
-                        </td>
-                        <td className="ui-wide">
-                          <Icon
-                            name={
-                              meter.utility_type === "ELECTRICITY"
-                                ? "zap"
-                                : "drop"
-                            }
-                            small
-                          />{" "}
-                          {utt(language, meter.utility_type)}
-                        </td>
-                        <td className="ui-num ui-wide">
-                          {dayText(meter.installed_date)}
-                        </td>
-                        <td className="r">
-                          {last === undefined ? (
-                            "—"
-                          ) : (
-                            <>
-                              <span className="ui-num">
-                                {amountText(last.effective_value)}{" "}
-                                {measurementUnitLabel(
-                                  meter.measurement_unit_code,
-                                )}
-                              </span>
-                              <span className="ui-sub2 ui-num">
-                                {dayText(last.reading_date)}
-                              </span>
-                            </>
+                          <b className="ui-num">{owner?.unit_number ?? "—"}</b>
+                          {who !== null && !who.muted && (
+                            <span className="ui-sub2">{who.text}</span>
                           )}
                         </td>
-                        <td>
-                          <StateChip language={language} meter={meter} />
-                        </td>
+                        {TYPES_SHOWN.map((type) => {
+                          const cell = meters.filter(
+                            (meter) => meter.utility_type === type,
+                          );
+                          return (
+                            <td key={type}>
+                              {cell.length === 0 ? (
+                                <span className="ui-muted">—</span>
+                              ) : (
+                                cell.map((meter) => {
+                                  const last = data.readings.get(meter.id)?.[0];
+                                  return (
+                                    <div
+                                      className="ui-metercell"
+                                      key={meter.id}
+                                    >
+                                      <a
+                                        className="ui-no ui-num"
+                                        href={hashForPage(
+                                          "utilities",
+                                          `meter:${meter.id}`,
+                                        )}
+                                      >
+                                        {meter.serial_number}
+                                      </a>
+                                      <span className="ui-sub2 ui-num">
+                                        {last === undefined
+                                          ? "—"
+                                          : `${amountText(last.effective_value)} ${measurementUnitLabel(
+                                              meter.measurement_unit_code,
+                                            )} · ${dayText(last.reading_date)}`}
+                                      </span>
+                                      <StateChip
+                                        language={language}
+                                        meter={meter}
+                                      />
+                                    </div>
+                                  );
+                                })
+                              )}
+                            </td>
+                          );
+                        })}
                       </tr>
                     );
                   })}

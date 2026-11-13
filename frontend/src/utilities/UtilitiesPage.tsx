@@ -290,6 +290,21 @@ function ReadingsTab({
 
   const readingDay = readingDayOf(today);
   const entry = period === "month" && today >= readingDay;
+  // Operations fix 5 (owner 13/11/2026): before the reading day, This month has no readings
+  // yet, so the list shows the last month that has them (the last reading round) instead of
+  // an empty box, and the note says which month it is.
+  const lastRound = (() => {
+    if (period !== "month" || entry) return null;
+    const lines = allLines(data, type, unit?.unit_id ?? null);
+    const thisMonth = today.slice(0, 7);
+    if (lines.some((line) => line.reading.reading_date.startsWith(thisMonth)))
+      return null;
+    const earlier = lines
+      .map((line) => line.reading.reading_date.slice(0, 7))
+      .filter((month) => month < thisMonth)
+      .sort();
+    return earlier.at(-1) ?? null;
+  })();
   const earlyImport = testApp && canSave && period === "month" && !entry;
   const working = (row: EntryRow) => !isBroken(row.meter);
   const counts = new Map(
@@ -512,7 +527,11 @@ function ReadingsTab({
           {period === "month" && (
             <div className="ui-notice" role="note">
               <Icon name="info" />
-              <p>{utt(language, "before_day", dayText(readingDay))}</p>
+              <p>
+                {utt(language, "before_day", dayText(readingDay))}
+                {lastRound !== null &&
+                  ` ${utt(language, "before_day_last", monthText(language, lastRound))}`}
+              </p>
             </div>
           )}
           {earlyImport && (
@@ -525,7 +544,7 @@ function ReadingsTab({
             language={language}
             month={
               period === "month"
-                ? today.slice(0, 7)
+                ? (lastRound ?? today.slice(0, 7))
                 : period === "pick"
                   ? pick
                   : null

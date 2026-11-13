@@ -69848,6 +69848,36 @@
       "test_path": "backend/tests/test_telegram_local_setup_migration.py",
       "status": "implemented",
       "notes": "Set up Telegram test writes the aba_payway block by itself when both PayWay key files are saved: sandbox host unless aba_payway_host names the live one, no Payment Method code; a wrong host is refused."
+    },
+    {
+      "test_id": "TEST-FE-2195",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/payments/PaymentsList.test.tsx",
+      "status": "implemented",
+      "notes": "Operations screen (owner 13/11/2026): the Payments cards with $0.00 and no payments fold behind one More cards card; a pressed card stays shown."
+    },
+    {
+      "test_id": "TEST-FE-2196",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/approvals/ApprovalsPage.test.tsx",
+      "status": "implemented",
+      "notes": "Operations screen (owner 13/11/2026): the Approvals drafts table takes the phone card look; the Processed today box shows only when something was decided today."
+    },
+    {
+      "test_id": "TEST-FE-2197",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/utilities/UtilitiesPage.test.tsx",
+      "status": "implemented",
+      "notes": "Operations screen (owner 13/11/2026): the Meters list has one row for each Unit with its Electricity and Water meters side by side; a type card shows only that column."
     }
   ]
 }

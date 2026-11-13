@@ -126,7 +126,7 @@ export const SCREENS: readonly Screen[] = [
     name: "utilities",
     hash: "#/utilities",
     fixture: "utilities",
-    ready: "No readings in",
+    ready: "Until then, this list shows the last readings",
   },
   // The Meters tab: Add meter in the head with "Manager only" beside it.
   {

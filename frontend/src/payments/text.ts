@@ -291,6 +291,14 @@ const TEXT = {
   col_for: ["Paid for", "បង់សម្រាប់"],
   col_status: ["Status", "ស្ថានភាព"],
   c_total: ["Total received", "ប្រាក់ទទួលសរុប"],
+  // Operations fix 1 (owner 13/11/2026); new: the Khmer words need the native check.
+  c_more: ["More cards", "កាតបន្ថែម"],
+  c_more_s: [
+    "$0.00 in this period. Tap to show them.",
+    "$0.00 ក្នុងរយៈពេលនេះ។ ចុចដើម្បីបង្ហាញ។",
+  ],
+  c_fewer: ["Fewer cards", "កាតតិចជាងនេះ"],
+  c_fewer_s: ["Hide the cards with $0.00.", "លាក់កាតដែលមាន $0.00។"],
   c_unm: ["{0} not matched yet", "{0} មិនទាន់ផ្គូផ្គង"],
   c_allm: ["Nothing left to match", "គ្មានប្រាក់ត្រូវផ្គូផ្គងទៀត"],
   c_n: ["{0} payments", "ការបង់ប្រាក់ {0}"],

@@ -72,6 +72,11 @@ const TEXT = {
     "Reading day is {0}. The list to enter the readings opens that day.",
     "ថ្ងៃអានគឺ {0}។ បញ្ជីសម្រាប់វាយអំណានបើកនៅថ្ងៃនោះ។",
   ],
+  // Operations fix 5 (owner 13/11/2026); new: the Khmer words need the native check.
+  before_day_last: [
+    "Until then, this list shows the last readings, {0}.",
+    "រហូតដល់ពេលនោះ បញ្ជីនេះបង្ហាញអំណានចុងក្រោយ {0}។",
+  ],
   col_unit_meter: ["Unit · Meter", "បន្ទប់ · នាឡិកាស្ទង់"],
   col_last: ["Last reading", "អំណានចុងក្រោយ"],
   col_new: ["New reading", "អំណានថ្មី"],

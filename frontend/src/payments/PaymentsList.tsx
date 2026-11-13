@@ -138,6 +138,9 @@ export function PaymentsList({
   const [toText, setToText] = useState(dayText(picked[1]));
   const [pickError, setPickError] = useState(false);
   const [card, setCard] = useState<PayKind | "all">("all");
+  // Owner 13/11/2026 (Operations fix 1): the cards of kinds with no money in the period fold
+  // away behind one "more" card, so the list starts higher.
+  const [showZero, setShowZero] = useState(false);
   const [onlyLeft, setOnlyLeft] = useState(false);
   const [summary, setSummary] = useState<PaymentsSummary | null>(null);
   const [failed, setFailed] = useState(false);
@@ -306,6 +309,15 @@ export function PaymentsList({
     (total, kind) => total + summary.kinds[kind].cents,
     0,
   );
+  const zeroKinds = PAY_KINDS.filter(
+    (kind) =>
+      summary.kinds[kind].cents === 0 &&
+      summary.kinds[kind].payments === 0 &&
+      card !== kind,
+  );
+  const shownKinds = showZero
+    ? PAY_KINDS
+    : PAY_KINDS.filter((kind) => !zeroKinds.includes(kind));
   const inCard = (row: PaymentRow) =>
     card === "all" || (row.status !== "REVERSED" && (row.kinds[card] ?? 0) > 0);
   const listed = summary.rows.filter(inCard);
@@ -380,7 +392,7 @@ export function PaymentsList({
           value={summary.received}
           valueText={usdFromCents(summary.received)}
         />
-        {PAY_KINDS.map((kind) => {
+        {shownKinds.map((kind) => {
           const [icon, tone] = KIND_LOOK[kind];
           const { cents, payments } = summary.kinds[kind];
           return (
@@ -399,6 +411,29 @@ export function PaymentsList({
             />
           );
         })}
+        {zeroKinds.length > 0 && (
+          <button
+            aria-expanded={showZero}
+            className="ui-kpi none ui-kpi-more"
+            onClick={() => {
+              setShowZero(!showZero);
+            }}
+            type="button"
+          >
+            <span className="ui-kpi-label">
+              <span className="ui-kpi-icon">
+                <Icon name={showZero ? "x" : "plus"} small />
+              </span>
+              {pyt(language, showZero ? "c_fewer" : "c_more")}
+            </span>
+            <span className="ui-kpi-value ui-num">
+              {String(zeroKinds.length)}
+            </span>
+            <span className="ui-kpi-note">
+              {pyt(language, showZero ? "c_fewer_s" : "c_more_s")}
+            </span>
+          </button>
+        )}
       </div>
       <p className={addsUp ? "ui-addup" : "ui-addup ui-warnv"}>
         <Icon name={addsUp ? "check" : "alert"} small />

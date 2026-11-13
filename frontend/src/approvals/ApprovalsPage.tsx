@@ -571,7 +571,9 @@ export function ApprovalsPage({
           </p>
         ) : (
           <div className="ui-tablewrap">
-            <table className="ui-table">
+            {/* Operations fix 4 (owner 13/11/2026): on a phone each draft is a card with a
+                full-width Review button (screens.css, table.ui-applist). */}
+            <table className="ui-table ui-applist">
               <thead>
                 <tr>
                   <th scope="col">{apt(language, "ap_col_draft")}</th>
@@ -647,11 +649,11 @@ export function ApprovalsPage({
         <Icon name="info" />
         <p>{apt(language, "ap_rule")}</p>
       </div>
-      <section aria-labelledby="approvals-done" className="ui-card">
-        <h2 id="approvals-done">{apt(language, "ap_done_h")}</h2>
-        {done.length === 0 ? (
-          <p className="ui-muted">{apt(language, "ap_done_none")}</p>
-        ) : (
+      {/* Operations fix 7 (owner 13/11/2026): with nothing decided today the box is left out;
+          the "Processed today 0" card above already says so. */}
+      {done.length > 0 && (
+        <section aria-labelledby="approvals-done" className="ui-card">
+          <h2 id="approvals-done">{apt(language, "ap_done_h")}</h2>
           <ul className="ui-apps">
             {done.map((item) => (
               <li key={item.draft_id}>
@@ -671,8 +673,8 @@ export function ApprovalsPage({
               </li>
             ))}
           </ul>
-        )}
-      </section>
+        </section>
+      )}
 
       {opened !== null &&
         draft !== undefined &&

@@ -415,7 +415,8 @@ describe("Waiting for approval", () => {
         "Nothing is pending. Every draft has been processed.",
       ),
     ).toBeTruthy();
-    expect(screen.getAllByText("Nothing decided yet today.")).toHaveLength(1);
+    // Operations fix 7: no empty "Processed today" box.
+    expect(screen.queryAllByText("Nothing decided yet today.")).toHaveLength(0);
     expect(api.waiting).toHaveBeenCalledTimes(2);
     cleanup();
 
@@ -582,5 +583,24 @@ describe("Waiting for approval", () => {
     dialog = screen.getByRole("dialog", { name: "Refund: Customer Credit" });
     expect(facts().map(([term]) => term)).not.toContain("Refund method");
     expect(facts()).toContainEqual(["Reference", "Cash at the front desk"]);
+  });
+});
+
+describe("Operations screen (owner 13/11/2026)", () => {
+  it("TEST-FE-2196 (owner 13/11/2026) the drafts table carries the phone card look, and the Processed today box shows only when something was decided today", async () => {
+    show(() => Promise.resolve({ ...PAGE, decided_today: [] }));
+    expect(await screen.findByText("Refund: Reservation Deposit")).toBeTruthy();
+    expect(screen.getByRole("table").classList.contains("ui-applist")).toBe(
+      true,
+    );
+    expect(
+      screen.queryByRole("region", { name: "Processed today" }),
+    ).toBeNull();
+    cleanup();
+
+    show(() => Promise.resolve(PAGE));
+    expect(
+      await screen.findByRole("region", { name: "Processed today" }),
+    ).toBeTruthy();
   });
 });
