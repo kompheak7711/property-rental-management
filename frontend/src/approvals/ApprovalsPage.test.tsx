@@ -246,7 +246,7 @@ describe("Waiting for approval", () => {
     const { api } = show(() => Promise.resolve(page), { decisionApi });
     fireEvent.click(
       await screen.findByRole("button", {
-        name: "Open: Refund: Reservation Deposit",
+        name: "Review: Refund: Reservation Deposit",
       }),
     );
     const dialog = screen.getByRole("dialog", {
@@ -284,7 +284,7 @@ describe("Waiting for approval", () => {
 
     fireEvent.click(
       await screen.findByRole("button", {
-        name: "Open: Keep: Security Deposit",
+        name: "Review: Keep: Security Deposit",
       }),
     );
     expect(
@@ -329,7 +329,7 @@ describe("Waiting for approval", () => {
     });
     fireEvent.click(
       await screen.findByRole("button", {
-        name: "Open: Move payment to the right Unit",
+        name: "Review: Move payment to the right Unit",
       }),
     );
     const dialog = screen.getByRole("dialog");
@@ -384,7 +384,7 @@ describe("Waiting for approval", () => {
     const { api } = show(() => Promise.resolve(PAGE), { decisionApi: refused });
     fireEvent.click(
       await screen.findByRole("button", {
-        name: "Open: Correction: extra charge",
+        name: "Review: Correction: extra charge",
       }),
     );
     fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
@@ -468,7 +468,7 @@ describe("Waiting for approval", () => {
     show(() => Promise.resolve(page), { decisionApi });
     fireEvent.click(
       await screen.findByRole("button", {
-        name: "Open: Refund: Reservation Deposit",
+        name: "Review: Refund: Reservation Deposit",
       }),
     );
     fireEvent.click(screen.getByRole("button", { name: "Reject" }));
@@ -515,5 +515,72 @@ describe("Waiting for approval", () => {
     ).toBe(
       "Refunds pending: $200.00. Refunds pending approval · 1 calculated when confirmed",
     );
+  });
+
+  it("TEST-FE-2143 (round 15) the row button says Review; Review shows the Refund method by name and the reference note; a name that could not be read leaves its row out; a Customer with no Unit is written as plain text in the list", async () => {
+    const CREDIT = draft(
+      "d-7",
+      "REFUND",
+      {
+        variant: "USD",
+        amount_usd_cents: 6_930,
+        direction: "OUT",
+        customer_name: "Mao Sophea",
+      },
+      {
+        payload: {
+          source_kind: "CREDIT",
+          refund_method_id: "method-cash",
+          reference_note: "Cash at the front desk",
+        },
+      },
+    );
+    const page = { ...PAGE, waiting: [CREDIT] };
+    const refundMethods = vi.fn(() =>
+      Promise.resolve([
+        { id: "method-bank", display_name: "Bank transfer" },
+        { id: "method-cash", display_name: "Cash" },
+      ]),
+    );
+    show(() => Promise.resolve(page), {
+      decisionApi: { ...decisions(), refundMethods },
+    });
+    const button = await screen.findByRole("button", {
+      name: "Review: Refund: Customer Credit",
+    });
+    expect(button.textContent).toBe("Review");
+    const cell = screen.getByText("Mao Sophea");
+    expect(cell.tagName).toBe("TD");
+    fireEvent.click(button);
+    let dialog = screen.getByRole("dialog", {
+      name: "Refund: Customer Credit",
+    });
+    const facts = () =>
+      Array.from(dialog.querySelectorAll("dt")).map((term) => [
+        term.textContent,
+        term.nextElementSibling?.textContent,
+      ]);
+    await waitFor(() => {
+      expect(facts()).toContainEqual(["Refund method", "Cash"]);
+    });
+    expect(facts()).toContainEqual(["Reference", "Cash at the front desk"]);
+    expect(facts()).toContainEqual(["Reason", "Reason of d-7"]);
+    expect(refundMethods).toHaveBeenCalledWith("property-1");
+    cleanup();
+
+    show(() => Promise.resolve(page), {
+      decisionApi: {
+        ...decisions(),
+        refundMethods: vi.fn(() => Promise.reject(new Error("down"))),
+      },
+    });
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: "Review: Refund: Customer Credit",
+      }),
+    );
+    dialog = screen.getByRole("dialog", { name: "Refund: Customer Credit" });
+    expect(facts().map(([term]) => term)).not.toContain("Refund method");
+    expect(facts()).toContainEqual(["Reference", "Cash at the front desk"]);
   });
 });

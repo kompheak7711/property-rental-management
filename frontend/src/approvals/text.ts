@@ -48,6 +48,8 @@ const TEXT = {
   ap_col_amt: ["Amount", "ចំនួន"],
   col_status: ["Status", "ស្ថានភាព"],
   ap_open: ["Open", "បើក"],
+  // Round 15: the row button has the design's word (v81 "Review").
+  ap_review: ["Review", "ពិនិត្យ"],
   ap_wait_chip: ["Pending approval", "កំពុងរង់ចាំ"],
   ap_none: [
     "Nothing is pending. Every draft has been processed.",
@@ -73,6 +75,9 @@ const TEXT = {
   required: ["Required", "ចាំបាច់"],
   ap_reason: ["Reason", "មូលហេតុ"],
   ap_prepared: ["Prepared", "បានរៀបចំ"],
+  // Round 15: the Refund's method and reference note, as in design v81 Review.
+  ap_method: ["Refund method", "វិធីសងប្រាក់"],
+  ap_ref: ["Reference", "លេខយោង"],
   df_res: ["Reservation", "ការកក់"],
   df_lease: ["Lease", "កិច្ចសន្យា"],
   ap_moves: ["What happens when you confirm", "អ្វីកើតឡើងពេលអ្នកបញ្ជាក់"],

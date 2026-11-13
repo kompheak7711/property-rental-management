@@ -959,3 +959,31 @@ Main's PR #34 is merged into `ui-v81`. Its migration `20270723_392` and this bra
 Settings, Business, Payment Methods: the edit dialog has a new switch, "Use for ABA QR payments", under "Staff can use it on new Receipts". The marked method shows an "ABA QR" chip in the list. Only one method can have it: ticking it on another method says "{method} is used for ABA QR payments now. Saving moves it to this method.", and the save takes the mark off the first one. A method that is off cannot have it ("Turn this method on to use it for ABA QR payments."). The server keeps the same rules (DL-227).
 
 Tests: TEST-FE-2141 (the dialog and the list) in `frontend/src/settings/BusinessTab.test.tsx`, TEST-FE-2142 (reading and sending `aba_qr`) in `frontend/src/propertyClient.test.tsx`.
+
+## Round 15: module batch 5, Approvals (13/11/2026)
+
+Owner 13/11 15:02: "all good" after the Utilities pictures, so Approvals started.
+
+### What changed
+
+| Part | Before | Now | Where |
+|---|---|---|---|
+| Row button | "Open" | "Review", as in design v81 | `approvals/ApprovalsPage.tsx`, `ap_review` |
+| Review window | For, Amount, Prepared, Reason (small, grey) | The reason is normal text; a Refund also shows "Refund method" (the method's name, read from the refund methods) and "Reference" (the note on the draft), as in design v81 | `DraftFacts`, `ap_method`, `ap_ref` |
+| List, "For" column | The Customer's name small and grey even with no Unit above it | With no Unit, the name is normal text | `ApprovalsPage.tsx` |
+
+The refund methods are read once with the list. If that read fails, the "Refund method" line is left out; nothing else changes.
+
+### Every difference from design v81 left, with its reason
+
+| Part | Design v81 | App | Reason |
+|---|---|---|---|
+| Card and chip word | Waiting | Pending approval | Owner decision 3 (03_WORDING_REVIEW) |
+| Tabs | Financial approvals, Field reports (Later), Short-stay approvals | No tabs | Short-stay approvals went with DL-222; Field reports from Telegram are not built |
+| Column name | Purpose | For | The column holds the Unit and the Customer; "For" is plainer |
+| Draft number | DR-0007 under the draft's name | The reason under the draft's name | Drafts have no number in the app |
+| Refund of Customer Credit | Unit and Customer | Customer only | The server's summary names no Unit for a Credit |
+
+### Tests and checks
+
+Test: TEST-FE-2143 in `frontend/src/approvals/ApprovalsPage.test.tsx` (Review button, Refund method and Reference, a failed read of the methods, a Customer with no Unit). TEST-FE-933, 934 and 936 press "Review" now. The screen check has a new screen, `approvals`, with recorded answers in `frontend/e2e/fixtures/approvals.har.json` (one Refund of Customer Credit waits): 18 screens × 5 sizes pass. Layout and display only; no backend change, no database step.

@@ -69776,6 +69776,16 @@
       "notes": "The property client reads aba_qr as true or false (no mark from the server = false), refuses a mark that is not true or false, and sends the mark with a Payment Methods save."
     },
     {
+      "test_id": "TEST-FE-2143",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/approvals/ApprovalsPage.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 module batch 5 Approvals: the row button says Review; Review shows the Refund method by name and the reference note from the draft; a name that could not be read leaves its row out; a Customer with no Unit is plain text in the list."
+    },
+    {
       "test_id": "TEST-FE-2186",
       "upstream_ids": [
         "UI-008",

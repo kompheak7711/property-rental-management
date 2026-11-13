@@ -142,6 +142,13 @@ export const SCREENS: readonly Screen[] = [
     fixture: "utilities",
     ready: "Replace meter",
   },
+  // Approvals (round 15, 13/11/2026): one Refund of Customer Credit waits, with Review.
+  {
+    name: "approvals",
+    hash: "#/approvals",
+    fixture: "approvals",
+    ready: "Mao Sophea",
+  },
   // Leasing batch (owner 13/11/2026, design FINAL): the Short stays Calendar as a booking chart
   // with the quick numbers and the Today panel. Made-up guests for 13/11/2026
   // (e2e/fixtures/shortstays.har.json).
