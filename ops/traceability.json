@@ -69699,7 +69699,7 @@
       "test_level": "UI component",
       "test_path": "frontend/src/shortstays/ShortStaysPage.test.tsx",
       "status": "implemented",
-      "notes": "Leasing batch Today panel: a guest who has not paid gets Take payment, which opens the booking; a room not ready opens Housekeeping; no Check in button then. Owner 13/11/2026 evening: the Today panel opens from the right when Arriving today or Leaving today is pressed."
+      "notes": "Leasing batch Today panel: a guest who has not paid gets Pay, which opens the booking; a room not ready opens Housekeeping; no Check in button then. Owner 13/11/2026 evening: the Today panel opens from the right when Arriving today or Leaving today is pressed."
     },
     {
       "test_id": "TEST-FE-2183",

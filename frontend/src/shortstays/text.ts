@@ -879,7 +879,7 @@ const TEXT = {
   td_leave: ["Leaving", "ចេញ"],
   td_none_in: ["No one arrives today.", "គ្មាននរណាមកដល់ថ្ងៃនេះទេ។"],
   td_none_out: ["No one leaves today.", "គ្មាននរណាចេញថ្ងៃនេះទេ។"],
-  td_pay: ["Take payment", "ទទួលប្រាក់"],
+  td_pay: ["Pay", "បង់ប្រាក់"],
   td_deposit: ["Take deposit", "ទទួលប្រាក់កក់"],
   td_id: ["Add ID number", "បញ្ចូលលេខអត្តសញ្ញាណ"],
   td_room: ["Room not ready", "បន្ទប់មិនទាន់រួចរាល់"],

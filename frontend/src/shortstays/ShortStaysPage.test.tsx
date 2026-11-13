@@ -2543,7 +2543,7 @@ describe("Daily and weekly rent: Short stays", () => {
       expect(nextStep(READY)).toBe("in");
     });
 
-    it("TEST-FE-2182 a guest who has not paid gets Take payment, which opens the booking; a room not ready opens Housekeeping", async () => {
+    it("TEST-FE-2182 a guest who has not paid gets Pay, which opens the booking; a room not ready opens Housekeeping", async () => {
       show({ api: deskApi({ ...READY, payment: "NOT_BILLED" }) });
       fireEvent.click(
         await screen.findByRole("button", { name: /Arriving today/ }),
@@ -2552,7 +2552,7 @@ describe("Daily and weekly rent: Short stays", () => {
         name: "Today · 04/11/2026",
       });
       expect(
-        await within(today).findByRole("link", { name: "Take payment" }),
+        await within(today).findByRole("link", { name: "Pay" }),
       ).toHaveAttribute("href", "#/shortstays/st%3Ab-1");
       expect(within(today).getByText("Not paid")).toHaveClass("ss-warn");
       expect(

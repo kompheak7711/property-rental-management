@@ -1,7 +1,7 @@
 // Leasing batch (owner 13/11/2026, design FINAL): beside the Calendar, the quick numbers (full
 // tonight, arriving, leaving, not paid, booking sites) and the Today panel. Each guest who
 // arrives or leaves today has one button: Check in or Check out, or the step still missing
-// before a check-in (Take payment, Take deposit, Add ID number, Room not ready), which opens the
+// before a check-in (Pay, Take deposit, Add ID number, Room not ready), which opens the
 // booking where that step is done. The checks are the database's (migration 20270602_312):
 // paid, the deposit held, the guest's ID number, the room ready; the two ticks are asked here.
 // Display only: the server checks every step again.
