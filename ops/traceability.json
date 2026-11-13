@@ -67789,6 +67789,17 @@
       "test_path": "frontend/src/moveout/MoveoutPage.test.tsx",
       "status": "implemented",
       "notes": "On the Move-out page, step 2 shows the Rent for the days used after a hand-back on the 3rd; the button sends the amounts shown, the page says what the Invoice charges now and reads its records again; a hand-back on the 12th asks nothing."
+    },
+    {
+      "test_id": "TEST-FE-2247",
+      "upstream_ids": [
+        "UI-007",
+        "UI-014"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/InvoiceManagement.test.tsx",
+      "status": "implemented",
+      "notes": "A refused billing form marks its wrong field in the same screen update that shows the refusal, so the message never shows with an unmarked field (the timing fault behind an intermittent TEST-FE-259)."
     }
   ]
 }
