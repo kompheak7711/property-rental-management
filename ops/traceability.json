@@ -69911,6 +69911,17 @@
       "test_path": "frontend/src/shortstays/ShortStaysPage.test.tsx",
       "status": "implemented",
       "notes": "Owner 14/11/2026 00:00 (Leasing thread): the Short stays tabs are the page head's tab links like Invoices (?tab=cal|list|clean), the open one marked; New booking sits at the right of the tab row."
+    },
+    {
+      "test_id": "TEST-FE-2203",
+      "upstream_ids": [
+        "UI-008",
+        "PR-SS-STEP5"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shortstays/ShortStaysPage.test.tsx",
+      "status": "implemented",
+      "notes": "Owner 14/11/2026 00:37 (Leasing thread): the Short stays Calendar leaves out a Unit not for rent and a Unit leased for every day shown; a Unit whose tenant moves out within the days shown stays with its Lease bar. Tonight shows only the number taken, and each card's number sits at its top right."
     }
   ]
 }

@@ -30,6 +30,7 @@ import { CleaningList } from "./CleaningList";
 import { CreditsDue } from "./CreditsDue";
 import { DamageDue } from "./DamageDue";
 import { NewBookingForm } from "./NewBooking";
+import { forShortStays } from "./nights";
 import { StayChart } from "./StayChart";
 import { TodayPanel } from "./TodayPanel";
 import {
@@ -267,6 +268,18 @@ export function ShortStaysPage({
   const days = Array.from({ length: span }, (_, index) => addDays(from, index));
   const step = span === VIEWS.month ? span : STEP;
   // The Today panel stays on the screen while the chart moves to other days.
+  // Owner 14/11/2026: only the Units a short-stay guest can have (not a leased one).
+  const shortStayUnits =
+    calendar === null
+      ? []
+      : calendar.units.filter((unit) =>
+          forShortStays(
+            unit,
+            calendar.today,
+            calendar.from,
+            addDays(calendar.from, calendar.days - 1),
+          ),
+        );
   const calendarView = (
     <div className="ss-calgrid">
       <TodayPanel
@@ -346,11 +359,11 @@ export function ShortStaysPage({
             </span>
           </div>
           <div className="ui-card pad0">
-            {calendar.units.length === 0 ? (
+            {shortStayUnits.length === 0 ? (
               <p className="ui-empty">{st(language, "cal_none")}</p>
             ) : (
               <StayChart
-                calendar={calendar}
+                calendar={{ ...calendar, units: shortStayUnits }}
                 days={days}
                 language={language}
                 mayBook={may("short_stays.desk")}

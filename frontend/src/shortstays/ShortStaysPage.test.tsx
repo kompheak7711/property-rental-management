@@ -2483,7 +2483,8 @@ describe("Daily and weekly rent: Short stays", () => {
     it("TEST-FE-2180 shows the quick numbers: full tonight, arriving, leaving, not paid; booking sites only to the Owner and the Manager", async () => {
       show();
       const full = (await screen.findByText("Tonight")).closest("div");
-      expect(full).toHaveTextContent("0 of 2");
+      // Owner 14/11/2026: "Tonight" shows the Units taken (0), with "2 free" under it.
+      expect(full?.querySelector("b")).toHaveTextContent(/^0$/);
       expect(full).toHaveTextContent("2 free");
       // Owner 13/11/2026 evening: Not paid yet opens the Not paid panel from the right.
       const unpaid = screen.getByRole("button", { name: /Not paid yet/ });
@@ -2753,6 +2754,65 @@ describe("Daily and weekly rent: Short stays", () => {
       const done = screen.getByRole("list", { name: "Done and skipped" });
       expect(done.closest("details")).not.toHaveAttribute("open");
       expect(within(done).getByText("U502")).toBeInTheDocument();
+    });
+
+    it("TEST-FE-2203 the Calendar leaves out a Unit leased for every day shown and a Unit not for rent; a Unit whose tenant moves out within the days shown stays", async () => {
+      const base = calendar("2026-11-04", 14);
+      const [free, laterLease] = base.units;
+      if (free === undefined || laterLease === undefined)
+        throw new Error("No sample Units");
+      const unit = (
+        number: string,
+        extra: Partial<(typeof base.units)[number]>,
+      ) => ({
+        ...free,
+        unit_id: `u-${number}`,
+        unit_number: number,
+        bookings: [],
+        ...extra,
+      });
+      const units = [
+        free,
+        laterLease,
+        unit("U601", {
+          leases: [
+            {
+              lease_id: "l-6",
+              start_date: "2026-06-01",
+              end_date: "2027-05-31",
+            },
+          ],
+        }),
+        unit("U602", {
+          leases: [
+            {
+              lease_id: "l-7",
+              start_date: "2026-06-01",
+              end_date: "2026-11-09",
+            },
+          ],
+        }),
+        unit("U603", { for_rent: false }),
+      ];
+      show({
+        api: fakeApi({
+          calendar: vi.fn((_: string, from: string, days: number) =>
+            Promise.resolve({ ...calendar(from, days), units }),
+          ),
+        }),
+      });
+      const table = await screen.findByRole("table");
+      expect(
+        within(table).getByRole("row", { name: /U501/ }),
+      ).toBeInTheDocument();
+      expect(
+        within(table).getByRole("row", { name: /U503/ }),
+      ).toBeInTheDocument();
+      expect(
+        within(table).getByRole("row", { name: /U602/ }),
+      ).toBeInTheDocument();
+      expect(within(table).queryByRole("row", { name: /U601/ })).toBeNull();
+      expect(within(table).queryByRole("row", { name: /U603/ })).toBeNull();
     });
 
     it("TEST-FE-2202 the Short stays tabs are the page head's links, as on Invoices, with the open one marked", async () => {

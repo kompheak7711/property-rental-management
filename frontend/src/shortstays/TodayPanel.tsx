@@ -14,7 +14,7 @@ import { hashForPage } from "../shell/navigation";
 import { Dialog } from "../shell/ui";
 import type { Language } from "../signInText";
 import { stepProblem } from "./BookingDetail";
-import { nightOf } from "./nights";
+import { forShortStays, nightOf } from "./nights";
 import {
   addDays,
   type Booking,
@@ -142,7 +142,10 @@ export function TodayPanel({
     );
 
   const { calendar, arriving, leaving, sites } = data;
-  const forRent = calendar.units.filter((unit) => unit.for_rent);
+  // Owner 14/11/2026: "Tonight" counts only the Units a short-stay guest can have tonight.
+  const forRent = calendar.units.filter((unit) =>
+    forShortStays(unit, today, today, today),
+  );
   const freeTonight = forRent.filter(
     (unit) => nightOf(unit, today).kind === "FREE",
   ).length;
@@ -288,14 +291,8 @@ export function TodayPanel({
       <div className="ss-kpis">
         <div className="ss-kpi">
           <span>{st(language, "kp_full")}</span>
-          <b className="ui-num">
-            {st(
-              language,
-              "kp_full_v",
-              forRent.length - freeTonight,
-              forRent.length,
-            )}
-          </b>
+          {/* Owner 14/11/2026: the number of Units taken tonight only; "3 free" is under it. */}
+          <b className="ui-num">{forRent.length - freeTonight}</b>
           <span>{st(language, "kp_full_s", freeTonight)}</span>
         </div>
         {kpi(

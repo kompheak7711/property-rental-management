@@ -56,10 +56,14 @@
   gap: 10px;
 }
 
+/* Owner 14/11/2026: each card's number sits at its top right, beside the card's name; the note
+   runs under both. */
 .ss-kpi {
   display: grid;
-  gap: 2px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 8px;
   align-content: start;
+  align-items: start;
   min-height: 44px;
   padding: 10px 12px;
   border: 1px solid var(--border);
@@ -86,11 +90,21 @@ button.ss-kpi:hover {
 }
 
 .ss-kpi > b {
+  grid-row: 1;
+  grid-column: 2;
   font-size: 1.35rem;
+  line-height: 1.1;
   color: var(--heading);
 }
 
-.ss-kpi > span + span {
+.ss-kpi > span:first-child {
+  grid-row: 1;
+  grid-column: 1;
+  align-self: center;
+}
+
+.ss-kpi > span:not(:first-child) {
+  grid-column: 1 / -1;
   color: var(--text-2);
   font-size: 0.78rem;
 }
@@ -101,11 +115,11 @@ button.ss-kpi:hover {
 }
 
 .ss-kpi.warn > b,
-.ss-kpi .bad {
+.ss-kpi > span.bad {
   color: var(--warn);
 }
 
-.ss-kpi .ok {
+.ss-kpi > span.ok {
   color: var(--ok);
 }
 
