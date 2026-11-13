@@ -828,7 +828,8 @@ export function UsersTab({
             </span>
           </header>
           <div className="ui-tablewrap">
-            <table className="ui-table">
+            {/* Administration review fix 6: one card per user on a phone. */}
+            <table className="ui-table ui-rowcards">
               <thead>
                 <tr>
                   <th scope="col">{sst(language, "se_user")}</th>
@@ -859,7 +860,10 @@ export function UsersTab({
                         />
                       </td>
                       <td>{roleText(language, user)}</td>
-                      <td className="wrap">
+                      <td
+                        className="wrap ui-rc-wide"
+                        data-label={at(language, "ur_roles_col")}
+                      >
                         <span>{userRoleNames(language, user, roles)}</span>
                         {user.lifecycle_state === "active" && (
                           <>
@@ -899,7 +903,7 @@ export function UsersTab({
                           </Chip>
                         )}
                       </td>
-                      <td>
+                      <td className="ui-rc-wide">
                         {helpable ? (
                           <span className="ui-actions">
                             <button

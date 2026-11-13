@@ -1782,7 +1782,9 @@ function Statement({
         <p className="ui-muted pad">{lt(language, "r_none")}</p>
       ) : (
         <div className="ui-tablewrap">
-          <table className="ui-table">
+          {/* Administration review fix 6: "ui-stmt" lets long column names wrap, so the
+              Difference column fits on a laptop. */}
+          <table className="ui-table ui-stmt">
             <thead>
               <tr>
                 {report.columns.map((column) => (

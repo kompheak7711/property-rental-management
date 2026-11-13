@@ -108,7 +108,13 @@ function audit(width: number): string[] {
       el.textContent.trim() !== ""
     ) {
       const parent = el.parentElement;
-      if (parent !== null) {
+      // Administration review fix 2 (owner 13/11/2026): a row of tabs that slides sideways
+      // holds tabs past its edge on purpose; they are reached by sliding the row.
+      const slides =
+        parent !== null &&
+        /^(auto|scroll)$/.test(getComputedStyle(parent).overflowX) &&
+        parent.scrollWidth > parent.clientWidth + 1;
+      if (parent !== null && !slides) {
         const box = el.getBoundingClientRect();
         const outer = parent.getBoundingClientRect();
         if (box.right > outer.right + 1 || box.left < outer.left - 1)

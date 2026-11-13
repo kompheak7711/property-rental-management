@@ -430,7 +430,7 @@ describe("Settings", () => {
     ).toBeTruthy();
   });
 
-  it("TEST-FE-1906 Users and access is its own page with Users, Roles, Sign-in and security and History; the earlier account forms show only there", () => {
+  it("TEST-FE-1906 Users and access is its own page with Users, Roles, Sign-in and security and History; the earlier account forms show only under History (Administration review fix 10)", async () => {
     window.location.hash = "#/access";
     show(() => Promise.resolve(HEALTHY), {
       capabilities: new Set(["identity.manage_access"]),
@@ -442,18 +442,88 @@ describe("Settings", () => {
       .getAllByRole("tab")
       .map((tab) => tab.textContent);
     expect(tabs).toEqual(["Users", "Roles", "Sign-in and security", "History"]);
-    // The earlier forms are folded; only the Settings ones sit in a hidden part.
-    expect(screen.getByText("Old account form").closest("[hidden]")).toBeNull();
+    // On Users the earlier account forms are hidden; the Settings ones too.
+    expect(
+      screen.getByText("Old account form").closest("[hidden]"),
+    ).not.toBeNull();
     expect(
       screen.getByText("Old business form").closest("[hidden]"),
     ).not.toBeNull();
     fireEvent.click(screen.getByRole("tab", { name: "History" }));
     expect(window.location.hash).toBe("#/access?tab=history");
+    expect(screen.getByText("Old account form").closest("[hidden]")).toBeNull();
     expect(
-      screen.getByText(
-        /The full list of access changes is in the earlier forms/,
-      ),
+      await screen.findByText("No access change yet."),
     ).toBeInTheDocument();
+  });
+
+  it("TEST-FE-2230 Users and access › History lists the access changes, newest first, with names and plain words (Administration review fix 10)", async () => {
+    window.location.hash = "#/access?tab=history";
+    usersApi.load.mockImplementationOnce(() =>
+      Promise.resolve({
+        users: [
+          {
+            user_id: "u-owner",
+            display_name: "Owner",
+          } as never,
+          { user_id: "u-dara", display_name: "Sok Dara" } as never,
+        ],
+        capabilities: [],
+        roleBundles: [],
+        authorizationHistory: [
+          {
+            event_id: "e1",
+            property_id: "p",
+            occurred_at: "2026-11-13T01:00:00Z",
+            action: "identity.account.created",
+            actor_id: "u-owner",
+            target_id: "u-dara",
+            outcome: "completed",
+          },
+          {
+            event_id: "e2",
+            property_id: "p",
+            occurred_at: "2026-11-13T02:00:00Z",
+            action: "identity.account.locked_out",
+            actor_id: "u-owner",
+            target_id: "u-dara",
+            outcome: "rejected",
+          },
+        ],
+      }),
+    );
+    show(() => Promise.resolve(HEALTHY), {
+      capabilities: new Set(["identity.manage_access"]),
+      mode: "access",
+    });
+    const added = await screen.findByText("User added");
+    const rows = screen.getAllByRole("row").slice(1);
+    // Newest first: the unknown action reads in plain words, and a refused one says so.
+    expect(rows[0]).toHaveTextContent("Account locked out");
+    expect(rows[0]).toHaveTextContent("Refused");
+    expect(rows[1]).toContainElement(added);
+    expect(rows[1]).toHaveTextContent("Sok Dara");
+    expect(rows[1]).toHaveTextContent("13/11/2026");
+  });
+
+  it("TEST-FE-2231 Users and access follows the address, so the side menu's Roles opens Roles on the open page (Administration review fix 5)", () => {
+    window.location.hash = "#/access";
+    show(() => Promise.resolve(HEALTHY), {
+      capabilities: new Set(["identity.manage_access"]),
+      mode: "access",
+    });
+    expect(screen.getByRole("tab", { name: "Users" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    act(() => {
+      window.location.hash = "#/access?tab=roles";
+      window.dispatchEvent(new HashChangeEvent("hashchange"));
+    });
+    expect(screen.getByRole("tab", { name: "Roles" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
   });
 
   it("TEST-FE-2187 Booking sites is a Settings tab for the Owner and the Manager (owner 13/11/2026: moved from Short stays)", async () => {

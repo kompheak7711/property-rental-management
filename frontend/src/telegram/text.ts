@@ -612,6 +612,12 @@ const TEXT = {
   src_TELEGRAM: ["Telegram bot", "បូត Telegram"],
   // Invoices on Telegram (DL-211, owner 8 Nov 2026). All Khmer here is new and needs the
   // native check.
+  // Administration review fix 7 (13/11/2026): long lists show the 5 newest first. All new: the
+  // Khmer needs the native check.
+  list_some: ["The {0} newest of {1}.", "{0} ថ្មីបំផុត ក្នុងចំណោម {1}។"],
+  list_all: ["All {0}.", "ទាំង {0}។"],
+  show_all: ["Show all {0}", "បង្ហាញទាំង {0}"],
+  show_fewer: ["Show fewer", "បង្ហាញតិចជាងនេះ"],
   inv_h: ["Invoices on Telegram", "វិក្កយបត្រតាមតេឡេក្រាម"],
   inv_sub: [
     "Each issued Invoice goes to the tenants linked to its Lease. A reminder goes {0} days before the due date while it is not fully paid. Invoices of the last {1} days.",
