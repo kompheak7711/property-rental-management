@@ -69925,6 +69925,76 @@
       "notes": "A riel rate record is checked by its own mark-up: 0 with ABA's Sell rate rounded up loads, 50 (saved before DL-228) with 1.005 loads, any other pair is refused."
     },
     {
+      "test_id": "TEST-FE-2210",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/units/UnitsPage.test.tsx",
+      "status": "implemented",
+      "notes": "Property screen (owner 14/11/2026): the Unit page lists the running Lease's unpaid and part-paid Invoices by due date, each opening its Invoice; no builder notes; the photo box says No photo yet."
+    },
+    {
+      "test_id": "TEST-FE-2211",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/products/ProductsPage.test.tsx",
+      "status": "implemented",
+      "notes": "Property screen (owner 14/11/2026): a stock move is one row, Moved from the old place to the new one with no sign on the quantity; the details sit under the product."
+    },
+    {
+      "test_id": "TEST-FE-2212",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/problems/ProblemReportsPage.test.tsx",
+      "status": "implemented",
+      "notes": "Property screen (owner 14/11/2026): the Problem reports list has no Kind or Source column; a building floor reads floor 3 or the name as typed, never floor Floor 3."
+    },
+    {
+      "test_id": "TEST-FE-2213",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shell/rowMenu.test.tsx",
+      "status": "implemented",
+      "notes": "Property screen (owner 14/11/2026): a table row's buttons sit in one Edit menu that shows them only when opened; a choice, Escape or a press outside closes it."
+    },
+    {
+      "test_id": "TEST-FE-2214",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/problems/ProblemReportsPage.test.tsx",
+      "status": "implemented",
+      "notes": "Property screen (owner 14/11/2026): on the New Problem report form a long type name takes two boxes, Yes and No sit in one row, and Save is the last button."
+    },
+    {
+      "test_id": "test_migrations_411_and_412_follow_401_and_are_forward_only",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_problem_type_short_names_migration.py",
+      "status": "implemented",
+      "notes": "Migrations 20270725_411 (Problem type short names) and 20270725_412 (Safety back before Other) follow 401 in order, 412 is the head, and both are forward-only."
+    },
+    {
+      "test_id": "test_the_types_have_the_short_names_and_the_new_order",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_problem_type_short_names_migration.py",
+      "status": "implemented",
+      "notes": "After the migrations the Problem types read Door/Lock and Furniture/appliance, Safety sits after Noise and before Other, and the Khmer names and Safety's always urgent stay as they were."
+    },
+    {
       "test_id": "TEST-FE-2220",
       "upstream_ids": [
         "UI-008"
