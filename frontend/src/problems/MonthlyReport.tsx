@@ -5,7 +5,6 @@
 // Needs "Plan repairs" (problem_reports.plan); the server checks it again.
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { BackLink } from "../shell/backNav";
 
 import { todayInPhnomPenh, usdFromCents } from "../shell/format";
 import { Icon } from "../shell/icons";
@@ -101,8 +100,6 @@ export function MonthlyReport({
     load();
   }, [load]);
 
-  const back = <BackLink language={language} parent="problems" />;
-
   const costTable = (
     id: string,
     title: string,
@@ -151,30 +148,31 @@ export function MonthlyReport({
 
   return (
     <>
-      {back}
-      <PageHead>
-        <div>
-          <h2>{pt(language, "m_title")}</h2>
-          <p>{pt(language, "m_sub")}</p>
-        </div>
-        <div className="ui-field">
-          <label htmlFor="pm-month">{pt(language, "m_month")}</label>
-          <select
-            className="ui-sel"
-            id="pm-month"
-            onChange={(event) => {
-              setMonth(event.currentTarget.value);
-            }}
-            value={month}
-          >
-            {months.map((value) => (
-              <option key={value} value={value}>
-                {monthText(language, `${value}-01`)}
-              </option>
-            ))}
-          </select>
-        </div>
-      </PageHead>
+      {/* Property fix 4 (owner 14/11/2026): the tab row is the head; the month box sits at its
+          right end, and the Reports tab is the way back. */}
+      <h2 className="ui-sr">{pt(language, "m_title")}</h2>
+      <PageHead
+        actions={
+          <div className="ui-headfield">
+            <label htmlFor="pm-month">{pt(language, "m_month")}</label>
+            <select
+              className="ui-sel"
+              id="pm-month"
+              onChange={(event) => {
+                setMonth(event.currentTarget.value);
+              }}
+              value={month}
+            >
+              {months.map((value) => (
+                <option key={value} value={value}>
+                  {monthText(language, `${value}-01`)}
+                </option>
+              ))}
+            </select>
+          </div>
+        }
+      />
+      <p className="ui-muted ui-tight">{pt(language, "m_sub")}</p>
       {problem !== null && (
         <div className="ui-notice warn" role="status">
           <Icon name="alert" />

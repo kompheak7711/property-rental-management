@@ -175,6 +175,54 @@ export const SCREENS: readonly Screen[] = [
     ready: "Sam Dalin",
     clock: "2026-11-13T03:00:00Z",
   },
+  // Administration review (owner 13/11/2026 "All"): the tab row is the head, the 11 Ledger tabs
+  // slide in one row, tables are cards on a phone, the Telegram paper-copy lists show 5 rows,
+  // Users and access › History lists the access changes. Made-up data from the cloud review app
+  // (e2e/fixtures/administration.har.json).
+  {
+    name: "ledger-expense-requests",
+    hash: "#/exreqs",
+    fixture: "administration",
+    ready: "Open requests and advances",
+  },
+  {
+    name: "ledger-statements",
+    hash: "#/statements",
+    fixture: "administration",
+    ready: "Margin: water (4040 less 6020)",
+  },
+  {
+    name: "audit-log",
+    hash: "#/history",
+    fixture: "administration",
+    ready: "Payment allocation posted",
+  },
+  // Telegram › Linked tenants is not in the list yet: it stacks several lists (Linked now,
+  // Invoices, Receipts), which the two-tables rule refuses; splitting it is the owner's call.
+  {
+    name: "telegram-health",
+    hash: "#/tghealth",
+    fixture: "administration",
+    ready: "Messages not sent yet",
+  },
+  {
+    name: "access-users",
+    hash: "#/access",
+    fixture: "administration",
+    ready: "Chea Sreyneang",
+  },
+  {
+    name: "access-history",
+    hash: "#/access?tab=history",
+    fixture: "administration",
+    ready: "One-time password given",
+  },
+  {
+    name: "settings-business",
+    hash: "#/settings/business",
+    fixture: "administration",
+    ready: "Payment Methods",
+  },
 ];
 
 /** The five sizes of the owner's rule (width × height). */

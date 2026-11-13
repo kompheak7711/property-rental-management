@@ -16,6 +16,8 @@ import {
 } from "../shell/recordViews";
 import { BackLink } from "../shell/backNav";
 
+import type { InvoiceApi, InvoiceResource } from "../invoiceClient";
+import { cents } from "../invoices/invoicesData";
 import type { LeaseApi, LeaseResource } from "../leaseClient";
 import type { ProductsApi } from "../products/productsClient";
 import { UnitInventoryCard } from "../products/UnitInventory";
@@ -44,7 +46,7 @@ import { UnitChip, floorText } from "./UnitsList";
 import { ut } from "./text";
 import { type UtilityPricesApi, UnitUtilitiesCard } from "./UtilityPrices";
 import { itemName, typeName } from "./unitsData";
-import { PageHead } from "../shell/pageHead";
+import { PageHeader } from "../shell/layouts";
 
 type LeaseKind = "current" | "draft" | "ended" | "terminated" | "cancelled";
 
@@ -226,6 +228,8 @@ export interface UnitDetailProps {
   servicesApi: RentTermsServicesApi;
   /** V1.1 part 5 (DL-122): the Unit inventory form moves items through stock. */
   productsApi: ProductsApi;
+  /** Property fix 5 (owner 14/11/2026): the current Lease's unpaid Invoices. */
+  invoiceApi?: Pick<InvoiceApi, "list">;
 }
 
 export function UnitDetail({
@@ -243,6 +247,7 @@ export function UnitDetail({
   utilityApi,
   servicesApi,
   productsApi,
+  invoiceApi,
 }: UnitDetailProps) {
   const khmer = language === "km";
   const view = useHashView();
@@ -326,16 +331,6 @@ export function UnitDetail({
     (["VACANT", "CLEANING", "UNDER_MAINTENANCE"].includes(unit.status) ||
       (unit.status === "RESERVED" && reservation !== null && draft === null));
   const type = typeName(lists, unit.unit_type, khmer);
-  const sub = [
-    floorText(language, unit.floor),
-    type,
-    unit.size_square_metres === null
-      ? null
-      : ut(language, "m2", Number(unit.size_square_metres)),
-    "CHETANA Residence",
-  ]
-    .filter((part) => part !== null)
-    .join(" · ");
 
   const fact = (label: string, value: ReactNode) => (
     <div className="ui-fact" key={label}>
@@ -501,104 +496,100 @@ export function UnitDetail({
 
   return (
     <>
-      {back}
-      <PageHead>
-        <div>
-          <div className="ui-hrow">
-            <h2 className="ui-num" data-record-title="">
-              {unit.unit_number}
-            </h2>
-            <UnitChip language={language} status={unit.status} />
-            {!forRent && <Chip tone="neutral">{ut(language, "fr_no")}</Chip>}
-          </div>
-          <p>{sub}</p>
-        </div>
-        <div className="ui-actions">
-          {forRent &&
-            unit.status === "VACANT" &&
-            may("reservations.create") && (
+      {/* Property fix 4 (owner 14/11/2026): one head, as on the Lease page: Back on top, the
+          Unit number with its status, and the buttons on the right. Open Lease is in the
+          Current Lease card only. */}
+      <PageHeader
+        actions={
+          <>
+            {forRent &&
+              unit.status === "VACANT" &&
+              may("reservations.create") && (
+                <a
+                  className="ui-btn primary"
+                  href={hashForPage("reservations", `new:${unit.unit_id}`)}
+                >
+                  <Icon name="calendar" />
+                  {ut(language, "make_reservation")}
+                </a>
+              )}
+            {canLease && may("leases.draft") && (
               <a
-                className="ui-btn primary"
-                href={hashForPage("reservations", `new:${unit.unit_id}`)}
+                className={
+                  unit.status === "VACANT" ? "ui-btn" : "ui-btn primary"
+                }
+                href={hashForPage(
+                  "leases",
+                  reservation === null
+                    ? `unit:${unit.unit_id}`
+                    : `new:${reservation.reservation_id}`,
+                )}
               >
-                <Icon name="calendar" />
-                {ut(language, "make_reservation")}
+                <Icon name="lease" />
+                {ut(
+                  language,
+                  reservation === null ? "new_lease" : "new_lease_from_res",
+                )}
               </a>
             )}
-          {canLease && may("leases.draft") && (
-            <a
-              className={unit.status === "VACANT" ? "ui-btn" : "ui-btn primary"}
-              href={hashForPage(
-                "leases",
-                reservation === null
-                  ? `unit:${unit.unit_id}`
-                  : `new:${reservation.reservation_id}`,
-              )}
-            >
-              <Icon name="lease" />
-              {ut(
-                language,
-                reservation === null ? "new_lease" : "new_lease_from_res",
-              )}
-            </a>
-          )}
-          {draft !== null && may("leases.read") && (
-            <a
-              className="ui-btn primary"
-              href={hashForPage("leases", draft.lease_id)}
-            >
-              <Icon name="lease" />
-              {ut(language, "open_draft")}
-            </a>
-          )}
-          {current !== null && may("leases.read") && (
-            <a
-              className="ui-btn primary"
-              href={hashForPage("leases", current.lease_id)}
-            >
-              <Icon name="lease" />
-              {ut(language, "open_lease")}
-            </a>
-          )}
-          {reservation !== null && may("reservations.read") && (
-            <a
-              className="ui-btn"
-              href={hashForPage("reservations", reservation.reservation_id)}
-            >
-              <Icon name="calendar" />
-              {ut(language, "open_reservation")}
-            </a>
-          )}
-          {manage && (
-            <>
-              <button
-                className="ui-btn"
-                onClick={() => {
-                  setNotice(null);
-                  setWarning(null);
-                  setDialog("status");
-                }}
-                type="button"
+            {draft !== null && may("leases.read") && (
+              <a
+                className="ui-btn primary"
+                href={hashForPage("leases", draft.lease_id)}
               >
-                <Icon name="swap" />
-                {ut(language, "change_status")}
-              </button>
-              <button
+                <Icon name="lease" />
+                {ut(language, "open_draft")}
+              </a>
+            )}
+            {reservation !== null && may("reservations.read") && (
+              <a
                 className="ui-btn"
-                onClick={() => {
-                  setNotice(null);
-                  setWarning(null);
-                  setDialog("update");
-                }}
-                type="button"
+                href={hashForPage("reservations", reservation.reservation_id)}
               >
-                <Icon name="swap" />
-                {ut(language, "update_unit")}
-              </button>
-            </>
-          )}
-        </div>
-      </PageHead>
+                <Icon name="calendar" />
+                {ut(language, "open_reservation")}
+              </a>
+            )}
+            {manage && (
+              <>
+                <button
+                  className="ui-btn"
+                  onClick={() => {
+                    setNotice(null);
+                    setWarning(null);
+                    setDialog("status");
+                  }}
+                  type="button"
+                >
+                  <Icon name="swap" />
+                  {ut(language, "change_status")}
+                </button>
+                <button
+                  className="ui-btn"
+                  onClick={() => {
+                    setNotice(null);
+                    setWarning(null);
+                    setDialog("update");
+                  }}
+                  type="button"
+                >
+                  <Icon name="swap" />
+                  {ut(language, "update_unit")}
+                </button>
+              </>
+            )}
+          </>
+        }
+        back={back}
+        badge={
+          <>
+            <UnitChip language={language} status={unit.status} />
+            {!forRent && <Chip tone="neutral">{ut(language, "fr_no")}</Chip>}
+          </>
+        }
+        numeric
+        title={unit.unit_number}
+      />
       {warning !== null && (
         <div className="ui-notice warn" role="alert">
           <Icon name="alert" />
@@ -617,12 +608,11 @@ export function UnitDetail({
             <h2 id="unit-details">{ut(language, "details")}</h2>
             <div
               aria-label={ut(language, "no_photo")}
-              className="ui-photo"
+              className="ui-photo ui-photo-small"
               role="img"
             >
               <Icon name="units" />
               <span>{ut(language, "no_photo")}</span>
-              <span className="ui-small">{ut(language, "photo_later")}</span>
             </div>
             <div className="ui-facts">
               {fact(
@@ -758,12 +748,14 @@ export function UnitDetail({
             today={today}
             unit={unit}
           />
-          <section aria-labelledby="unit-invoices" className="ui-card">
-            <h2 id="unit-invoices">{ut(language, "invoices")}</h2>
-            <p className="ui-small ui-muted">
-              {ut(language, "invoices_later")}
-            </p>
-          </section>
+          {invoiceApi !== undefined && may("invoices.read") && (
+            <UnitInvoicesCard
+              api={invoiceApi}
+              language={language}
+              lease={current}
+              propertyId={propertyId}
+            />
+          )}
           <section aria-labelledby="unit-history" className="ui-card">
             <h2 id="unit-history">{ut(language, "history")}</h2>
             <LatestNote
@@ -882,5 +874,82 @@ export function UnitDetail({
         />
       )}
     </>
+  );
+}
+
+/** Property fix 5 (owner 14/11/2026): the unpaid Invoices of the Unit's current Lease, each
+ *  one a link to the Invoice. */
+function UnitInvoicesCard({
+  api,
+  language,
+  lease,
+  propertyId,
+}: {
+  api: Pick<InvoiceApi, "list">;
+  language: Language;
+  lease: LeaseResource | null;
+  propertyId: string;
+}) {
+  const leaseId = lease?.lease_id ?? null;
+  const [rows, setRows] = useState<InvoiceResource[] | null>(null);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    if (leaseId === null) return;
+    let live = true;
+    setFailed(false);
+    void Promise.all(
+      (["UNPAID", "PARTIALLY_PAID"] as const).map((status) =>
+        api.list(propertyId, { lease_id: leaseId, status }),
+      ),
+    )
+      .then((pages) => {
+        if (!live) return;
+        setRows(
+          pages
+            .flatMap((page) => page.items)
+            .filter((invoice) => cents(invoice.outstanding_balance) > 0)
+            .sort((left, right) =>
+              (left.due_date ?? "").localeCompare(right.due_date ?? ""),
+            ),
+        );
+      })
+      .catch(() => {
+        if (live) setFailed(true);
+      });
+    return () => {
+      live = false;
+    };
+  }, [api, leaseId, propertyId]);
+  let body: ReactNode;
+  if (leaseId === null) body = ut(language, "inv_no_lease");
+  else if (failed) body = ut(language, "inv_failed");
+  else if (rows === null) body = ut(language, "loading");
+  else if (rows.length === 0) body = ut(language, "inv_none");
+  else body = null;
+  return (
+    <section aria-labelledby="unit-invoices" className="ui-card">
+      <h2 id="unit-invoices">{ut(language, "invoices")}</h2>
+      {body !== null ? (
+        <p className="ui-small ui-muted">{body}</p>
+      ) : (
+        <ul className="ui-plain ui-unitinv">
+          {(rows ?? []).map((invoice) => (
+            <li key={invoice.id}>
+              <a className="ui-num" href={hashForPage("invoices", invoice.id)}>
+                {invoice.invoice_number}
+              </a>
+              <span className="ui-muted">
+                {invoice.due_date === null
+                  ? ""
+                  : ut(language, "inv_due", dayText(invoice.due_date))}
+              </span>
+              <b className="ui-num">
+                {usdFromCents(cents(invoice.outstanding_balance))}
+              </b>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }

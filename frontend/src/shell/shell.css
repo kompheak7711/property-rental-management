@@ -1341,3 +1341,48 @@ a.shell-me-text[aria-current="page"] b {
   margin-left: auto;
   padding-bottom: 6px;
 }
+
+/* Administration review fix 2 (owner 13/11/2026): a row of page tabs is one line that slides
+   sideways (the 11 Ledger tabs filled 2 rows on a laptop and 5 on a phone); the open tab is
+   scrolled into view (AppShell). The side menu lists the same tabs. */
+.shell-tabs {
+  flex-wrap: nowrap;
+  min-width: 0;
+  /* Its width comes from the page, never from its tabs, so a long row never widens the page. */
+  contain: inline-size;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+}
+
+.shell-tabs > .shell-tab {
+  flex: none;
+  white-space: nowrap;
+}
+
+.shell-head-tabbed > .shell-tabs {
+  flex: 1 1 0;
+}
+
+/* On a phone the tab row takes the whole width and the page's buttons sit under it, full
+   width and of equal size. */
+@media (max-width: 640px) {
+  .shell-head.shell-head-tabbed > .shell-tabs,
+  .shell-head.shell-head-tabbed > .ui-subtabs {
+    flex: 1 1 100%;
+  }
+
+  .shell-head.shell-head-tabbed > .shell-head-actions {
+    display: grid;
+    grid-auto-columns: minmax(0, 1fr);
+    grid-auto-flow: column;
+    flex: 1 1 100%;
+    margin-left: 0;
+    padding-bottom: 0;
+  }
+
+  .shell-head.shell-head-tabbed > .shell-head-actions .ui-btn {
+    justify-content: center;
+    width: 100%;
+  }
+}

@@ -64,7 +64,35 @@ type TextKey = keyof typeof TEXT;
 
 // What the device remembers about the menu (the same keys as the design, app23.js).
 /** Pages whose tab row is their head (owner 13/11/2026 23:44): no title or sub-line on show. */
-const TABBED_HEAD: ReadonlySet<string> = new Set(["invoices", "quotations"]);
+// Property fix 2 (owner 14/11/2026): Products, Stock movements and Storage locations too.
+// Administration review fix 1 (owner 13/11/2026): the Ledger, Staff and Telegram tabs too.
+const TABBED_HEAD: ReadonlySet<string> = new Set([
+  "invoices",
+  "quotations",
+  "products",
+  "stock",
+  "locations",
+  "exreqs",
+  "expenses",
+  "bills",
+  "journal",
+  "needscheck",
+  "chart",
+  "statements",
+  "budget",
+  "fassets",
+  "bankcash",
+  "lclose",
+  "employees",
+  "loans",
+  "payroll",
+  "attendance",
+  "tglinks",
+  "tgcontact",
+  "tgfaq",
+  "tgnotices",
+  "tghealth",
+]);
 
 const RAIL_KEY = "chetana-rail";
 const GROUPS_KEY = "chetana-navgrp";
@@ -409,6 +437,25 @@ export function AppShell({
   const clock = phnomPenhClock(instant, language);
   const tabs = openItem === null ? [] : allowedPagesOf(openItem, capabilities);
   const tabbedHead = tabs.length > 1 && TABBED_HEAD.has(page);
+  // Administration review fix 2: the tab row slides sideways, so the open tab is brought into
+  // view when the page opens (the row itself scrolls; the page does not move).
+  useEffect(() => {
+    const row = view.current?.querySelector<HTMLElement>(".shell-tabs");
+    const open = row?.querySelector<HTMLElement>('[aria-current="page"]');
+    if (
+      row === undefined ||
+      row === null ||
+      open === null ||
+      open === undefined
+    )
+      return;
+    if (row.scrollWidth <= row.clientWidth) return;
+    const at =
+      open.getBoundingClientRect().left -
+      row.getBoundingClientRect().left +
+      row.scrollLeft;
+    row.scrollLeft = Math.max(0, at - (row.clientWidth - open.offsetWidth) / 2);
+  }, [page]);
   // UI v81 round 2: the title is the open page's name (the tab's), as in design v81; the tab
   // bar is named after the menu item.
   const title = pageName(page, language);

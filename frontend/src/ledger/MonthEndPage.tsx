@@ -239,7 +239,7 @@ function NextMonth({
       <section className="ui-card">
         <p>
           {now === undefined
-            ? lt(language, "cl_none", "—", "—")
+            ? lt(language, "cl_none_yet")
             : lt(
                 language,
                 "cl_none",

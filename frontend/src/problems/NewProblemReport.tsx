@@ -7,6 +7,7 @@
 
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { BackLink } from "../shell/backNav";
+import { PageHeader } from "../shell/layouts";
 
 import { Icon } from "../shell/icons";
 import { dayText } from "../shell/format";
@@ -313,11 +314,13 @@ export function NewProblemReportForm({
 
   return (
     <>
-      {back}
-      <div className="ui-head">
-        <h2>{pt(language, "add_t")}</h2>
-      </div>
-      <form className="ui-card ui-form" noValidate onSubmit={submit}>
+      {/* Property fix 4 (owner 14/11/2026): Back on top, then the form's own title. */}
+      <PageHeader back={back} title={pt(language, "add_t")} />
+      <form
+        className="ui-card ui-form ui-pageform"
+        noValidate
+        onSubmit={submit}
+      >
         {finding !== undefined && (
           <div className="ui-notice" role="note">
             <Icon name="info" />
@@ -542,8 +545,10 @@ export function NewProblemReportForm({
                   }}
                   type="radio"
                 />
-                <Icon name={typeIcon(entry)} small />
-                {typeName(language, entry)}
+                <span className="ui-tile-name">
+                  <Icon name={typeIcon(entry)} small />
+                  {typeName(language, entry)}
+                </span>
                 {entry.always_urgent && (
                   <span className="ui-sub2 warn">{pt(language, "always")}</span>
                 )}

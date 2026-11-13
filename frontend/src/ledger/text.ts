@@ -261,7 +261,7 @@ const TEXT = {
     "រៀលសម្រាប់ {0} បានរក្សាទុក។ វានឹងចូលសៀវភៅបញ្ជីនៅពេលកត់ត្រាលើកក្រោយ។",
   ],
   nc_racc_h: [
-    "…you then enter the riel paid in Unposted records.",
+    "To pay a refund from the riel bank account, choose 1021. The refund stays in US dollars; you then enter the riel paid in Unposted records.",
     "ដើម្បីសងប្រាក់ពីគណនីធនាគាររៀល សូមជ្រើស ១០២១។ ការសងប្រាក់នៅតែជាដុល្លារ; បន្ទាប់មកអ្នកវាយបញ្ចូលរៀលដែលបានសងនៅក្នុង ត្រូវពិនិត្យ។",
   ],
   // Financial statements
@@ -920,6 +920,11 @@ const TEXT = {
   cl_none: [
     "No month is ready to close. {0} ends on {1}.",
     "គ្មានខែណារួចរាល់ដើម្បីបិទ។ {0} បញ្ចប់នៅ {1}។",
+  ],
+  // Administration review fix 4 (13/11/2026): no open month yet, so no "— ends on —". // new
+  cl_none_yet: [
+    "No month is ready to close yet.",
+    "មិនទាន់មានខែណារួចរាល់ដើម្បីបិទនៅឡើយទេ។",
   ],
   cl_months: ["Months", "ខែ"],
   cl_now: ["To close now", "ត្រូវបិទឥឡូវ"],

@@ -169,7 +169,7 @@ describe("Home", () => {
     expect(labels).toEqual([
       "Vacant Units",
       "Leases ending soon",
-      "Pending payment",
+      "Unpaid",
       "Paid this month",
       "Overdue",
       "Approvals",
@@ -195,9 +195,7 @@ describe("Home", () => {
     expect(card(/Approvals/).textContent).toBe(
       "Approvals1Refunds pending $5.00",
     );
-    expect(card(/Pending payment/).textContent).toBe(
-      "Pending payment$6,091.25",
-    );
+    expect(card(/^Unpaid/).textContent).toBe("Unpaid$6,091.25");
     // Paid this month counts the Invoices due this month that are paid; no note, no bar.
     expect(card(/Paid this month/).textContent).toBe(
       "Paid this month$3,716.20",
@@ -446,7 +444,7 @@ describe("Home", () => {
       "none",
     );
     expect(document.querySelectorAll(".ui-home-kpi")).toHaveLength(2);
-    expect(screen.queryByText("Pending payment")).toBeNull();
+    expect(screen.queryByText("Unpaid")).toBeNull();
     // Owner 14/11/2026: an empty Tasks card has no "Nothing here" line.
     expect(screen.queryByText("Nothing overdue")).toBeNull();
     expect(screen.queryByText("Nothing here")).toBeNull();
@@ -696,7 +694,7 @@ describe("Home", () => {
         "Leases ending soon",
         "Bookings",
         "Checked in",
-        "Pending payment",
+        "Unpaid",
         "Paid this month",
         "Overdue",
         "Approvals",
@@ -848,7 +846,7 @@ describe("Home", () => {
         ["Leases ending soon", "#/leases?show=ending"],
         ["Bookings", "#/shortstays?show=booked"],
         ["Checked in", "#/shortstays?show=checked_in"],
-        ["Pending payment", "#/invoices?show=open"],
+        ["Unpaid", "#/invoices?show=open"],
         // The paid Invoices of this month: the list the card's amount adds up.
         ["Paid this month", "#/invoices?show=paid&period=month"],
         ["Overdue", "#/invoices?show=overdue"],

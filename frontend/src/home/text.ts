@@ -29,7 +29,8 @@ const TEXT = {
   // Owner 12/11/2026: the Occupancy card is a Vacant card (vacant Units only).
   k_vac: ["Vacant Units", "បន្ទប់ទំនេរ"], // new
   k_vac_s: ["{0} Units · {1} reserved", "បន្ទប់ {0} · បានកក់ {1}"], // new
-  k_pend: ["Pending payment", "ប្រាក់មិនទាន់បង់"],
+  // Owner 14/11/2026: "Unpaid", the same word as the Invoices card it opens ("Total unpaid").
+  k_pend: ["Unpaid", "ប្រាក់មិនទាន់បង់"],
   k_paid: ["Paid this month", "បានបង់ខែនេះ"],
   k_over: ["Overdue", "ហួសកំណត់"],
   n_lease: ["Leases ending soon", "កិច្ចសន្យាជិតផុតកំណត់"],
@@ -156,9 +157,8 @@ const TEXT = {
   // UI v81 (design v81 Home): the Owner's money box and Attendance. Owner 12/11/2026: the box
   // is named "Financial summary" and no longer says "Only the Owner sees this".
   om_t: ["Financial summary", "សង្ខេបហិរញ្ញវត្ថុ"], // new
-  om_cash: ["Cash and bank today", "សាច់ប្រាក់ និងធនាគារថ្ងៃនេះ"], // new
-  om_owe: ["Customers owe", "អតិថិជនជំពាក់"], // new
-  om_over: ["Owed over 30 days", "ជំពាក់លើស ៣០ ថ្ងៃ"], // new
+  om_cash: ["Cash & bank", "សាច់ប្រាក់ និងធនាគារថ្ងៃនេះ"], // new
+  om_over: ["30+ days late", "ជំពាក់លើស ៣០ ថ្ងៃ"], // new
   om_spent: ["Spent this month", "ចំណាយខែនេះ"], // new
   om_spent_s: ["Budget {0}", "ថវិកា {0}"], // new
   om_nobudget: ["No budget for this month", "គ្មានថវិកាសម្រាប់ខែនេះ"], // new

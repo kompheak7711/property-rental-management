@@ -9,13 +9,15 @@ afterEach(() => {
 });
 
 describe("Inspections (UI v81 round 2)", () => {
-  it("TEST-FE-1914 says the Joint Inspection and Unit Check records come in V1.2 and opens Move-outs and Problem reports", () => {
+  it("TEST-FE-1914 says where inspections are for now and opens Move-outs and Problem reports", () => {
     render(<InspectionsPage language="en" />);
     expect(
       screen.getByText(
-        "Joint Inspections and Unit Checks are built in V1.2, after the design is approved. Until then:",
+        "This page does not list inspections yet. For now, find them here:",
       ),
     ).toBeInTheDocument();
+    // Property fix 5 (owner 14/11/2026): no build-step notes for staff.
+    expect(screen.queryByText(/V1\.2/)).toBeNull();
     expect(
       screen.getByRole("link", { name: "Open Move-outs" }),
     ).toHaveAttribute("href", "#/moveout");

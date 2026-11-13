@@ -49,7 +49,7 @@ import {
   showsCost,
 } from "./RepairCost";
 import { hasText, pt, type ProblemsTextKey } from "./text";
-import { PageHead } from "../shell/pageHead";
+import { PageHeader } from "../shell/layouts";
 
 type Problem = "failed" | "missing";
 type DialogName = StepName | "REPLAN" | "ANSWER" | "COST" | "COST_CHECK";
@@ -344,13 +344,12 @@ export function ProblemReportDetail({
 
   return (
     <>
-      {back}
-      <PageHead>
-        <div>
-          <div className="ui-hrow">
-            <h2 className="ui-num" data-record-title="">
-              {report.report_number}
-            </h2>
+      {/* Property fix 4 (owner 14/11/2026): one head: Back on top, the report number with its
+          status, the summary under it. */}
+      <PageHeader
+        back={back}
+        badge={
+          <>
             <StatusChip language={language} state={state} />
             {report.urgent && (
               <Chip icon="alert" tone="err">
@@ -360,26 +359,26 @@ export function ProblemReportDetail({
             {report.repeat !== null && (
               <Chip tone="warn">{pt(language, "repeat")}</Chip>
             )}
-          </div>
-          <p>
-            {[
-              pt(language, `k_${report.kind}`),
-              typeName(language, report.problem_type),
-              pt(language, `src_${report.source}`),
-              pt(
-                language,
-                "received_ago",
-                ageText(language, report.created_at, moment),
-              ),
-              report.created_by_name === null
-                ? null
-                : pt(language, "added_by", report.created_by_name),
-            ]
-              .filter(Boolean)
-              .join(" · ")}
-          </p>
-        </div>
-      </PageHead>
+          </>
+        }
+        numeric
+        summary={[
+          pt(language, `k_${report.kind}`),
+          typeName(language, report.problem_type),
+          pt(language, `src_${report.source}`),
+          pt(
+            language,
+            "received_ago",
+            ageText(language, report.created_at, moment),
+          ),
+          report.created_by_name === null
+            ? null
+            : pt(language, "added_by", report.created_by_name),
+        ]
+          .filter(Boolean)
+          .join(" · ")}
+        title={report.report_number}
+      />
       {notice !== null && (
         <div className="ui-notice ok" role="status">
           <Icon name="check" />

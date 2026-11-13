@@ -8,6 +8,7 @@ import {
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { InvoiceApi, InvoiceResource } from "../invoiceClient";
 import type { LeaseApi, LeaseResource } from "../leaseClient";
 import type { ReservationApi, ReservationResource } from "../reservationClient";
 import { detailFromHash, hashForPage, pageFromHash } from "../shell/navigation";
@@ -374,12 +375,14 @@ function show(
     capabilities?: ReadonlySet<string> | null;
     utilities?: UtilityPricesApi;
     services?: RentTermsServicesApi;
+    invoices?: Pick<InvoiceApi, "list">;
   } = {},
 ) {
   return render(
     <UnitsPage
       active
       capabilities={options.capabilities ?? null}
+      invoiceApi={options.invoices ?? invoiceApi([])}
       language="en"
       leaseApi={options.leases ?? leaseApi()}
       propertyId="property-1"
@@ -389,6 +392,47 @@ function show(
       utilityApi={options.utilities ?? utilityApi()}
     />,
   );
+}
+
+function invoice(
+  id: string,
+  status: InvoiceResource["status"],
+  due: string,
+  balance: number,
+): InvoiceResource {
+  return {
+    id,
+    property_id: "property-1",
+    customer_id: "customer-1",
+    lease_id: "lease-1",
+    invoice_number: id.toUpperCase(),
+    category: "RENT",
+    status,
+    invoice_date: "2026-11-01",
+    due_date: due,
+    billing_period: null,
+    version: 1,
+    original_total: { currency: "USD", minor_units: 50000 },
+    adjusted_total: { currency: "USD", minor_units: 50000 },
+    active_application_total: { currency: "USD", minor_units: 50000 - balance },
+    outstanding_balance: { currency: "USD", minor_units: balance },
+    lines: [],
+    adjustments: [],
+    void_event: null,
+    evidence: {} as InvoiceResource["evidence"],
+  };
+}
+
+function invoiceApi(items: InvoiceResource[]): Pick<InvoiceApi, "list"> {
+  return {
+    list: vi.fn((_property: string, filters?: { status?: string }) =>
+      Promise.resolve({
+        items: items.filter((item) => item.status === filters?.status),
+        next_cursor: null,
+        capabilities: [],
+      }),
+    ),
+  };
 }
 
 function rowOf(number: string): HTMLElement {
@@ -637,9 +681,10 @@ describe("Unit page", () => {
     expect(
       await screen.findByRole("heading", { name: "U101" }),
     ).toBeInTheDocument();
+    // Owner 14/11/2026: no line under the title; the Unit details card has these facts.
     expect(
-      screen.getByText("Floor 1 · Studio · 36 m² · CHETANA Residence"),
-    ).toBeInTheDocument();
+      screen.queryByText("Floor 1 · Studio · 36 m² · CHETANA Residence"),
+    ).toBeNull();
     for (const name of [
       "Unit details",
       "Current Lease",
@@ -680,6 +725,37 @@ describe("Unit page", () => {
     for (const link of screen.getAllByRole("link", { name: "Open Lease" })) {
       expect(link).toHaveAttribute("href", "#/leases/lease-1");
     }
+  });
+
+  it("TEST-FE-2210 (Property fix 5, owner 14/11/2026) the Unit page lists the running Lease's unpaid and part-paid Invoices by due date, each opening its Invoice, with no builder notes", async () => {
+    window.location.hash = "#/units/unit-U101";
+    const invoices = invoiceApi([
+      invoice("inv-2", "PARTIALLY_PAID", "2026-11-05", 12000),
+      invoice("inv-1", "UNPAID", "2026-10-05", 50000),
+      invoice("inv-3", "PAID", "2026-09-05", 0),
+    ]);
+    show(unitApi(), { invoices });
+
+    const card = (
+      await screen.findByRole("heading", { name: "Invoices for this Unit" })
+    ).closest("section");
+    if (card === null) throw new Error("no Invoices card");
+    await waitFor(() => {
+      expect(within(card).getAllByRole("listitem")).toHaveLength(2);
+    });
+    const lines = within(card).getAllByRole("listitem");
+    expect(lines[0]).toHaveTextContent("INV-1due 05/10/2026$500.00");
+    expect(lines[1]).toHaveTextContent("INV-2due 05/11/2026$120.00");
+    expect(within(card).getByRole("link", { name: "INV-1" })).toHaveAttribute(
+      "href",
+      hashForPage("invoices", "inv-1"),
+    );
+    expect(invoices.list).toHaveBeenCalledWith("property-1", {
+      lease_id: "lease-1",
+      status: "UNPAID",
+    });
+    expect(screen.queryByText(/V1\.2|step R5|file storage/)).toBeNull();
+    expect(screen.getByText("No photo yet")).toBeInTheDocument();
   });
 
   it("TEST-FE-1105 the Unit page shows each Meter with the price in force and the next one, and a kind with no Meter is not billed (V1-061)", async () => {
@@ -889,11 +965,8 @@ describe("Unit page", () => {
     view.unmount();
 
     await open("U101");
-    // The head and the Current Lease card.
-    expect(hrefs("Open Lease")).toEqual([
-      "#/leases/lease-1",
-      "#/leases/lease-1",
-    ]);
+    // Property fix 4 (owner 14/11/2026): Open Lease is in the Current Lease card only.
+    expect(hrefs("Open Lease")).toEqual(["#/leases/lease-1"]);
     expect(screen.queryByRole("link", { name: "New Lease" })).toBeNull();
   });
 

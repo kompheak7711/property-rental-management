@@ -250,6 +250,18 @@ function show(
   );
 }
 
+// Property fix 1 (owner 14/11/2026): a product's Edit, Mark-up, Cost and Prices buttons sit
+// in its one "Edit" menu, so a test opens that menu first.
+async function openEdit(scope: HTMLElement, name: string) {
+  const summary = within(scope).getByLabelText(`Edit: ${name}`);
+  fireEvent.click(summary);
+  await waitFor(() => {
+    expect(
+      summary.closest("details")?.querySelector(".ui-rowmenu-list"),
+    ).not.toBeNull();
+  });
+}
+
 function change(label: string | RegExp, value: string) {
   fireEvent.change(screen.getByLabelText(label), { target: { value } });
 }
@@ -279,11 +291,12 @@ describe("Building › Products (V1.1 part 4, DL-121)", () => {
     const service = within(table).getByText("Room cleaning").closest("tr");
     expect(service?.textContent).toContain("Service");
     // Staff see the products and their prices, but add and change nothing.
+    await openEdit(table, "Fan");
     expect(
       within(table).queryByRole("button", { name: "Add product" }),
     ).toBeNull();
     expect(
-      within(table).queryByRole("button", { name: "Edit: Fan" }),
+      within(table).queryByRole("button", { name: "Details: Fan" }),
     ).toBeNull();
     expect(
       within(table).queryByRole("button", { name: "Mark-up: Fan" }),
@@ -299,15 +312,17 @@ describe("Building › Products (V1.1 part 4, DL-121)", () => {
 
     show("products", apiOf(), MANAGER);
     const managed = await screen.findByRole("region", { name: "Products" });
+    await openEdit(managed, "Fan");
     expect(
       within(managed).getByRole("button", { name: "Add product" }),
     ).toBeTruthy();
     expect(
-      within(managed).getByRole("button", { name: "Edit: Fan" }),
+      within(managed).getByRole("button", { name: "Details: Fan" }),
     ).toBeTruthy();
     expect(
       within(managed).queryByRole("button", { name: "Mark-up: Fan" }),
     ).toBeNull();
+    await openEdit(managed, "Room cleaning");
     expect(
       within(managed).getByRole("button", { name: "Cost: Room cleaning" }),
     ).toBeTruthy();
@@ -364,7 +379,8 @@ describe("Building › Products (V1.1 part 4, DL-121)", () => {
       "Room cleaning deep added.",
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Edit: Fan" }));
+    await openEdit(table, "Fan");
+    fireEvent.click(screen.getByRole("button", { name: "Details: Fan" }));
     dialog = screen.getByRole("dialog", { name: "Edit P0001" });
     // An Item stays an Item.
     expect(
@@ -389,6 +405,7 @@ describe("Building › Products (V1.1 part 4, DL-121)", () => {
       });
     });
 
+    await openEdit(table, "Fan");
     fireEvent.click(
       await screen.findByRole("button", { name: "Mark-up: Fan" }),
     );
@@ -409,6 +426,45 @@ describe("Building › Products (V1.1 part 4, DL-121)", () => {
         max_mark_up_basis_points: 4000,
       });
     });
+  });
+
+  it("TEST-FE-2211 (Property fix 9, owner 14/11/2026) a move is one row, Moved from the old place to the new one, and the details sit under the product", async () => {
+    const out: Movement = {
+      ...MOVEMENT,
+      movement_number: "SM260005",
+      kind: "TRANSFER_OUT",
+      quantity: "2",
+      unit_cost_usd_cents: null,
+      supplier: null,
+      receipt_reference: null,
+    };
+    const into: Movement = {
+      ...out,
+      kind: "TRANSFER_IN",
+      quantity: "2",
+      unit_id: "unit-u101",
+      unit_number: "U101",
+      place_item_id: BEDROOM,
+      place_name_en: "Bedroom",
+      place_name_kh: null,
+    };
+    show(
+      "stock",
+      apiOf({ movements: vi.fn(() => Promise.resolve([out, into, MOVEMENT])) }),
+      STAFF,
+    );
+    const card = await screen.findByRole("region", { name: "Stock movements" });
+    const rows = within(card).getAllByText("SM260005");
+    expect(rows).toHaveLength(1);
+    const row = rows[0]?.closest("tr");
+    expect(row?.textContent).toContain("Moved");
+    expect(row?.textContent).toContain("W01 · Cabinet 1 → U101 · Bedroom 1");
+    // A move neither adds nor takes away, so its quantity has no sign.
+    expect(row?.textContent).toContain("Vanna2 Piece");
+    const purchase = within(card).getByText("SM260001").closest("tr");
+    expect(purchase?.querySelector(".ui-subline")?.textContent).toContain(
+      "$10.00 · Market · R-1",
+    );
   });
 
   it("TEST-FE-1145 Stock movements: a New purchase puts an Item in a place with its cost; Move stock takes only what a place holds; Adjust stock is for a Manager or the Owner and needs a reason; a server refusal stays in the form", async () => {
@@ -539,7 +595,11 @@ describe("Building › Products (V1.1 part 4, DL-121)", () => {
     const warehouse = await screen.findByRole("region", { name: /Unit W01/ });
     expect(within(warehouse).getByText("Not for rent")).toBeTruthy();
     const first = within(warehouse).getByText("Cabinet 1").closest("tr");
-    expect(first?.textContent).toContain("P0001 Fan × 2, P0003 Old lamp × 2");
+    expect(
+      [...(first?.querySelectorAll("ul.ui-holds li") ?? [])].map(
+        (item) => item.textContent,
+      ),
+    ).toEqual(["P0001 Fan × 2", "P0003 Old lamp × 2"]);
     const second = within(warehouse).getByText("Cabinet 2").closest("tr");
     expect(second?.textContent).toContain("Empty");
     expect(screen.getByRole("region", { name: "Unit U101" })).toBeTruthy();

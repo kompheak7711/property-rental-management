@@ -8,7 +8,7 @@ import {
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ProblemReportsPage } from "./ProblemReportsPage";
+import { ProblemReportsPage, whereText } from "./ProblemReportsPage";
 import {
   type FindingSource,
   type ProblemChoices,
@@ -356,6 +356,21 @@ describe("Building › Problem reports (V1.1 part 7, DL-124)", () => {
         .getByRole("button", { name: "Open 3" })
         .getAttribute("aria-pressed"),
     ).toBe("true");
+  });
+
+  it('TEST-FE-2212 (Property fix 3, owner 14/11/2026) the list has no Kind column, and a building floor reads "floor 3" or the name as typed, never "floor Floor 3"', async () => {
+    show(apiOf(), MANAGER);
+    const table = await screen.findByRole("table");
+    const heads = within(table)
+      .getAllByRole("columnheader")
+      .map((head) => head.textContent);
+    expect(heads).not.toContain("Kind");
+    expect(heads).not.toContain("Source");
+    expect(whereText("en", BP1)).toBe("Lift · floor 3");
+    expect(whereText("en", { ...BP1, floor: "Floor 3" })).toBe(
+      "Lift · Floor 3",
+    );
+    expect(whereText("en", { ...BP1, floor: null })).toBe("Lift");
   });
 
   it("TEST-FE-1221 New Problem report checks the form, Safety is always urgent, the Building kind asks for the shared place and floor, and Same problem saves it joined to an open report here", async () => {

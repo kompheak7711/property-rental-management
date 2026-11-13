@@ -14,10 +14,11 @@ const TEXT = {
     "Joint Inspections at move-in and move-out, and Unit Checks during a Lease",
     "ការត្រួតពិនិត្យរួមពេលចូល និងចាកចេញ និងការត្រួតពិនិត្យបន្ទប់ក្នុងពេលជួល",
   ],
-  soon_t: ["Until V1.2", "រហូតដល់ V1.2"],
+  // Property fix 5 (owner 14/11/2026): plain words for staff, no build-step notes.
+  soon_t: ["Where inspections are now", "កន្លែងការត្រួតពិនិត្យឥឡូវនេះ"],
   soon: [
-    "Joint Inspections and Unit Checks are built in V1.2, after the design is approved. Until then:",
-    "ការត្រួតពិនិត្យរួម និងការត្រួតពិនិត្យបន្ទប់ នឹងសាងសង់ក្នុង V1.2 បន្ទាប់ពីការរចនាត្រូវបានអនុម័ត។ រហូតដល់ពេលនោះ៖",
+    "This page does not list inspections yet. For now, find them here:",
+    "ទំព័រនេះមិនទាន់បង្ហាញការត្រួតពិនិត្យនៅឡើយទេ។ សម្រាប់ពេលនេះ សូមរកនៅទីនេះ៖",
   ],
   moveout: [
     "The move-out inspection and its findings are on the Lease's Move-out page.",

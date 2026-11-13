@@ -8,7 +8,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { dayText } from "../shell/format";
 import { Icon } from "../shell/icons";
-import { Chip } from "../shell/ui";
+import { PageHead } from "../shell/pageHead";
+import { Chip, RowMenu } from "../shell/ui";
 import { useShowFromAddress } from "../shell/useHashPage";
 import type { Language } from "../signInText";
 import {
@@ -183,6 +184,7 @@ export function ProductsPage({
       )}
       {tab === "products" && catalogue !== null && (
         <ProductsTable
+          active={active}
           catalogue={catalogue}
           language={language}
           may={may}
@@ -194,6 +196,7 @@ export function ProductsPage({
       )}
       {tab === "stock" && movements !== null && (
         <MovementsTable
+          active={active}
           canAdjust={may("stock.adjust")}
           canMove={may("stock.transfer")}
           canPurchase={may("stock.purchase")}
@@ -331,11 +334,13 @@ export function ProductsPage({
 }
 
 function ProductsTable({
+  active,
   language,
   catalogue,
   may,
   onOpen,
 }: {
+  active: boolean;
   language: Language;
   catalogue: Catalogue;
   may: (capability: string) => boolean;
@@ -359,10 +364,15 @@ function ProductsTable({
   );
   return (
     <section aria-labelledby="products-title" className="ui-card pad0">
-      <header className="ui-chead pad">
-        <h2 id="products-title">{pt(language, "pr_title")}</h2>
-        {may("products.manage") && (
-          <span className="ui-actions">
+      {/* Property fix 2 (owner 14/11/2026): the tab row is the page's head, so the card has no
+          title of its own and Add product sits at the right end of the tab row. */}
+      <h2 className="ui-sr" id="products-title">
+        {pt(language, "pr_title")}
+      </h2>
+      {may("products.manage") && (
+        <PageHead
+          active={active}
+          actions={
             <button
               className="ui-btn primary"
               onClick={() => {
@@ -373,9 +383,9 @@ function ProductsTable({
               <Icon name="plus" small />
               {pt(language, "pr_add")}
             </button>
-          </span>
-        )}
-      </header>
+          }
+        />
+      )}
       <p className="ui-muted pad">
         {pt(
           language,
@@ -424,7 +434,7 @@ function ProductsTable({
         </p>
       ) : (
         <div className="ui-tablewrap">
-          <table className="ui-table">
+          <table className="ui-table ui-pcards ui-prodlist">
             <thead>
               <tr>
                 <th scope="col">{pt(language, "pr_sku")}</th>
@@ -445,8 +455,8 @@ function ProductsTable({
                 const name = productName(product, language);
                 return (
                   <tr key={product.product_id}>
-                    <td className="ui-num">{product.sku}</td>
-                    <td>
+                    <td className="ui-num pc-small">{product.sku}</td>
+                    <td className="pc-name">
                       <b>{name}</b>
                       {product.discontinued && (
                         <>
@@ -463,22 +473,35 @@ function ProductsTable({
                         </>
                       )}
                     </td>
-                    <td>
+                    <td className="pc-hide">
                       {categoryName(catalogue, product.category_code, language)}
                     </td>
-                    <td>{unitName(product.measure_unit, language)}</td>
-                    <td className="ui-num">
-                      {product.kind === "SERVICE"
-                        ? pt(language, "pr_service")
-                        : product.stock}
+                    <td className="pc-hide">
+                      {unitName(product.measure_unit, language)}
                     </td>
-                    <td className="ui-num">
+                    <td className="ui-num pc-small">
+                      {product.kind === "SERVICE" ? (
+                        pt(language, "pr_service")
+                      ) : (
+                        <>
+                          <span className="pc-label">
+                            {pt(language, "pr_stock")}{" "}
+                          </span>
+                          {product.stock}
+                          <span className="pc-label">
+                            {" "}
+                            {unitName(product.measure_unit, language)}
+                          </span>
+                        </>
+                      )}
+                    </td>
+                    <td className="ui-num pc-hide">
                       {dollars(product.cost_usd_cents)}
                     </td>
-                    <td className="ui-num">
+                    <td className="ui-num pc-hide">
                       {percent(product.mark_up_basis_points)}
                     </td>
-                    <td className="ui-num">
+                    <td className="ui-num pc-end">
                       {product.price_usd_cents === null ? (
                         <span className="ui-muted">
                           {pt(language, "pr_no_price")}
@@ -488,17 +511,22 @@ function ProductsTable({
                       )}
                     </td>
                     <td>
-                      <span className="ui-actions">
+                      {/* Property fix 1 (owner 14/11/2026): the row's buttons in one small
+                          menu, so every row stays one line high. */}
+                      <RowMenu
+                        label={pt(language, "pr_edit")}
+                        name={`${pt(language, "pr_edit")}: ${name}`}
+                      >
                         {may("products.manage") && (
                           <button
-                            aria-label={`${pt(language, "pr_edit")}: ${name}`}
+                            aria-label={`${pt(language, "pr_details")}: ${name}`}
                             className="ui-btn"
                             onClick={() => {
                               onOpen({ kind: "edit", product });
                             }}
                             type="button"
                           >
-                            {pt(language, "pr_edit")}
+                            {pt(language, "pr_details")}
                           </button>
                         )}
                         {may("products.prices") && (
@@ -536,7 +564,7 @@ function ProductsTable({
                         >
                           {pt(language, "pr_prices")}
                         </button>
-                      </span>
+                      </RowMenu>
                     </td>
                   </tr>
                 );
@@ -552,7 +580,43 @@ function ProductsTable({
   );
 }
 
+/** Property fix 9 (owner 14/11/2026): a move is one row, "from → to", not an out row and an
+ *  in row with the same number. Rows without a partner stay as they are. */
+function moveRows(
+  movements: Movement[],
+): { movement: Movement; to: Movement | null }[] {
+  const rows: { movement: Movement; to: Movement | null }[] = [];
+  for (const movement of movements) {
+    if (movement.kind === "TRANSFER_IN") {
+      const pair = movements.some(
+        (other) =>
+          other.kind === "TRANSFER_OUT" &&
+          other.movement_number === movement.movement_number,
+      );
+      if (pair) continue;
+    }
+    const to =
+      movement.kind === "TRANSFER_OUT"
+        ? (movements.find(
+            (other) =>
+              other.kind === "TRANSFER_IN" &&
+              other.movement_number === movement.movement_number,
+          ) ?? null)
+        : null;
+    rows.push({ movement, to });
+  }
+  return rows;
+}
+
+function placeText(movement: Movement, language: Language): string {
+  return `${movement.unit_number} · ${placeName(
+    { name_en: movement.place_name_en, name_kh: movement.place_name_kh },
+    language,
+  )} ${String(movement.place_number)}`;
+}
+
 function MovementsTable({
+  active,
   language,
   movements,
   canPurchase,
@@ -560,6 +624,7 @@ function MovementsTable({
   canAdjust,
   onOpen,
 }: {
+  active: boolean;
   language: Language;
   movements: Movement[];
   canPurchase: boolean;
@@ -578,32 +643,34 @@ function MovementsTable({
   ];
   return (
     <section aria-labelledby="stock-title" className="ui-card pad0">
-      <header className="ui-chead pad">
-        <h2 id="stock-title">{pt(language, "sm_title")}</h2>
-        <span className="ui-actions">
-          {buttons
-            .filter(([, allowed]) => allowed)
-            .map(([mode, , key]) => (
-              <button
-                className={mode === "PURCHASE" ? "ui-btn primary" : "ui-btn"}
-                key={mode}
-                onClick={() => {
-                  onOpen(mode);
-                }}
-                type="button"
-              >
-                {mode === "PURCHASE" && <Icon name="plus" small />}
-                {mode === "TRANSFER" && <Icon name="swap" small />}
-                {pt(language, key)}
-              </button>
-            ))}
-        </span>
-      </header>
+      {/* Property fix 2 (owner 14/11/2026): the buttons sit at the right end of the tab row. */}
+      <h2 className="ui-sr" id="stock-title">
+        {pt(language, "sm_title")}
+      </h2>
+      <PageHead
+        active={active}
+        actions={buttons
+          .filter(([, allowed]) => allowed)
+          .map(([mode, , key]) => (
+            <button
+              className={mode === "PURCHASE" ? "ui-btn primary" : "ui-btn"}
+              key={mode}
+              onClick={() => {
+                onOpen(mode);
+              }}
+              type="button"
+            >
+              {mode === "PURCHASE" && <Icon name="plus" small />}
+              {mode === "TRANSFER" && <Icon name="swap" small />}
+              {pt(language, key)}
+            </button>
+          ))}
+      />
       {movements.length === 0 ? (
         <p className="ui-muted pad">{pt(language, "sm_none")}</p>
       ) : (
         <div className="ui-tablewrap">
-          <table className="ui-table">
+          <table className="ui-table ui-pcards ui-movelist">
             <thead>
               <tr>
                 <th scope="col">{pt(language, "sm_number")}</th>
@@ -612,16 +679,15 @@ function MovementsTable({
                 <th scope="col">{pt(language, "sm_product")}</th>
                 <th scope="col">{pt(language, "sm_qty")}</th>
                 <th scope="col">{pt(language, "sm_place")}</th>
-                <th scope="col">{pt(language, "sm_detail")}</th>
-                <th scope="col">{pt(language, "sm_by")}</th>
               </tr>
             </thead>
             <tbody>
-              {movements.map((movement) => {
+              {moveRows(movements).map(({ movement, to }) => {
                 const out =
-                  movement.kind === "ADJUSTMENT_OUT" ||
-                  movement.kind === "TRANSFER_OUT" ||
-                  movement.kind === "SALE";
+                  to === null &&
+                  (movement.kind === "ADJUSTMENT_OUT" ||
+                    movement.kind === "TRANSFER_OUT" ||
+                    movement.kind === "SALE");
                 const detail = [
                   movement.unit_cost_usd_cents === null
                     ? null
@@ -629,39 +695,45 @@ function MovementsTable({
                   movement.supplier,
                   movement.receipt_reference,
                   movement.reason,
+                  movement.recorded_by_name,
                 ]
-                  .filter((part): part is string => part !== null)
+                  .filter(
+                    (part): part is string => part !== null && part !== "",
+                  )
                   .join(" · ");
                 return (
                   <tr key={`${movement.movement_number}-${movement.kind}`}>
-                    <td className="ui-num">{movement.movement_number}</td>
-                    <td>{dayText(movement.business_date)}</td>
-                    <td>
-                      <Chip tone={out ? "warn" : "ok"}>
-                        {pt(language, `sm_${movement.kind}`)}
+                    <td className="ui-num pc-small">
+                      {movement.movement_number}
+                    </td>
+                    <td className="pc-small">
+                      {dayText(movement.business_date)}
+                    </td>
+                    <td className="pc-end">
+                      <Chip tone={to !== null ? "info" : out ? "warn" : "ok"}>
+                        {pt(
+                          language,
+                          to !== null ? "sm_moved" : `sm_${movement.kind}`,
+                        )}
                       </Chip>
                     </td>
-                    <td>
+                    <td className="pc-name ui-wrapcell">
                       {movement.sku} · {movement.product_name_en}
+                      {/* Property fix 9: the details and who recorded it, small under the
+                          product, so the table fits the screen. */}
+                      {detail !== "" && (
+                        <span className="ui-subline">{detail}</span>
+                      )}
                     </td>
-                    <td className="ui-num">
-                      {out ? "−" : "+"}
+                    <td className="ui-num pc-end">
+                      {to !== null ? "" : out ? "−" : "+"}
                       {movement.quantity}{" "}
                       {unitName(movement.measure_unit, language)}
                     </td>
-                    <td>
-                      {movement.unit_number} ·{" "}
-                      {placeName(
-                        {
-                          name_en: movement.place_name_en,
-                          name_kh: movement.place_name_kh,
-                        },
-                        language,
-                      )}{" "}
-                      {movement.place_number}
+                    <td className="pc-full">
+                      {placeText(movement, language)}
+                      {to !== null && <> → {placeText(to, language)}</>}
                     </td>
-                    <td>{detail}</td>
-                    <td>{movement.recorded_by_name ?? ""}</td>
                   </tr>
                 );
               })}
@@ -739,7 +811,7 @@ function LocationsCards({
               )}
             </header>
             <div className="ui-tablewrap">
-              <table className="ui-table">
+              <table className="ui-table ui-loclist">
                 <thead>
                   <tr>
                     <th scope="col">{pt(language, "lo_place")}</th>
@@ -758,12 +830,14 @@ function LocationsCards({
                             {pt(language, "lo_empty")}
                           </span>
                         ) : (
-                          place.stock
-                            .map(
-                              (line) =>
-                                `${line.sku} ${line.name_en} × ${line.quantity}`,
-                            )
-                            .join(", ")
+                          // Property fix 10 (owner 14/11/2026): one item per line.
+                          <ul className="ui-holds">
+                            {place.stock.map((line) => (
+                              <li key={line.product_id}>
+                                {line.sku} {line.name_en} × {line.quantity}
+                              </li>
+                            ))}
+                          </ul>
                         )}
                       </td>
                     </tr>
