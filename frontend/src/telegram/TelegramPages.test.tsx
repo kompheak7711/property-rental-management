@@ -532,6 +532,50 @@ describe("Office › Telegram", () => {
     expect(api.links).toHaveBeenCalledWith("prop-1");
   });
 
+  it("TEST-FE-2232 Invoices on Telegram shows the 5 newest of a long list and a Show all button (Administration review fix 7)", async () => {
+    const api = fakeApi();
+    const unsent = INVOICES.invoices[1];
+    if (unsent === undefined) throw new Error("the fixture has two Invoices");
+    const many = Array.from({ length: 8 }, (_, index) => ({
+      ...unsent,
+      id: `inv-${String(index)}`,
+      number: `INV-2026-01${String(index).padStart(2, "0")}`,
+    }));
+    api.invoices = vi.fn(() =>
+      Promise.resolve({ ...INVOICES, invoices: many }),
+    );
+    render(
+      <LinkedTenantsPage
+        active
+        api={api}
+        capabilities={READER}
+        language="en"
+        propertyId="prop-1"
+      />,
+    );
+    const invoices = await screen.findByRole("region", {
+      name: "Invoices on Telegram",
+    });
+    await within(invoices).findByRole("row", { name: /INV-2026-0100/ });
+    // The heading row and the 5 newest.
+    expect(within(invoices).getAllByRole("row")).toHaveLength(6);
+    expect(
+      within(invoices).getByText("The 5 newest of 8."),
+    ).toBeInTheDocument();
+    // The count of Invoices that need a paper copy still counts every one.
+    expect(
+      within(invoices).getByText(/did not reach anyone on Telegram: 8\./),
+    ).toBeInTheDocument();
+    fireEvent.click(
+      within(invoices).getByRole("button", { name: "Show all 8" }),
+    );
+    expect(within(invoices).getAllByRole("row")).toHaveLength(9);
+    fireEvent.click(
+      within(invoices).getByRole("button", { name: "Show fewer" }),
+    );
+    expect(within(invoices).getAllByRole("row")).toHaveLength(6);
+  });
+
   it("TEST-FE-1950 Invoices on Telegram shows who got each issued Invoice and its reminder, and which tenants need a paper copy", async () => {
     const api = fakeApi();
     render(

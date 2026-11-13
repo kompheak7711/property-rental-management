@@ -37,10 +37,35 @@ const TEXT = {
   ac_roles: ["Roles", "តួនាទី"], // new
   ac_signin: ["Sign-in and security", "ការចូល និងសុវត្ថិភាព"], // new
   ac_history: ["History", "ប្រវត្តិ"], // new
-  ac_history_note: [
-    "The full list of access changes is in the earlier forms below until it moves here. Every change is also in the Audit log.",
-    "បញ្ជីពេញនៃការប្តូរសិទ្ធិ មាននៅក្នុងទម្រង់មុនខាងក្រោម រហូតដល់ផ្លាស់មកទីនេះ។ រាល់ការប្តូរក៏មាននៅក្នុងកំណត់ហេតុសវនកម្មដែរ។",
-  ], // new
+  // Administration review fix 10 (13/11/2026): the History tab lists the access changes.
+  // All new: the Khmer needs the native check.
+  ah_when: ["When", "ពេលណា"],
+  ah_who: ["Who", "អ្នកណា"],
+  ah_what: ["What happened", "អ្វីបានកើតឡើង"],
+  ah_user: ["User", "អ្នកប្រើ"],
+  ah_you: ["{0} (you)", "{0} (អ្នក)"],
+  ah_loading: ["Loading the access changes…", "កំពុងផ្ទុកការប្តូរសិទ្ធិ…"],
+  ah_none: ["No access change yet.", "មិនទាន់មានការប្តូរសិទ្ធិនៅឡើយ។"],
+  ah_failed: [
+    "The access changes could not be read. Try again in a moment.",
+    "មិនអាចអានការប្តូរសិទ្ធិបានទេ។ សូមព្យាយាមម្តងទៀតបន្តិចក្រោយ។",
+  ],
+  ah_refused: ["Refused", "បានបដិសេធ"],
+  ah_note: [
+    "Newest first. Nothing here can be edited or deleted. Every change is also in the Audit log.",
+    "ថ្មីបំផុតមុនគេ។ មិនអាចកែ ឬលុបអ្វីនៅទីនេះបានទេ។ រាល់ការប្តូរក៏មាននៅក្នុងកំណត់ហេតុសវនកម្មដែរ។",
+  ],
+  ah_created: ["User added", "បានបន្ថែមអ្នកប្រើ"],
+  ah_updated: ["User details changed", "បានប្តូរព័ត៌មានអ្នកប្រើ"],
+  ah_disabled: ["User disabled", "បានបិទអ្នកប្រើ"],
+  ah_otp: ["One-time password given", "បានផ្តល់ពាក្យសម្ងាត់ប្រើម្តង"],
+  ah_sessions: ["All sessions ended", "បានបញ្ចប់វគ្គទាំងអស់"],
+  ah_role_given: ["Role given", "បានផ្តល់តួនាទី"],
+  ah_role_removed: ["Role removed", "បានដកតួនាទី"],
+  ah_role_made: ["Role added", "បានបន្ថែមតួនាទី"],
+  ah_role_changed: ["Role permissions changed", "បានប្តូរសិទ្ធិតួនាទី"],
+  ah_settings_given: ["Settings access given", "បានផ្តល់សិទ្ធិការកំណត់"],
+  ah_settings_removed: ["Settings access removed", "បានដកសិទ្ធិការកំណត់"],
   se_tab_sites: ["Booking sites", "គេហទំព័រកក់"],
   se_tab_health: ["System health", "សុខភាពប្រព័ន្ធ"],
   // new: tabs not rebuilt yet keep the earlier forms.
@@ -57,9 +82,10 @@ const TEXT = {
     "ផ្ទាំងនេះនឹងរៀបចំឡើងវិញនៅជំហានក្រោយ។ រហូតដល់ពេលនោះ ទម្រង់មុនខាងក្រោមនៅតែប្រើបាន។",
   ],
   // new: the Users tab is rebuilt; role bundles are not in the mock-up.
+  // Administration review fix 10: the old forms show only under History now. // new
   earlier_kept: [
-    "Role bundles and the full list of access changes are still in the earlier forms below.",
-    "កញ្ចប់តួនាទី និងបញ្ជីពេញនៃការប្តូរសិទ្ធិ នៅតែមាននៅក្នុងទម្រង់មុនខាងក្រោម។",
+    "The older English forms below do the same things as the tabs above. They go when the old screens are removed.",
+    "ទម្រង់អង់គ្លេសចាស់ខាងក្រោម ធ្វើរឿងដដែលនឹងផ្ទាំងខាងលើ។ វានឹងដកចេញ ពេលអេក្រង់ចាស់ត្រូវដកចេញ។",
   ],
   // new: the Business tab is rebuilt; the earlier forms stay until the old screens go.
   earlier_same: [

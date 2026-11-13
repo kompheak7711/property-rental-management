@@ -466,7 +466,8 @@ export function HistoryPage({
           <p className="ui-empty">{hit(language, "hi_none")}</p>
         ) : (
           <div className="ui-tablewrap">
-            <table className="ui-table">
+            {/* Administration review fix 6: cards on a phone and an iPad. */}
+            <table className="ui-table ui-rowcards ui-rowcards-md">
               <thead>
                 <tr>
                   <th scope="col">{hit(language, "hi_when")}</th>
@@ -497,7 +498,7 @@ export function HistoryPage({
                       <td>
                         <Chip tone="neutral">{kind}</Chip>
                       </td>
-                      <td>
+                      <td className="ui-rc-wide">
                         <span lang="en">{actionText(event.action)}</span>
                         {event.outcome.toLowerCase() === "refused" && (
                           <>

@@ -785,6 +785,42 @@ function invoiceReached(invoice: {
   return "waiting";
 }
 
+/** Administration review fix 7: a long list shows its newest rows first. */
+const FIRST = 5;
+
+function ShowAll({
+  all,
+  count,
+  language,
+  onShow,
+}: {
+  all: boolean;
+  count: number;
+  language: Language;
+  onShow: (all: boolean) => void;
+}) {
+  if (count <= FIRST) return null;
+  return (
+    <div className="ui-tfoot ui-tfoot-row">
+      <span>
+        {all
+          ? tt(language, "list_all", count)
+          : tt(language, "list_some", FIRST, count)}
+      </span>
+      <button
+        aria-expanded={all}
+        className="ui-btn"
+        onClick={() => {
+          onShow(!all);
+        }}
+        type="button"
+      >
+        {all ? tt(language, "show_fewer") : tt(language, "show_all", count)}
+      </button>
+    </div>
+  );
+}
+
 function InvoicesOnTelegram({
   language,
   propertyId,
@@ -798,6 +834,8 @@ function InvoicesOnTelegram({
 }) {
   const page = usePage<InvoicesPage>(propertyId, active, api.invoices);
   const data = page.data;
+  // Administration review fix 7 (owner 13/11/2026): the 5 newest, then "Show all".
+  const [all, setAll] = useState(false);
   const paper =
     data === null
       ? 0
@@ -843,50 +881,64 @@ function InvoicesOnTelegram({
                   </tr>
                 </thead>
                 <tbody>
-                  {data.invoices.map((invoice) => {
-                    const reached = invoiceReached(invoice);
-                    const sentCount = invoice.sent.filter(
-                      (person) => person.state === "SENT",
-                    ).length;
-                    return (
-                      <tr key={invoice.id}>
-                        <td className="ui-num">{invoice.number}</td>
-                        <td>{invoice.unit_number ?? ""}</td>
-                        <td className="ui-wide">{invoice.customer}</td>
-                        <td className="ui-num">{dayText(invoice.due_date)}</td>
-                        <td className="ui-wide ui-num">
-                          {usdFromCents(invoice.to_pay_usd_cents)}
-                        </td>
-                        <td>
-                          {reached === "sent" && (
-                            <Chip tone="ok">
-                              {tt(language, "inv_sent", sentCount)}
-                            </Chip>
-                          )}
-                          {reached === "waiting" && (
-                            <Chip tone="warn">
-                              {tt(language, "inv_waiting")}
-                            </Chip>
-                          )}
-                          {reached === "failed" && (
-                            <Chip tone="err">{tt(language, "inv_failed")}</Chip>
-                          )}
-                          {reached === "none" && (
-                            <Chip tone="err">{tt(language, "inv_paper")}</Chip>
-                          )}
-                        </td>
-                        <td className="ui-wide ui-num">
-                          {invoice.reminded_at === null
-                            ? tt(language, "inv_no_reminder")
-                            : momentText(invoice.reminded_at)}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                  {(all ? data.invoices : data.invoices.slice(0, FIRST)).map(
+                    (invoice) => {
+                      const reached = invoiceReached(invoice);
+                      const sentCount = invoice.sent.filter(
+                        (person) => person.state === "SENT",
+                      ).length;
+                      return (
+                        <tr key={invoice.id}>
+                          <td className="ui-num">{invoice.number}</td>
+                          <td>{invoice.unit_number ?? ""}</td>
+                          <td className="ui-wide">{invoice.customer}</td>
+                          <td className="ui-num">
+                            {dayText(invoice.due_date)}
+                          </td>
+                          <td className="ui-wide ui-num">
+                            {usdFromCents(invoice.to_pay_usd_cents)}
+                          </td>
+                          <td>
+                            {reached === "sent" && (
+                              <Chip tone="ok">
+                                {tt(language, "inv_sent", sentCount)}
+                              </Chip>
+                            )}
+                            {reached === "waiting" && (
+                              <Chip tone="warn">
+                                {tt(language, "inv_waiting")}
+                              </Chip>
+                            )}
+                            {reached === "failed" && (
+                              <Chip tone="err">
+                                {tt(language, "inv_failed")}
+                              </Chip>
+                            )}
+                            {reached === "none" && (
+                              <Chip tone="err">
+                                {tt(language, "inv_paper")}
+                              </Chip>
+                            )}
+                          </td>
+                          <td className="ui-wide ui-num">
+                            {invoice.reminded_at === null
+                              ? tt(language, "inv_no_reminder")
+                              : momentText(invoice.reminded_at)}
+                          </td>
+                        </tr>
+                      );
+                    },
+                  )}
                 </tbody>
               </table>
             </div>
           )}
+          <ShowAll
+            all={all}
+            count={data.invoices.length}
+            language={language}
+            onShow={setAll}
+          />
           <p className="ui-tfoot">
             {tt(language, "inv_sub", data.rules.remind_days, data.rules.days)}
           </p>
@@ -911,6 +963,7 @@ function ReceiptsOnTelegram({
 }) {
   const page = usePage<ReceiptsPage>(propertyId, active, api.receipts);
   const data = page.data;
+  const [all, setAll] = useState(false);
   const reachedOf = (receipt: TelegramReceipt) => invoiceReached(receipt);
   const paper =
     data === null
@@ -954,47 +1007,59 @@ function ReceiptsOnTelegram({
                   </tr>
                 </thead>
                 <tbody>
-                  {data.receipts.map((receipt) => {
-                    const reached = reachedOf(receipt);
-                    const sentCount = receipt.sent.filter(
-                      (person) => person.state === "SENT",
-                    ).length;
-                    return (
-                      <tr key={receipt.id}>
-                        <td className="ui-num">{receipt.number}</td>
-                        <td className="ui-wide">{receipt.customer}</td>
-                        <td className="ui-wide ui-num">
-                          {momentText(receipt.issued_at)}
-                        </td>
-                        <td className="ui-num">
-                          {usdFromCents(receipt.amount_usd_cents)}
-                        </td>
-                        <td>
-                          {receipt.status !== "RECEIVED" ? (
-                            <Chip tone="warn">
-                              {tt(language, "rec_reversed")}
-                            </Chip>
-                          ) : reached === "sent" ? (
-                            <Chip tone="ok">
-                              {tt(language, "inv_sent", sentCount)}
-                            </Chip>
-                          ) : reached === "waiting" ? (
-                            <Chip tone="warn">
-                              {tt(language, "inv_waiting")}
-                            </Chip>
-                          ) : reached === "failed" ? (
-                            <Chip tone="err">{tt(language, "inv_failed")}</Chip>
-                          ) : (
-                            <Chip tone="err">{tt(language, "inv_paper")}</Chip>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                  {(all ? data.receipts : data.receipts.slice(0, FIRST)).map(
+                    (receipt) => {
+                      const reached = reachedOf(receipt);
+                      const sentCount = receipt.sent.filter(
+                        (person) => person.state === "SENT",
+                      ).length;
+                      return (
+                        <tr key={receipt.id}>
+                          <td className="ui-num">{receipt.number}</td>
+                          <td className="ui-wide">{receipt.customer}</td>
+                          <td className="ui-wide ui-num">
+                            {momentText(receipt.issued_at)}
+                          </td>
+                          <td className="ui-num">
+                            {usdFromCents(receipt.amount_usd_cents)}
+                          </td>
+                          <td>
+                            {receipt.status !== "RECEIVED" ? (
+                              <Chip tone="warn">
+                                {tt(language, "rec_reversed")}
+                              </Chip>
+                            ) : reached === "sent" ? (
+                              <Chip tone="ok">
+                                {tt(language, "inv_sent", sentCount)}
+                              </Chip>
+                            ) : reached === "waiting" ? (
+                              <Chip tone="warn">
+                                {tt(language, "inv_waiting")}
+                              </Chip>
+                            ) : reached === "failed" ? (
+                              <Chip tone="err">
+                                {tt(language, "inv_failed")}
+                              </Chip>
+                            ) : (
+                              <Chip tone="err">
+                                {tt(language, "inv_paper")}
+                              </Chip>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    },
+                  )}
                 </tbody>
               </table>
             </div>
           )}
+          <ShowAll
+            all={all}
+            count={data.receipts.length}
+            language={language}
+            onShow={setAll}
+          />
           <p className="ui-tfoot">{tt(language, "rec_sub", data.rules.days)}</p>
         </>
       )}
@@ -1345,7 +1410,8 @@ export function TelegramHealthPage({
           <h2 id="tg-bots">{tt(language, "bots")}</h2>
         </div>
         <div className="ui-tablewrap">
-          <table className="ui-table">
+          {/* Administration review fix 6: one card per bot on a phone. */}
+          <table className="ui-table ui-rowcards">
             <thead>
               <tr>
                 <th scope="col">{tt(language, "c_bot")}</th>
@@ -1369,8 +1435,18 @@ export function TelegramHealthPage({
                         <Chip tone="ok">{tt(language, "working")}</Chip>
                       )}
                     </td>
-                    <td className="ui-num">{when(bot.last_in, language)}</td>
-                    <td className="ui-num">{when(bot.last_out, language)}</td>
+                    <td
+                      className="ui-num ui-rc-wide"
+                      data-label={tt(language, "c_in")}
+                    >
+                      {when(bot.last_in, language)}
+                    </td>
+                    <td
+                      className="ui-num ui-rc-wide"
+                      data-label={tt(language, "c_out")}
+                    >
+                      {when(bot.last_out, language)}
+                    </td>
                   </tr>
                 );
               })}

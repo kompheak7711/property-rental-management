@@ -821,7 +821,7 @@ describe("local sign-in", () => {
   });
 
   it("TEST-FE-012 exposes account commands only after server capability and recent-auth checks with explicit consequence confirmation", async () => {
-    openPage("access");
+    openPage("access?tab=history");
     const user: UserAccount = {
       user_id: "user-1",
       property_id: "property-1",
@@ -875,7 +875,7 @@ describe("local sign-in", () => {
       target: { value: "property-1" },
     });
     // UI v81: the account forms live on Users and access (moved out of Settings).
-    openPage("access");
+    openPage("access?tab=history");
     fireEvent.click(
       screen.getByRole("button", { name: "Check administration access" }),
     );
@@ -1031,7 +1031,7 @@ describe("local sign-in", () => {
   });
 
   it("TEST-FE-014 requires consequence confirmation before administrative recovery", async () => {
-    openPage("access");
+    openPage("access?tab=history");
     const user: UserAccount = {
       user_id: "user-1",
       property_id: "property-1",
@@ -1090,7 +1090,7 @@ describe("local sign-in", () => {
       target: { value: "property-1" },
     });
     // UI v81: the account forms live on Users and access (moved out of Settings).
-    openPage("access");
+    openPage("access?tab=history");
     fireEvent.click(
       screen.getByRole("button", { name: "Check administration access" }),
     );
@@ -1132,7 +1132,7 @@ describe("local sign-in", () => {
   });
 
   it("TEST-FE-684 shows a new account's first one-time password once and clears it", async () => {
-    openPage("access");
+    openPage("access?tab=history");
     const created: UserAccount = {
       user_id: "user-2",
       property_id: "property-1",
@@ -1189,7 +1189,7 @@ describe("local sign-in", () => {
       target: { value: "property-1" },
     });
     // UI v81: the account forms live on Users and access (moved out of Settings).
-    openPage("access");
+    openPage("access?tab=history");
     fireEvent.click(
       screen.getByRole("button", { name: "Check administration access" }),
     );

@@ -604,53 +604,6 @@ export function BusinessTab({
               />
             </Card>
           )}
-          {tab === "general" && (
-            <Card
-              action={editButton(
-                "pm_add",
-                { kind: "method", method: null },
-                sst(language, "se_methods"),
-              )}
-              id="biz-methods"
-              title={sst(language, "se_methods")}
-            >
-              <ul className="ui-apps">
-                {methods.map((method) => (
-                  <li key={method.code}>
-                    <span>
-                      {method.display_name}
-                      <small className="ui-num" lang="en">
-                        {method.code}
-                      </small>
-                    </span>
-                    <span className="ui-actions">
-                      {method.aba_qr && (
-                        <Chip tone="info">{sst(language, "pm_aba_chip")}</Chip>
-                      )}
-                      {method.accepted ? (
-                        <Chip icon="check" tone="ok">
-                          {sst(language, "se_active")}
-                        </Chip>
-                      ) : (
-                        <Chip tone="neutral">{sst(language, "pm_off")}</Chip>
-                      )}
-                      <button
-                        aria-label={`${sst(language, "se_edit")}: ${method.display_name}`}
-                        className="ui-btn link"
-                        onClick={() => {
-                          openWith({ kind: "method", method });
-                        }}
-                        type="button"
-                      >
-                        {sst(language, "se_edit")}
-                      </button>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-              <p className="ui-small ui-muted">{sst(language, "pm_note")}</p>
-            </Card>
-          )}
           {tab === "rules" && (
             <Card
               action={editButton(
@@ -796,6 +749,55 @@ export function BusinessTab({
             </Card>
           )}
         </div>
+        {/* Administration review (owner 13/11/2026): the fifth General card takes the whole
+            width under the two-per-row grid, so no card sits alone in a grid row. */}
+        {tab === "general" && (
+          <Card
+            action={editButton(
+              "pm_add",
+              { kind: "method", method: null },
+              sst(language, "se_methods"),
+            )}
+            id="biz-methods"
+            title={sst(language, "se_methods")}
+          >
+            <ul className="ui-apps">
+              {methods.map((method) => (
+                <li key={method.code}>
+                  <span>
+                    {method.display_name}
+                    <small className="ui-num" lang="en">
+                      {method.code}
+                    </small>
+                  </span>
+                  <span className="ui-actions">
+                    {method.aba_qr && (
+                      <Chip tone="info">{sst(language, "pm_aba_chip")}</Chip>
+                    )}
+                    {method.accepted ? (
+                      <Chip icon="check" tone="ok">
+                        {sst(language, "se_active")}
+                      </Chip>
+                    ) : (
+                      <Chip tone="neutral">{sst(language, "pm_off")}</Chip>
+                    )}
+                    <button
+                      aria-label={`${sst(language, "se_edit")}: ${method.display_name}`}
+                      className="ui-btn link"
+                      onClick={() => {
+                        openWith({ kind: "method", method });
+                      }}
+                      type="button"
+                    >
+                      {sst(language, "se_edit")}
+                    </button>
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <p className="ui-small ui-muted">{sst(language, "pm_note")}</p>
+          </Card>
+        )}
       </SubTabPanel>
 
       {open?.kind === "property" && (
