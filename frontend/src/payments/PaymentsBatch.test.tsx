@@ -333,6 +333,29 @@ describe('UI v81 module batch 2: the "Exchange rate for riel" card', () => {
     ).toBeInTheDocument();
   });
 
+  it("TEST-FE-2144 with no markup (DL-228, a rate saved after PR #35) there is no Plus line: the ABA sell rate, then the app rate", () => {
+    render(
+      <RielRateCard
+        items={[]}
+        language="en"
+        rate={{ rate: 4_092, reference: "4091.200000", markupBp: 0 }}
+        toRiel={rielFor}
+        typedCents={null}
+        typedRiel={null}
+        when={null}
+      />,
+    );
+    expect(
+      [...document.querySelectorAll(".ui-well .line")].map(
+        (line) => line.textContent,
+      ),
+    ).toEqual([
+      "ABA sell rate4,091.2 ៛",
+      "App rate (rounded up)4,092 ៛ = $1.00",
+    ]);
+    expect(screen.queryByText(/^Plus /)).toBeNull();
+  });
+
   it("TEST-FE-2129 a payment typed in riel shows its worth in US dollars; a server that names no published rate or no markup shows the app rate alone; the markup is the server's own number", () => {
     const { rerender } = render(
       <RielRateCard

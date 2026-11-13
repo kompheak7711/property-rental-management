@@ -377,7 +377,7 @@ describe("Settings: Business", () => {
     });
     expect(khrRate).toHaveBeenCalledWith("property-1");
     expect(card("Exchange").textContent).toContain(
-      "ABA Sell rate plus 0.5%, rounded up to the next 1 ៛.",
+      "ABA Sell rate, rounded up to the next 1 ៛.",
     );
     cleanup();
 
