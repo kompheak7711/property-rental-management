@@ -130,7 +130,10 @@ export interface ForfeitureReversalDraftInput {
 
 export interface HandBackResolutionInput {
   action: "VOID" | "CREDIT_ADJUSTMENT";
+  /** What the assessment showed as unpaid; 0 for a fully paid Invoice (DL-229). */
   expected_outstanding_usd_cents: number;
+  /** What the assessment showed as taken off the Invoice (DL-229). */
+  expected_credit_usd_cents: number;
   reason: string;
 }
 
