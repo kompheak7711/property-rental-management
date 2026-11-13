@@ -458,7 +458,7 @@ class Finish(BaseModel):
 
 
 class Assign(BaseModel):
-    """DL-236: the cleaner (an employee) a Housekeeping task is given to; none gives it to nobody."""
+    """DL-236: the cleaner (an employee) given a Housekeeping task; none gives it to nobody."""
 
     model_config = ConfigDict(extra="forbid", strict=True)
 
