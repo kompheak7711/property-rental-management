@@ -781,12 +781,36 @@ body .shell-head-sub > .ui-headseg {
     width: 100%;
   }
 
+  /* Owner 13/11/2026 (phone): the switch fills the width, three buttons on the first row and
+     two on the second, each row split equally; Receive payment fills the width under it. */
   .shell-head-sub > .ui-headseg {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-auto-flow: row;
   }
 
   .shell-head-sub > .ui-headseg button {
+    grid-column: span 2;
+    padding: 0 8px;
+  }
+
+  .shell-head-sub > .ui-headseg button:nth-child(n + 4) {
+    grid-column: span 3;
+  }
+
+  .shell-head:has(.ui-headseg) > .shell-head-actions {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .shell-head:has(.ui-headseg) > .shell-head-actions > .ui-actions {
+    display: flex;
     flex: 1 1 auto;
+  }
+
+  .shell-head:has(.ui-headseg) > .shell-head-actions .ui-btn {
+    flex: 1 1 auto;
+    justify-content: center;
   }
 }
 
