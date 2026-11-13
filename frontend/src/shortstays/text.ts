@@ -538,7 +538,7 @@ const TEXT = {
   cl_ROOM_CHECK: ["Room check", "ពិនិត្យបន្ទប់"],
   cl_TO_DO: ["To do", "ត្រូវធ្វើ"],
   cl_DONE: ["Done", "រួចរាល់"],
-  cl_SKIPPED: ["Skipped", "បានរំលង"],
+  cl_SKIPPED: ["Not cleaned", "មិនបានសម្អាត"], // owner 14/11/2026: was "Skipped"
   cl_late: ["Due {0}", "ត្រូវធ្វើ {0}"],
   // Owner 13/11/2026: a task not done on its day shows red, and done or skipped ones fold.
   cl_late_chip: ["Late", "យឺត"],
@@ -546,13 +546,16 @@ const TEXT = {
     "Nothing left to do on this day.",
     "មិនមានការងារនៅសល់ក្នុងថ្ងៃនេះទេ។",
   ],
-  cl_finished: ["Done and skipped ({0})", "រួចរាល់ និងបានរំលង ({0})"],
-  cl_finished_list: ["Done and skipped", "រួចរាល់ និងបានរំលង"],
-  cl_done_b: ["Done", "រួចរាល់"],
-  cl_skip: ["Skip", "រំលង"],
-  cl_reason: ["Why it is skipped", "មូលហេតុដែលរំលង"],
+  cl_finished: ["Finished ({0})", "បានបញ្ចប់ ({0})"],
+  cl_finished_list: ["Finished", "បានបញ្ចប់"],
+  cl_done_b: ["Cleaned", "បានសម្អាត"], // owner 14/11/2026: was "Done"
+  cl_skip: ["Not cleaned today", "មិនបានសម្អាតថ្ងៃនេះ"], // owner 14/11/2026: was "Skip"
+  cl_reason: ["Why it is not cleaned", "មូលហេតុដែលមិនបានសម្អាត"],
   cl_room: ["Do the room check", "ធ្វើការពិនិត្យបន្ទប់"],
-  e_skip: ["A skipped clean says why.", "ការរំលងការសម្អាតត្រូវប្រាប់មូលហេតុ។"],
+  e_skip: [
+    "Say why the room is not cleaned today.",
+    "សូមប្រាប់មូលហេតុដែលមិនបានសម្អាតបន្ទប់ថ្ងៃនេះ។",
+  ],
   cl_saved: ["{0}: {1}.", "{0}៖ {1}។"],
   // Step 4b: cancel and credit
   can_t: ["Cancel", "លុបចោល"],

@@ -1326,16 +1326,16 @@ describe("Daily and weekly rent: Short stays", () => {
     expect(
       screen.getByRole("link", { name: "Do the room check" }),
     ).toHaveAttribute("href", "#/shortstays/st%3Ab-9");
-    fireEvent.click(screen.getByRole("button", { name: "Skip" }));
-    fireEvent.click(screen.getByRole("button", { name: "Skip" }));
+    fireEvent.click(screen.getByRole("button", { name: "Not cleaned today" }));
+    fireEvent.click(screen.getByRole("button", { name: "Not cleaned today" }));
     expect(
-      await screen.findByText("A skipped clean says why."),
+      await screen.findByText("Say why the room is not cleaned today."),
     ).toBeInTheDocument();
     expect(finishTask).not.toHaveBeenCalled();
-    fireEvent.change(screen.getByLabelText(/Why it is skipped/), {
+    fireEvent.change(screen.getByLabelText(/Why it is not cleaned/), {
       target: { value: "Do not disturb" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Skip" }));
+    fireEvent.click(screen.getByRole("button", { name: "Not cleaned today" }));
     await waitFor(() => {
       expect(finishTask).toHaveBeenCalledWith("p-1", "t-1", {
         skip: true,
@@ -2750,8 +2750,8 @@ describe("Daily and weekly rent: Short stays", () => {
       expect(
         within(rows[0]).getByRole("link", { name: "ST260003" }),
       ).toHaveClass("ss-tasklink");
-      expect(screen.getByText("Done and skipped (1)")).toBeInTheDocument();
-      const done = screen.getByRole("list", { name: "Done and skipped" });
+      expect(screen.getByText("Finished (1)")).toBeInTheDocument();
+      const done = screen.getByRole("list", { name: "Finished" });
       expect(done.closest("details")).not.toHaveAttribute("open");
       expect(within(done).getByText("U502")).toBeInTheDocument();
     });
