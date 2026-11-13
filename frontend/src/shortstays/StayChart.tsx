@@ -105,7 +105,7 @@ export function StayChart({
     else group.units.push(unit);
   }
   return (
-    <div className="ui-tablewrap ss-chartwrap">
+    <div className="ss-chartwrap">
       <table className="ss-chart">
         <thead>
           <tr>

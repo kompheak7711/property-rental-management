@@ -219,9 +219,14 @@ a.ss-kpi .ok {
   min-height: 44px;
 }
 
+/* Owner 13/11/2026 ("why is the booking chart so short?"): the chart is not a list table, so the
+   page's table fitting (shell/tableFit.ts) leaves it alone and every Unit shows. Only a chart
+   taller than the screen scrolls in its own box, with the days stuck at its top. */
 .ss-chartwrap {
-  max-height: 70vh;
+  position: relative;
+  max-height: calc(100vh - 96px);
   overflow: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 table.ss-chart {
