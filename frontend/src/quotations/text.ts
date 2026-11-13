@@ -24,7 +24,7 @@ const TEXT = {
   new_btn: ["New Quotation", "សម្រង់តម្លៃថ្មី"],
   c_all: ["All Quotations", "សម្រង់តម្លៃទាំងអស់"],
   c_all_s: ["The latest 300", "300 ចុងក្រោយ"],
-  c_wait: ["Waiting for signature", "រង់ចាំហត្ថលេខា"],
+  c_wait: ["Signature", "ហត្ថលេខា"],
   c_wait_s: [
     "Until their valid day",
     // new
@@ -32,7 +32,7 @@ const TEXT = {
   ],
   c_signed: ["Signed", "បានចុះហត្ថលេខា"],
   c_signed_s: ["Invoice issued", "វិក្កយបត្រចេញរួច"],
-  c_closed: ["Expired or declined", "ផុតកំណត់ ឬបដិសេធ"],
+  c_closed: ["Closed", "បានបិទ"],
   c_closed_s: ["No Invoice", "គ្មានវិក្កយបត្រ"],
   showing: ["Showing: {0}", "កំពុងបង្ហាញ៖ {0}"],
   show_all: ["Show all", "បង្ហាញទាំងអស់"],

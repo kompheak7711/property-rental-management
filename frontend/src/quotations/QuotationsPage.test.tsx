@@ -326,15 +326,11 @@ describe("Office › Invoices › Quotations (V1.1 part 6, DL-123)", () => {
     expect(within(table).getByText("INV260009")).toBeTruthy();
     expect(within(table).getAllByText("Expired")).toHaveLength(1);
     expect(within(table).getAllByText("Customer declined")).toHaveLength(1);
-    fireEvent.click(
-      screen.getByRole("button", { name: /^Waiting for signature: 1\./ }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: /^Signature: 1\./ }));
     expect(within(screen.getByRole("table")).getAllByRole("row")).toHaveLength(
       2,
     );
-    fireEvent.click(
-      screen.getByRole("button", { name: /^Expired or declined: 2\./ }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: /^Closed: 2\./ }));
     expect(within(screen.getByRole("table")).getAllByRole("row")).toHaveLength(
       3,
     );
