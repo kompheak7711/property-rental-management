@@ -59,6 +59,15 @@ function stays(calendar: StayCalendar): (CalendarBooking & {
   );
 }
 
+/** "13/11 09:45": the day, month and time in Phnom Penh (owner 14/11/2026). */
+function shortMoment(value: string): string {
+  const full = momentText(value);
+  const [day, time] = full.split(" ");
+  return day === undefined || time === undefined
+    ? full
+    : `${day.slice(0, 5)} ${time}`;
+}
+
 export function TodayPanel({
   language,
   propertyId,
@@ -276,7 +285,7 @@ export function TodayPanel({
     >
       <span>{st(language, name)}</span>
       <b className="ui-num">{value}</b>
-      <span>{note}</span>
+      {note !== "" && <span>{note}</span>}
     </button>
   );
 
@@ -298,7 +307,8 @@ export function TodayPanel({
         {kpi(
           "kp_arrive",
           arriving.length,
-          arriving.map((b) => b.guest_name).join(", "),
+          // Owner 14/11/2026: the number only; the names are in the Today panel.
+          "",
           () => {
             setDrawer("today");
           },
@@ -306,7 +316,8 @@ export function TodayPanel({
         {kpi(
           "kp_leave",
           leaving.length,
-          leaving.map((b) => b.guest_name).join(", "),
+          // Owner 14/11/2026: the number only; the names are in the Today panel.
+          "",
           () => {
             setDrawer("today");
           },
@@ -325,15 +336,15 @@ export function TodayPanel({
             className={`ss-kpi${badSites.length > 0 ? " warn" : ""}`}
             href={hashForPage("settings", "sites")}
           >
+            {/* Owner 14/11/2026: "Online", with the last read time at the top right. */}
             <span>{st(language, "kp_sites")}</span>
+            {activeSites.length > 0 && activeSites[0]?.last_read_at != null && (
+              <b className="ui-num ss-kpitime">
+                {shortMoment(activeSites[0].last_read_at)}
+              </b>
+            )}
             {activeSites.length === 0 ? (
               <span>{st(language, "kp_sites_none")}</span>
-            ) : badSites.length === 0 ? (
-              <span className="ok">
-                {st(language, "kp_sites_ok")}
-                {activeSites[0]?.last_read_at != null &&
-                  ` · ${momentText(activeSites[0].last_read_at)}`}
-              </span>
             ) : (
               badSites.slice(0, 2).map((site) => (
                 <span className="bad" key={site.calendar_id}>

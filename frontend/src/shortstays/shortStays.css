@@ -97,6 +97,11 @@ button.ss-kpi:hover {
   color: var(--heading);
 }
 
+.ss-kpi > b.ss-kpitime {
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
 .ss-kpi > span:first-child {
   grid-row: 1;
   grid-column: 1;

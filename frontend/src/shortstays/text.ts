@@ -883,8 +883,7 @@ const TEXT = {
   kp_leave: ["Leaving today", "ចេញថ្ងៃនេះ"],
   kp_unpaid: ["Not paid yet", "មិនទាន់បង់"],
   kp_unpaid_s: ["Bookings in the next 2 weeks", "ការកក់ក្នុង 2 សប្ដាហ៍ខាងមុខ"],
-  kp_sites: ["Booking sites", "គេហទំព័រកក់"],
-  kp_sites_ok: ["All up to date", "ទាន់សម័យទាំងអស់"],
+  kp_sites: ["Online", "អនឡាញ"], // owner 14/11/2026: was "Booking sites"
   kp_sites_none: ["No calendar links yet", "មិនទាន់មានតំណប្រតិទិន"],
   kp_sites_bad: ["{0}: could not read", "{0}៖ អានមិនបាន"],
   td_title: ["Today · {0}", "ថ្ងៃនេះ · {0}"],

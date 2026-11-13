@@ -1720,7 +1720,7 @@ describe("Daily and weekly rent: Short stays", () => {
   it("TEST-FE-1620 hides Booking sites without the approve right", async () => {
     show();
     expect(await screen.findByRole("table")).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Booking sites" })).toBeNull();
+    expect(screen.queryByRole("link", { name: /^Online/ })).toBeNull();
   });
 
   it("TEST-FE-1621 warns that a booking site holds the nights, except for that site's own guest", async () => {
@@ -2500,7 +2500,7 @@ describe("Daily and weekly rent: Short stays", () => {
       fireEvent.click(within(panel).getByRole("button", { name: "Close" }));
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
       expect(
-        screen.queryByRole("link", { name: /Booking sites/ }),
+        screen.queryByRole("link", { name: /Online/ }),
       ).not.toBeInTheDocument();
       cleanup();
       window.location.hash = "#/shortstays";
@@ -2526,8 +2526,10 @@ describe("Daily and weekly rent: Short stays", () => {
         }),
         capabilities: new Set([...DESK, "short_stays.approve"]),
       });
-      const sites = await screen.findByRole("link", { name: /Booking sites/ });
+      const sites = await screen.findByRole("link", { name: /Online/ });
       expect(sites).toHaveTextContent("Agoda (U501): could not read");
+      // Owner 14/11/2026: the last read time, short, at the top right.
+      expect(sites.querySelector("b")).toHaveTextContent("04/11 10:00");
       expect(sites).toHaveClass("warn");
       expect(sites).toHaveAttribute("href", "#/settings/sites");
     });
