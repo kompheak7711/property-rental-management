@@ -837,6 +837,21 @@ const TEXT = {
     "បានធ្វើសម្រង់តម្លៃ {0}។ ចម្លងសារសម្រាប់ភ្ញៀវ។",
   ],
   q_book: ["Book this", "កក់បន្ទប់នេះ"],
+  // Leasing batch (owner 13/11/2026, new; Khmer needs the native check): the price message is
+  // copied on New booking instead of the Quotes tab.
+  pm_copy: ["Copy price message", "ចម្លងសារតម្លៃ"],
+  pm_note: [
+    "Send it to the guest on Telegram. It does not hold the room.",
+    "ផ្ញើទៅភ្ញៀវតាម Telegram។ វាមិនរក្សាបន្ទប់ទុកទេ។",
+  ],
+  pm_name: [
+    "Type the guest's name first.",
+    "សូមវាយឈ្មោះភ្ញៀវជាមុនសិន។",
+  ],
+  pm_select: [
+    "Select the message and copy it.",
+    "សូមជ្រើសសារ ហើយចម្លងវា។",
+  ],
   q_message: [
     "CHETANA Residence: quote {0}\nRoom {1}, {2} guests\n{3} to {4}, {5}\nTotal {6}\nCheck-in from {7}, check-out by {8}. Deposit {9} at check-in (cash or a card hold), given back after the room check.\nThis is today's price; the room is held only when you book.",
     "CHETANA Residence៖ សម្រង់តម្លៃ {0}\nបន្ទប់ {1} ភ្ញៀវ {2} នាក់\n{3} ដល់ {4} {5}\nសរុប {6}\nចូលចាប់ពីម៉ោង {7} ចេញមុនម៉ោង {8}។ ប្រាក់កក់ {9} ពេលចូល (សាច់ប្រាក់ ឬកាត) ហើយប្រគល់វិញក្រោយពិនិត្យបន្ទប់។\nនេះជាតម្លៃថ្ងៃនេះ បន្ទប់ត្រូវបានរក្សាទុកតែពេលអ្នកកក់ប៉ុណ្ណោះ។",

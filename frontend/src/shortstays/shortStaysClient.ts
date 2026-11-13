@@ -442,7 +442,9 @@ export interface NewComplaint {
 
 export interface NewQuote {
   unit_id: string;
-  guest_name: string;
+  /** Leasing batch: New booking names a picked guest by the Customer, else by name. */
+  customer_id?: string;
+  guest_name?: string;
   guest_contact?: string;
   guest_count: number;
   check_in_on: string;

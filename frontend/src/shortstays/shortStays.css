@@ -274,3 +274,13 @@ form.ss-form .ui-date input {
   flex: 1 1 auto;
   min-width: 0;
 }
+
+/* Leasing batch (owner 13/11/2026): Copy price message in the New booking price box. */
+.ss-pricemsg {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+.ss-pricemsg > .ss-message {
+  justify-self: stretch;
+}

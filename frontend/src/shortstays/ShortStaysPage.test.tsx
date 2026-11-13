@@ -1877,7 +1877,12 @@ describe("Daily and weekly rent: Short stays", () => {
     expect(screen.queryByRole("button", { name: "Mark as asked" })).toBeNull();
   });
 
-  it("TEST-FE-1625 makes a quote with today's price and a message for the guest", async () => {
+  it("TEST-FE-2177 has no Quotes tab; New booking copies the price message for the guest and still keeps it as a quote", async () => {
+    // Leasing batch (owner 13/11/2026): the Quotes tab is gone.
+    show({ capabilities: new Set([...DESK, "short_stays.approve"]) });
+    expect(await screen.findByRole("table")).toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "Quotes" })).toBeNull();
+    cleanup();
     const made: StayQuote = {
       quote_id: "q-1",
       quote_number: "SQ260001",
@@ -1888,9 +1893,9 @@ describe("Daily and weekly rent: Short stays", () => {
       guest_contact: "@chenda",
       guest_count: 2,
       check_in_on: "2026-11-06",
-      check_out_on: "2026-11-09",
-      nights: 3,
-      total_usd_cents: 5460,
+      check_out_on: "2026-11-07",
+      nights: 1,
+      total_usd_cents: 2600,
       lines: LINES,
       made_on: "2026-11-04",
       check_in_time: 840,
@@ -1900,51 +1905,42 @@ describe("Daily and weekly rent: Short stays", () => {
       monthly_rent_usd_cents: 26900,
     };
     const quote = vi.fn(() => Promise.resolve(made));
-    const quotes = vi.fn(() => Promise.resolve([] as StayQuote[]));
-    quotes.mockResolvedValueOnce([]).mockResolvedValue([made]);
-    show({ api: fakeApi({ quote, quotes }) });
-    fireEvent.click(await screen.findByRole("tab", { name: "Quotes" }));
-    expect(await screen.findByText("No quotes yet.")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Make the quote" }));
-    expect(
-      screen.getByText(
-        "Choose the room, enter the guest's name, 1 to 10 guests and the nights.",
-      ),
-    ).toBeInTheDocument();
-    fireEvent.change(byId("sq-unit"), { target: { value: "u-503" } });
-    fireEvent.change(byId("sq-in"), { target: { value: "06/11/2026" } });
-    fireEvent.change(byId("sq-nights"), { target: { value: "3" } });
-    fireEvent.change(byId("sq-guests"), { target: { value: "2" } });
-    fireEvent.change(byId("sq-name"), { target: { value: " Sok Chenda " } });
-    fireEvent.change(byId("sq-contact"), { target: { value: "@chenda" } });
-    fireEvent.click(screen.getByRole("button", { name: "Make the quote" }));
+    go("#/shortstays/new:u-503:2026-11-06");
+    show({ api: fakeApi({ quote }) });
+    await screen.findByText("1 × night $26.00");
+    const copy = screen.getByRole("button", { name: "Copy price message" });
+    // Without a guest name there is no message yet.
+    fireEvent.click(copy);
+    expect(screen.getByText("Type the guest's name first.")).toBeInTheDocument();
+    expect(quote).not.toHaveBeenCalled();
+    fireEvent.change(byId("sb-name"), { target: { value: " Sok Chenda " } });
+    fireEvent.change(screen.getByLabelText(/^Phone/), {
+      target: { value: "@chenda" },
+    });
+    fireEvent.change(byId("sb-guests"), { target: { value: "2" } });
+    fireEvent.click(copy);
     expect(quote).toHaveBeenCalledWith("p-1", {
       unit_id: "u-503",
       guest_name: "Sok Chenda",
       guest_contact: "@chenda",
       guest_count: 2,
       check_in_on: "2026-11-06",
-      check_out_on: "2026-11-09",
+      check_out_on: "2026-11-07",
     });
-    expect(
-      await screen.findByText(
-        "Quote SQ260001 made. Copy the message for the guest.",
-      ),
-    ).toBeInTheDocument();
-    const message = screen.getByDisplayValue(
+    const message = await screen.findByDisplayValue(
       /^CHETANA Residence: quote SQ260001/,
     );
     expect((message as HTMLTextAreaElement).value).toContain(
-      "06/11/2026 to 09/11/2026, 3 nights\nTotal $54.60\nCheck-in from 14:00, check-out by 12:00.",
+      "06/11/2026 to 07/11/2026, 1 night\nTotal $26.00\nCheck-in from 14:00, check-out by 12:00.",
     );
     expect((message as HTMLTextAreaElement).value).toContain(
       "Staying longer? 1 month only: $405.00. A Lease of 6 or 12 months: $269.00 a month.",
     );
-    expect(screen.getByRole("link", { name: "Book this" })).toHaveAttribute(
-      "href",
-      "#/shortstays/new%3Au-503%3A2026-11-06",
-    );
-    expect(await screen.findByText("SQ260001")).toBeInTheDocument();
+    // A change of guests makes the message out of date, so it goes.
+    fireEvent.change(byId("sb-guests"), { target: { value: "3" } });
+    expect(
+      screen.queryByDisplayValue(/^CHETANA Residence: quote SQ260001/),
+    ).toBeNull();
   });
 
   it("TEST-FE-1626 tells the desk about a returning guest's thank-you and a problem guest", async () => {
@@ -2310,10 +2306,11 @@ describe("Daily and weekly rent: Short stays", () => {
     // By hand: the address follows, and All gives the plain address again.
     fireEvent.click(within(row).getByRole("button", { name: "Cancelled 1" }));
     expect(numbers()).toEqual(["ST260004"]);
-    expect(window.location.hash).toBe("#/shortstays?show=cancelled");
+    // Leasing batch: the address keeps the Bookings tab, so the menu's sub-item stays marked.
+    expect(window.location.hash).toBe("#/shortstays?show=cancelled&tab=list");
     fireEvent.click(within(row).getByRole("button", { name: "All 4" }));
     expect(numbers()).toHaveLength(4);
-    expect(window.location.hash).toBe("#/shortstays");
+    expect(window.location.hash).toBe("#/shortstays?tab=list");
     cleanup();
 
     // A status no booking has says so, and the row still offers the others.

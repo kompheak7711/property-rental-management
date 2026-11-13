@@ -22,7 +22,7 @@ import {
   useHashDetail,
   useShowFromAddress,
 } from "../shell/useHashPage";
-import { Chip, type Tone } from "../shell/ui";
+import { Chip, SubTabs, type Tone, useSubTab } from "../shell/ui";
 import type { Language } from "../signInText";
 import { BookingDetail } from "./BookingDetail";
 import { CleaningList } from "./CleaningList";
@@ -30,7 +30,6 @@ import { CreditsDue } from "./CreditsDue";
 import { DamageDue } from "./DamageDue";
 import { NewBookingForm } from "./NewBooking";
 import { nightOf } from "./nights";
-import { Quotes } from "./Quotes";
 import { SiteCalendars } from "./SiteCalendars";
 import { WeekReport } from "./WeekReport";
 import {
@@ -107,7 +106,10 @@ function weekday(language: Language, day: string): string {
   }).format(new Date(`${day}T00:00:00Z`));
 }
 
-type Tab = "cal" | "list" | "clean" | "quotes" | "report" | "sites";
+// Leasing batch (owner 13/11/2026): no Quotes tab (the price message is copied on New booking);
+// the tab is "?tab=<id>" in the address, so the menu's Short stays sub-items open it.
+type Tab = "cal" | "list" | "clean" | "report" | "sites";
+const ALL_TABS: readonly Tab[] = ["cal", "list", "clean", "report", "sites"];
 
 // UI v81 round 11: the Bookings list can show one status. The word in the address is the
 // status in small letters ("#/shortstays?show=booked", "?show=checked_in").
@@ -132,7 +134,12 @@ export function ShortStaysPage({
   const may = (capability: string) =>
     capabilities === null || capabilities.has(capability);
   const today = todayInPhnomPenh(now);
-  const [tab, setTabState] = useState<Tab>("cal");
+  const [tab, setTabState] = useSubTab<Tab>(ALL_TABS, "cal");
+  // The Weekly report and Booking sites are for the Owner and the Manager.
+  const tabs: readonly Tab[] = may("short_stays.approve")
+    ? ALL_TABS
+    : ["cal", "list", "clean"];
+  const shownTab: Tab = tabs.includes(tab) ? tab : "cal";
   const [status, setStatusState] = useState<BookingStatus | "all">("all");
   // UI v81 round 11: Home's two Short stays cards open the Bookings list on their status
   // ("Short stay bookings" on Booked, "Short stays checked in" on Checked in).
@@ -142,13 +149,9 @@ export function ShortStaysPage({
     setTabState("list");
     setStatusState(asked ?? "all");
   });
-  const setTab = (next: Tab) => {
-    setTabState(next);
-    keepShow(next === "list" && status !== "all" ? status.toLowerCase() : null);
-  };
   const setStatus = (next: BookingStatus | "all") => {
     setStatusState(next);
-    keepShow(next === "all" ? null : next.toLowerCase());
+    keepShow(next === "all" ? null : next.toLowerCase(), { tab: "list" });
   };
   const [from, setFrom] = useState(today);
   const [calendar, setCalendar] = useState<StayCalendar | null>(null);
@@ -158,11 +161,12 @@ export function ShortStaysPage({
   const sequence = useRef(0);
 
   const load = useCallback(() => {
-    if (propertyId === "" || (tab !== "cal" && tab !== "list")) return;
+    if (propertyId === "" || (shownTab !== "cal" && shownTab !== "list"))
+      return;
     const operation = ++sequence.current;
     setFailed(false);
     const read =
-      tab === "cal"
+      shownTab === "cal"
         ? api.calendar(propertyId, from, DAYS).then((found) => {
             if (operation === sequence.current) setCalendar(found);
           })
@@ -172,7 +176,7 @@ export function ShortStaysPage({
     void read.catch(() => {
       if (operation === sequence.current) setFailed(true);
     });
-  }, [api, propertyId, tab, from]);
+  }, [api, propertyId, shownTab, from]);
 
   // Another Property never shows the bookings of the one before.
   useEffect(() => {
@@ -650,45 +654,24 @@ export function ShortStaysPage({
           </div>
         )}
       </PageHead>
-      <div className="ui-filters">
-        {/* UI v81 (B4): the Short stays tabs are underlined tabs, like every page's tabs. */}
-        <div
-          aria-label={st(language, "tabs")}
-          className="ui-tabline"
-          role="tablist"
-        >
-          {(may("short_stays.approve")
-            ? (["cal", "list", "clean", "quotes", "report", "sites"] as const)
-            : (["cal", "list", "clean", "quotes"] as const)
-          ).map((value) => (
-            <button
-              aria-selected={tab === value}
-              key={value}
-              onClick={() => {
-                setTab(value);
-              }}
-              role="tab"
-              type="button"
-            >
-              {st(language, `tab_${value}`)}
-            </button>
-          ))}
-        </div>
-      </div>
-      {tab === "cal" ? (
+      <SubTabs
+        current={shownTab}
+        idPrefix="shortstays"
+        label={st(language, "tabs")}
+        onChange={(id) => {
+          setTabState(id as Tab);
+          if (id === "list") setStatusState("all");
+        }}
+        tabs={tabs.map((value) => ({
+          id: value,
+          label: st(language, `tab_${value}`),
+        }))}
+      />
+      {shownTab === "cal" ? (
         calendarView
-      ) : tab === "list" ? (
+      ) : shownTab === "list" ? (
         listView
-      ) : tab === "quotes" ? (
-        <Quotes
-          api={api}
-          key={propertyId}
-          language={language}
-          may={may}
-          propertyId={propertyId}
-          today={today}
-        />
-      ) : tab === "report" ? (
+      ) : shownTab === "report" ? (
         <WeekReport
           api={api}
           key={propertyId}
@@ -697,7 +680,7 @@ export function ShortStaysPage({
           propertyId={propertyId}
           today={today}
         />
-      ) : tab === "sites" ? (
+      ) : shownTab === "sites" ? (
         <SiteCalendars
           api={api}
           key={propertyId}
