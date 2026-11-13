@@ -14,6 +14,15 @@ const TEXT = {
   ],
   g_totals: ["Totals by Unit and month", "សរុបតាមបន្ទប់ និងខែ"],
   g_registers: ["Registers and lists", "បញ្ជី"],
+  g_stays: ["Short stays", "ការស្នាក់នៅខ្លី"],
+  r_short_stay_week: [
+    "Short stays weekly report",
+    "របាយការណ៍ប្រចាំសប្ដាហ៍ ការស្នាក់នៅខ្លី",
+  ],
+  d_short_stay_week: [
+    "Nights sold, money, guests and booking sites, one week at a time",
+    "យប់ដែលលក់ ប្រាក់ ភ្ញៀវ និងគេហទំព័រកក់ មួយសប្ដាហ៍ម្ដង",
+  ],
   tag: ["Owner and Manager", "ម្ចាស់ និងអ្នកគ្រប់គ្រង"],
   open: ["Open report", "បើករបាយការណ៍"],
   // changed: "(V1-057)" left out.

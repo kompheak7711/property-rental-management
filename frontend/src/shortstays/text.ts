@@ -905,6 +905,8 @@ const TEXT = {
   td_done_in: ["{0} is checked in.", "{0} បានចុះឈ្មោះចូល។"],
   td_done_out: ["{0} is checked out.", "{0} បានចុះឈ្មោះចេញ។"],
   td_close: ["Cancel", "បោះបង់"],
+  td_shut: ["Close", "បិទ"],
+  td_unpaid_none: ["Every booking is paid.", "ការកក់ទាំងអស់បានបង់។"],
   td_ticks: [
     "Tick both boxes: ID copy made and house rules signed.",
     "សូមធីកទាំងពីរ៖ បានថតចម្លងអត្តសញ្ញាណ និងបានចុះហត្ថលេខាលើវិធាន។",

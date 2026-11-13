@@ -37,58 +37,17 @@
   --ss-dot: #f08a45;
 }
 
-/* Quick numbers on top; the chart and the Today panel side by side on a wide screen, the panel
-   above the chart on an iPad and a phone. */
+/* Owner 13/11/2026 evening: the quick numbers on top and the chart under them at full width;
+   Arriving, Leaving and Not paid open the Today and Not paid panels from the right. */
 .ss-calgrid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
-  grid-template-areas:
-    "kpis kpis"
-    "main today";
   gap: 16px;
-  align-items: start;
 }
 
-.ss-calgrid > .ss-kpis {
-  grid-area: kpis;
-}
-
-.ss-calgrid > .ss-calmain {
-  grid-area: main;
+.ss-calmain {
   display: grid;
   gap: 12px;
   min-width: 0;
-}
-
-.ss-calgrid > .ss-today {
-  grid-area: today;
-}
-
-@media (max-width: 1100px) {
-  .ss-calgrid {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas:
-      "kpis"
-      "today"
-      "main";
-  }
-}
-
-/* iPad: the guests of today on the left, Rooms to clean and Not paid beside them, so the chart
-   is not pushed far down. */
-@media (min-width: 641px) and (max-width: 1100px) {
-  .ss-today {
-    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-    align-items: start;
-  }
-
-  .ss-today > .ui-notice {
-    grid-column: 1 / -1;
-  }
-
-  .ss-today > section:first-of-type {
-    grid-row: span 2;
-  }
 }
 
 .ss-kpis {
@@ -97,7 +56,7 @@
   gap: 10px;
 }
 
-a.ss-kpi {
+.ss-kpi {
   display: grid;
   gap: 2px;
   align-content: start;
@@ -110,37 +69,43 @@ a.ss-kpi {
   text-decoration: none;
 }
 
-a.ss-kpi:hover {
+button.ss-kpi {
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+button.ss-kpi:hover {
   background: var(--hover);
 }
 
-a.ss-kpi > span:first-child {
+.ss-kpi > span:first-child {
   color: var(--text-2);
   font-size: 0.8rem;
   font-weight: 600;
 }
 
-a.ss-kpi > b {
+.ss-kpi > b {
   font-size: 1.35rem;
   color: var(--heading);
 }
 
-a.ss-kpi > span + span {
+.ss-kpi > span + span {
   color: var(--text-2);
   font-size: 0.78rem;
 }
 
-a.ss-kpi.warn {
+.ss-kpi.warn {
   border-color: var(--warn);
   background: var(--warn-bg);
 }
 
-a.ss-kpi.warn > b,
-a.ss-kpi .bad {
+.ss-kpi.warn > b,
+.ss-kpi .bad {
   color: var(--warn);
 }
 
-a.ss-kpi .ok {
+.ss-kpi .ok {
   color: var(--ok);
 }
 

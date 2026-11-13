@@ -41,6 +41,7 @@ const TEXT = {
     "The full list of access changes is in the earlier forms below until it moves here. Every change is also in the Audit log.",
     "បញ្ជីពេញនៃការប្តូរសិទ្ធិ មាននៅក្នុងទម្រង់មុនខាងក្រោម រហូតដល់ផ្លាស់មកទីនេះ។ រាល់ការប្តូរក៏មាននៅក្នុងកំណត់ហេតុសវនកម្មដែរ។",
   ], // new
+  se_tab_sites: ["Booking sites", "គេហទំព័រកក់"],
   se_tab_health: ["System health", "សុខភាពប្រព័ន្ធ"],
   // new: tabs not rebuilt yet keep the earlier forms.
   earlier: ["Earlier forms (English)", "ទម្រង់មុន (អង់គ្លេស)"],

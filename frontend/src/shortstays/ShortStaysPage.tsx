@@ -29,10 +29,8 @@ import { CleaningList } from "./CleaningList";
 import { CreditsDue } from "./CreditsDue";
 import { DamageDue } from "./DamageDue";
 import { NewBookingForm } from "./NewBooking";
-import { SiteCalendars } from "./SiteCalendars";
 import { StayChart } from "./StayChart";
 import { TodayPanel } from "./TodayPanel";
-import { WeekReport } from "./WeekReport";
 import {
   addDays,
   type Booking,
@@ -105,8 +103,9 @@ function plainClick(event: React.MouseEvent): boolean {
 
 // Leasing batch (owner 13/11/2026): no Quotes tab (the price message is copied on New booking);
 // the tab is "?tab=<id>" in the address, so the menu's Short stays sub-items open it.
-type Tab = "cal" | "list" | "clean" | "report" | "sites";
-const ALL_TABS: readonly Tab[] = ["cal", "list", "clean", "report", "sites"];
+// Owner 13/11/2026 evening: the Weekly report is in Reports and Booking sites in Settings.
+type Tab = "cal" | "list" | "clean";
+const ALL_TABS: readonly Tab[] = ["cal", "list", "clean"];
 
 // UI v81 round 11: the Bookings list can show one status. The word in the address is the
 // status in small letters ("#/shortstays?show=booked", "?show=checked_in").
@@ -132,10 +131,7 @@ export function ShortStaysPage({
     capabilities === null || capabilities.has(capability);
   const today = todayInPhnomPenh(now);
   const [tab, setTabState] = useSubTab<Tab>(ALL_TABS, "cal");
-  // The Weekly report and Booking sites are for the Owner and the Manager.
-  const tabs: readonly Tab[] = may("short_stays.approve")
-    ? ALL_TABS
-    : ["cal", "list", "clean"];
+  const tabs = ALL_TABS;
   const shownTab: Tab = tabs.includes(tab) ? tab : "cal";
   const [status, setStatusState] = useState<BookingStatus | "all">("all");
   // UI v81 round 11: Home's two Short stays cards open the Bookings list on their status
@@ -573,23 +569,6 @@ export function ShortStaysPage({
         calendarView
       ) : shownTab === "list" ? (
         listView
-      ) : shownTab === "report" ? (
-        <WeekReport
-          api={api}
-          key={propertyId}
-          language={language}
-          may={may}
-          propertyId={propertyId}
-          today={today}
-        />
-      ) : shownTab === "sites" ? (
-        <SiteCalendars
-          api={api}
-          key={propertyId}
-          language={language}
-          propertyId={propertyId}
-          today={today}
-        />
       ) : (
         <CleaningList
           api={api}

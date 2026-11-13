@@ -300,33 +300,40 @@ describe("V1-058 R1 app shell", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("TEST-FE-2176 shows the Short stays tabs as its sub-items at the tabs' own addresses, the Weekly report and Booking sites only to the Owner and the Manager", () => {
+  it("TEST-FE-2176 shows the Short stays tabs as its sub-items at the tabs' own addresses; Booking sites is a Settings sub-item for the Owner and the Manager", () => {
     renderShell("shortstays");
     const menu = screen.getByRole("navigation", { name: "Menu" });
-    const hrefs = () =>
+    const hrefs = (id: string) =>
       Array.from(
-        menu.querySelectorAll<HTMLAnchorElement>("#shell-sub-shortstays a"),
+        menu.querySelectorAll<HTMLAnchorElement>(`#shell-sub-${id} a`),
       ).map((link) => [link.textContent, link.getAttribute("href")]);
-    expect(hrefs()).toEqual([
+    // Owner 13/11/2026 evening: the Weekly report is in Reports, Booking sites in Settings.
+    expect(hrefs("shortstays")).toEqual([
       ["Calendar", "#/shortstays?tab=cal"],
       ["Bookings", "#/shortstays?tab=list"],
       ["Housekeeping", "#/shortstays?tab=clean"],
-      ["Weekly report", "#/shortstays?tab=report"],
-      ["Booking sites", "#/shortstays?tab=sites"],
     ]);
     // No Quotes: the price message is copied on New booking.
     expect(within(menu).queryByRole("link", { name: "Quotes" })).toBeNull();
+    expect(hrefs("settings")).toContainEqual([
+      "Booking sites",
+      "#/settings?tab=sites",
+    ]);
     cleanup();
-    renderShell("shortstays", "en", {
-      capabilities: new Set(["short_stays.read", "short_stays.desk"]),
+    renderShell("settings", "en", {
+      capabilities: new Set([
+        "short_stays.read",
+        "short_stays.desk",
+        "settings.manage",
+      ]),
     });
     expect(
       Array.from(
         screen
           .getByRole("navigation", { name: "Menu" })
-          .querySelectorAll("#shell-sub-shortstays a"),
+          .querySelectorAll("#shell-sub-settings a"),
       ).map((link) => link.textContent),
-    ).toEqual(["Calendar", "Bookings", "Housekeeping"]);
+    ).not.toContain("Booking sites");
   });
 
   // UI v81 side menu (owner 08/11/2026 09:57, section D of 05:43): Collapse menu, folding

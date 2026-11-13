@@ -1,6 +1,7 @@
 import {
   act,
   cleanup,
+  waitFor,
   fireEvent,
   render,
   screen,
@@ -14,7 +15,7 @@ import {
   HealthUnavailableError,
 } from "./healthClient";
 import { rolesApiOf } from "../test/rolesFixtures";
-import { SettingsPage } from "./SettingsPage";
+import { SettingsPage, type SettingsPageProps } from "./SettingsPage";
 
 afterEach(() => {
   cleanup();
@@ -160,6 +161,7 @@ function show(
     propertyId = "property-1",
     mode = "settings" as "settings" | "access",
     testApp = false,
+    stayApi = undefined as SettingsPageProps["stayApi"],
   } = {},
 ) {
   const api = { status: vi.fn(status) };
@@ -183,6 +185,7 @@ function show(
       ratesApi={ratesApi}
       mode={mode}
       testApp={testApp}
+      {...(stayApi === undefined ? {} : { stayApi })}
     />,
   );
   return api;
@@ -451,5 +454,30 @@ describe("Settings", () => {
         /The full list of access changes is in the earlier forms/,
       ),
     ).toBeInTheDocument();
+  });
+
+  it("TEST-FE-2187 Booking sites is a Settings tab for the Owner and the Manager (owner 13/11/2026: moved from Short stays)", async () => {
+    window.location.hash = "#/settings/sites";
+    const siteCalendars = vi.fn(() => new Promise<never>(() => undefined));
+    const calendar = vi.fn(() => new Promise<never>(() => undefined));
+    show(() => new Promise<HealthStatus>(() => undefined), {
+      stayApi: {
+        siteCalendars,
+        calendar,
+      } as unknown as SettingsPageProps["stayApi"],
+    });
+    expect(screen.getByRole("link", { name: "Booking sites" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    await waitFor(() => {
+      expect(siteCalendars).toHaveBeenCalledWith("property-1");
+    });
+    cleanup();
+    window.location.hash = "#/settings/business";
+    show(() => new Promise<HealthStatus>(() => undefined), {
+      capabilities: new Set(["settings.manage"]),
+    });
+    expect(screen.queryByRole("link", { name: "Booking sites" })).toBeNull();
   });
 });

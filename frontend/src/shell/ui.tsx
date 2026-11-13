@@ -90,6 +90,7 @@ export function Dialog({
   noButtons = false,
   onEscape,
   confirmDiscard = false,
+  drawer = false,
 }: {
   title: string;
   children: ReactNode;
@@ -111,6 +112,8 @@ export function Dialog({
    * or Edit form whose Close just closes; money windows keep their own close rules (DL-112).
    */
   confirmDiscard?: boolean;
+  /** Leasing batch (owner 13/11/2026): a side panel that is not a form also opens from the right. */
+  drawer?: boolean;
 }) {
   const headingId = useId();
   const box = useRef<HTMLDivElement>(null);
@@ -202,12 +205,17 @@ export function Dialog({
     </div>
   );
   return (
-    <div className={isForm ? "ui-dlg-back ui-drawer-back" : "ui-dlg-back"}>
+    <div
+      className={
+        isForm || drawer ? "ui-dlg-back ui-drawer-back" : "ui-dlg-back"
+      }
+    >
       <div
         aria-labelledby={headingId}
         aria-modal="true"
         className={
-          (wide ? "ui-dlg wide" : "ui-dlg") + (isForm ? " ui-drawer" : "")
+          (wide ? "ui-dlg wide" : "ui-dlg") +
+          (isForm || drawer ? " ui-drawer" : "")
         }
         ref={box}
         role="dialog"

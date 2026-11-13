@@ -22,6 +22,8 @@ import { pyt } from "../payments/text";
 import { bookingRefusal } from "./NewBooking";
 import { ShortStaysPage } from "./ShortStaysPage";
 import { nextStep } from "./TodayPanel";
+import { SiteCalendars } from "./SiteCalendars";
+import { WeekReport as WeekReportView } from "./WeekReport";
 import {
   type Booking,
   type GuestHistory,
@@ -1665,11 +1667,15 @@ describe("Daily and weekly rent: Short stays", () => {
     };
     const siteCalendars = vi.fn(() => Promise.resolve([link]));
     const saveSiteCalendar = vi.fn(() => Promise.resolve(link));
-    show({
-      api: fakeApi({ siteCalendars, saveSiteCalendar }),
-      capabilities: new Set([...DESK, "short_stays.approve"]),
-    });
-    fireEvent.click(await screen.findByRole("tab", { name: "Booking sites" }));
+    // Owner 13/11/2026 evening: the links are a Settings tab now (SettingsPage).
+    render(
+      <SiteCalendars
+        api={fakeApi({ siteCalendars, saveSiteCalendar })}
+        language="en"
+        propertyId="p-1"
+        today="2026-11-04"
+      />,
+    );
     expect(
       await screen.findByText("The site answered 404"),
     ).toBeInTheDocument();
@@ -1690,7 +1696,6 @@ describe("Daily and weekly rent: Short stays", () => {
     fireEvent.change(byId("sc-url"), {
       target: { value: " https://airbnb.example/cal.ics " },
     });
-    // The Today panel beside the Calendar reads the links too.
     const reads = siteCalendars.mock.calls.length;
     fireEvent.click(screen.getByRole("button", { name: "Add link" }));
     expect(saveSiteCalendar).toHaveBeenCalledWith("p-1", {
@@ -1990,12 +1995,20 @@ describe("Daily and weekly rent: Short stays", () => {
   it("TEST-FE-1627 shows the weekly report to the Manager and records a tenant's complaint", async () => {
     const complaint = vi.fn(() => Promise.resolve());
     const api = fakeApi({ complaint });
-    show();
+    // Owner 13/11/2026 evening: the report is in Reports now (ReportsPage), not a tab here.
+    show({ capabilities: new Set([...DESK, "short_stays.approve"]) });
     expect(await screen.findByRole("table")).toBeInTheDocument();
     expect(screen.queryByRole("tab", { name: "Weekly report" })).toBeNull();
     cleanup();
-    show({ api, capabilities: new Set([...DESK, "short_stays.approve"]) });
-    fireEvent.click(await screen.findByRole("tab", { name: "Weekly report" }));
+    render(
+      <WeekReportView
+        api={api}
+        language="en"
+        may={() => true}
+        propertyId="p-1"
+        today="2026-11-04"
+      />,
+    );
     // Today is Wednesday 04/11: the week from Monday 02/11, no next week yet.
     expect(api.weekReport).toHaveBeenCalledWith("p-1", "2026-11-02");
     expect(
@@ -2469,21 +2482,22 @@ describe("Daily and weekly rent: Short stays", () => {
 
     it("TEST-FE-2180 shows the quick numbers: full tonight, arriving, leaving, not paid; booking sites only to the Owner and the Manager", async () => {
       show();
-      const full = await screen.findByRole("link", { name: /Full tonight/ });
+      const full = (await screen.findByText("Full tonight")).closest("div");
       expect(full).toHaveTextContent("0 of 2");
       expect(full).toHaveTextContent("2 free");
-      const unpaid = screen.getByRole("link", { name: /Not paid yet/ });
+      // Owner 13/11/2026 evening: Not paid yet opens the Not paid panel from the right.
+      const unpaid = screen.getByRole("button", { name: /Not paid yet/ });
       expect(unpaid).toHaveTextContent("1");
       expect(unpaid).toHaveClass("warn");
-      expect(unpaid).toHaveAttribute(
-        "href",
-        "#/shortstays?show=booked&tab=list",
-      );
+      fireEvent.click(unpaid);
+      const panel = screen.getByRole("dialog", { name: "Not paid" });
       expect(
-        screen.getByRole("link", {
+        within(panel).getByRole("link", {
           name: /Lim Dara · U501 · arrives 05\/11\/2026/,
         }),
       ).toHaveAttribute("href", "#/shortstays/st%3Ab-1");
+      fireEvent.click(within(panel).getByRole("button", { name: "Close" }));
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
       expect(
         screen.queryByRole("link", { name: /Booking sites/ }),
       ).not.toBeInTheDocument();
@@ -2514,7 +2528,7 @@ describe("Daily and weekly rent: Short stays", () => {
       const sites = await screen.findByRole("link", { name: /Booking sites/ });
       expect(sites).toHaveTextContent("Agoda (U501): could not read");
       expect(sites).toHaveClass("warn");
-      expect(sites).toHaveAttribute("href", "#/shortstays?tab=sites");
+      expect(sites).toHaveAttribute("href", "#/settings/sites");
     });
 
     it("TEST-FE-2181 shows the step still missing before a check-in, in the desk's order", () => {
@@ -2531,8 +2545,11 @@ describe("Daily and weekly rent: Short stays", () => {
 
     it("TEST-FE-2182 a guest who has not paid gets Take payment, which opens the booking; a room not ready opens Housekeeping", async () => {
       show({ api: deskApi({ ...READY, payment: "NOT_BILLED" }) });
-      const today = await screen.findByRole("complementary", {
-        name: /Today · 04\/11\/2026/,
+      fireEvent.click(
+        await screen.findByRole("button", { name: /Arriving today/ }),
+      );
+      const today = screen.getByRole("dialog", {
+        name: "Today · 04/11/2026",
       });
       expect(
         await within(today).findByRole("link", { name: "Take payment" }),
@@ -2544,6 +2561,9 @@ describe("Daily and weekly rent: Short stays", () => {
       cleanup();
       window.location.hash = "#/shortstays";
       show({ api: deskApi({ ...READY, unit_status: "CLEANING" }) });
+      fireEvent.click(
+        await screen.findByRole("button", { name: /Arriving today/ }),
+      );
       expect(
         await screen.findByRole("link", { name: "Room not ready" }),
       ).toHaveAttribute("href", "#/shortstays?tab=clean");
@@ -2552,7 +2572,10 @@ describe("Daily and weekly rent: Short stays", () => {
     it("TEST-FE-2183 checks a ready guest in from the Today panel after both ticks, and the Calendar reads again", async () => {
       const api = deskApi(READY);
       show({ api });
-      fireEvent.click(await screen.findByRole("button", { name: "Check in" }));
+      fireEvent.click(
+        await screen.findByRole("button", { name: /Arriving today/ }),
+      );
+      fireEvent.click(screen.getByRole("button", { name: "Check in" }));
       const dialog = await screen.findByRole("dialog", {
         name: "Check in Lim Dara",
       });
@@ -2587,9 +2610,10 @@ describe("Daily and weekly rent: Short stays", () => {
     it("TEST-FE-2184 checks a leaving guest out from the Today panel", async () => {
       const api = deskApi(READY);
       show({ api });
-      const today = await screen.findByRole("complementary", {
-        name: /Today/,
-      });
+      fireEvent.click(
+        await screen.findByRole("button", { name: /Leaving today/ }),
+      );
+      const today = screen.getByRole("dialog", { name: /Today/ });
       expect(await within(today).findByText("Sok Chea")).toBeInTheDocument();
       fireEvent.click(within(today).getByRole("button", { name: "Check out" }));
       const dialog = await screen.findByRole("dialog", {
@@ -2613,11 +2637,14 @@ describe("Daily and weekly rent: Short stays", () => {
         api: deskApi(READY),
         capabilities: new Set(["short_stays.read"]),
       });
-      const today = await screen.findByRole("complementary", {
-        name: /Today/,
-      });
+      fireEvent.click(
+        await screen.findByRole("button", { name: /Leaving today/ }),
+      );
+      const today = screen.getByRole("dialog", { name: /Today/ });
       expect(await within(today).findByText("Sok Chea")).toBeInTheDocument();
-      expect(within(today).queryByRole("button")).not.toBeInTheDocument();
+      expect(
+        within(today).queryByRole("button", { name: /Check/ }),
+      ).not.toBeInTheDocument();
       // A free night does not open New booking either.
       const table = await screen.findByRole("table");
       expect(

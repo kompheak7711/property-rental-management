@@ -58325,7 +58325,7 @@
       "test_level": "UI component",
       "test_path": "frontend/src/reports/ReportsPage.test.tsx",
       "status": "implemented",
-      "notes": "V1-060 B6 (Reports screens, V1-057 data, DESIGN.md round 4): Lists every report in two groups in the owner's order, each with its line, the Owner and Manager tag on the money and audit reports, and Open report; a card opens its report."
+      "notes": "V1-060 B6 (Reports screens, V1-057 data, DESIGN.md round 4): Lists every report in two groups in the owner's order, each with its line, the Owner and Manager tag on the money and audit reports, and Open report; a card opens its report. Owner 13/11/2026 evening: a third group, Short stays, holds the Short stays weekly report."
     },
     {
       "test_id": "TEST-FE-1031",
@@ -58617,7 +58617,7 @@
       "test_level": "UI component",
       "test_path": "frontend/src/reports/ReportsPage.test.tsx",
       "status": "implemented",
-      "notes": "V1-060 B6 (Reports screens, V1-057 data, DESIGN.md round 4): The page follows the language switch: the list and a Totals table in Khmer, with the same numbers and no new request."
+      "notes": "V1-060 B6 (Reports screens, V1-057 data, DESIGN.md round 4): The page follows the language switch: the list and a Totals table in Khmer, with the same numbers and no new request. Owner 13/11/2026 evening: fourteen reports."
     },
     {
       "test_id": "TEST-FE-1057",
@@ -66153,7 +66153,7 @@
       "test_level": "UI component",
       "test_path": "frontend/src/shortstays/ShortStaysPage.test.tsx",
       "status": "implemented",
-      "notes": "Short stays: sets up a booking site's calendar link and turns it off."
+      "notes": "Short stays: sets up a booking site's calendar link and turns it off. Owner 13/11/2026 evening: the links are a Settings tab (SettingsPage); the test draws the tab's part."
     },
     {
       "test_id": "TEST-FE-1620",
@@ -66225,7 +66225,7 @@
       "test_level": "UI component",
       "test_path": "frontend/src/shortstays/ShortStaysPage.test.tsx",
       "status": "implemented",
-      "notes": "Short stays: shows the weekly report to the Manager and records a tenant's complaint."
+      "notes": "Short stays: shows the weekly report to the Manager and records a tenant's complaint. Owner 13/11/2026 evening: the report is in Reports (no Short stays tab); the test draws the report's part."
     },
     {
       "test_id": "TEST-FE-1605",
@@ -69633,7 +69633,7 @@
       "test_level": "UI component",
       "test_path": "frontend/src/shell/AppShell.test.tsx",
       "status": "implemented",
-      "notes": "Leasing batch (owner 13/11/2026): the Short stays tabs are its menu sub-items at the tabs' own addresses (Calendar, Bookings, Housekeeping, Weekly report, Booking sites); the Weekly report and Booking sites only for the Owner and the Manager."
+      "notes": "Leasing batch (owner 13/11/2026): the Short stays tabs are its menu sub-items at the tabs' own addresses (Calendar, Bookings, Housekeeping); owner 13/11 evening: Booking sites is a Settings sub-item for the Owner and the Manager, the Weekly report is in Reports."
     },
     {
       "test_id": "TEST-FE-2177",
@@ -69677,7 +69677,7 @@
       "test_level": "UI component",
       "test_path": "frontend/src/shortstays/ShortStaysPage.test.tsx",
       "status": "implemented",
-      "notes": "Leasing batch Calendar: quick numbers Full tonight, Arriving today, Leaving today, Not paid yet (opens the Booked list); Booking sites status only for the Owner and the Manager, naming a link that could not be read."
+      "notes": "Leasing batch Calendar: quick numbers Full tonight, Arriving today, Leaving today, Not paid yet; owner 13/11 evening: Not paid yet opens the Not paid panel from the right; Booking sites status only for the Owner and the Manager, opening Settings, naming a link that could not be read."
     },
     {
       "test_id": "TEST-FE-2181",
@@ -69699,7 +69699,7 @@
       "test_level": "UI component",
       "test_path": "frontend/src/shortstays/ShortStaysPage.test.tsx",
       "status": "implemented",
-      "notes": "Leasing batch Today panel: a guest who has not paid gets Take payment, which opens the booking; a room not ready opens Housekeeping; no Check in button then."
+      "notes": "Leasing batch Today panel: a guest who has not paid gets Take payment, which opens the booking; a room not ready opens Housekeeping; no Check in button then. Owner 13/11/2026 evening: the Today panel opens from the right when Arriving today or Leaving today is pressed."
     },
     {
       "test_id": "TEST-FE-2183",
@@ -69710,7 +69710,7 @@
       "test_level": "UI component",
       "test_path": "frontend/src/shortstays/ShortStaysPage.test.tsx",
       "status": "implemented",
-      "notes": "Leasing batch Today panel: Check in asks the two ticks (ID copy, house rules), sends nothing until both are ticked, then checks the guest in with the booking's version and the Calendar reads again."
+      "notes": "Leasing batch Today panel: Check in asks the two ticks (ID copy, house rules), sends nothing until both are ticked, then checks the guest in with the booking's version and the Calendar reads again. Owner 13/11/2026 evening: the Today panel opens from the right when Arriving today or Leaving today is pressed."
     },
     {
       "test_id": "TEST-FE-2184",
@@ -69721,7 +69721,7 @@
       "test_level": "UI component",
       "test_path": "frontend/src/shortstays/ShortStaysPage.test.tsx",
       "status": "implemented",
-      "notes": "Leasing batch Today panel: Check out for a guest leaving today, with the booking's version."
+      "notes": "Leasing batch Today panel: Check out for a guest leaving today, with the booking's version. Owner 13/11/2026 evening: the Today panel opens from the right when Arriving today or Leaving today is pressed."
     },
     {
       "test_id": "TEST-FE-2185",
@@ -69732,7 +69732,7 @@
       "test_level": "UI component",
       "test_path": "frontend/src/shortstays/ShortStaysPage.test.tsx",
       "status": "implemented",
-      "notes": "Leasing batch Today panel: a person without the desk right sees the guests but no Check in or Check out button, and a free night does not open New booking."
+      "notes": "Leasing batch Today panel: a person without the desk right sees the guests but no Check in or Check out button, and a free night does not open New booking. Owner 13/11/2026 evening: the Today panel opens from the right when Arriving today or Leaving today is pressed."
     },
     {
       "test_id": "TEST-FE-2139",
@@ -69753,6 +69753,28 @@
       "test_path": "frontend/src/utilities/UtilitiesPage.test.tsx",
       "status": "implemented",
       "notes": "UI v81 module batch 4 Utilities: Add meter is the page's button in the head and Replace meter is on the meter page, each with Manager only beside the button, not inside it; the meter page has the shared record head with Back on top."
+    },
+    {
+      "test_id": "TEST-FE-2186",
+      "upstream_ids": [
+        "UI-008",
+        "PR-SS-STEP5"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/reports/ReportsPage.test.tsx",
+      "status": "implemented",
+      "notes": "Owner 13/11/2026 (Leasing thread): the Short stays weekly report opens from Reports (#/reports/short_stay_week) with Back to the reports, for the Owner and the Manager only."
+    },
+    {
+      "test_id": "TEST-FE-2187",
+      "upstream_ids": [
+        "UI-008",
+        "PR-SS-STEP5"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/settings/SettingsPage.test.tsx",
+      "status": "implemented",
+      "notes": "Owner 13/11/2026 (Leasing thread): Booking sites (the booking sites' calendar links) is a Settings tab (#/settings/sites) for the Owner and the Manager only."
     }
   ]
 }

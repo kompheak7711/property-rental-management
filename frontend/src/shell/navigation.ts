@@ -432,22 +432,12 @@ export interface PageSubTab {
 }
 
 const PAGE_SUB_TABS: Partial<Record<PageId, readonly PageSubTab[]>> = {
-  // Leasing batch (owner 13/11/2026): the Short stays tabs (shortstays/text.ts tab_*); the
-  // Weekly report and Booking sites show to the Owner and the Manager (short_stays.approve).
+  // Leasing batch (owner 13/11/2026): the Short stays tabs (shortstays/text.ts tab_*). Owner
+  // 13/11 evening: the Weekly report moved to Reports and Booking sites to Settings.
   shortstays: [
     { id: "cal", label: ["Calendar", "ប្រតិទិន"] },
     { id: "list", label: ["Bookings", "ការកក់"] },
     { id: "clean", label: ["Housekeeping", "ការសម្អាត"] },
-    {
-      id: "report",
-      label: ["Weekly report", "របាយការណ៍ប្រចាំសប្ដាហ៍"],
-      needs: ["short_stays.approve"],
-    },
-    {
-      id: "sites",
-      label: ["Booking sites", "គេហទំព័រកក់"],
-      needs: ["short_stays.approve"],
-    },
   ],
   access: [
     { id: "users", label: ["Users", "អ្នកប្រើ"] },
@@ -475,6 +465,11 @@ const PAGE_SUB_TABS: Partial<Record<PageId, readonly PageSubTab[]>> = {
       id: "units",
       label: ["Unit setup", "ការរៀបចំបន្ទប់"],
       needs: ["settings.manage"],
+    },
+    {
+      id: "sites",
+      label: ["Booking sites", "គេហទំព័រកក់"],
+      needs: ["short_stays.approve"],
     },
     {
       id: "health",

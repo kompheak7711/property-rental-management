@@ -89,6 +89,7 @@ export function TodayPanel({
   const [done, setDone] = useState<string | null>(null);
   const [copy, setCopy] = useState(false);
   const [rules, setRules] = useState(false);
+  const [drawer, setDrawer] = useState<"today" | "unpaid" | null>(null);
   const sequence = useRef(0);
   const maySites = may("short_stays.approve");
 
@@ -258,10 +259,34 @@ export function TodayPanel({
     };
   };
 
+  const kpi = (
+    name: StaysTextKey,
+    value: number,
+    note: string,
+    onOpen: () => void,
+    warn = false,
+  ) => (
+    <button
+      className={`ss-kpi${warn ? " warn" : ""}`}
+      onClick={onOpen}
+      type="button"
+    >
+      <span>{st(language, name)}</span>
+      <b className="ui-num">{value}</b>
+      <span>{note}</span>
+    </button>
+  );
+
   return (
     <>
+      {done !== null && drawer === null && (
+        <div className="ui-notice ok" role="status">
+          <Icon name="check" />
+          <p>{done}</p>
+        </div>
+      )}
       <div className="ss-kpis">
-        <a className="ss-kpi" href={`${hashForPage("shortstays")}?tab=cal`}>
+        <div className="ss-kpi">
           <span>{st(language, "kp_full")}</span>
           <b className="ui-num">
             {st(
@@ -272,29 +297,36 @@ export function TodayPanel({
             )}
           </b>
           <span>{st(language, "kp_full_s", freeTonight)}</span>
-        </a>
-        <a className="ss-kpi" href="#ss-today">
-          <span>{st(language, "kp_arrive")}</span>
-          <b className="ui-num">{arriving.length}</b>
-          <span>{arriving.map((b) => b.guest_name).join(", ")}</span>
-        </a>
-        <a className="ss-kpi" href="#ss-today">
-          <span>{st(language, "kp_leave")}</span>
-          <b className="ui-num">{leaving.length}</b>
-          <span>{leaving.map((b) => b.guest_name).join(", ")}</span>
-        </a>
-        <a
-          className={`ss-kpi${unpaid.length > 0 ? " warn" : ""}`}
-          href={`${hashForPage("shortstays")}?show=booked&tab=list`}
-        >
-          <span>{st(language, "kp_unpaid")}</span>
-          <b className="ui-num">{unpaid.length}</b>
-          <span>{st(language, "kp_unpaid_s")}</span>
-        </a>
+        </div>
+        {kpi(
+          "kp_arrive",
+          arriving.length,
+          arriving.map((b) => b.guest_name).join(", "),
+          () => {
+            setDrawer("today");
+          },
+        )}
+        {kpi(
+          "kp_leave",
+          leaving.length,
+          leaving.map((b) => b.guest_name).join(", "),
+          () => {
+            setDrawer("today");
+          },
+        )}
+        {kpi(
+          "kp_unpaid",
+          unpaid.length,
+          st(language, "kp_unpaid_s"),
+          () => {
+            setDrawer("unpaid");
+          },
+          unpaid.length > 0,
+        )}
         {maySites && (
           <a
             className={`ss-kpi${badSites.length > 0 ? " warn" : ""}`}
-            href={`${hashForPage("shortstays")}?tab=sites`}
+            href={hashForPage("settings", "sites")}
           >
             <span>{st(language, "kp_sites")}</span>
             {activeSites.length === 0 ? (
@@ -319,100 +351,121 @@ export function TodayPanel({
           </a>
         )}
       </div>
-      <aside aria-labelledby="ss-today-h" className="ss-today" id="ss-today">
-        {done !== null && (
-          <div className="ui-notice ok" role="status">
-            <Icon name="check" />
-            <p>{done}</p>
-          </div>
-        )}
-        <section className="ui-card">
-          <h2 id="ss-today-h">
-            {st(language, "td_title", dayText(today))}
-            <span className="ui-muted">
-              {st(language, "td_staying", staying)}
-            </span>
-          </h2>
-          <h3>
-            {st(language, "td_arrive")} · {arriving.length}
-          </h3>
-          {arriving.length === 0 ? (
-            <p className="ui-small ui-muted">{st(language, "td_none_in")}</p>
-          ) : (
-            <ul className="ui-plain ss-guests">
-              {arriving.map((booking) => {
-                const note = arriveNote(booking);
-                return (
+      {drawer === "today" && asking === null && (
+        <Dialog
+          closeLabel={st(language, "td_shut")}
+          drawer
+          onClose={() => {
+            setDrawer(null);
+          }}
+          title={st(language, "td_title", dayText(today))}
+        >
+          <div className="ss-today">
+            {done !== null && (
+              <div className="ui-notice ok" role="status">
+                <Icon name="check" />
+                <p>{done}</p>
+              </div>
+            )}
+            <p className="ui-muted">{st(language, "td_staying", staying)}</p>
+            <h3>
+              {st(language, "td_arrive")} · {arriving.length}
+            </h3>
+            {arriving.length === 0 ? (
+              <p className="ui-small ui-muted">{st(language, "td_none_in")}</p>
+            ) : (
+              <ul className="ui-plain ss-guests">
+                {arriving.map((booking) => {
+                  const note = arriveNote(booking);
+                  return (
+                    <li key={booking.booking_id}>
+                      <a href={open(booking)}>
+                        <span>
+                          <b>{booking.guest_name}</b> ·{" "}
+                          <span className="ui-num">{booking.unit_number}</span>
+                        </span>
+                        <span
+                          className={`ui-sub2${note.warn ? " ss-warn" : ""}`}
+                        >
+                          {note.text}
+                        </span>
+                      </a>
+                      {mayDesk && stepButton(booking)}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+            <h3>
+              {st(language, "td_leave")} · {leaving.length}
+            </h3>
+            {leaving.length === 0 ? (
+              <p className="ui-small ui-muted">{st(language, "td_none_out")}</p>
+            ) : (
+              <ul className="ui-plain ss-guests">
+                {leaving.map((booking) => (
                   <li key={booking.booking_id}>
                     <a href={open(booking)}>
                       <span>
                         <b>{booking.guest_name}</b> ·{" "}
                         <span className="ui-num">{booking.unit_number}</span>
                       </span>
-                      <span className={`ui-sub2${note.warn ? " ss-warn" : ""}`}>
-                        {note.text}
+                      <span className="ui-sub2">
+                        {st(
+                          language,
+                          "td_by",
+                          timeText(booking.check_out_time),
+                        )}
                       </span>
                     </a>
-                    {mayDesk && stepButton(booking)}
+                    {mayDesk && (
+                      <button
+                        className="ui-btn"
+                        onClick={() => {
+                          setProblem(null);
+                          setAsking({ kind: "out", booking });
+                        }}
+                        type="button"
+                      >
+                        {st(language, "out_b")}
+                      </button>
+                    )}
                   </li>
-                );
-              })}
-            </ul>
-          )}
-          <h3>
-            {st(language, "td_leave")} · {leaving.length}
-          </h3>
-          {leaving.length === 0 ? (
-            <p className="ui-small ui-muted">{st(language, "td_none_out")}</p>
+                ))}
+              </ul>
+            )}
+            <section className="ss-today-clean">
+              <h3>{st(language, "td_clean")}</h3>
+              <p className="ui-small">
+                {toClean.length === 0
+                  ? st(language, "td_clean_none")
+                  : toClean.map((unit) => unit.unit_number).join(" · ")}
+              </p>
+              <a
+                className="ss-link44"
+                href={`${hashForPage("shortstays")}?tab=clean`}
+              >
+                {st(language, "td_clean_open")}
+              </a>
+            </section>
+          </div>
+        </Dialog>
+      )}
+      {drawer === "unpaid" && (
+        <Dialog
+          closeLabel={st(language, "td_shut")}
+          drawer
+          onClose={() => {
+            setDrawer(null);
+          }}
+          title={st(language, "td_unpaid")}
+        >
+          <p className="ui-muted">{st(language, "kp_unpaid_s")}</p>
+          {unpaid.length === 0 ? (
+            <p>{st(language, "td_unpaid_none")}</p>
           ) : (
-            <ul className="ui-plain ss-guests">
-              {leaving.map((booking) => (
-                <li key={booking.booking_id}>
-                  <a href={open(booking)}>
-                    <span>
-                      <b>{booking.guest_name}</b> ·{" "}
-                      <span className="ui-num">{booking.unit_number}</span>
-                    </span>
-                    <span className="ui-sub2">
-                      {st(language, "td_by", timeText(booking.check_out_time))}
-                    </span>
-                  </a>
-                  {mayDesk && (
-                    <button
-                      className="ui-btn"
-                      onClick={() => {
-                        setProblem(null);
-                        setAsking({ kind: "out", booking });
-                      }}
-                      type="button"
-                    >
-                      {st(language, "out_b")}
-                    </button>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-        <section className="ui-card">
-          <h2>{st(language, "td_clean")}</h2>
-          <p className="ui-small">
-            {toClean.length === 0
-              ? st(language, "td_clean_none")
-              : toClean.map((unit) => unit.unit_number).join(" · ")}
-          </p>
-          <a
-            className="ss-link44"
-            href={`${hashForPage("shortstays")}?tab=clean`}
-          >
-            {st(language, "td_clean_open")}
-          </a>
-        </section>
-        {unpaid.length > 0 && (
-          <section className="ui-card ss-unpaid-card">
-            <h2>{st(language, "td_unpaid")}</h2>
             <ul className="ui-plain">
-              {unpaid.slice(0, 5).map((booking) => (
+              {unpaid.map((booking) => (
                 <li key={booking.booking_id}>
                   <a
                     className="ss-link44"
@@ -429,9 +482,9 @@ export function TodayPanel({
                 </li>
               ))}
             </ul>
-          </section>
-        )}
-      </aside>
+          )}
+        </Dialog>
+      )}
       {asking !== null && (
         <Dialog
           busy={busy}

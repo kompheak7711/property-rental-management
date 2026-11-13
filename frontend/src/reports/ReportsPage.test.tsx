@@ -93,8 +93,13 @@ describe("Reports list", () => {
         "Owner and Manager",
       ),
     ).toBeNull();
-    expect(screen.getAllByText("Owner and Manager")).toHaveLength(10);
-    expect(screen.getAllByText("Open report")).toHaveLength(13);
+    // Owner 13/11/2026 (Leasing thread): the Short stays weekly report is a third group.
+    expect(cardNames("Short stays")).toEqual(["Short stays weekly report"]);
+    expect(
+      screen.getByRole("link", { name: /^Short stays weekly report/ }),
+    ).toHaveAttribute("href", "#/reports/short_stay_week");
+    expect(screen.getAllByText("Owner and Manager")).toHaveLength(11);
+    expect(screen.getAllByText("Open report")).toHaveLength(14);
     expect(
       screen.getByText(/^Staff see the operational reports only\./),
     ).toBeTruthy();
@@ -523,7 +528,7 @@ describe("Language and parameters", () => {
       screen.getByRole("region", { name: "សរុបតាមបន្ទប់ និងខែ" }),
     ).toBeTruthy();
     expect(cardNames("សរុបតាមបន្ទប់ និងខែ")[0]).toBe("ចំណូលសរុប");
-    expect(screen.getAllByText("បើករបាយការណ៍")).toHaveLength(13);
+    expect(screen.getAllByText("បើករបាយការណ៍")).toHaveLength(14);
     cleanup();
 
     const page = openReports({ hash: "#/reports/total_income" });
@@ -620,5 +625,27 @@ describe("Language and parameters", () => {
     await waitFor(() => {
       expect(page.units.list).toHaveBeenCalledWith("property-2", {});
     });
+  });
+
+  it("TEST-FE-2186 the Short stays weekly report opens from Reports for the Owner and the Manager (owner 13/11/2026: moved from Short stays)", () => {
+    const weekReport = vi.fn(() => new Promise<never>(() => undefined));
+    const calendar = vi.fn(() => new Promise<never>(() => undefined));
+    openReports({
+      hash: "#/reports/short_stay_week",
+      stayApi: { weekReport, calendar } as unknown as NonNullable<
+        Parameters<typeof openReports>[0]
+      >["stayApi"],
+    });
+    expect(
+      screen.getByRole("heading", {
+        level: 2,
+        name: "Short stays weekly report",
+      }),
+    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^Back to / })).toBeTruthy();
+    expect(weekReport).toHaveBeenCalled();
+    cleanup();
+    openReports({ capabilities: new Set(["reports.read"]) });
+    expect(screen.queryByRole("region", { name: "Short stays" })).toBeNull();
   });
 });

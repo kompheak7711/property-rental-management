@@ -13,7 +13,12 @@ import {
   useState,
 } from "react";
 
-import { momentText } from "../shell/format";
+import { momentText, todayInPhnomPenh } from "../shell/format";
+import { SiteCalendars } from "../shortstays/SiteCalendars";
+import {
+  type ShortStaysApi,
+  shortStaysApi,
+} from "../shortstays/shortStaysClient";
 import { Icon, type ShellIcon } from "../shell/icons";
 import { hashForPage } from "../shell/navigation";
 import { useHashDetail } from "../shell/useHashPage";
@@ -41,6 +46,7 @@ export type SettingsTab =
   | "services"
   | "units"
   | "users"
+  | "sites"
   | "health";
 
 /** UI v81: the sub-tabs of the Users and access page (moved out of Settings). */
@@ -83,6 +89,14 @@ const TABS: readonly {
     icon: "units",
     needs: ["settings.manage"],
   },
+  // Owner 13/11/2026 (Leasing thread): the booking sites' calendar links, set up once, moved
+  // here from Short stays. For the Owner and the Manager, as before.
+  {
+    tab: "sites",
+    label: "se_tab_sites",
+    icon: "calendar",
+    needs: ["short_stays.approve"],
+  },
   {
     tab: "health",
     label: "se_tab_health",
@@ -114,6 +128,8 @@ export interface SettingsPageProps {
   mode?: "settings" | "access";
   /** These screens are a test app (not the real install): System health says so calmly. */
   testApp?: boolean;
+  /** The Booking sites tab (tests pass a fake). */
+  stayApi?: ShortStaysApi;
 }
 
 function Earlier({
@@ -364,6 +380,7 @@ export function SettingsPage({
   earlier,
   mode = "settings",
   testApp = false,
+  stayApi = shortStaysApi,
 }: SettingsPageProps) {
   const detail = useHashDetail(mode === "access" ? "access" : "settings");
   // UI v81: Users and sign-in moved to its own menu item; an old address goes there.
@@ -452,6 +469,15 @@ export function SettingsPage({
             <Icon name="alert" />
             <p>{sst(language, "no_property")}</p>
           </div>
+        )}
+        {tab === "sites" && !noProperty && (
+          <SiteCalendars
+            api={stayApi}
+            key={propertyId}
+            language={language}
+            propertyId={propertyId}
+            today={todayInPhnomPenh()}
+          />
         )}
         {tab === "units" && !noProperty && (
           <UnitSetupTab
