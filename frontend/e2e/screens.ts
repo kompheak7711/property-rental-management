@@ -149,6 +149,22 @@ export const SCREENS: readonly Screen[] = [
     fixture: "approvals",
     ready: "Mao Sophea",
   },
+  // Reservations (module batch 6, 14/11/2026): the tab row is the head; on a phone each
+  // Reservation is a card. Then one cancelled Reservation's page: one head, History with names.
+  {
+    name: "reservations",
+    hash: "#/reservations",
+    fixture: "reservations",
+    ready: "U407",
+    clock: "2026-11-13T19:30:00Z",
+  },
+  {
+    name: "reservation",
+    hash: "#/reservations/add41500-adb9-47e3-ba99-db0edb642e80",
+    fixture: "reservations",
+    ready: "By Kompheak",
+    clock: "2026-11-13T19:30:00Z",
+  },
   // Leasing batch (owner 13/11/2026, design FINAL): the Short stays Calendar as a booking chart
   // with the quick numbers and the Today panel. Made-up guests for 13/11/2026
   // (e2e/fixtures/shortstays.har.json).

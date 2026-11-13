@@ -92,6 +92,10 @@ const TABBED_HEAD: ReadonlySet<string> = new Set([
   "tgfaq",
   "tgnotices",
   "tghealth",
+  // UI v81 batch 6 (Reservations): the Long stays tabs too.
+  "reservations",
+  "leases",
+  "moveout",
 ]);
 
 const RAIL_KEY = "chetana-rail";

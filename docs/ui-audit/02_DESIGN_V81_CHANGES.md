@@ -987,3 +987,35 @@ The refund methods are read once with the list. If that read fails, the "Refund 
 ### Tests and checks
 
 Test: TEST-FE-2143 in `frontend/src/approvals/ApprovalsPage.test.tsx` (Review button, Refund method and Reference, a failed read of the methods, a Customer with no Unit). TEST-FE-933, 934 and 936 press "Review" now. The screen check has a new screen, `approvals`, with recorded answers in `frontend/e2e/fixtures/approvals.har.json` (one Refund of Customer Credit waits): 18 screens × 5 sizes pass. Layout and display only; no backend change, no database step.
+
+## Round 16: module batch 6, Reservations (14/11/2026)
+
+Owner 13/11 18:59: "Ok" (Approvals approved). The Leasing screen thread owns Bookings, Viewing requests, Short stays and Housekeeping, so this batch is Reservations only (it had no changes there on any branch).
+
+### What changed
+
+| Part | Before | Now | Where |
+|---|---|---|---|
+| Long stays head | Title "Reservations", a sub-line, then the tabs (the word Reservations twice) | The tab row is the head, the page's button at its right, as on Invoices; also on Leases and Move-outs | `shell/AppShell.tsx` `TABBED_HEAD` |
+| List on an iPad standing up | Six columns, the deposit and status cut off at the right | Reserved on folds under the Customer below 1024px | `reservations/ReservationsList.tsx`, `ui-reslist` in `shell/screens.css` |
+| List on a phone | A wide table cut after the Customer | One card a Reservation: Unit and status, the Customer and Reserved on, then Expires and the deposit | the same |
+| Reservation page head | Page title "Reservations", then the record title, buttons, the tabs, then "Back" below them | One head: Back on top, "Reservation · U408" with its status, the buttons on the right; no tabs above it (as on the Unit and Lease pages) | `reservations/ReservationDetail.tsx`, shared `PageHeader` |
+| History | What happened and when, with no person | Each step names the person: "By <name>", "Approved by <name>" for the extension; the first step stays at the bottom of the newest-first list | `ReservationDetail.tsx`; server read `reservation_api.py` (names only, nothing stored changes) |
+| Security Deposit card | "Accepted $450.00, different amount approved" (the full deposit set beside the 20% suggestion for the first payment, so the note was wrong almost every time) | "Full Security Deposit $450.00", the name New Reservation uses, with no note | `ReservationDetail.tsx`, `full_deposit` |
+| Back link | A Reservation opened from the list said "Back to Home" (a hidden page's heading was read) | "Back to Reservations": only a heading on show counts | `shell/backNav.tsx` `currentPageLabel` |
+
+The person's name comes from the account that recorded each step (`app.user_accounts.display_name`), read with the Reservation as the Lease page does since 08/11. The response gets `made_by_name`, `actor_name` on each receipt, cancellation and deposit outcome, and `approved_by_name` on the extension. No stored data, rule, permission or field name changes.
+
+### Every difference from design v81 left, with its reason
+
+| Part | Design v81 | App | Reason |
+|---|---|---|---|
+| Place in the menu | Bookings › Reservations, with Viewing requests | Long stays › Reservations, Leases, Move-outs | The menu order is the Leasing screen thread's (owner 13/11) |
+| New Reservation | A full page with a "Next step" box | A side window | The window was approved in V1-060 B6 and keeps the deposit and the Reservation in one save |
+| Result column | A separate column | The result under the status chip | One column fewer fits an iPad |
+| Reservation facts | Three columns with the Unit's type and floor and the Customer's phone | A two-column list | The Reservation read has no type, floor or phone; adding them is a server change for little gain |
+| Customer card on the Reservation page | Customer card with Paid on time and Credit | Not shown | Those come from the Customer page; the Customer link opens it |
+
+### Tests and checks
+
+Tests: TEST-FE-2145 (one head, Back on top, History names), TEST-FE-2146 (Reserved on under the Customer, phone-card classes) in `frontend/src/reservations/ReservationsPage.test.tsx`; TEST-FE-2147 (Back ignores a hidden page's heading) in `frontend/src/shell/backNav.test.tsx`. TEST-FE-839 expects "Full Security Deposit". The server test `test_reservation_worker_migration.py` expects the names. The screen check has two new screens, `reservations` and `reservation`, with recorded answers in `frontend/e2e/fixtures/reservations.har.json` (made-up Reservations; one leftover test Unit with a non-Unit number was taken out of the list answer): 20 screens × 5 sizes pass.

@@ -40,6 +40,8 @@ const TEXT = {
   unit: ["Unit", "បន្ទប់"],
   customer: ["Customer", "អតិថិជន"],
   reserved_on: ["Reserved on", "កក់នៅ"],
+  // Batch 6: under the Customer when the Reserved on column folds.
+  reserved_sub: ["Reserved on {0}", "កក់នៅ {0}"],
   expires: ["Expires", "ផុតកំណត់"],
   deposit: ["Deposit received", "ប្រាក់កក់បានទទួល"],
   status: ["Status", "ស្ថានភាព"],
@@ -69,6 +71,8 @@ const TEXT = {
     "រកមិនឃើញការកក់នេះ ឬគណនីរបស់អ្នកមិនអាចបើកវាបានទេ។",
   ],
   title: ["Reservation · {0}", "ការកក់ · {0}"],
+  // Batch 6 (UI v81): the head while the Reservation loads.
+  details: ["Reservation", "ការកក់"],
   head_sub: [
     "{0} · reserved on {1} · expires {2}",
     "{0} · កក់នៅ {1} · ផុតកំណត់ {2}",
@@ -107,6 +111,8 @@ const TEXT = {
   when: ["When", "ពេល"],
   offered: ["What was offered", "អ្វីដែលបានផ្តល់ជូន"],
   security: ["Security Deposit", "ប្រាក់កក់សុវត្ថិភាព"],
+  // Batch 6: the agreed full amount, as named on New Reservation.
+  full_deposit: ["Full Security Deposit", "ប្រាក់កក់សុវត្ថិភាពពេញ"],
   suggested: ["Suggested", "ការណែនាំ"],
   suggested_note: [
     "{0} of the agreed Rent, not a minimum",
@@ -139,6 +145,9 @@ const TEXT = {
   ],
   m_none: ["No deposit money was received.", "មិនបានទទួលប្រាក់កក់ទេ។"],
   history: ["History", "ប្រវត្តិ"],
+  // Batch 6 (owner: History names the person for every step).
+  h_by: ["By {0}", "ដោយ {0}"],
+  h_approved_by: ["Approved by {0}", "អនុម័តដោយ {0}"],
   h_reserved: ["Reservation made for {0}.", "បានកក់សម្រាប់ {0}។"],
   h_receipt: ["Deposit received: {0}.", "បានទទួលប្រាក់កក់៖ {0}។"],
   h_extended: ["Extended to {0}.", "បានពន្យាររហូតដល់ {0}។"],

@@ -70044,6 +70044,36 @@
       "test_path": "frontend/src/telegram/TelegramPages.test.tsx",
       "status": "implemented",
       "notes": "Administration screen review (owner 13/11/2026, fix 7): Telegram Linked tenants shows the 5 newest paper-copy Invoices and a Show all button that opens the whole list."
+    },
+    {
+      "test_id": "TEST-FE-2145",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/reservations/ReservationsPage.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 module batch 6 Reservations: the Reservation page has one head (Back on top, one title with its status, buttons on the right, no menu tabs above it); History names the person for every step (By <name>, Approved by <name> for the extension) and lists the steps newest first with the Reservation made at the bottom."
+    },
+    {
+      "test_id": "TEST-FE-2146",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/reservations/ReservationsPage.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 module batch 6 Reservations: the list keeps Reserved on under the Customer for an iPad standing up, and its table is ready to be one card a Reservation on a phone (Expires label shown there)."
+    },
+    {
+      "test_id": "TEST-FE-2147",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shell/backNav.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 module batch 6: Back names the page on show; a record heading of a page that stays mounted but hidden is not taken as the page left (a Reservation opened from the list said Back to Home)."
     }
   ]
 }
