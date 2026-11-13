@@ -551,6 +551,8 @@ const TEXT = {
   // DL-236 (owner 14/11/2026): a task is given to one person.
   cl_assign: ["Assign to", "ផ្ដល់ការងារឱ្យ"],
   cl_nobody: ["Nobody yet", "មិនទាន់មាននរណាម្នាក់"],
+  // The Staff bot tells the person given a task; this person has no linked Telegram.
+  cl_no_tg: ["{0} (no Telegram)", "{0} (គ្មាន Telegram)"],
   cl_nobody_yet: ["Not given to anyone yet", "មិនទាន់ផ្ដល់ឱ្យនរណាម្នាក់"],
   cl_given: ["Given to {0}", "ផ្ដល់ឱ្យ {0}"],
   cl_done_by: ["Done by {0}", "ធ្វើដោយ {0}"],

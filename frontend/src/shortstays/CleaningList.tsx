@@ -204,7 +204,9 @@ export function CleaningList({
                     )}
                   {cleaners.map((person) => (
                     <option key={person.actor_id} value={person.actor_id}>
-                      {person.name}
+                      {person.telegram
+                        ? person.name
+                        : st(language, "cl_no_tg", person.name)}
                     </option>
                   ))}
                 </select>

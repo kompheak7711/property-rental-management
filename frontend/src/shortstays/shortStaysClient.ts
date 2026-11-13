@@ -587,6 +587,8 @@ export interface CleaningTask {
 export interface Cleaner {
   actor_id: string;
   name: string;
+  /** The Staff bot can tell this person on Telegram when a task is given to them. */
+  telegram: boolean;
 }
 
 export interface CleaningDay {
@@ -1320,7 +1322,11 @@ export function cleaningOf(value: unknown): CleaningDay {
     }),
     cleaners: list(row.cleaners ?? []).map((entry) => {
       const person = record(entry);
-      return { actor_id: text(person.actor_id), name: text(person.name) };
+      return {
+        actor_id: text(person.actor_id),
+        name: text(person.name),
+        telegram: person.telegram === true,
+      };
     }),
   };
 }

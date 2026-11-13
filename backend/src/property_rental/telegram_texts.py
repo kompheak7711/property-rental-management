@@ -991,6 +991,12 @@ TEXTS: Final[dict[str, dict[str, str]]] = {
         "km": "🚨 បន្ទាន់៖ {type} · {where}។ សូមទៅមើលភ្លាមៗ។ លេខរបាយការណ៍នឹងមកពេលក្រោយ។",
         "en": "🚨 បន្ទាន់៖ {type} · {where}។ សូមទៅមើលភ្លាមៗ។ លេខរបាយការណ៍នឹងមកពេលក្រោយ។",
     },
+    # DL-236 (owner 13 Nov 2026): the front desk gave this person a Housekeeping task. The Khmer
+    # waits for the native-speaker check.
+    "staff.task_given": {
+        "km": "🧹 ការងារថ្មីសម្រាប់អ្នក៖ {task} · បន្ទប់ {unit} · ថ្ងៃ {day}។",
+        "en": "🧹 ការងារថ្មីសម្រាប់អ្នក៖ {task} · បន្ទប់ {unit} · ថ្ងៃ {day}។",
+    },
     # Report states as the tenant sees them (the app's words, Building > Problem reports).
     "status.RECEIVED": {"km": "បានទទួល", "en": "Received"},
     "status.PLANNED": {"km": "បានរៀបចំការមកពិនិត្យ", "en": "Visit planned"},

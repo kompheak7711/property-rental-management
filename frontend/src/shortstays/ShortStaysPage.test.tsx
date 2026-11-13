@@ -2866,8 +2866,8 @@ describe("Daily and weekly rent: Short stays", () => {
         ...extra,
       });
       const cleaners = [
-        { actor_id: "a-1", name: "Chan Thida" },
-        { actor_id: "a-2", name: "Sok Mony" },
+        { actor_id: "a-1", name: "Chan Thida", telegram: true },
+        { actor_id: "a-2", name: "Sok Mony", telegram: false },
       ];
       const day = (tasks: CleaningTask[]): CleaningDay => ({
         day: "2026-11-04",
@@ -2911,7 +2911,7 @@ describe("Daily and weekly rent: Short stays", () => {
         within(box)
           .getAllByRole("option")
           .map((option) => option.textContent),
-      ).toEqual(["Nobody yet", "Chan Thida", "Sok Mony"]);
+      ).toEqual(["Nobody yet", "Chan Thida", "Sok Mony (no Telegram)"]);
       fireEvent.change(box, { target: { value: "a-1" } });
       await waitFor(() => {
         expect(assignTask).toHaveBeenCalledWith("p-1", "1", "a-1");
@@ -2935,7 +2935,7 @@ describe("Daily and weekly rent: Short stays", () => {
       const day: CleaningDay = {
         day: "2026-11-04",
         today: "2026-11-04",
-        cleaners: [{ actor_id: "a-1", name: "Chan Thida" }],
+        cleaners: [{ actor_id: "a-1", name: "Chan Thida", telegram: true }],
         tasks: [
           {
             task_id: "1",

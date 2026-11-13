@@ -19,6 +19,10 @@ What this migration adds:
 - ``app.assign_housekeeping_task``: the front desk (``short_stays.desk``) gives a task that is
   still to do to a person, to another person, or to nobody. The History (audit) keeps the
   person before and after.
+- The Staff bot tells the person given a task (owner 13 Nov 2026: "after assign, send task to
+  cleaning via telegram?"): one Khmer message ``staff.task_given`` to each live Staff bot link of
+  the person's employee record at the Property (``app.housekeeping_staff_chats``). A person with
+  no linked Telegram gets no message; ``cleaners`` says who has one (``telegram``).
 
 Anyone with ``short_stays.housekeeping`` may still finish any task (a colleague covers a
 day off); the task then names who finished it. No money, Invoice or Unit status changes.
@@ -88,12 +92,26 @@ BEGIN
     RETURN NEW;
 END $$;
 
+-- The Staff bot chats of a person: the live Telegram links of their employee record at the
+-- Property on the day (HR, migration 20270430_300).
+CREATE FUNCTION app.housekeeping_staff_chats(p_property uuid, p_person uuid, p_day date)
+RETURNS SETOF bigint LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog AS $$
+    SELECT DISTINCT link.telegram_user_id
+    FROM app.employees AS employee
+    JOIN app.employee_telegram_links AS link ON link.employee_id = employee.id
+    WHERE employee.user_actor_id = p_person AND employee.property_id = p_property
+      AND app.hr_link_live(link.id, p_day)
+$$;
+REVOKE ALL ON FUNCTION app.housekeeping_staff_chats(uuid, uuid, date) FROM PUBLIC;
+
 -- The people a Housekeeping task may be given to: an active account that may tick housekeeping
--- tasks at this Property.
-CREATE FUNCTION app.short_stay_cleaners(p_property uuid)
+-- tasks at this Property; ``telegram`` says whether the Staff bot can tell them.
+CREATE FUNCTION app.short_stay_cleaners(p_property uuid, p_day date)
 RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog AS $$
     SELECT COALESCE(jsonb_agg(jsonb_build_object('actor_id', account.actor_id,
-            'name', account.display_name) ORDER BY lower(account.display_name), account.actor_id),
+            'name', account.display_name, 'telegram', EXISTS (
+                SELECT 1 FROM app.housekeeping_staff_chats(p_property, account.actor_id, p_day)))
+            ORDER BY lower(account.display_name), account.actor_id),
         '[]'::jsonb)
     FROM app.user_accounts AS account
     WHERE account.lifecycle_state = 'active'
@@ -101,7 +119,7 @@ RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog 
           WHERE held.capability_id = 'short_stays.housekeeping'
             AND held.property_id = p_property)
 $$;
-REVOKE ALL ON FUNCTION app.short_stay_cleaners(uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION app.short_stay_cleaners(uuid, date) FROM PUBLIC;
 
 CREATE OR REPLACE FUNCTION app.short_stay_housekeeping(p_property uuid, p_day date, p_actor uuid)
 RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = pg_catalog AS $$
@@ -111,7 +129,7 @@ BEGIN
         RAISE EXCEPTION 'The day is invalid' USING ERRCODE = '22023';
     END IF;
     RETURN jsonb_build_object('day', p_day, 'today', v_today,
-        'cleaners', app.short_stay_cleaners(p_property),
+        'cleaners', app.short_stay_cleaners(p_property, v_today),
         'tasks', COALESCE((
         SELECT jsonb_agg(jsonb_build_object('task_id', task.id, 'kind', task.kind,
             'task_on', task.task_on, 'status', task.status, 'note', task.note,
@@ -144,6 +162,7 @@ DECLARE
     v_today date := app.require_product_right(p_actor, 'short_stays.desk', p_property);
     v_task app.housekeeping_tasks;
     v_person uuid;
+    v_chat bigint;
 BEGIN
     IF p_assign IS NULL OR jsonb_typeof(p_assign) <> 'object'
        OR EXISTS (SELECT 1 FROM jsonb_object_keys(p_assign) AS key WHERE key <> 'actor_id')
@@ -164,7 +183,7 @@ BEGIN
         RAISE EXCEPTION 'This task is already done' USING ERRCODE = '55000';
     END IF;
     IF v_person IS NOT NULL AND NOT EXISTS (
-        SELECT 1 FROM jsonb_array_elements(app.short_stay_cleaners(p_property)) AS person
+        SELECT 1 FROM jsonb_array_elements(app.short_stay_cleaners(p_property, v_today)) AS person
         WHERE (person ->> 'actor_id')::uuid = v_person) THEN
         RAISE EXCEPTION 'This person may not do housekeeping here' USING ERRCODE = '22023';
     END IF;
@@ -182,6 +201,21 @@ BEGIN
         'short_stays.desk',
         jsonb_build_object('assigned_to', v_task.assigned_to),
         jsonb_build_object('assigned_to', v_person), p_correlation);
+    -- The Staff bot tells the person, once for this change (the key holds the new version).
+    FOR v_chat IN SELECT chat FROM app.housekeeping_staff_chats(p_property, v_person, v_today)
+        AS chat
+    LOOP
+        PERFORM app.telegram_queue_once(p_property, 'STAFF', v_chat, 'staff.task_given', 'km',
+            jsonb_build_object(
+                'unit', (SELECT unit.unit_number FROM app.units AS unit
+                    WHERE unit.id = v_task.unit_id),
+                'task', CASE v_task.kind
+                    WHEN 'DAILY_CLEAN' THEN 'សម្អាតប្រចាំថ្ងៃ'
+                    WHEN 'CHANGE_OVER' THEN 'សម្អាតពេលប្ដូរភ្ញៀវ'
+                    ELSE 'ពិនិត្យបន្ទប់' END,
+                'day', to_char(v_task.task_on, 'DD/MM/YYYY')),
+            NULL, NULL, 'hk-task:' || v_task.id || ':' || (v_task.version + 1), p_actor);
+    END LOOP;
     RETURN app.short_stay_housekeeping(p_property, v_task.task_on, p_actor);
 END $$;
 """

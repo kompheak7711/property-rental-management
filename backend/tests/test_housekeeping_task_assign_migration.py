@@ -191,3 +191,83 @@ def test_a_task_is_given_to_one_person_and_names_who_finished_it(
         json.dumps({"actor_id": str(db.staff)}),
         db.manager,
     )
+
+
+def test_the_staff_bot_tells_the_person_given_the_task(stay_database: BookingDatabase) -> None:
+    db = stay_database
+    made = run(db.runtime_url, BOOK, db.property_id, booking(db, db.studio, 5, 7), db.staff)
+    chat = 7_100_236
+    with psycopg.connect(db.owner_url) as connection:
+        task_id = connection.execute(
+            "INSERT INTO app.housekeeping_tasks (property_id, unit_id, booking_id, task_on, kind, "
+            "created_by) VALUES (%s, %s, %s, %s, 'CHANGE_OVER', %s) RETURNING id",
+            (db.property_id, db.studio, made, db.today, db.staff),
+        ).fetchone()
+        assert task_id is not None
+        # The staff member is an employee hired today with a Staff bot link (HR, migration 300).
+        employee = connection.execute(
+            "INSERT INTO app.employees (property_id, employee_code, name_en, name_km, "
+            "user_actor_id, created_by) VALUES (%s, 'E-236', 'Chan Thida', 'ចាន់ ធីតា', %s, %s) "
+            "RETURNING id",
+            (db.property_id, db.staff, db.staff),
+        ).fetchone()
+        assert employee is not None
+        connection.execute(
+            "INSERT INTO app.employment_events (employee_id, event_type, effective_date, "
+            "job_title_id, shift_code, usual_day_off, reason, created_by) "
+            "SELECT %s, 'HIRED', %s, title.id, (SELECT min(code) FROM app.work_shifts), 7, "
+            "'Hired', %s FROM app.job_titles AS title WHERE title.code = 'CLEANER'",
+            (employee[0], db.today, db.staff),
+        )
+        connection.execute(
+            "INSERT INTO app.employee_telegram_links (employee_id, telegram_user_id, report_role, "
+            "created_by) VALUES (%s, %s, 'CLEANER', %s)",
+            (employee[0], chat, db.staff),
+        )
+    day = run(db.runtime_url, LIST, db.property_id, db.today, db.staff)
+    telegram = {person["actor_id"]: person["telegram"] for person in day["cleaners"]}
+    assert (telegram[str(db.staff)], telegram[str(db.manager)]) == (True, False)
+
+    task = str(task_id[0])
+    run(
+        db.runtime_url,
+        ASSIGN,
+        db.property_id,
+        task,
+        json.dumps({"actor_id": str(db.staff)}),
+        db.manager,
+    )
+    # Given to someone else (no Telegram) and back: one more message, none for the other person.
+    run(
+        db.runtime_url,
+        ASSIGN,
+        db.property_id,
+        task,
+        json.dumps({"actor_id": str(db.manager)}),
+        db.manager,
+    )
+    run(
+        db.runtime_url,
+        ASSIGN,
+        db.property_id,
+        task,
+        json.dumps({"actor_id": str(db.staff)}),
+        db.manager,
+    )
+    with psycopg.connect(db.owner_url) as connection:
+        sent = connection.execute(
+            "SELECT bot_code, chat_id, text_code, language, details FROM app.telegram_outbox "
+            "WHERE text_code = 'staff.task_given' ORDER BY created_at",
+        ).fetchall()
+        unit = connection.execute(
+            "SELECT unit_number FROM app.units WHERE id = %s", (db.studio,)
+        ).fetchone()
+    assert unit is not None
+    message = (
+        "STAFF",
+        chat,
+        "staff.task_given",
+        "km",
+        {"unit": unit[0], "task": "សម្អាតពេលប្ដូរភ្ញៀវ", "day": db.today.strftime("%d/%m/%Y")},
+    )
+    assert sent == [message, message]

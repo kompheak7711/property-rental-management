@@ -70007,6 +70007,17 @@
       "notes": "The front desk gives a task still to do to a person who may do housekeeping, to another, or to nobody; the History keeps each change; anyone with the housekeeping right finishes it and the list names who did; a finished task, an unknown person and a bad answer are refused."
     },
     {
+      "test_id": "test_the_staff_bot_tells_the_person_given_the_task",
+      "upstream_ids": [
+        "DL-236",
+        "DB-HK-001"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_housekeeping_task_assign_migration.py",
+      "status": "implemented",
+      "notes": "The Staff bot queues one Khmer message (task, room, day) to the linked Telegram of the employee given a task, once for each change; a person with no linked Telegram gets none, and the cleaners list says who has Telegram."
+    },
+    {
       "test_id": "TEST-FE-2190",
       "upstream_ids": [
         "DL-228",
