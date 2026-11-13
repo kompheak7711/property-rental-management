@@ -63,6 +63,9 @@ const TEXT = {
 type TextKey = keyof typeof TEXT;
 
 // What the device remembers about the menu (the same keys as the design, app23.js).
+/** Pages whose tab row is their head (owner 13/11/2026 23:44): no title or sub-line on show. */
+const TABBED_HEAD: ReadonlySet<string> = new Set(["invoices", "quotations"]);
+
 const RAIL_KEY = "chetana-rail";
 const GROUPS_KEY = "chetana-navgrp";
 const SUBS_KEY = "chetana-navopen";
@@ -405,6 +408,7 @@ export function AppShell({
 
   const clock = phnomPenhClock(instant, language);
   const tabs = openItem === null ? [] : allowedPagesOf(openItem, capabilities);
+  const tabbedHead = tabs.length > 1 && TABBED_HEAD.has(page);
   // UI v81 round 2: the title is the open page's name (the tab's), as in design v81; the tab
   // bar is named after the menu item.
   const title = pageName(page, language);
@@ -714,7 +718,37 @@ export function AppShell({
           ref={view}
           tabIndex={-1}
         >
-          {!ownHead && (
+          {!ownHead && tabbedHead && (
+            // Owner 13/11/2026 23:44 (iPad): on Invoices and Quotations the tabs already name
+            // the page, so the title is for screen readers only, the sub-line is left out and
+            // the page's buttons sit at the right end of the tab row.
+            <div className="shell-head shell-head-tabbed">
+              <h1 className="ui-sr" id="page-title">
+                {title}
+              </h1>
+              <div className="shell-head-sub" hidden ref={setHeadSub} />
+              <nav aria-label={tabsName} className="shell-tabs">
+                {tabs.map((tab) => (
+                  <a
+                    aria-current={tab === page ? "page" : undefined}
+                    className="shell-tab"
+                    href={hashForPage(tab)}
+                    key={tab}
+                    onClick={(event) => {
+                      if (event.metaKey || event.ctrlKey || event.shiftKey)
+                        return;
+                      event.preventDefault();
+                      openPageInAddress(tab, true);
+                    }}
+                  >
+                    {pageName(tab, language)}
+                  </a>
+                ))}
+              </nav>
+              <div className="shell-head-actions" ref={setHeadActions} />
+            </div>
+          )}
+          {!ownHead && !tabbedHead && (
             <div className="shell-head">
               <div className="shell-head-text">
                 <h1 id="page-title">{title}</h1>
@@ -723,7 +757,7 @@ export function AppShell({
               <div className="shell-head-actions" ref={setHeadActions} />
             </div>
           )}
-          {!ownHead && tabs.length > 1 && (
+          {!ownHead && !tabbedHead && tabs.length > 1 && (
             <nav aria-label={tabsName} className="shell-tabs">
               {tabs.map((tab) => (
                 <a

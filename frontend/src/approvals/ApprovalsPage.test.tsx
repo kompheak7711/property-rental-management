@@ -182,11 +182,12 @@ describe("Waiting for approval", () => {
     const { api } = show(() => Promise.resolve(PAGE));
     expect(await screen.findByText("Refund: Reservation Deposit")).toBeTruthy();
     expect(api.waiting).toHaveBeenCalledWith("property-1");
+    // Owner 13/11/2026 23:44: the line under the title is gone.
     expect(
-      screen.getByText(
+      screen.queryByText(
         /Drafts move no money until the Owner or a Manager confirms them/,
       ),
-    ).toBeTruthy();
+    ).toBeNull();
 
     const cards = screen
       .getAllByRole("button", { pressed: false })

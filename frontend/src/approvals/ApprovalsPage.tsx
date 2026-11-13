@@ -31,7 +31,6 @@ import {
   type WaitingPage,
 } from "./approvalsClient";
 import { apt, draftEffect, draftLabel } from "./text";
-import { PageHead } from "../shell/pageHead";
 
 export const FINANCIAL_APPROVE = "financial.approve";
 
@@ -300,7 +299,6 @@ export function ApprovalsPage({
   const mayApprove =
     capabilities === null || capabilities.has(FINANCIAL_APPROVE);
   const [page, setPage] = useState<WaitingPage | null>(null);
-  const [readAt, setReadAt] = useState("");
   const [failure, setFailure] = useState<"failed" | "not_allowed" | null>(null);
   const [filter, setFilter] = useState<Filter>("all");
   const [opened, setOpened] = useState<{ id: string; step: Step } | null>(null);
@@ -340,7 +338,6 @@ export function ApprovalsPage({
       .then((loaded) => {
         if (operation !== sequence.current) return;
         setPage(loaded);
-        setReadAt(new Date().toISOString());
       })
       .catch((error: unknown) => {
         if (operation !== sequence.current) return;
@@ -374,24 +371,10 @@ export function ApprovalsPage({
 
   if (propertyId === "") return null;
 
-  const head = (
-    <PageHead>
-      <p>
-        {apt(language, "ap_sub")}
-        {page !== null && readAt !== "" && (
-          <span className="ui-num">
-            {" "}
-            · {apt(language, "as_of", momentText(readAt).slice(11))}
-          </span>
-        )}
-      </p>
-    </PageHead>
-  );
 
   if (failure !== null) {
     return (
       <>
-        {head}
         <div className="ui-notice warn" role="status">
           <Icon name="alert" />
           <p>{apt(language, failure)}</p>
@@ -407,7 +390,6 @@ export function ApprovalsPage({
   if (page === null) {
     return (
       <>
-        {head}
         <p className="ui-muted" role="status">
           {apt(language, "loading")}
         </p>
@@ -539,7 +521,6 @@ export function ApprovalsPage({
 
   return (
     <>
-      {head}
       {toast !== null && (
         <div className="ui-notice ok" role="status">
           <Icon name="check" />

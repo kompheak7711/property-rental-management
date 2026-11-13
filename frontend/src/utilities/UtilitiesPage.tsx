@@ -12,7 +12,7 @@ import type { LeaseApi } from "../leaseClient";
 import { measurementUnitLabel } from "../measurementUnits";
 import { dayText, todayInPhnomPenh } from "../shell/format";
 import { Icon } from "../shell/icons";
-import { hashForPage } from "../shell/navigation";
+import { hashForPage, pageName } from "../shell/navigation";
 import { useHashDetail, useShowFromAddress } from "../shell/useHashPage";
 import { Chip } from "../shell/ui";
 import type { Language } from "../signInText";
@@ -47,6 +47,7 @@ import {
   readingDayOf,
   withReading,
 } from "./utilitiesData";
+import { TabHead } from "../shell/layouts";
 import { PageHead } from "../shell/pageHead";
 
 export interface UtilitiesPageProps {
@@ -139,33 +140,8 @@ export function UtilitiesPage({
     );
   }
 
-  return (
+  const content = (
     <>
-      {/* The readings and Meters tabs draw the head themselves, with their button on the
-          right, and a meter page has its own record head (UI v81 Utilities batch). */}
-      {data === null && (
-        <PageHead>
-          <p>{utt(language, "sub")}</p>
-        </PageHead>
-      )}
-      {tab !== "meter" && (
-        <nav aria-label={utt(language, "sub")} className="ui-subtabs">
-          <a
-            aria-current={tab === "read" ? "page" : undefined}
-            href={hashForPage("utilities")}
-          >
-            <Icon name="list" small />
-            {utt(language, "tab_read")}
-          </a>
-          <a
-            aria-current={tab === "meters" ? "page" : undefined}
-            href={hashForPage("utilities", "meters")}
-          >
-            <Icon name="meter" small />
-            {utt(language, "tab_meters")}
-          </a>
-        </nav>
-      )}
       {failed && (
         <div className="ui-notice warn" role="status">
           <Icon name="alert" />
@@ -239,6 +215,47 @@ export function UtilitiesPage({
           onReload={load}
           today={today}
         />
+      )}
+    </>
+  );
+
+  return (
+    <>
+      {/* The readings and Meters tabs draw the head themselves, with their button on the
+          right, and a meter page has its own record head (UI v81 Utilities batch). */}
+      {data === null && (
+        <PageHead>
+          <p>{utt(language, "sub")}</p>
+        </PageHead>
+      )}
+
+      {tab === "meter" ? (
+        content
+      ) : (
+        // Owner 13/11/2026 23:44 (iPad): the tab row is the page's head; no title or sub-line.
+        <TabHead
+          tabs={
+            <nav aria-label={utt(language, "sub")} className="ui-subtabs">
+              <a
+                aria-current={tab === "read" ? "page" : undefined}
+                href={hashForPage("utilities")}
+              >
+                <Icon name="list" small />
+                {utt(language, "tab_read")}
+              </a>
+              <a
+                aria-current={tab === "meters" ? "page" : undefined}
+                href={hashForPage("utilities", "meters")}
+              >
+                <Icon name="meter" small />
+                {utt(language, "tab_meters")}
+              </a>
+            </nav>
+          }
+          title={pageName("utilities", language)}
+        >
+          {content}
+        </TabHead>
       )}
     </>
   );

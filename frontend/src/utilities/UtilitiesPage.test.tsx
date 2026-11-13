@@ -1450,7 +1450,7 @@ describe("Utilities Meters tab (V1-058 R4b)", () => {
     expect(
       within(table)
         .getAllByRole("columnheader")
-        .map((cell) => cell.textContent?.trim()),
+        .map((cell) => cell.textContent.trim()),
     ).toEqual(["Unit", "Electricity", "Water"]);
     // Three Units, three rows (the replaced U201 meter sits in the U201 row).
     expect(within(table).getAllByRole("row")).toHaveLength(4);
@@ -1463,7 +1463,7 @@ describe("Utilities Meters tab (V1-058 R4b)", () => {
     expect(
       within(screen.getByRole("table"))
         .getAllByRole("columnheader")
-        .map((cell) => cell.textContent?.trim()),
+        .map((cell) => cell.textContent.trim()),
     ).toEqual(["Unit", "Water"]);
   });
 });

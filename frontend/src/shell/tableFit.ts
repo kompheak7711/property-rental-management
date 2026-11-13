@@ -160,6 +160,23 @@ function writeSaved(key: string, value: SavedScroll): void {
   }
 }
 
+/** Operations pages whose number cards keep the tighter look with no table rows (owner
+ *  13/11/2026). */
+const CARDS_NO_ROWS: ReadonlySet<string> = new Set([
+  "payments",
+  "invoices",
+  "quotations",
+  "utilities",
+  "approvals",
+]);
+
+/** A record page is open (its address names one record); the Meters tab is a list, not one. */
+function detailOpen(): boolean {
+  const hash = window.location.hash;
+  const detail = detailFromHash(hash);
+  return detail !== null && detail !== "meters";
+}
+
 /** The page's main table box, or null when the page has none to fit. */
 export function mainTableBox(root: ParentNode): HTMLElement | null {
   // UI v81 round 4: a Settings address names a tab ("#/settings/business"), not a record.
@@ -254,9 +271,24 @@ export function installTableFit(): () => void {
     if (box === null) {
       // Owner 13/11/2026: a number card that filters the list (Payments › Late-payment, Utilities,
       // Other charges) can leave the list empty. The cards then keep the look they had, so they
-      // do not grow. Another address (a record page too), or a list that never had rows, drops the fitted look.
-      if (listPage !== fittedPage)
-        root.classList.remove("ui-fit", "ui-mid", "ui-short");
+      // do not grow.
+      if (listPage === fittedPage) return;
+      // Owner 13/11/2026 23:44 (iPad): an Operations list that has no table rows at all (nothing
+      // waiting in Approvals, no Quotation in a card, the Meters tab) takes the same tighter
+      // look of a fitting screen as a list with rows, so its cards are never the tall ones.
+      const fitNoRows =
+        CARDS_NO_ROWS.has(pageFromHash(window.location.hash)) &&
+        !detailOpen() &&
+        window.innerWidth >= FIT_MIN_WIDTH &&
+        window.innerHeight >= FIT_MIN_HEIGHT;
+      root.classList.toggle("ui-fit", fitNoRows);
+      root.classList.remove("ui-mid");
+      root.classList.toggle(
+        "ui-short",
+        fitNoRows &&
+          window.innerWidth < LARGE_WIDTH &&
+          window.innerHeight < SHORT_HEIGHT,
+      );
       return;
     }
     fittedPage = listPage;

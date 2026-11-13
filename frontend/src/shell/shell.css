@@ -1323,3 +1323,21 @@ a.shell-me-text[aria-current="page"] b {
     max-width: none;
   }
 }
+
+/* Owner 13/11/2026 23:44 (iPad): the tab row is the head of Invoices and Quotations; the page's
+   buttons sit at its right end, above the line under the tabs. */
+.shell-head.shell-head-tabbed {
+  align-items: flex-end;
+  border-bottom: 1px solid var(--border);
+}
+
+.shell-head-tabbed > .shell-tabs {
+  flex: 1 1 auto;
+  margin-top: 0;
+  border-bottom: 0;
+}
+
+.shell-head-tabbed > .shell-head-actions {
+  margin-left: auto;
+  padding-bottom: 6px;
+}

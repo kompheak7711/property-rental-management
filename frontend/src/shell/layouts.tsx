@@ -91,6 +91,53 @@ export function PageHeader({
   );
 }
 
+/**
+ * A page whose in-page tabs are its head (owner 13/11/2026 23:44, Utilities): the title is for
+ * screen readers only, no sub-line shows, and the buttons a tab sends with PageHead sit at the
+ * right end of the tab row. The children are the tab's content.
+ */
+export function TabHead({
+  title,
+  tabs,
+  children,
+}: {
+  title: string;
+  /** The tab links (a <nav>). */
+  tabs: ReactNode;
+  children: ReactNode;
+}) {
+  const slots = useContext(PageHeadContext);
+  const anchor = useRef<HTMLDivElement>(null);
+  const [owner, setOwner] = useState(false);
+  const [actions, setActions] = useState<HTMLElement | null>(null);
+  const [sub, setSub] = useState<HTMLElement | null>(null);
+  useLayoutEffect(() => {
+    const { inBox, shown } = boxState(anchor.current);
+    const owns = inBox && shown;
+    setOwner(owns);
+    if (!owns) return;
+    slots.ownHead(true);
+    return () => {
+      slots.ownHead(false);
+    };
+  }, [slots, slots.page]);
+  return (
+    <>
+      <div className="shell-head shell-head-tabbed" ref={anchor}>
+        <h1 className="ui-sr" id={owner ? "page-title" : undefined}>
+          {title}
+        </h1>
+        <div className="shell-head-sub" hidden ref={setSub} />
+        {tabs}
+        <div className="shell-head-actions" ref={setActions} />
+      </div>
+      <PageHeadContext value={{ ...slots, sub, actions }}>
+        {children}
+      </PageHeadContext>
+    </>
+  );
+}
+
 /** Plain text beside a button in the actions row, such as "Manager only"; never inside it. */
 export function RightNote({ children }: { children: ReactNode }) {
   return <span className="ui-only">{children}</span>;
