@@ -14,6 +14,7 @@ import {
   type HealthStatus,
   HealthUnavailableError,
 } from "./healthClient";
+import type { AccessAdministrationSnapshot } from "../adminClient";
 import { rolesApiOf } from "../test/rolesFixtures";
 import { SettingsPage, type SettingsPageProps } from "./SettingsPage";
 
@@ -90,13 +91,14 @@ const setupApi = {
 };
 
 const usersApi = {
-  load: vi.fn(() =>
-    Promise.resolve({
-      users: [],
-      capabilities: [],
-      roleBundles: [],
-      authorizationHistory: [],
-    }),
+  load: vi.fn(
+    (): Promise<AccessAdministrationSnapshot> =>
+      Promise.resolve({
+        users: [],
+        capabilities: [],
+        roleBundles: [],
+        authorizationHistory: [],
+      }),
   ),
   createUser: vi.fn(),
   disableUser: vi.fn(),
