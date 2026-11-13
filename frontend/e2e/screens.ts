@@ -98,6 +98,27 @@ export const SCREENS: readonly Screen[] = [
     fixture: "payments",
     ready: "Unpaid Invoices",
   },
+  // Module batch 3, Invoices. The list of the month.
+  {
+    name: "invoices",
+    hash: "#/invoices",
+    fixture: "invoices",
+    ready: "INV260015",
+  },
+  // One Invoice: the head with Back, the sheet, and the shared Customer card beside it.
+  {
+    name: "invoice",
+    hash: "#/invoices/inv%3Aa546c656-1297-480b-9aad-bfd7b69bb39f",
+    fixture: "invoices",
+    ready: "All Invoices for",
+  },
+  // New Quotation: the shared page head with Back.
+  {
+    name: "new-quotation",
+    hash: "#/quotations/new",
+    fixture: "invoices",
+    ready: "New Quotation",
+  },
 ];
 
 /** The five sizes of the owner's rule (width × height). */

@@ -152,6 +152,15 @@ const TEXT = {
   h_adjusted: ["Adjusted: {0}", "បានកែតម្រូវ៖ {0}"],
   // new
   h_voided: ["Voided: {0}", "ទុកជាមោឃៈ៖ {0}"],
+  // UI v81 module batch 3 (Invoices): History names the person for every step.
+  h_issued_by: ["Issued by {0}", "ចេញដោយ {0}"], // new
+  h_issued_app: [
+    "Issued by automatic billing",
+    "ចេញដោយការចេញវិក្កយបត្រស្វ័យប្រវត្តិ",
+  ], // new
+  h_draft_by: ["Draft saved by {0}", "សេចក្តីព្រាងរក្សាទុកដោយ {0}"], // new
+  h_adjusted_by: ["Adjusted by {0}: {1}", "កែតម្រូវដោយ {0}៖ {1}"], // new
+  h_voided_by: ["Voided by {0}: {1}", "ទុកជាមោឃៈដោយ {0}៖ {1}"], // new
   cust_t: ["Customer", "អតិថិជន"],
   // new
   open_customer: ["Open Customer", "បើកអតិថិជន"],

@@ -27,6 +27,11 @@ function audit(width: number): string[] {
   const nav = document.getElementById("shell-nav");
   const visible = (el: Element): boolean => {
     if (el.closest("[hidden]") !== null) return false;
+    // A folded <details> (the "Earlier forms" under a page) still gives its content boxes in
+    // Chromium, but nothing in it is drawn until it is opened; only its <summary> shows.
+    const folded = el.closest("details:not([open])");
+    if (folded !== null && el.closest("summary")?.parentElement !== folded)
+      return false;
     const style = getComputedStyle(el);
     if (style.display === "none" || style.visibility === "hidden") return false;
     const box = el.getBoundingClientRect();

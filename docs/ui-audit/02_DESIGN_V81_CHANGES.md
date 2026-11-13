@@ -891,3 +891,33 @@ Measured at 1440 × 900 (design | app): form card and side column 61% and 39% | 
 ### Tests and checks
 
 Tests: TEST-FE-2128 (Receive payment on the shared layout with the Customer card), 2129 and 2130 (the rate card with a rate, without one and while it is read), 2131 (the client reads the published rate, its time and the markup), 2132 (the payer's Customer card), 2133 (the Receipt page on the shared layout), 2134 (44 px in the tighter look; a form page names its form), all in `frontend/src/payments/PaymentsBatch.test.tsx`. TEST-FE-1921 (the Lease page's Customer card) passes on the shared card. TEST-FE-1938 now expects "Due date". The screen check has three new screens, `payments`, `receive-payment` and `receipt`, with the recorded answers in `frontend/e2e/fixtures/payments.har.json`: 10 screens × 5 sizes pass.
+
+## Round 13: module batch 3, Invoices (13/11/2026)
+
+The owner approved the Payments batch on 13/11/2026 ("test passed") and asked for the next module. The Invoices list, one Invoice, New Invoice, New Quotation and one Quotation were put beside design v81 at the five sizes.
+
+### What changed
+
+- **One Invoice, the head.** The shared page head of the approved Lease page: "Back to Invoices" on top, the Invoice number as the page title with its status chip, the line "type · Customer · Unit" under it, and the buttons on the right: Receive payment, Print Invoice, Adjust and Void. "Manager only" stands beside Adjust and Void as text, not inside the button (the owner's rule from batch 1).
+- **One Invoice, the body.** The sheet on the left, the side column on the right (the shared two-column layout of the Lease and Receipt pages).
+- **One Invoice, the Customer card.** The same Customer card as the Lease, Receive payment and Receipt pages: name, Lease role and Unit, phone, Paid on time, Customer Credit and Unpaid Invoices. Under it: "Open Lease" and "All Invoices for" the Unit.
+- **One Invoice, History.** Each step names the person (the owner's rule "History names the person for every step on every page"): "Draft saved by …", "Issued by …", "Adjusted by …: reason", "Voided by …: reason". An Invoice that the automatic billing issued says "Issued by automatic billing". To show the names, the one-Invoice read of the API now also returns the account name of each person who made, issued, adjusted or voided the Invoice (`actor_names`). It is display only: no stored value, rule or permission changed.
+- **New Invoice, New Quotation, one Quotation.** The same shared page head: Back on top, the title, the line under it and the buttons on the right.
+- **Customer card, Unpaid Invoices.** The amount-owed box now sits on the warm warning ground. Its brown label had 4.27:1 contrast on the grey ground; it now has 4.84:1 (the 4.5:1 rule).
+- **Invoices list.** Already close to the design after rounds 9 and 10; not changed.
+
+### Every difference from design v81 left, with its reason
+
+| Screen | Part | Design v81 | App | Why |
+|---|---|---|---|---|
+| One Invoice | Late-payment charge card and "Write off" | Shown on the overdue sample | Not there | The late-payment charge becomes its own Invoice and write-off rules come in the clean-up phase (owner 12/11/2026, rules review). Not built yet |
+| One Invoice | "Unpaid Invoices and charges" list inside the Customer card | Each unpaid Invoice listed | The total | The same card as the approved Lease and Payments pages |
+| One Invoice | "Printed by …" in History | Shown | Not shown | The one-Invoice read gives no print steps; adding them is more than a display change |
+| One Invoice | A draft Invoice | A details card instead of the sheet | Not changed | The sample data has no draft to check against; left for a later round |
+| New Quotation | Back link | "Back to Home" (the design was opened from Home) | "Back to Quotations" | The page's parent, as on every form page |
+| New Quotation | Line about validity | "Valid 7 days, until 10/11/2026" | The Settings rule in words | The form does not know the issue day before saving |
+| Every page | "Earlier forms" box | Not there | Folded under the page | Billing runs and Due Date settings exist only there until Settings and Home take them over |
+
+### Tests and checks
+
+Tests: TEST-FE-2135 (the Invoice page head and its button order with "Manager only"), 2136 (History names the person), 2137 (the shared Customer card on the Invoice page) in `frontend/src/invoices/InvoicesPage.test.tsx`; TEST-FE-2138 (New Quotation and one Quotation use the shared head) in `frontend/src/quotations/QuotationsPage.test.tsx`. The backend test `test_v1_045_typed_sources_keep_category_and_controlling_id_together` checks the names in the one-Invoice read. The screen check has three new screens, `invoices`, `invoice` and `new-quotation`, with recorded answers in `frontend/e2e/fixtures/invoices.har.json`: 13 screens × 5 sizes pass. The screen check now skips the inside of a folded `<details>` box (Chromium gives its content boxes although nothing is drawn).

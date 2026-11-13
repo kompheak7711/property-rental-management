@@ -1779,6 +1779,9 @@ export function App({
           lateApi={paymentsApi}
           leaseApi={leaseApi}
           propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
+          ledgerApi={ledgerApi ?? customerLedgerClient}
+          actorId={sessionActorId ?? undefined}
+          reports={reportsApi}
         />
         {/* V1-058 R5: the billing runs and the Due Date settings stay in the earlier English
             forms, folded, until Settings and Home take them over. */}

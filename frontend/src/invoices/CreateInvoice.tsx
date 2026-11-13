@@ -33,7 +33,7 @@ import { Chip, Dialog } from "../shell/ui";
 import type { Language } from "../signInText";
 import { type InvoicesData, centsOf } from "./invoicesData";
 import { ivt, type InvoicesTextKey } from "./text";
-import { PageHead } from "../shell/pageHead";
+import { PageHeader } from "../shell/layouts";
 
 /** At most 20 items on one Invoice, each a whole quantity from 1 to 9999 (owner, DL-103). */
 export const MAX_ITEMS = 20;
@@ -753,13 +753,11 @@ function ItemsForm({
 
   return (
     <>
-      {back}
-      <PageHead>
-        <div>
-          <h2>{ivt(language, editing ? "ni_edit_t" : "ni_btn")}</h2>
-          <p>{ivt(language, editing ? "ni_edit_intro" : "ni_intro")}</p>
-        </div>
-      </PageHead>
+      <PageHeader
+        back={back}
+        summary={ivt(language, editing ? "ni_edit_intro" : "ni_intro")}
+        title={ivt(language, editing ? "ni_edit_t" : "ni_btn")}
+      />
       {changed && (
         <div className="ui-notice warn" role="status">
           <Icon name="alert" />

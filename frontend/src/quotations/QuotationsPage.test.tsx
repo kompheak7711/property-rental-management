@@ -618,4 +618,36 @@ describe("Office › Invoices › Quotations (V1.1 part 6, DL-123)", () => {
       screen.queryByRole("button", { name: "Customer signed" }),
     ).toBeNull();
   });
+
+  it("TEST-FE-2138 UI v81 module batch 3: New Quotation and one Quotation have their own page head: Back on top, the title as the page's heading and no list tabs", async () => {
+    window.location.hash = "#/quotations/new";
+    show(apiOf(), MAKER);
+    const title = await screen.findByRole("heading", {
+      level: 1,
+      name: "New Quotation",
+    });
+    const head = title.closest("header.ui-pagehead");
+    expect(head?.firstElementChild).toBe(
+      screen.getByRole("button", { name: /^Back to/ }),
+    );
+    cleanup();
+
+    window.location.hash = "#/quotations/qt:q-1";
+    show(apiOf(), MAKER);
+    const number = await screen.findByRole("heading", {
+      level: 1,
+      name: "QT260001",
+    });
+    expect(number).toHaveClass("ui-num");
+    const row = number.closest("header.ui-pagehead");
+    expect(row?.firstElementChild).toBe(
+      screen.getByRole("button", { name: /^Back to/ }),
+    );
+    // The buttons are in the head, on the right.
+    expect(
+      within(row as HTMLElement).getByRole("button", {
+        name: "Customer signed",
+      }),
+    ).toBeTruthy();
+  });
 });

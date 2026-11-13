@@ -69594,6 +69594,46 @@
       "test_path": "frontend/src/payments/PaymentsBatch.test.tsx",
       "status": "implemented",
       "notes": "UI v81 module batch 2 Payments: a switch button is 44 px tall on a computer and a phone, and the tighter look of a short desktop screen makes no button, switch, tab or number card shorter than 44 px; a form page can name its form for a screen reader."
+    },
+    {
+      "test_id": "TEST-FE-2135",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/invoices/InvoicesPage.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 module batch 3 Invoices: the Invoice page has its own head: Back to Invoices on top, the Invoice number as the page's heading with its status and summary, the buttons on the right with Manager only as text beside Adjust and Void."
+    },
+    {
+      "test_id": "TEST-FE-2136",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/invoices/InvoicesPage.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 module batch 3 Invoices: the Invoice History names the person for every step (Draft saved by, Issued by or Issued by automatic billing, Adjusted by, Voided by) from the account names the one-Invoice read sends."
+    },
+    {
+      "test_id": "TEST-FE-2137",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/invoices/InvoicesPage.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 module batch 3 Invoices: beside an Invoice the shared Customer card shows the phone, Paid on time, Credit and Unpaid Invoices, with Open Lease and All Invoices for the Unit under it."
+    },
+    {
+      "test_id": "TEST-FE-2138",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/quotations/QuotationsPage.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 module batch 3 Invoices: New Quotation and one Quotation have their own page head with Back on top, the title as the page's heading and the buttons on the right."
     }
   ]
 }

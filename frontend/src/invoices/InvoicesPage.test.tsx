@@ -8,7 +8,8 @@ import {
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { CustomerApi } from "../customerClient";
+import type { CustomerApi, CustomerDetail } from "../customerClient";
+import type { CustomerLedgerApi, LedgerReply } from "../customerLedgerClient";
 import {
   InvoiceClientError,
   type InvoiceApi,
@@ -296,6 +297,12 @@ function show(
     />,
   );
   return api;
+}
+
+/** The element found, or the test stops. */
+function box(node: Element | null): HTMLElement {
+  if (!(node instanceof HTMLElement)) throw new Error("not found");
+  return node;
 }
 
 function rows(): string[] {
@@ -1302,5 +1309,187 @@ describe("Invoices page (V1-058 R5)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Show all" }));
     expect(window.location.hash).toBe("#/invoices");
     expect(rows()).toHaveLength(6);
+  });
+
+  it("TEST-FE-2135 UI v81 module batch 3: the Invoice page has its own head: Back to Invoices on top, the number as the page's heading with its status, the summary, and the buttons on the right with Manager only beside Adjust and Void", async () => {
+    show();
+    fireEvent.click(await screen.findByRole("link", { name: "INV260001" }));
+    const title = await screen.findByRole("heading", {
+      level: 1,
+      name: "INV260001",
+    });
+    const head = box(title.closest("header.ui-pagehead"));
+    expect(head.firstElementChild).toBe(
+      screen.getByRole("button", { name: /^Back to/ }),
+    );
+    expect(within(head).getByText("Overdue")).toBeTruthy();
+    expect(within(head).getByText("Rent · Sok Dara · U101")).toHaveClass(
+      "ui-pagehead-sub",
+    );
+    const actions = box(head.querySelector(".ui-pagehead-actions"));
+    const parts = [...actions.children].map((part) => part.textContent);
+    expect(parts).toEqual([
+      "Receive payment",
+      "Print Invoice",
+      "Adjust",
+      "Manager only",
+      "Void",
+      "Manager only",
+    ]);
+    // "Manager only" is text beside the button, never inside it.
+    expect(screen.getByRole("button", { name: "Adjust" }).textContent).toBe(
+      "Adjust",
+    );
+  });
+
+  it("TEST-FE-2136 UI v81 module batch 3: the History names the person for every step: who saved the Draft, who issued it or automatic billing, who adjusted and who voided", async () => {
+    const named = (
+      found: InvoiceResource,
+      evidence: Record<string, unknown>,
+      extra: Partial<InvoiceResource> = {},
+    ): InvoiceResource => ({
+      ...found,
+      ...extra,
+      evidence: {
+        ...found.evidence,
+        ...evidence,
+      } as InvoiceResource["evidence"],
+    });
+    const [rent, part, , draft, voided] = invoices() as [
+      InvoiceResource,
+      InvoiceResource,
+      InvoiceResource,
+      InvoiceResource,
+      InvoiceResource,
+    ];
+    const names = { "actor-dara": "Chan Sophea", "actor-mgr": "Kim Leakhena" };
+    const list = [
+      // Saved as a Draft by a person, issued later by another.
+      named(rent, {
+        created_at: "2026-09-24T02:00:00Z",
+        created_by: "actor-dara",
+        issued_at: "2026-09-25T00:00:00Z",
+        issued_by: "actor-mgr",
+        actor_names: names,
+      }),
+      // Issued by automatic billing: made and issued at once by the app, which has no name.
+      named(part, {
+        created_at: "2026-10-25T00:00:00Z",
+        created_by: "actor-billing",
+        issued_at: "2026-10-25T00:00:00Z",
+        issued_by: "actor-billing",
+        actor_names: {},
+      }),
+      named(draft, { created_by: "actor-dara", actor_names: names }),
+      named(
+        voided,
+        {
+          created_at: "2026-09-25T00:00:00Z",
+          created_by: "actor-mgr",
+          issued_at: "2026-09-25T00:00:00Z",
+          issued_by: "actor-mgr",
+          actor_names: names,
+        },
+        {
+          adjustments: [
+            {
+              reason: "Typed the wrong amount",
+              occurred_at: "2026-09-26T03:00:00Z",
+              actor_id: "actor-mgr",
+            },
+          ],
+          void_event: {
+            reason: "Billed twice",
+            occurred_at: "2026-09-27T04:00:00Z",
+            actor_id: "actor-mgr",
+          },
+        },
+      ),
+    ];
+    const history = async (number: string) => {
+      window.location.hash = "#/invoices";
+      window.dispatchEvent(new HashChangeEvent("hashchange"));
+      fireEvent.click(await screen.findByRole("link", { name: number }));
+      const card = box(
+        (await screen.findByRole("heading", { name: "History" })).closest(
+          "section",
+        ),
+      );
+      return within(card)
+        .getAllByRole("listitem")
+        .map((item) => item.firstElementChild?.firstChild?.textContent);
+    };
+    show({ invoices: invoiceApi(list) });
+    expect(await history("INV260001")).toEqual(
+      expect.arrayContaining([
+        "Draft saved by Chan Sophea",
+        "Issued by Kim Leakhena",
+      ]),
+    );
+    expect(await history("INV260002")).toEqual(["Issued by automatic billing"]);
+    expect(await history("INV260005")).toEqual([
+      "Issued by Kim Leakhena",
+      "Adjusted by Kim Leakhena: Typed the wrong amount",
+      "Voided by Kim Leakhena: Billed twice",
+    ]);
+    window.location.hash = "#/invoices";
+    window.dispatchEvent(new HashChangeEvent("hashchange"));
+    fireEvent.click(await screen.findByRole("link", { name: "Draft" }));
+    const card = box(
+      (await screen.findByRole("heading", { name: "History" })).closest(
+        "section",
+      ),
+    );
+    expect(within(card).getByText("Draft saved by Chan Sophea")).toBeTruthy();
+  });
+
+  it("TEST-FE-2137 UI v81 module batch 3: beside an Invoice the shared Customer card shows the Customer's phone, Paid on time, Credit and Unpaid Invoices, with Open Lease and All Invoices for the Unit under it", async () => {
+    const get = vi.fn<CustomerApi["get"]>((id) =>
+      Promise.resolve({
+        customer_id: id,
+        legal_name: "Sok Dara",
+        phone_number: "012 345 678",
+        active: true,
+      } as CustomerDetail),
+    );
+    const read = vi.fn<CustomerLedgerApi["read"]>().mockResolvedValue({
+      section: "history",
+      items: [],
+      position: { credit_usd_cents: "2500", total_owed_usd_cents: "45000" },
+    } as unknown as LedgerReply);
+    const customerPaidOnTime = vi
+      .fn()
+      .mockResolvedValue({ on_time: 9, invoice_count: 11 });
+    const customers = customerApi();
+    render(
+      <InvoicesPage
+        active
+        actorId="actor-1"
+        capabilities={null}
+        customerApi={{ ...customers, get }}
+        invoiceApi={invoiceApi()}
+        language="en"
+        leaseApi={leaseApi()}
+        ledgerApi={{ read }}
+        propertyId="property-1"
+        reports={{ customerPaidOnTime }}
+        today={TODAY}
+      />,
+    );
+    fireEvent.click(await screen.findByRole("link", { name: "INV260001" }));
+    const card = box(
+      (await screen.findByRole("heading", { name: "Customer" })).closest(
+        "section",
+      ),
+    );
+    expect(await within(card).findByText("012 345 678")).toBeTruthy();
+    expect(await within(card).findByText("9 of 11 Invoices")).toBeTruthy();
+    expect(get).toHaveBeenCalledWith("cust-sok");
+    expect(
+      screen
+        .getByRole("link", { name: "All Invoices for U101" })
+        .getAttribute("href"),
+    ).toBe("#/invoices/for%3Acust-sok");
+    expect(screen.getByRole("link", { name: "Open Lease" })).toBeTruthy();
   });
 });

@@ -3863,6 +3863,12 @@ html[lang="km"] .ui-factlist dt {
   color: var(--text-2);
 }
 
+/* UI v81 Invoices batch: an amount owed sits on the warm warning ground, so its brown label
+   keeps 4.5:1 (it was 4.27:1 on the sunken ground). */
+.ui-well.owed {
+  background: var(--warn-bg);
+}
+
 .ui-well.owed .line b:first-child {
   color: var(--warn);
 }
