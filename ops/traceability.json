@@ -69961,6 +69961,17 @@
       "notes": "Owner 13/11/2026 (Leasing thread, DL-236): a housekeeper without the front desk right sees Given to and the person's name, or Not given to anyone yet, and no Assign to box."
     },
     {
+      "test_id": "TEST-FE-2206",
+      "upstream_ids": [
+        "DL-173",
+        "API-TG-005"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/telegram/TelegramPages.test.tsx",
+      "status": "implemented",
+      "notes": "Owner 14/11/2026 01:43 (Leasing thread): Viewing requests This month is number cards (4 a row, 2 on a phone); Why closed and Where from are lists inside the card; the request list has six columns (contact way under the phone, the day wanted under the Unit type, a note only when written) and is cards on a phone."
+    },
+    {
       "test_id": "test_new_rate_records_have_no_markup_and_old_records_keep_theirs",
       "upstream_ids": [
         "DL-228",

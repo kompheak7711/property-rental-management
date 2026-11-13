@@ -175,6 +175,14 @@ export const SCREENS: readonly Screen[] = [
     ready: "Finished (2)",
     clock: "2026-11-13T03:00:00Z",
   },
+  // Owner 14/11/2026 01:43: "check Viewing request". Made-up people (e2e/fixtures/viewing.har.json).
+  {
+    name: "viewing-requests",
+    hash: "#/visitreqs",
+    fixture: "viewing",
+    ready: "VR260003",
+    clock: "2026-11-13T03:00:00Z",
+  },
   // Administration review (owner 13/11/2026 "All"): the tab row is the head, the 11 Ledger tabs
   // slide in one row, tables are cards on a phone, the Telegram paper-copy lists show 5 rows,
   // Users and access › History lists the access changes. Made-up data from the cloud review app

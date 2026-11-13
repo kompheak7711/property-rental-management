@@ -1785,6 +1785,51 @@ describe("Office › Telegram", () => {
       TelegramError,
     );
   });
+  it("TEST-FE-2206 Viewing requests: This month is number cards, the counts are lists inside the card, and the request list has six columns", async () => {
+    const page: VisitRequestsPage = {
+      ...VISITS,
+      can_manage: true,
+      month: {
+        month: "2026-11",
+        new: 3,
+        joined: 1,
+        steps: { VISIT_BOOKED: 1 },
+        reasons: [],
+        sources: [{ code: "TELEGRAM", count: 3 }],
+      },
+    };
+    render(
+      <VisitRequestsPageView
+        active
+        api={fakeApi({ visitRequests: vi.fn(() => Promise.resolve(page)) })}
+        capabilities={null}
+        language="en"
+        propertyId="prop-1"
+      />,
+    );
+    const month = await screen.findByRole("region", { name: /This month/ });
+    const cards = within(month)
+      .getAllByRole("listitem")
+      .map((card) => card.textContent);
+    expect(cards.slice(0, 8)).toEqual([
+      "New requests3",
+      "Asked again1",
+      "Viewings booked1",
+      "Viewings done0",
+      "No-show0",
+      "Reserved0",
+      "Closed0",
+      "Spam0",
+    ]);
+    expect(cards[8]).toBe("Telegram bot3");
+    expect(within(month).queryByRole("table")).toBeNull();
+    const list = screen.getByRole("table");
+    expect(
+      within(list)
+        .getAllByRole("columnheader")
+        .map((cell) => cell.textContent),
+    ).toEqual(["Request", "Waited", "Customer", "Wants", "Status", "Staff"]);
+  });
   it("TEST-FE-1516 a Visit request opens Make Reservation, shows the Reservation it became, a Manager blocks the Telegram account with a note, a removed request says so, and Managers see this month", async () => {
     const contacted: VisitRequestDetail = {
       ...FIRST,

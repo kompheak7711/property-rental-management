@@ -7,6 +7,7 @@
 // saves. The server checks every right again. No bot key is ever shown.
 
 import "../shell/screens.css";
+import "./visits.css";
 
 import {
   type FormEvent,
@@ -2468,27 +2469,27 @@ function InquiryCells({
   language: Language;
   inquiry: VisitInquiry;
 }) {
+  // Owner 14/11/2026 01:43: fewer columns, so Status and Staff fit on a laptop; the contact
+  // way sits under the phone, the day wanted under the Unit type, and a note only when written.
   return (
     <>
       <td>
         {inquiry.name}
-        <span className="ui-sub2 ui-num">{inquiry.phone}</span>
-      </td>
-      <td className="ui-wide">
-        {contactBy(language, inquiry)}
+        <span className="ui-sub2">
+          <span className="ui-num">{inquiry.phone}</span> ·{" "}
+          <span>{contactBy(language, inquiry)}</span>
+        </span>
         {inquiry.email !== null && (
           <span className="ui-sub2">{inquiry.email}</span>
         )}
       </td>
       <td>
-        {unitTypeName(language, inquiry)}
-        <span className="ui-sub2">
-          {tt(language, "vr_movein", moveIn(language, inquiry))}
-        </span>
-      </td>
-      <td>{prefers(language, inquiry)}</td>
-      <td className="ui-wide">
-        <span className="ui-muted">{inquiry.note ?? ""}</span>
+        <span>{unitTypeName(language, inquiry)}</span> ·{" "}
+        <span>{tt(language, "vr_movein", moveIn(language, inquiry))}</span>
+        <span className="ui-sub2">{prefers(language, inquiry)}</span>
+        {inquiry.note !== null && (
+          <span className="ui-sub2 ui-muted vr-note">{inquiry.note}</span>
+        )}
       </td>
     </>
   );
@@ -2538,19 +2539,29 @@ function CountTable({
       {rows.length === 0 ? (
         <p className="ui-muted">{tt(language, "m_none")}</p>
       ) : (
-        <table className="ui-table">
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.code}>
-                <td>{textOf(language, prefix, row.code)}</td>
-                <td className="r ui-num">{row.count}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        // A short list, not a table: it stays inside the card at every size.
+        <ul className="vr-counts">
+          {rows.map((row) => (
+            <li key={row.code}>
+              <span>{textOf(language, prefix, row.code)}</span>
+              <b className="ui-num">{row.count}</b>
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );
+}
+
+function monthCounts(month: VisitMonth): [TelegramTextKey, number][] {
+  return [
+    ["m_new", month.new],
+    ["m_joined", month.joined],
+    ...MONTH_STEPS.map((step): [TelegramTextKey, number] => [
+      `m_${step}`,
+      month.steps[step] ?? 0,
+    ]),
+  ];
 }
 
 /** This month, for Managers and the Owner (DL-173). */
@@ -2569,18 +2580,15 @@ function MonthSection({
           {month.month.split("-").reverse().join("/")}
         </span>
       </h2>
-      <dl className="ui-kv">
-        <dt>{tt(language, "m_new")}</dt>
-        <dd className="ui-num">{month.new}</dd>
-        <dt>{tt(language, "m_joined")}</dt>
-        <dd className="ui-num">{month.joined}</dd>
-        {MONTH_STEPS.map((step) => [
-          <dt key={`${step}-t`}>{tt(language, `m_${step}`)}</dt>,
-          <dd className="ui-num" key={`${step}-d`}>
-            {month.steps[step] ?? 0}
-          </dd>,
-        ])}
-      </dl>
+      {/* Owner 14/11/2026 01:43: number cards in rows, not one long thin list. */}
+      <ul className="vr-month">
+        {monthCounts(month).map(([key, count]) => (
+          <li key={key}>
+            <span>{tt(language, key)}</span>
+            <b className="ui-num">{count}</b>
+          </li>
+        ))}
+      </ul>
       <div className="ui-split">
         <CountTable
           language={language}
@@ -2816,20 +2824,13 @@ export function VisitRequestsPageView({
           <p className="ui-empty">{tt(language, "vr_none")}</p>
         ) : (
           <div className="ui-tablewrap">
-            <table className="ui-table">
+            <table className="ui-table fit vr-list">
               <thead>
                 <tr>
                   <th scope="col">{tt(language, "vr_col_req")}</th>
                   <th scope="col">{tt(language, "vr_col_wait")}</th>
                   <th scope="col">{tt(language, "vr_col_who")}</th>
-                  <th className="ui-wide" scope="col">
-                    {tt(language, "vr_col_ch")}
-                  </th>
                   <th scope="col">{tt(language, "vr_col_wants")}</th>
-                  <th scope="col">{tt(language, "vr_col_pref")}</th>
-                  <th className="ui-wide" scope="col">
-                    {tt(language, "vr_col_note")}
-                  </th>
                   <th scope="col">{tt(language, "vr_col_status")}</th>
                   <th scope="col">{tt(language, "vr_col_staff")}</th>
                 </tr>
