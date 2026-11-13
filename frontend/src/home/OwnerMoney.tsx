@@ -181,7 +181,7 @@ export function OwnerMoney({
           tone="brand"
           value={numbers.cash}
         />
-        {/* Owner 14/11/2026: no "Customers owe" card; it is the same number as Pending payment. */}
+        {/* Owner 14/11/2026: no "Customers owe" card; it is the same number as Unpaid. */}
         <MoneyCard
           icon="history"
           label={hmt(language, "om_over")}

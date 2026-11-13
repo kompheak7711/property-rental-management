@@ -111,7 +111,7 @@ describe("Home Financial summary and Attendance (UI v81)", () => {
       .map((card) => card.textContent);
     expect(cards).toEqual([
       // Owner 14/11/2026: no "Opens the Balance sheet" or "2026 so far" line; the budget stays.
-      // Owner 14/11/2026: shorter names, and no "Customers owe" (same as Pending payment).
+      // Owner 14/11/2026: shorter names, and no "Customers owe" (same as Unpaid).
       "Cash & bank$4,700.00",
       "30+ days late$400.00",
       "Spent this month$420.00Budget $600.00",
