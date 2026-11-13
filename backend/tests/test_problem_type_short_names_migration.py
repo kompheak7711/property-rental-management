@@ -10,7 +10,7 @@ import pytest
 from alembic.config import Config
 from alembic.script import ScriptDirectory
 
-from test_lease_api_migration import migrated_database_url as migrated_database_url
+from test_migrations import _run_alembic, _temporary_migration_database
 
 REVISION = "20270725_411"
 PREVIOUS = "20270724_401"
@@ -31,12 +31,30 @@ def test_migrations_411_and_412_follow_401_and_are_forward_only() -> None:
             step.module.downgrade()
 
 
-def test_the_types_have_the_short_names_and_the_new_order(migrated_database_url: str) -> None:
-    with psycopg.connect(migrated_database_url) as connection:
-        rows = connection.execute(
-            "SELECT sort_order, code, name_en, name_kh, always_urgent "
-            "FROM app.problem_types ORDER BY sort_order"
-        ).fetchall()
+def _types(url: str) -> list[tuple[int, str, str, str | None, bool]]:
+    with psycopg.connect(url) as connection:
+        return [
+            (int(order), str(code), str(name), name_kh, bool(urgent))
+            for order, code, name, name_kh, urgent in connection.execute(
+                "SELECT sort_order, code, name_en, name_kh, always_urgent "
+                "FROM app.problem_types ORDER BY sort_order"
+            ).fetchall()
+        ]
+
+
+def test_the_types_have_the_short_names_and_the_new_order() -> None:
+    """On a database of its own (other tests rebuild the shared one): before 411 the old names
+    and order; after 412 the short names and Safety just before Other."""
+    with _temporary_migration_database("prm_problem_types") as temporary:
+        assert _run_alembic("upgrade", PREVIOUS).returncode == 0
+        before = _types(temporary)
+        assert [(code, name) for _, code, name, _, _ in before][3:6] == [
+            ("DOOR_LOCK", "Door and lock"),
+            ("WINDOW", "Window"),
+            ("FURNITURE", "Furniture or appliance"),
+        ]
+        assert _run_alembic("upgrade", SAFETY_BACK).returncode == 0
+        rows = _types(temporary)
     assert [(order, code, name) for order, code, name, _, _ in rows] == [
         (1, "WATER", "Water"),
         (2, "ELECTRICITY", "Electricity"),
