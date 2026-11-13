@@ -69200,7 +69200,7 @@
       "test_level": "UI component",
       "test_path": "frontend/src/home/HomeScreen.test.tsx",
       "status": "implemented",
-      "notes": "UI v81 round 7 Home (owner 12/11/2026): every Home card and Tasks card holds its number beside its name in the card's head, with the note under it; only Paid this month has a bar."
+      "notes": "UI v81 round 7 Home (owner 12/11/2026): every Home card and Tasks card holds its number beside its name in the card's head, with the note under it when there is one; no bar (owner 14/11/2026)."
     },
     {
       "test_id": "TEST-FE-1933",
@@ -69923,6 +69923,26 @@
       "test_path": "frontend/src/financialUiContext.test.ts",
       "status": "implemented",
       "notes": "A riel rate record is checked by its own mark-up: 0 with ABA's Sell rate rounded up loads, 50 (saved before DL-228) with 1.005 loads, any other pair is refused."
+    },
+    {
+      "test_id": "TEST-FE-2220",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/home/HomeScreen.test.tsx",
+      "status": "implemented",
+      "notes": "Home screen review (owner 14/11/2026): Missing readings is 0 before the Reading day and the server's count from that day; a card note says only the parts above 0; no note that only says what the card opens."
+    },
+    {
+      "test_id": "TEST-FE-2221",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/home/HomeScreen.test.tsx",
+      "status": "implemented",
+      "notes": "Home screen review (owner 14/11/2026): the two head buttons share one equal-width group; a warning about the automatic jobs is a slim bar under the title, a calm jobs line stays under the Tasks."
     }
   ]
 }

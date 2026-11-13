@@ -6,6 +6,8 @@
 // Leases ending soon, Short stay bookings, Short stays checked in, Pending payment, Paid this
 // month, Overdue, Approvals, Meter readings missing, Notices due, Problem reports, Birthdays,
 // Low stock, Attendance; every card shows its number at the top right, beside its name.
+// Home screen review (owner 14/11/2026): shorter names (Viewing requests, Bookings, Checked in,
+// Missing readings); a card has a note only when it tells something the number does not.
 
 import "../shell/screens.css";
 
@@ -35,7 +37,6 @@ import {
 import { CardGrid, PageHeader } from "../shell/layouts";
 import { hashForShow } from "../shell/useHashPage";
 import type { Language } from "../signInText";
-import { monthText } from "../utilities/text";
 import {
   type ProblemSummary,
   type ProblemsApi,
@@ -332,6 +333,31 @@ function groupOf(item: TodoItem, today: string): TodoGroup {
   return item.group;
 }
 
+/**
+ * The parts of a note that are above 0, joined with " · " ("1 urgent · 2 late"); no note when
+ * every part is 0 (owner 14/11/2026: "0 urgent · 0 late" says nothing).
+ */
+export function partsText(
+  parts: readonly (readonly [number, string])[],
+): string | undefined {
+  const shown = parts.filter(([count]) => count > 0).map(([, text]) => text);
+  return shown.length === 0 ? undefined : shown.join(" · ");
+}
+
+/**
+ * Meter readings still missing. Before the Reading day no reading is late yet, so the card
+ * shows 0 (Home screen review, owner 14/11/2026; the Utilities page also waits for the
+ * Reading day). `today` and the Reading day are "yyyy-mm-dd".
+ */
+export function readingsMissing(
+  readings: { count: number; reading_date: string },
+  today: string,
+): number {
+  return today.slice(0, 10) < readings.reading_date.slice(0, 10)
+    ? 0
+    : readings.count;
+}
+
 function Card({
   icon,
   tone,
@@ -341,14 +367,19 @@ function Card({
   page,
   show,
   more,
-  meter,
   empty,
+  money = false,
 }: {
   icon: ShellIcon;
   tone: Tone;
   label: string;
   value: string;
-  note: string;
+  /**
+   * Home screen review (owner 14/11/2026 00:23): a card has a note only when it tells
+   * something the number does not; a line that only says what the card opens, or "nothing",
+   * is not drawn.
+   */
+  note?: string;
   page: PageId;
   /**
    * UI v81 round 11 (owner 12/11/2026): the part of that page the card counts, so the card
@@ -357,13 +388,13 @@ function Card({
    */
   show?: string;
   more?: Record<string, string>;
-  /** 0 to 100 for the bar under the note; none when the card has no bar. */
-  meter?: number;
   empty: boolean;
+  /** An amount of money: it stays at the top right while the name may take two lines. */
+  money?: boolean;
 }) {
   return (
     <a
-      className={`ui-kpi ui-home-kpi ui-kpi-top ${empty ? "none" : tone}`}
+      className={`ui-kpi ui-home-kpi ui-kpi-top${money ? " ui-kpi-amount" : ""} ${empty ? "none" : tone}`}
       href={
         show === undefined ? hashForPage(page) : hashForShow(page, show, more)
       }
@@ -378,13 +409,8 @@ function Card({
         </span>
         <span className="ui-kpi-value ui-num">{value}</span>
       </span>
-      <span className="ui-kpi-note">{note}</span>
-      {typeof meter === "number" && (
-        <span aria-hidden="true" className="ui-home-meter">
-          <span
-            style={{ width: `${String(Math.max(0, Math.min(100, meter)))}%` }}
-          />
-        </span>
+      {note !== undefined && note !== "" && (
+        <span className="ui-kpi-note">{note}</span>
       )}
     </a>
   );
@@ -440,7 +466,13 @@ function Cards({
         icon="door"
         key="visits"
         label={hmt(language, "n_vr")}
-        note={hmt(language, "n_vr_s", visits.late, visits.visitsThisWeek)}
+        note={partsText([
+          [visits.late, hmt(language, "n_vr_late", visits.late)],
+          [
+            visits.visitsThisWeek,
+            hmt(language, "n_vr_week", visits.visitsThisWeek),
+          ],
+        ])}
         page="visitreqs"
         show="waiting"
         tone={visits.late > 0 ? "err" : "brand"}
@@ -465,23 +497,16 @@ function Cards({
     );
   }
   if (stays !== null) {
-    const countKey = (
-      count: number,
-      none: HomeTextKey,
-      one: HomeTextKey,
-      many: HomeTextKey,
-    ) => (count === 0 ? none : count === 1 ? one : many);
+    // Only a count above 0 is said ("2 arrive today"); "None arrive today" is not drawn.
+    const countText = (count: number, one: HomeTextKey, many: HomeTextKey) =>
+      count === 0 ? undefined : hmt(language, count === 1 ? one : many, count);
     shown.push(
       <Card
         empty={stays.booked === 0}
         icon="calendar"
         key="stays-booked"
         label={hmt(language, "n_ssb")}
-        note={hmt(
-          language,
-          countKey(stays.arriveToday, "n_ssb_s0", "n_ssb_s1", "n_ssb_s"),
-          stays.arriveToday,
-        )}
+        note={countText(stays.arriveToday, "n_ssb_s1", "n_ssb_s")}
         page="shortstays"
         show="booked"
         tone="info"
@@ -492,11 +517,7 @@ function Cards({
         icon="moveout"
         key="stays-in"
         label={hmt(language, "n_ssin")}
-        note={hmt(
-          language,
-          countKey(stays.outToday, "n_ssin_s0", "n_ssin_s1", "n_ssin_s"),
-          stays.outToday,
-        )}
+        note={countText(stays.outToday, "n_ssin_s1", "n_ssin_s")}
         page="shortstays"
         show="checked_in"
         tone="ok"
@@ -512,11 +533,7 @@ function Cards({
         icon="invoice"
         key="pending"
         label={hmt(language, "k_pend")}
-        note={hmt(
-          language,
-          pending.invoice_count === 1 ? "k_pend_s1" : "k_pend_s",
-          pending.invoice_count,
-        )}
+        money
         page="invoices"
         show="open"
         tone="warn"
@@ -527,23 +544,16 @@ function Cards({
   const paid = cards.paid_this_month;
   if (paid !== undefined) {
     const label = hmt(language, "k_paid");
-    const month = monthText(language, today).split(" ")[0] ?? "";
+    // Owner 14/11/2026: no note ("83% of $6,742.80 due in November") and no bar under it.
     if (paid.billed_usd_cents !== undefined) {
-      const billed = paid.billed_usd_cents;
       const settled = paid.billed_paid_usd_cents ?? 0;
-      const percent = billed > 0 ? Math.floor((settled * 100) / billed) : 0;
       shown.push(
         <Card
           empty={settled === 0}
           icon="payments"
           key="paid"
           label={label}
-          meter={percent}
-          note={
-            billed > 0
-              ? hmt(language, "k_paid_s", percent, usdFromCents(billed), month)
-              : hmt(language, "k_paid_none")
-          }
+          money
           more={{ period: "month" }}
           page="invoices"
           show="paid"
@@ -558,11 +568,7 @@ function Cards({
           icon="payments"
           key="paid"
           label={label}
-          note={hmt(
-            language,
-            paid.payment_count === 1 ? "k_paid_recv1" : "k_paid_recv",
-            paid.payment_count ?? 0,
-          )}
+          money
           page="payments"
           tone="ok"
           value={usdFromCents(paid.received_usd_cents)}
@@ -578,11 +584,7 @@ function Cards({
         icon="alert"
         key="overdue"
         label={hmt(language, "k_over")}
-        note={hmt(
-          language,
-          overdue.invoice_count === 1 ? "k_over_s1" : "k_over_s",
-          overdue.invoice_count,
-        )}
+        money
         page="invoices"
         show="overdue"
         tone="err"
@@ -602,11 +604,10 @@ function Cards({
           waiting.money_out_count > 0
             ? hmt(
                 language,
-                "n_appr_s",
-                waiting.count,
+                "n_appr_m",
                 usdFromCents(waiting.money_out_usd_cents),
               )
-            : hmt(language, "n_appr_c", waiting.count)
+            : undefined
         }
         page="approvals"
         tone="warn"
@@ -616,17 +617,17 @@ function Cards({
   }
   const readings = cards.meter_readings_missing;
   if (readings !== undefined) {
+    const missing = readingsMissing(readings, today);
     shown.push(
       <Card
-        empty={readings.count === 0}
+        empty={missing === 0}
         icon="meter"
         key="readings"
         label={hmt(language, "n_read")}
-        note={hmt(language, "n_read_s", dayText(readings.reading_date))}
         page="utilities"
         show="missing"
         tone="info"
-        value={String(readings.count)}
+        value={String(missing)}
       />,
     );
   }
@@ -638,7 +639,6 @@ function Cards({
         icon="list"
         key="letters"
         label={hmt(language, "n_letters")}
-        note={hmt(language, "n_letters_s")}
         page="letters"
         show="due"
         tone="err"
@@ -653,7 +653,13 @@ function Cards({
         icon="wrench"
         key="problems"
         label={hmt(language, "n_problems")}
-        note={hmt(language, "n_problems_s", problems.urgent, problems.late)}
+        note={partsText([
+          [
+            problems.urgent,
+            hmt(language, "n_problems_urgent", problems.urgent),
+          ],
+          [problems.late, hmt(language, "n_problems_late", problems.late)],
+        ])}
         page="problems"
         show="open"
         tone={problems.urgent > 0 || problems.late > 0 ? "err" : "info"}
@@ -684,7 +690,6 @@ function Cards({
         icon="box"
         key="lowstock"
         label={hmt(language, "n_low")}
-        note={hmt(language, "n_low_s")}
         page="products"
         show="low"
         tone="warn"
@@ -702,7 +707,7 @@ function Cards({
         note={
           attendance.total > 0
             ? hmt(language, "at_n", attendance.scans, attendance.noOut)
-            : hmt(language, "at_0")
+            : undefined
         }
         page="attendance"
         show="day"
@@ -811,9 +816,8 @@ function TodoList({ language, page }: { language: Language; page: HomePage }) {
   const earliest = (items: TodoItem[]) =>
     items.reduce((first, item) => (item.date < first.date ? item : first));
   const lineOf = (group: TodoGroup, items: TodoItem[]) => {
-    if (items.length === 0)
-      return hmt(language, group === "overdue" ? "tk_over_none" : "tk_none");
-    if (group === "today") return hmt(language, "tk_today_s");
+    // Owner 14/11/2026: no "Nothing overdue", "Nothing here" or "Do them today" line.
+    if (items.length === 0 || group === "today") return "";
     const when = relativeText(language, earliest(items), page.business_date);
     return hmt(language, group === "overdue" ? "tk_oldest" : "tk_next", when);
   };
@@ -848,7 +852,9 @@ function TodoList({ language, page }: { language: Language; page: HomePage }) {
                 </span>
                 <span className="ui-kpi-value ui-num">{items.length}</span>
               </span>
-              <span className="ui-kpi-note">{lineOf(group, items)}</span>
+              {lineOf(group, items) !== "" && (
+                <span className="ui-kpi-note">{lineOf(group, items)}</span>
+              )}
             </button>
           );
         })}
@@ -902,15 +908,24 @@ function TodoList({ language, page }: { language: Language; page: HomePage }) {
           </>
         )}
       </div>
-      <p className="ui-muted ui-small ui-tasks-hint">
-        {hmt(language, "tk_hint")}
-      </p>
     </section>
   );
 }
 
 /** The line under the list that confirms the last automatic jobs (owner, 12/10/2026). */
-function JobsLine({ language, page }: { language: Language; page: HomePage }) {
+function JobsLine({
+  language,
+  page,
+  place,
+}: {
+  language: Language;
+  page: HomePage;
+  /**
+   * Home screen review (owner 14/11/2026): a warning (no billing run, no ABA rate) is a slim
+   * yellow bar under the title; the calm line stays under the Tasks.
+   */
+  place: "top" | "bottom";
+}) {
   const { last_billing_at, rate_updated_at, next_billing_date } = page.jobs;
   const parts = [
     last_billing_at === null
@@ -929,9 +944,17 @@ function JobsLine({ language, page }: { language: Language; page: HomePage }) {
   ].filter(Boolean);
   if (parts.length === 0) return null;
   const quiet = last_billing_at === null || rate_updated_at === null;
+  if (quiet !== (place === "top")) return null;
+  if (quiet)
+    return (
+      <p className="ui-notice warn ui-home-jobs" role="status">
+        <Icon name="alert" small />
+        <span>{parts.join(" · ")}</span>
+      </p>
+    );
   return (
-    <p className={quiet ? "ui-addup ui-warnv" : "ui-addup"}>
-      <Icon name={quiet ? "alert" : "check"} small />
+    <p className="ui-addup">
+      <Icon name="check" small />
       <span>{parts.join(" · ")}</span>
     </p>
   );
@@ -1071,13 +1094,16 @@ export function HomeScreen({
     may("utility_readings.record")) && (
     <>
       {may("payments.record") && (
-        <a className="ui-btn primary" href={hashForPage("payments", "receive")}>
+        <a
+          className="ui-btn primary ui-homeact"
+          href={hashForPage("payments", "receive")}
+        >
           <Icon name="payments" />
           {hmt(language, "qa_record")}
         </a>
       )}
       {may("utility_readings.record") && (
-        <a className="ui-btn" href={hashForPage("utilities")}>
+        <a className="ui-btn ui-homeact" href={hashForPage("utilities")}>
           <Icon name="meter" />
           {hmt(language, "qa_readings")}
         </a>
@@ -1126,6 +1152,7 @@ export function HomeScreen({
   return (
     <>
       {head}
+      <JobsLine language={language} page={page} place="top" />
       {seesOwnerMoney && (
         <OwnerMoney
           active={active}
@@ -1151,7 +1178,7 @@ export function HomeScreen({
         <CostsToCheck language={language} summary={problems} />
       )}
       <TodoList language={language} page={page} />
-      <JobsLine language={language} page={page} />
+      <JobsLine language={language} page={page} place="bottom" />
     </>
   );
 }
