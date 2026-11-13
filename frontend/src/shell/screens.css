@@ -4311,9 +4311,11 @@ table.ui-table.ui-problist {
 .ui-chk.ui-tile {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 8px;
-  align-content: center;
-  padding: 8px 10px;
+  gap: 4px 6px;
+  /* Owner 14/11/2026: the circle and the icon stay beside the first line of the name. */
+  align-items: flex-start;
+  align-content: flex-start;
+  padding: 8px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--surface);
@@ -4324,10 +4326,50 @@ table.ui-table.ui-problist {
 }
 .ui-chk.ui-tile .ui-tile-name {
   display: inline-flex;
-  align-items: center;
+  align-items: flex-start;
   flex: 1 1 0;
-  gap: 6px;
+  gap: 5px;
   min-width: 0;
+  line-height: 1.4;
+}
+.shell-view .ui-chk.ui-tile input {
+  flex: none;
+  margin: 1px 0 0;
+}
+.ui-chk.ui-tile .ui-tile-name .shell-icon {
+  flex: none;
+  margin-top: 0.3em;
+}
+.ui-chk.ui-tile .ui-tile-name > span {
+  min-width: 0;
+  -webkit-hyphens: auto;
+  hyphens: auto;
+}
+/* Owner 14/11/2026: a short choice (Yes/No, the best time, how we heard) sits in one row of
+   equal boxes; a long list of choices wraps to the next row. */
+.ui-radios.ui-radios-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  align-content: start;
+  gap: 8px;
+}
+.ui-radios.ui-radios-row > .ui-chk {
+  gap: 6px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+.ui-radios.ui-radios-row > .ui-chk:has(input:checked) {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+.ui-radios.ui-radios-row > :not(.ui-chk) {
+  grid-column: 1 / -1;
+}
+/* Owner 14/11/2026: Cancel and Save at the right, Save last. */
+.ui-probform > .ui-actions {
+  justify-content: flex-end;
 }
 .ui-chk.ui-tile .ui-sub2 {
   flex-basis: 100%;

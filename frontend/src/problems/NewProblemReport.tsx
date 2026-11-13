@@ -5,7 +5,13 @@
 // DL-132: "#/problems/finding:<id>" makes the report from a move-out inspection finding: the
 // Unit and the text come from the finding and the source is Inspection.
 
-import { type FormEvent, useCallback, useEffect, useState } from "react";
+import {
+  type FormEvent,
+  Fragment,
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
 import { BackLink } from "../shell/backNav";
 import { PageHeader } from "../shell/layouts";
 
@@ -62,6 +68,22 @@ function BackToList({ language }: { language: Language }) {
 }
 
 /** DL-132: reads the finding, then opens the form filled from it. */
+/** Owner 14/11/2026 ("Air con-ditioner"): places where a long English word may break with a
+ *  hyphen. Chrome hyphenates a word only when it cannot fit a line by itself, so it would put
+ *  "Air" alone on a line; these soft hyphens let the line fill first on every browser. */
+const SOFT_BREAKS: Record<string, string> = {
+  conditioner: "con\u00addi\u00adtion\u00ader",
+  appliance: "ap\u00adpli\u00adance",
+  electricity: "elec\u00adtric\u00adi\u00adty",
+};
+
+function softBreaks(name: string): string {
+  return name.replace(/[a-z]+/gi, (word) => {
+    const soft = SOFT_BREAKS[word.toLowerCase()];
+    return soft === undefined ? word : `${word.slice(0, 1)}${soft.slice(1)}`;
+  });
+}
+
 export function NewProblemReportFromFinding({
   findingId,
   ...form
@@ -317,7 +339,7 @@ export function NewProblemReportForm({
       {/* Property fix 4 (owner 14/11/2026): Back on top, then the form's own title. */}
       <PageHeader back={back} title={pt(language, "add_t")} />
       <form
-        className="ui-card ui-form ui-pageform"
+        className="ui-card ui-form ui-pageform ui-probform"
         noValidate
         onSubmit={submit}
       >
@@ -356,7 +378,7 @@ export function NewProblemReportForm({
                 </label>
               ))}
             </fieldset>
-            <fieldset className="ui-radios">
+            <fieldset className="ui-radios ui-radios-row">
               <legend>{pt(language, "add_how")}</legend>
               {(["PHONE", "WALKIN", "SEEN"] as const).map((value) => (
                 <label className="ui-chk" key={value}>
@@ -547,7 +569,21 @@ export function NewProblemReportForm({
                 />
                 <span className="ui-tile-name">
                   <Icon name={typeIcon(entry)} small />
-                  {typeName(language, entry)}
+                  <span>
+                    {/* A long name may break after "/" (Furniture/ appliance). */}
+                    {softBreaks(typeName(language, entry))
+                      .split("/")
+                      .map((part, at) => (
+                        <Fragment key={at}>
+                          {at > 0 && (
+                            <>
+                              /<wbr />
+                            </>
+                          )}
+                          {part}
+                        </Fragment>
+                      ))}
+                  </span>
                 </span>
                 {entry.always_urgent && (
                   <span className="ui-sub2 warn">{pt(language, "always")}</span>
@@ -594,7 +630,7 @@ export function NewProblemReportForm({
           />
         </div>
         <div className="ui-row2">
-          <fieldset className="ui-radios">
+          <fieldset className="ui-radios ui-radios-row">
             <legend>{pt(language, "add_urgent")}</legend>
             {yesNo("np-urgent", isUrgent, setUrgent, always)}
             <Missing
@@ -604,14 +640,14 @@ export function NewProblemReportForm({
             />
           </fieldset>
           {kind === "UNIT" && (
-            <fieldset className="ui-radios">
+            <fieldset className="ui-radios ui-radios-row">
               <legend>{pt(language, "add_enter")}</legend>
               {yesNo("np-enter", mayEnter, setMayEnter)}
             </fieldset>
           )}
         </div>
         {kind === "UNIT" && (
-          <fieldset className="ui-radios">
+          <fieldset className="ui-radios ui-radios-row">
             <legend>{pt(language, "add_best")}</legend>
             {(["AM", "PM", "ANY"] as const).map((value) => (
               <label className="ui-chk" key={value}>

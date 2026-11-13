@@ -786,13 +786,8 @@ function LocationsCards({
           >
             <header className="ui-chead pad">
               <h2 id={headingId}>
-                {pt(language, "lo_unit", first.unit_number)}
-                {!first.for_rent && (
-                  <>
-                    {" "}
-                    <Chip tone="info">{pt(language, "lo_not_for_rent")}</Chip>
-                  </>
-                )}
+                {/* Owner 14/11/2026: the Unit number only ("W01"), no "Not for rent" chip. */}
+                {first.unit_number}
               </h2>
               {canAdd && (
                 <span className="ui-actions">
@@ -834,7 +829,10 @@ function LocationsCards({
                           <ul className="ui-holds">
                             {place.stock.map((line) => (
                               <li key={line.product_id}>
-                                {line.sku} {line.name_en} × {line.quantity}
+                                {line.sku} {line.name_en}{" "}
+                                <span className="ui-nowrap">
+                                  × {line.quantity}
+                                </span>
                               </li>
                             ))}
                           </ul>
