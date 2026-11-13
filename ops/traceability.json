@@ -69733,6 +69733,26 @@
       "test_path": "frontend/src/shortstays/ShortStaysPage.test.tsx",
       "status": "implemented",
       "notes": "Leasing batch Today panel: a person without the desk right sees the guests but no Check in or Check out button, and a free night does not open New booking."
+    },
+    {
+      "test_id": "TEST-FE-2139",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/utilities/UtilitiesPage.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 module batch 4 Utilities: on reading day Import is the page's button in the head, not in the filter row, and the progress line says how many meters are left to read."
+    },
+    {
+      "test_id": "TEST-FE-2140",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/utilities/UtilitiesPage.test.tsx",
+      "status": "implemented",
+      "notes": "UI v81 module batch 4 Utilities: Add meter is the page's button in the head and Replace meter is on the meter page, each with Manager only beside the button, not inside it; the meter page has the shared record head with Back on top."
     }
   ]
 }

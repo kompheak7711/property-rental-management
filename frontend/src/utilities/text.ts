@@ -45,6 +45,9 @@ const TEXT = {
   floor_n: ["Floor {0}", "ជាន់ទី {0}"],
   only_missing: ["Only not read", "តែមិនទាន់អាន"],
   progress: ["{0} of {1} meters read", "បានអាន {0} ក្នុងចំណោម {1}"],
+  // UI v81 Utilities batch: the design's words on the type switch and beside the progress line.
+  to_read: ["{0} to read", "នៅ {0} ត្រូវអាន"],
+  all_read: ["all read", "អានរួចទាំងអស់"],
   // new (the mock-up names the date in the words)
   next_inv: [
     "Read every meter, including empty rooms. Invoices are made on {0} from these readings.",
@@ -183,6 +186,8 @@ const TEXT = {
   pc_clear: ["Show all", "បង្ហាញទាំងអស់"],
   mt_add: ["Add meter", "បន្ថែមនាឡិកាស្ទង់"],
   manager: ["Manager", "អ្នកគ្រប់គ្រង"],
+  // UI v81 Utilities batch: "Manager only" beside the button, as on every page (batch 1).
+  manager_only: ["Manager only", "សម្រាប់អ្នកគ្រប់គ្រងប៉ុណ្ណោះ"],
   mt_add_intro: [
     "For a Unit that has no meter of this kind, such as a new Unit. A Unit has one electricity meter and one water meter. To change a broken meter, open it and choose Replace meter.",
     "សម្រាប់បន្ទប់ដែលគ្មាននាឡិកាស្ទង់ប្រភេទនេះ ដូចជាបន្ទប់ថ្មី។ បន្ទប់មួយមាននាឡិកាស្ទង់អគ្គិសនីមួយ និងទឹកមួយ។ ដើម្បីប្តូរនាឡិកាស្ទង់ខូច សូមបើកវា ហើយជ្រើស ប្តូរនាឡិកាស្ទង់។",

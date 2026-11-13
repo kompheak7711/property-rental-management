@@ -921,3 +921,33 @@ The owner approved the Payments batch on 13/11/2026 ("test passed") and asked fo
 ### Tests and checks
 
 Tests: TEST-FE-2135 (the Invoice page head and its button order with "Manager only"), 2136 (History names the person), 2137 (the shared Customer card on the Invoice page) in `frontend/src/invoices/InvoicesPage.test.tsx`; TEST-FE-2138 (New Quotation and one Quotation use the shared head) in `frontend/src/quotations/QuotationsPage.test.tsx`. The backend test `test_v1_045_typed_sources_keep_category_and_controlling_id_together` checks the names in the one-Invoice read. The screen check has three new screens, `invoices`, `invoice` and `new-quotation`, with recorded answers in `frontend/e2e/fixtures/invoices.har.json`: 13 screens × 5 sizes pass. The screen check now skips the inside of a folded `<details>` box (Chromium gives its content boxes although nothing is drawn).
+
+## Round 14: module batch 4, Utilities (13/11/2026)
+
+The owner approved the Invoices batch on 13/11/2026 ("Invoice screen is ok"). The readings list (on a normal day and on reading day), the Meters tab and one meter were put beside design v81 at the five sizes. The review app's reading-day pictures were taken with the browser clock set to 24/11/2026; nothing in the database was changed for them.
+
+### What changed
+
+- **Import** is the page's button on the right of the head, as in the design. Before, it sat at the end of the filter row. It shows when it did before: on reading day for a person who may save readings, and before the reading day in the test app only.
+- **Add meter** is the page's button on the right of the head on the Meters tab. "Manager only" stands beside it as text. Before, a "Manager" badge was inside the button, which the owner's batch 1 rule does not allow. Report broken and Replace meter on a meter page follow the same rule.
+- **The type switch** says "Electricity 3 to read" (the design's words) instead of "Electricity 1/3"; when every meter of the type is read it says "all read".
+- **The progress line** has the chip "15 to read" beside "31 of 46 meters read", as in the design.
+- **One meter** has the shared record head: "Back to Meters" on top, the serial as the page's heading with its status, the line "type · Unit · Customer" under it, and the buttons on the right.
+- **Shell head**: the buttons in the head sit in one row with a gap, and a "Manager only" note is centred on its button (shared; the other pages had one button there).
+
+### Every difference from design v81 left, with its reason
+
+| Screen | Part | Design v81 | App | Why |
+|---|---|---|---|---|
+| Readings | Line under the title | "Meter readings and meters for CHETANA Residence" | "Meter readings and meters" | The Property's name is in the side menu on every page |
+| Readings | Notice "Example of reading day 24/11/2026" | Shown | Not shown | A notice of the design file only; the app shows "Read every meter, including empty rooms" under the progress line |
+| Readings | Date of the last reading | Once, in the column title | Under each reading | Meters put in or replaced during the month have another last date |
+| Readings | Column "Consumption" | "Consumption" | "Used" | The app's word, shorter on a phone; not changed without the owner |
+| Readings | Unit line | The Customer's name | "No Lease now." on the review app | Sample data: the review app's Units have no Lease; with a Lease the name shows |
+| Meters | Number cards | Four small cards in one line, with "Estimates" | Three cards with icons and notes, no "Estimates" | The shared card of the approved Payments and Home pages; an "Estimates" card is not in the app yet and is left for a later round |
+| Meters | Column "Installation date" | "Installation date" | "Put in on" | The app's words; not changed without the owner |
+| All | "Earlier forms" box | Not there | Folded under the page | Rates, corrections and move-in or move-out readings exist only there |
+
+### Tests and checks
+
+Tests: TEST-FE-2139 (Import in the head on reading day, the "to read" chip), TEST-FE-2140 (Add meter in the head with "Manager only" beside it; the meter page's record head and its buttons) in `frontend/src/utilities/UtilitiesPage.test.tsx`. TEST-FE-874 now expects "2 to read". The screen check has three new screens, `utilities`, `meters` and `meter`, with recorded answers in `frontend/e2e/fixtures/utilities.har.json`: 16 screens × 5 sizes pass. Layout and display only; no backend change, no database step.

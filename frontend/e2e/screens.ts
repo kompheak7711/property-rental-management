@@ -121,6 +121,27 @@ export const SCREENS: readonly Screen[] = [
     fixture: "invoices",
     ready: "New Quotation",
   },
+  // Module batch 4, Utilities. The readings list (before the reading day) with Import in the head.
+  {
+    name: "utilities",
+    hash: "#/utilities",
+    fixture: "utilities",
+    ready: "No readings in",
+  },
+  // The Meters tab: Add meter in the head with "Manager only" beside it.
+  {
+    name: "meters",
+    hash: "#/utilities/meters",
+    fixture: "utilities",
+    ready: "Electricity meters",
+  },
+  // One meter: Report broken and Replace meter, each with "Manager only" beside it.
+  {
+    name: "meter",
+    hash: "#/utilities/meter%3A6319db9a-6b85-416e-8491-752ef8af91c4",
+    fixture: "utilities",
+    ready: "Replace meter",
+  },
   // Leasing batch (owner 13/11/2026, design FINAL): the Short stays Calendar as a booking chart
   // with the quick numbers and the Today panel. Made-up guests for 13/11/2026
   // (e2e/fixtures/shortstays.har.json).
