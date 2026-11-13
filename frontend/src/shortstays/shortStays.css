@@ -1,109 +1,454 @@
 /* Daily and weekly rent: the calendar (one row per Unit, one square per night) and the price
    box. Every square has an icon and a word, never colour only (mock-up round 28). */
 
-table.ss-cal {
-  border-collapse: separate;
-  border-spacing: 3px;
-  min-width: 100%;
-  font-size: 0.82rem;
+/* Leasing batch (owner 13/11/2026, design FINAL): the Calendar as a booking chart. One bar per
+   stay with the guest's name; the colour is never the only sign (the bar has the name, an unpaid
+   bar has a dot and says "not paid" to a screen reader, a closed night has a word). */
+
+:root {
+  --ss-booked-bg: #dce7fa;
+  --ss-booked-edge: #36607e;
+  --ss-in-bg: #d5eedf;
+  --ss-in-edge: #2f6b4a;
+  --ss-site-bg: #ece4fb;
+  --ss-site-edge: #5b4a8b;
+  --ss-dot: #c2570c;
 }
 
-table.ss-cal th {
-  font-weight: 600;
-  color: var(--text-2);
-  text-align: center;
-  white-space: nowrap;
-  padding: 4px 2px;
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ss-booked-bg: #1f2d3d;
+    --ss-booked-edge: #8fb3d3;
+    --ss-in-bg: #1f3326;
+    --ss-in-edge: #8ec7a1;
+    --ss-site-bg: #2c2640;
+    --ss-site-edge: #b9a8e6;
+    --ss-dot: #f08a45;
+  }
 }
 
-table.ss-cal thead th span {
-  display: block;
+:root[data-theme="dark"] {
+  --ss-booked-bg: #1f2d3d;
+  --ss-booked-edge: #8fb3d3;
+  --ss-in-bg: #1f3326;
+  --ss-in-edge: #8ec7a1;
+  --ss-site-bg: #2c2640;
+  --ss-site-edge: #b9a8e6;
+  --ss-dot: #f08a45;
 }
 
-table.ss-cal thead th.today {
-  color: var(--primary);
+/* Quick numbers on top; the chart and the Today panel side by side on a wide screen, the panel
+   above the chart on an iPad and a phone. */
+.ss-calgrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-areas:
+    "kpis kpis"
+    "main today";
+  gap: 16px;
+  align-items: start;
 }
 
-table.ss-cal tbody th {
-  position: sticky;
-  left: 0;
-  z-index: 1;
-  background: var(--surface);
-  text-align: left;
-  padding: 4px 8px;
-  min-width: 96px;
+.ss-calgrid > .ss-kpis {
+  grid-area: kpis;
 }
 
-.ss-wd {
-  font-weight: 400;
+.ss-calgrid > .ss-calmain {
+  grid-area: main;
+  display: grid;
+  gap: 12px;
+  min-width: 0;
 }
 
-td.ss-night {
-  min-width: 64px;
-  height: 44px;
-  padding: 0;
+.ss-calgrid > .ss-today {
+  grid-area: today;
+}
+
+@media (max-width: 1100px) {
+  .ss-calgrid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "kpis"
+      "today"
+      "main";
+  }
+}
+
+/* iPad: the guests of today on the left, Rooms to clean and Not paid beside them, so the chart
+   is not pushed far down. */
+@media (min-width: 641px) and (max-width: 1100px) {
+  .ss-today {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    align-items: start;
+  }
+
+  .ss-today > .ui-notice {
+    grid-column: 1 / -1;
+  }
+
+  .ss-today > section:first-of-type {
+    grid-row: span 2;
+  }
+}
+
+.ss-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+a.ss-kpi {
+  display: grid;
+  gap: 2px;
+  align-content: start;
+  min-height: 44px;
+  padding: 10px 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: var(--sunken);
-  vertical-align: middle;
-}
-
-td.ss-night > a,
-td.ss-night > span {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  min-height: 44px;
-  padding: 2px 4px;
-  overflow: hidden;
+  background: var(--surface);
   color: var(--text);
   text-decoration: none;
 }
 
-td.ss-night > a > span:last-child,
-td.ss-night > span > span:last-child {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-td.ss-free {
-  background: var(--surface);
-  border-style: dashed;
-}
-
-td.ss-free > a {
-  color: var(--link);
-  justify-content: center;
-}
-
-td.ss-free > a:hover {
+a.ss-kpi:hover {
   background: var(--hover);
 }
 
-td.ss-booked {
-  background: var(--info-bg);
-  border-color: var(--info);
-}
-
-td.ss-checked_in {
-  background: var(--ok-bg);
-  border-color: var(--ok);
-}
-
-td.ss-checked_out {
-  background: var(--sunken);
-}
-
-td.ss-lease,
-td.ss-reserved {
-  background: var(--warn-bg);
-  border-color: var(--warn);
-}
-
-td.ss-not_for_rent,
-td.ss-closed {
+a.ss-kpi > span:first-child {
   color: var(--text-2);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+a.ss-kpi > b {
+  font-size: 1.35rem;
+  color: var(--heading);
+}
+
+a.ss-kpi > span + span {
+  color: var(--text-2);
+  font-size: 0.78rem;
+}
+
+a.ss-kpi.warn {
+  border-color: var(--warn);
+  background: var(--warn-bg);
+}
+
+a.ss-kpi.warn > b,
+a.ss-kpi .bad {
+  color: var(--warn);
+}
+
+a.ss-kpi .ok {
+  color: var(--ok);
+}
+
+.ss-today {
+  display: grid;
+  gap: 12px;
+}
+
+.ss-today h2 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  margin: 0;
+  font-size: 1rem;
+}
+
+.ss-today h2 .ui-muted {
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.ss-today h3 {
+  margin: 4px 0 0;
+  color: var(--text-2);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ss-guests {
+  display: grid;
+  gap: 6px;
+}
+
+.ss-guests > li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 0;
+  border-top: 1px solid var(--border);
+}
+
+.ss-guests > li > a {
+  display: grid;
+  min-height: 44px;
+  align-content: center;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.ss-guests > li > a:hover b {
+  text-decoration: underline;
+}
+
+.ss-warn {
+  color: var(--warn);
+  font-weight: 600;
+}
+
+.ui-btn.ss-step {
+  border-color: var(--warn);
+  background: var(--warn-bg);
+}
+
+.shell-view a.ui-btn.ss-step {
+  color: var(--warn);
+}
+
+.ss-link44 {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+.ss-chartwrap {
+  max-height: 70vh;
+  overflow: auto;
+}
+
+table.ss-chart {
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 100%;
+  font-size: 0.82rem;
+  table-layout: fixed;
+}
+
+table.ss-chart th,
+table.ss-chart td {
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  padding: 0;
+  height: 44px;
+}
+
+table.ss-chart thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  min-width: 52px;
+  padding: 4px 2px;
+  background: var(--surface);
+  color: var(--text-2);
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+}
+
+table.ss-chart thead th > span {
+  display: block;
+}
+
+table.ss-chart thead th.today {
+  background: var(--selected);
+  color: var(--heading);
+  box-shadow: inset 0 -3px 0 var(--primary);
+}
+
+table.ss-chart th.ss-unitcol {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  width: 104px;
+  min-width: 104px;
+  padding: 4px 8px;
+  background: var(--surface);
+  text-align: left;
+}
+
+table.ss-chart thead th.ss-unitcol {
+  z-index: 3;
+}
+
+table.ss-chart th.ss-unitcol b {
+  display: block;
+  color: var(--text);
+}
+
+.ss-room {
+  display: block;
+  color: var(--text-2);
+  font-size: 0.72rem;
+  font-weight: 500;
+}
+
+.ss-room.ok {
+  color: var(--ok);
+}
+
+.ss-room.warn {
+  color: var(--warn);
+  font-weight: 600;
+}
+
+tr.ss-grp > th,
+tr.ss-grp > td {
+  height: 30px;
+  background: var(--sunken);
+  color: var(--text-2);
+  font-size: 0.74rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+tr.ss-grp > th.ss-unitcol {
+  background: var(--sunken);
+  color: var(--heading);
+}
+
+tr.ss-grp > td.full {
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+
+td.ss-cell {
+  padding: 3px 2px;
+  vertical-align: middle;
+}
+
+td.ss-free > a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border-radius: 6px;
+  color: var(--link);
+  font-size: 1.1rem;
+  text-decoration: none;
+  opacity: 0.35;
+}
+
+td.ss-free > a:hover,
+td.ss-free > a:focus-visible {
+  background: var(--hover);
+  opacity: 1;
+}
+
+.ss-bar {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 44px;
+  padding: 0 8px;
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  border-left-width: 4px;
+  border-radius: 6px;
+  background: var(--sunken);
+  color: var(--text);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.ss-bar > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+a.ss-bar:hover {
+  filter: brightness(0.96);
+}
+
+.ss-bar.booked,
+.ss-sw.booked {
+  border-color: var(--ss-booked-edge);
+  background: var(--ss-booked-bg);
+}
+
+.ss-bar.in,
+.ss-sw.in {
+  border-color: var(--ss-in-edge);
+  background: var(--ss-in-bg);
+}
+
+.ss-bar.out {
+  border-color: var(--border);
+  background: var(--sunken);
+  color: var(--text-2);
+  font-weight: 500;
+}
+
+.ss-bar.site,
+.ss-sw.site {
+  border-color: var(--ss-site-edge);
+  background: var(--ss-site-bg);
+}
+
+.ss-bar.lease,
+.ss-sw.lease {
+  border-color: var(--warn);
+  background: var(--warn-bg);
+}
+
+.ss-bar.closed,
+.ss-sw.closed {
+  border-color: var(--border);
+  background: repeating-linear-gradient(
+    135deg,
+    var(--sunken) 0 6px,
+    var(--surface) 6px 12px
+  );
+  color: var(--text-2);
+  font-weight: 500;
+}
+
+/* Our booking on a night a booking site also holds. */
+td.ss-clash .ss-bar {
+  outline: 2px solid var(--err);
+  outline-offset: -2px;
+}
+
+.ss-dot {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--ss-dot);
+}
+
+.ss-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--text-2);
+  font-size: 0.8rem;
+}
+
+.ss-legend > li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ss-sw {
+  display: inline-block;
+  width: 18px;
+  height: 12px;
+  border: 1px solid;
+  border-left-width: 3px;
+  border-radius: 3px;
 }
 
 .ss-lines li {
@@ -135,11 +480,6 @@ td.ss-closed {
 }
 
 /* Step 3: a booking not paid yet shows a dashed square on the calendar. */
-td.ss-unpaid {
-  border-style: dashed;
-  border-width: 2px;
-}
-
 .ss-ready li {
   display: flex;
   align-items: center;
@@ -198,17 +538,6 @@ fieldset.ss-problems > legend {
 .ss-clean > li .ui-hrow {
   flex-wrap: wrap;
   gap: 8px;
-}
-
-/* Step 5a: nights a booking site holds, and our booking on a night a site also holds. */
-td.ss-hold {
-  background: var(--sunken);
-  border-style: dashed;
-}
-
-td.ss-clash {
-  outline: 2px solid var(--err);
-  outline-offset: -2px;
 }
 
 /* Step 5b: a message to copy for the guest (quote, review request) and the guest's notes. */
@@ -273,4 +602,25 @@ form.ss-form .ui-date input {
   width: auto;
   flex: 1 1 auto;
   min-width: 0;
+}
+
+/* Leasing batch (owner 13/11/2026): Copy price message in the New booking price box. */
+.ss-pricemsg {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+.ss-pricemsg > .ss-message {
+  justify-self: stretch;
+}
+
+/* On a phone the five Short stays tabs take two rows, so none is hidden off the edge. */
+@media (max-width: 640px) {
+  .ui-subtabs[role="tablist"]:has(#shortstays-cal) {
+    flex-wrap: wrap;
+    margin-right: 0;
+    margin-left: 0;
+    padding: 2px 0;
+    overflow: visible;
+  }
 }

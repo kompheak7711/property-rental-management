@@ -104,23 +104,22 @@ export const MENU: readonly MenuGroup[] = [
   {
     // UI v81 (02/11 wording review): Tenants → Leasing.
     label: ["Leasing", "ការជួល"],
+    // Leasing batch (owner 13/11/2026): Viewing requests; Long stays (Reservations, Leases,
+    // Move-outs); Short stays with its in-page tabs as sub-items; Notices for every stay;
+    // Customers.
     items: [
+      // Telegram bots step 3a (DL-171): Visit requests from the Customer bot.
+      { page: "visitreqs", icon: "calendar" },
       {
         page: "reservations",
-        icon: "calendar",
-        // new
-        label: ["Bookings", "ការកក់"],
-        // Telegram bots step 3a (DL-171): Visit requests from the Customer bot. UI v81 round 2:
-        // Viewing requests first, as in the design.
-        tabs: ["visitreqs", "reservations"],
-      },
-      // Daily and weekly rent (phase 6 step 2, mock-up round 28): Tenants › Short stays.
-      { page: "shortstays", icon: "calendar" },
-      {
-        page: "leases",
         icon: "lease",
-        tabs: ["leases", "letters", "moveout"],
+        // new: the Khmer word needs the native check.
+        label: ["Long stays", "ការស្នាក់នៅយូរ"],
+        tabs: ["reservations", "leases", "moveout"],
       },
+      // Daily and weekly rent (phase 6 step 2): its tabs are sub-items (PAGE_SUB_TABS).
+      { page: "shortstays", icon: "calendar" },
+      { page: "letters", icon: "list" },
       { page: "customers", icon: "customers" },
     ],
   },
@@ -433,6 +432,23 @@ export interface PageSubTab {
 }
 
 const PAGE_SUB_TABS: Partial<Record<PageId, readonly PageSubTab[]>> = {
+  // Leasing batch (owner 13/11/2026): the Short stays tabs (shortstays/text.ts tab_*); the
+  // Weekly report and Booking sites show to the Owner and the Manager (short_stays.approve).
+  shortstays: [
+    { id: "cal", label: ["Calendar", "ប្រតិទិន"] },
+    { id: "list", label: ["Bookings", "ការកក់"] },
+    { id: "clean", label: ["Housekeeping", "ការសម្អាត"] },
+    {
+      id: "report",
+      label: ["Weekly report", "របាយការណ៍ប្រចាំសប្ដាហ៍"],
+      needs: ["short_stays.approve"],
+    },
+    {
+      id: "sites",
+      label: ["Booking sites", "គេហទំព័រកក់"],
+      needs: ["short_stays.approve"],
+    },
+  ],
   access: [
     { id: "users", label: ["Users", "អ្នកប្រើ"] },
     { id: "roles", label: ["Roles", "តួនាទី"] },

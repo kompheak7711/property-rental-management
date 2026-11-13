@@ -62,9 +62,11 @@ describe("V1-058 R1 app shell", () => {
       "Invoices",
       "Utilities",
       "Approvals",
-      "Bookings",
+      // Leasing batch (owner 13/11/2026): Viewing requests, Long stays, Short stays, Notices.
+      "Viewing requests",
+      "Long stays",
       "Short stays",
-      "Leases",
+      "Notices",
       "Customers",
       "Units",
       // UI v81 round 2 (owner 07/11/2026): Inspections after Units; the menu order of design v81.
@@ -88,7 +90,7 @@ describe("V1-058 R1 app shell", () => {
     ]) {
       expect(within(menu).getByText(group)).toBeInTheDocument();
     }
-    expect(MENU.flatMap((group) => group.items)).toHaveLength(20);
+    expect(MENU.flatMap((group) => group.items)).toHaveLength(21);
   });
 
   it("TEST-FE-802 marks only the open page in the menu and names the work area after it", () => {
@@ -188,7 +190,7 @@ describe("V1-058 R1 app shell", () => {
         .map((link) => [link.textContent, link.getAttribute("href")]),
     ).toEqual([
       ["Home", "#/home"],
-      ["Leases", "#/moveout"],
+      ["Long stays", "#/moveout"],
       ["Units", "#/units"],
       // UI v81 round 2: Inspections opens with units.read.
       ["Inspections", "#/inspections"],
@@ -199,7 +201,7 @@ describe("V1-058 R1 app shell", () => {
     expect(within(menu).queryByText("Operations")).not.toBeInTheDocument();
     // One allowed tab: no tab bar.
     expect(
-      screen.queryByRole("navigation", { name: "Leases" }),
+      screen.queryByRole("navigation", { name: "Long stays" }),
     ).not.toBeInTheDocument();
   });
 
@@ -251,48 +253,80 @@ describe("V1-058 R1 app shell", () => {
     expect(document.documentElement.scrollTop).toBe(0);
   });
 
-  it("TEST-FE-809 shows Letters and Move-out as tabs of Leases and keeps Leases marked in the menu", () => {
-    renderShell("letters");
+  it("TEST-FE-809 shows Reservations, Leases and Move-outs as tabs of Long stays, and Viewing requests and Notices as items of their own", () => {
+    // Leasing batch (owner 13/11/2026): Long stays holds Reservations, Leases and Move-outs.
+    renderShell("leases");
     const menu = screen.getByRole("navigation", { name: "Menu" });
-    // UI v81 side menu: the Leases item stays marked while its sub-item Notices is the current
-    // page (the sub-item carries aria-current, the item its "cur" mark).
-    const leasesRow = menu.querySelector(
-      '.shell-nitem[data-menu-page="leases"]',
+    // UI v81 side menu: the Long stays item stays marked while its sub-item Leases is the
+    // current page (the sub-item carries aria-current, the item its "cur" mark).
+    const row = menu.querySelector(
+      '.shell-nitem[data-menu-page="reservations"]',
     );
-    expect(leasesRow).toHaveClass("cur");
-    expect(within(menu).getByRole("link", { name: "Notices" })).toHaveAttribute(
+    expect(row).toHaveClass("cur");
+    expect(within(menu).getByRole("link", { name: "Leases" })).toHaveAttribute(
       "aria-current",
       "page",
     );
     // UI v81 round 2: the title is the open tab's name; the tab bar is named after the menu item.
-    expect(screen.getByRole("main")).toHaveAccessibleName("Notices");
-    const tabs = screen.getByRole("navigation", { name: "Leases" });
+    expect(screen.getByRole("main")).toHaveAccessibleName("Leases");
+    const tabs = screen.getByRole("navigation", { name: "Long stays" });
     expect(
       within(tabs)
         .getAllByRole("link")
         .map((link) => [link.textContent, link.getAttribute("href")]),
     ).toEqual([
+      ["Reservations", "#/reservations"],
       ["Leases", "#/leases"],
-      ["Notices", "#/letters"],
       ["Move-outs", "#/moveout"],
     ]);
-    expect(within(tabs).getByRole("link", { name: "Notices" })).toHaveAttribute(
-      "aria-current",
-      "page",
-    );
     cleanup();
-    renderShell("reservations");
-    expect(screen.getByRole("main")).toHaveAccessibleName("Reservations");
-    // Telegram bots step 3a (DL-171): Bookings has the Visit requests tab now.
-    const bookings = screen.getByRole("navigation", { name: "Bookings" });
+    // Notices are for long and short stays: an item of its own, without a tab bar.
+    renderShell("letters");
+    expect(screen.getByRole("main")).toHaveAccessibleName("Notices");
     expect(
-      within(bookings)
-        .getAllByRole("link")
-        .map((link) => [link.textContent, link.getAttribute("href")]),
-    ).toEqual([
-      ["Viewing requests", "#/visitreqs"],
-      ["Reservations", "#/reservations"],
+      within(screen.getByRole("navigation", { name: "Menu" })).getByRole(
+        "link",
+        { name: "Notices" },
+      ),
+    ).toHaveAttribute("aria-current", "page");
+    expect(
+      screen.queryByRole("navigation", { name: "Long stays" }),
+    ).not.toBeInTheDocument();
+    cleanup();
+    renderShell("visitreqs");
+    expect(screen.getByRole("main")).toHaveAccessibleName("Viewing requests");
+    expect(
+      screen.queryByRole("navigation", { name: "Bookings" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("TEST-FE-2176 shows the Short stays tabs as its sub-items at the tabs' own addresses, the Weekly report and Booking sites only to the Owner and the Manager", () => {
+    renderShell("shortstays");
+    const menu = screen.getByRole("navigation", { name: "Menu" });
+    const hrefs = () =>
+      Array.from(
+        menu.querySelectorAll<HTMLAnchorElement>("#shell-sub-shortstays a"),
+      ).map((link) => [link.textContent, link.getAttribute("href")]);
+    expect(hrefs()).toEqual([
+      ["Calendar", "#/shortstays?tab=cal"],
+      ["Bookings", "#/shortstays?tab=list"],
+      ["Housekeeping", "#/shortstays?tab=clean"],
+      ["Weekly report", "#/shortstays?tab=report"],
+      ["Booking sites", "#/shortstays?tab=sites"],
     ]);
+    // No Quotes: the price message is copied on New booking.
+    expect(within(menu).queryByRole("link", { name: "Quotes" })).toBeNull();
+    cleanup();
+    renderShell("shortstays", "en", {
+      capabilities: new Set(["short_stays.read", "short_stays.desk"]),
+    });
+    expect(
+      Array.from(
+        screen
+          .getByRole("navigation", { name: "Menu" })
+          .querySelectorAll("#shell-sub-shortstays a"),
+      ).map((link) => link.textContent),
+    ).toEqual(["Calendar", "Bookings", "Housekeeping"]);
   });
 
   // UI v81 side menu (owner 08/11/2026 09:57, section D of 05:43): Collapse menu, folding
@@ -382,34 +416,36 @@ describe("V1-058 R1 app shell", () => {
     });
 
     it("TEST-FE-1928 a page with tabs gets a ⌄ whose sub-items link to the same addresses as its tabs; the current sub-item is marked; a page without tabs has none", () => {
-      renderShell("letters");
+      renderShell("leases");
       const menu = menuOf();
-      const leasesRow = part('.shell-nitem[data-menu-page="leases"]');
-      const toggle = within(leasesRow).getByRole("button", { name: "3 pages" });
+      const row = part('.shell-nitem[data-menu-page="reservations"]');
+      const toggle = within(row).getByRole("button", { name: "3 pages" });
       expect(toggle).toHaveAttribute("aria-expanded", "true");
-      const tabs = screen.getByRole("navigation", { name: "Leases" });
-      const subItems = hrefsOf(menu, "#shell-sub-leases a");
+      const tabs = screen.getByRole("navigation", { name: "Long stays" });
+      const subItems = hrefsOf(menu, "#shell-sub-reservations a");
       expect(subItems).toEqual(hrefsOf(tabs, "a"));
       expect(subItems).toEqual([
+        ["Reservations", "#/reservations"],
         ["Leases", "#/leases"],
-        ["Notices", "#/letters"],
         ["Move-outs", "#/moveout"],
       ]);
       expect(
-        within(menu).getByRole("link", { name: "Notices" }),
+        within(menu).getByRole("link", { name: "Leases" }),
       ).toHaveAttribute("aria-current", "page");
       expect(
         menu.querySelector(
-          '.shell-nitem[data-menu-page="leases"] > .shell-item',
+          '.shell-nitem[data-menu-page="reservations"] > .shell-item',
         ),
       ).not.toHaveAttribute("aria-current");
       // The ⌄ closes and opens the sub-items, and the choice is remembered.
       fireEvent.click(toggle);
       expect(toggle).toHaveAttribute("aria-expanded", "false");
-      expect(menu.querySelector("#shell-sub-leases")).toHaveAttribute("hidden");
+      expect(menu.querySelector("#shell-sub-reservations")).toHaveAttribute(
+        "hidden",
+      );
       expect(
         JSON.parse(window.localStorage.getItem("chetana-navopen") ?? "{}"),
-      ).toEqual({ leases: false });
+      ).toEqual({ reservations: false });
       fireEvent.click(toggle);
       expect(toggle).toHaveAttribute("aria-expanded", "true");
       // Users and access: its in-page tabs as sub-items, at the tabs' own addresses.
@@ -494,10 +530,10 @@ describe("V1-058 R1 app shell", () => {
         }),
       });
       try {
-        renderShell("letters");
-        const row = () => part('.shell-nitem[data-menu-page="leases"]');
+        renderShell("leases");
+        const row = () => part('.shell-nitem[data-menu-page="reservations"]');
         const link = () =>
-          part('.shell-nitem[data-menu-page="leases"] > .shell-item');
+          part('.shell-nitem[data-menu-page="reservations"] > .shell-item');
         // The open menu has no fly-out.
         fireEvent.mouseEnter(row());
         expect(document.querySelector(".shell-fly")).toBeNull();
@@ -506,13 +542,13 @@ describe("V1-058 R1 app shell", () => {
         const fly = part(".shell-fly");
         expect(link()).toHaveAttribute("aria-expanded", "true");
         expect(hrefsOf(fly, "a")).toEqual([
+          ["Long stays", "#/reservations"],
+          ["Reservations", "#/reservations"],
           ["Leases", "#/leases"],
-          ["Leases", "#/leases"],
-          ["Notices", "#/letters"],
           ["Move-outs", "#/moveout"],
         ]);
         expect(
-          within(fly).getByRole("link", { name: "Notices" }),
+          within(fly).getByRole("link", { name: "Leases" }),
         ).toHaveAttribute("aria-current", "page");
         fireEvent.mouseLeave(row());
         expect(document.querySelector(".shell-fly")).toBeNull();

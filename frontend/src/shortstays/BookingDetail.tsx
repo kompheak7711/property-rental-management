@@ -49,7 +49,7 @@ import { hasText, st, type StaysTextKey } from "./text";
 import { PageHead } from "../shell/pageHead";
 
 /** The words for a refused step; 412 and 409 also show the booking as it is now. */
-function stepProblem(error: unknown): StaysTextKey {
+export function stepProblem(error: unknown): StaysTextKey {
   if (!(error instanceof ShortStaysError)) return "f_failed";
   switch (error.status) {
     case 412:
