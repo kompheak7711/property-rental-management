@@ -783,3 +783,24 @@ form.ss-form .ui-date input {
   margin: 0;
   border-bottom: 0;
 }
+
+/* On a phone the three tabs share the row in equal parts, so Housekeeping is never cut, and
+   a booking card's dates fit on one line. */
+@media (max-width: 639px) {
+  .shell-head-tabbed > .ss-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
+    padding: 0;
+    overflow: visible;
+  }
+
+  .shell-head-tabbed > .ss-tabs a {
+    justify-content: center;
+    padding: 8px 4px;
+  }
+
+  table.ui-table.ss-booklist td:nth-child(4) {
+    font-size: 0.875rem;
+  }
+}
