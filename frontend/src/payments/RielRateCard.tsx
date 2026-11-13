@@ -85,9 +85,12 @@ export function RielRateCard({
   toRiel: (cents: number, rate: number) => number;
 }) {
   // The step from the published rate to the app rate shows only when the server names both
-  // the published rate and its markup.
+  // the published rate and a markup above 0. Since DL-228 (PR #35) the app adds no markup, so
+  // a new rate has none; only a rate saved before then still carries its 0.5%.
   const marked =
-    rate?.reference === undefined || rate.markupBp === undefined
+    rate?.reference === undefined ||
+    rate.markupBp === undefined ||
+    rate.markupBp === 0
       ? null
       : markedUp(rate.reference, rate.markupBp);
   return (

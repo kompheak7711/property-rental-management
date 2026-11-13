@@ -110,11 +110,12 @@ describe("Home Financial summary and Attendance (UI v81)", () => {
       .getAllByRole("link")
       .map((card) => card.textContent);
     expect(cards).toEqual([
-      "Cash and bank today$4,700.00Opens the Balance sheet",
-      "Customers owe$900.00Opens Accounts receivable aging",
-      "Owed over 30 days$400.00Opens Accounts receivable aging",
+      // Owner 14/11/2026: no "Opens the Balance sheet" or "2026 so far" line; the budget stays.
+      "Cash and bank today$4,700.00",
+      "Customers owe$900.00",
+      "Owed over 30 days$400.00",
       "Spent this month$420.00Budget $600.00",
-      "Profit this year$4,125.002026 so far",
+      "Profit this year$4,125.00",
     ]);
     // Owner 12/11/2026 10:47: the five cards are one row from an iPad up.
     expect(box.querySelector(".ui-kpis.ui-om")).toHaveClass("ui-five");

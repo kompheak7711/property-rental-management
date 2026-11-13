@@ -69200,7 +69200,7 @@
       "test_level": "UI component",
       "test_path": "frontend/src/home/HomeScreen.test.tsx",
       "status": "implemented",
-      "notes": "UI v81 round 7 Home (owner 12/11/2026): every Home card and Tasks card holds its number beside its name in the card's head, with the note under it; only Paid this month has a bar."
+      "notes": "UI v81 round 7 Home (owner 12/11/2026): every Home card and Tasks card holds its number beside its name in the card's head, with the note under it when there is one; no bar (owner 14/11/2026)."
     },
     {
       "test_id": "TEST-FE-1933",
@@ -69786,6 +69786,17 @@
       "notes": "UI v81 module batch 5 Approvals: the row button says Review; Review shows the Refund method by name and the reference note from the draft; a name that could not be read leaves its row out; a Customer with no Unit is plain text in the list."
     },
     {
+      "test_id": "TEST-FE-2144",
+      "upstream_ids": [
+        "DL-228",
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/payments/PaymentsBatch.test.tsx",
+      "status": "implemented",
+      "notes": "Receive payment, Exchange rate for riel: with no markup (a rate saved after DL-228) there is no Plus line; the card shows the ABA sell rate, then the app rate. A rate saved before DL-228 still shows its 0.5%."
+    },
+    {
       "test_id": "TEST-FE-2186",
       "upstream_ids": [
         "UI-008",
@@ -69878,6 +69889,60 @@
       "test_path": "frontend/src/utilities/UtilitiesPage.test.tsx",
       "status": "implemented",
       "notes": "Operations screen (owner 13/11/2026): the Meters list has one row for each Unit with its Electricity and Water meters side by side; a type card shows only that column."
+    },
+    {
+      "test_id": "test_new_rate_records_have_no_markup_and_old_records_keep_theirs",
+      "upstream_ids": [
+        "DL-228",
+        "DB-BS-005",
+        "BR-MONEY-004"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_riel_rate_no_markup_migration.py",
+      "status": "implemented",
+      "notes": "A new riel rate record is ABA's Sell rate rounded up to a whole riel with mark-up 0; a record saved before keeps its 0.5%; a mark-up added to a new record, rounding down, an old record without its 0.5% or any other mark-up is refused."
+    },
+    {
+      "test_id": "test_payment_functions_no_longer_add_markup_and_the_settings_rule_is_gone",
+      "upstream_ids": [
+        "DL-228",
+        "DB-BS-005"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_riel_rate_no_markup_migration.py",
+      "status": "implemented",
+      "notes": "Receive payment in riel and the rate confirm no longer multiply by 1.005 or write 50; the unused Settings rule Riel rate: ABA Sell rate plus is removed."
+    },
+    {
+      "test_id": "TEST-FE-2190",
+      "upstream_ids": [
+        "DL-228",
+        "BR-MONEY-007"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/financialUiContext.test.ts",
+      "status": "implemented",
+      "notes": "A riel rate record is checked by its own mark-up: 0 with ABA's Sell rate rounded up loads, 50 (saved before DL-228) with 1.005 loads, any other pair is refused."
+    },
+    {
+      "test_id": "TEST-FE-2220",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/home/HomeScreen.test.tsx",
+      "status": "implemented",
+      "notes": "Home screen review (owner 14/11/2026): Missing readings is 0 before the Reading day and the server's count from that day; a card note says only the parts above 0; no note that only says what the card opens."
+    },
+    {
+      "test_id": "TEST-FE-2221",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/home/HomeScreen.test.tsx",
+      "status": "implemented",
+      "notes": "Home screen review (owner 14/11/2026): the two head buttons share one equal-width group; a warning about the automatic jobs is a slim bar under the title, a calm jobs line stays under the Tasks."
     }
   ]
 }

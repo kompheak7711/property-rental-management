@@ -371,7 +371,6 @@ export function ApprovalsPage({
 
   if (propertyId === "") return null;
 
-
   if (failure !== null) {
     return (
       <>
