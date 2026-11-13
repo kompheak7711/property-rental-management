@@ -775,6 +775,42 @@ body .shell-head-sub > .ui-headseg {
   grid-auto-flow: column;
 }
 
+/* Owner 13/11/2026 23:25 (iPad): where the title, the switch and Receive payment do not fit on
+   one row, the title and the page's buttons share the first row and the switch takes the full
+   width under them (never a button under the switch). */
+@media (min-width: 640px) and (max-width: 1399px) {
+  body .shell-head:has(.ui-headseg) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  body .shell-head:has(.ui-headseg) > .shell-head-text {
+    display: contents;
+  }
+
+  body .shell-head:has(.ui-headseg) > .shell-head-text > h1 {
+    grid-row: 1;
+    grid-column: 1;
+  }
+
+  body .shell-head:has(.ui-headseg) > .shell-head-actions {
+    grid-row: 1;
+    grid-column: 2;
+    margin-left: 0;
+  }
+
+  body .shell-head:has(.ui-headseg) > .shell-head-text > .shell-head-sub {
+    grid-row: 2;
+    grid-column: 1 / -1;
+  }
+
+  body .shell-head-sub > .ui-headseg {
+    display: grid;
+    width: 100%;
+  }
+}
+
 @media (max-width: 639px) {
   .shell-head-text:has(> .shell-head-sub > .ui-headseg),
   .shell-head-sub:has(> .ui-headseg) {
