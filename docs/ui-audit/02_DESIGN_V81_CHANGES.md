@@ -951,3 +951,11 @@ The owner approved the Invoices batch on 13/11/2026 ("Invoice screen is ok"). Th
 ### Tests and checks
 
 Tests: TEST-FE-2139 (Import in the head on reading day, the "to read" chip), TEST-FE-2140 (Add meter in the head with "Manager only" beside it; the meter page's record head and its buttons) in `frontend/src/utilities/UtilitiesPage.test.tsx`. TEST-FE-874 now expects "2 to read". The screen check has three new screens, `utilities`, `meters` and `meter`, with recorded answers in `frontend/e2e/fixtures/utilities.har.json`: 16 screens × 5 sizes pass. Layout and display only; no backend change, no database step.
+
+## Main merge: ABA QR payment method (PR #34, DL-227) (13/11/2026)
+
+Main's PR #34 is merged into `ui-v81`. Its migration `20270723_392` and this branch's head `20270718_367` are joined by `20270724_400` (no change of its own; forward-only). The two sides touch different tables: 392 changes only the Payment Methods (`aba_qr`) and the functions that save them; none of 360-369 touch them.
+
+Settings, Business, Payment Methods: the edit dialog has a new switch, "Use for ABA QR payments", under "Staff can use it on new Receipts". The marked method shows an "ABA QR" chip in the list. Only one method can have it: ticking it on another method says "{method} is used for ABA QR payments now. Saving moves it to this method.", and the save takes the mark off the first one. A method that is off cannot have it ("Turn this method on to use it for ABA QR payments."). The server keeps the same rules (DL-227).
+
+Tests: TEST-FE-2141 (the dialog and the list) in `frontend/src/settings/BusinessTab.test.tsx`, TEST-FE-2142 (reading and sending `aba_qr`) in `frontend/src/propertyClient.test.tsx`.

@@ -624,6 +624,9 @@ export function BusinessTab({
                       </small>
                     </span>
                     <span className="ui-actions">
+                      {method.aba_qr && (
+                        <Chip tone="info">{sst(language, "pm_aba_chip")}</Chip>
+                      )}
                       {method.accepted ? (
                         <Chip icon="check" tone="ok">
                           {sst(language, "se_active")}
@@ -955,10 +958,15 @@ export function BusinessTab({
           methods={methods}
           onClose={closeOpen}
           onSave={(next) => {
+            // DL-227: only one method records ABA QR payments, so marking
+            // this one takes the mark off the others in the same save.
+            const others = next.aba_qr
+              ? methods.map((method) => ({ ...method, aba_qr: false }))
+              : methods;
             const list =
               open.method === null
-                ? [...methods, next]
-                : methods.map((method) =>
+                ? [...others, next]
+                : others.map((method) =>
                     method.code === next.code ? next : method,
                   );
             run(
@@ -1894,12 +1902,20 @@ function MethodDialog({
 }) {
   const [name, setName] = useState(method?.display_name ?? "");
   const [accepted, setAccepted] = useState(method?.accepted ?? true);
-  const [errors, setErrors] = useState<{ name?: string; on?: string }>({});
+  const [abaQr, setAbaQr] = useState(method?.aba_qr ?? false);
+  const [errors, setErrors] = useState<{
+    name?: string;
+    on?: string;
+    aba?: string;
+  }>({});
+  const holder = methods.find(
+    (other) => other.code !== method?.code && other.aba_qr,
+  );
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const shown = name.trim();
-    const found: { name?: string; on?: string } = {};
+    const found: { name?: string; on?: string; aba?: string } = {};
     if (shown === "") found.name = sst(language, "se_e_name");
     else if (
       methods.some(
@@ -1916,17 +1932,25 @@ function MethodDialog({
     ) {
       found.on = sst(language, "pm_e_last");
     }
+    if (abaQr && !accepted) found.aba = sst(language, "pm_e_aba");
     setErrors(found);
-    if (found.name !== undefined || found.on !== undefined) {
-      document
-        .getElementById(found.name !== undefined ? "pm-name" : "pm-on")
-        ?.focus();
+    const first =
+      found.name !== undefined
+        ? "pm-name"
+        : found.on !== undefined
+          ? "pm-on"
+          : found.aba !== undefined
+            ? "pm-aba"
+            : null;
+    if (first !== null) {
+      document.getElementById(first)?.focus();
       return;
     }
     onSave({
       code: method?.code ?? methodCode(shown, methods),
       display_name: shown,
       accepted,
+      aba_qr: abaQr,
     });
   }
 
@@ -1972,6 +1996,27 @@ function MethodDialog({
         <span>{sst(language, "pm_on")}</span>
       </label>
       <FieldError id="pm-on-e" text={errors.on ?? null} />
+      <label className="ui-chk">
+        <input
+          aria-describedby={
+            errors.aba === undefined ? "pm-aba-n" : "pm-aba-n pm-aba-e"
+          }
+          aria-invalid={errors.aba !== undefined}
+          checked={abaQr}
+          id="pm-aba"
+          onChange={(event) => {
+            setAbaQr(event.currentTarget.checked);
+          }}
+          type="checkbox"
+        />
+        <span>{sst(language, "pm_aba")}</span>
+      </label>
+      <p className="ui-small ui-muted" id="pm-aba-n">
+        {abaQr && holder !== undefined
+          ? sst(language, "pm_aba_move", holder.display_name)
+          : sst(language, "pm_aba_note")}
+      </p>
+      <FieldError id="pm-aba-e" text={errors.aba ?? null} />
       <p className="ui-small ui-muted">{sst(language, "pm_note")}</p>
       <Problem text={problem} />
     </Dialog>

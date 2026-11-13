@@ -1382,7 +1382,12 @@ describe("local sign-in", () => {
       business_name: null,
       timezone_name: "Asia/Phnom_Penh",
       payment_methods: [
-        { code: "BANK", display_name: "Bank transfer", accepted: true },
+        {
+          code: "BANK",
+          display_name: "Bank transfer",
+          accepted: true,
+          aba_qr: false,
+        },
       ],
       version: 3,
     };

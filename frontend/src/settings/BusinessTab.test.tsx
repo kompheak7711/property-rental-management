@@ -33,10 +33,13 @@ afterEach(() => {
 });
 
 const METHODS: PaymentMethodConfiguration[] = [
-  { code: "CASH", display_name: "Cash", accepted: true },
-  { code: "ABA_PAY", display_name: "ABA PAY", accepted: true },
-  { code: "CHEQUE", display_name: "Cheque", accepted: false },
+  { code: "CASH", display_name: "Cash", accepted: true, aba_qr: false },
+  { code: "ABA_PAY", display_name: "ABA PAY", accepted: true, aba_qr: false },
+  { code: "CHEQUE", display_name: "Cheque", accepted: false, aba_qr: false },
 ];
+
+const ON = "Staff can use it on new Receipts";
+const ABA = "Use for ABA QR payments";
 
 const PROPERTY: PropertyBusinessConfiguration = {
   property_id: "property-1",
@@ -481,13 +484,14 @@ describe("Settings: Business", () => {
           code: "WING_TRANSFER",
           display_name: "Wing transfer",
           accepted: true,
+          aba_qr: false,
         },
       ],
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Edit: ABA PAY" }));
     dialog = screen.getByRole("dialog", { name: "Edit method" });
-    fireEvent.click(within(dialog).getByRole("checkbox"));
+    fireEvent.click(within(dialog).getByRole("checkbox", { name: ON }));
     fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
     await screen.findByText("ABA PAY saved.");
     expect(api.property.updatePaymentMethods).toHaveBeenLastCalledWith(
@@ -511,12 +515,12 @@ describe("Settings: Business", () => {
     show(api);
     fireEvent.click(await screen.findByRole("button", { name: "Edit: Cash" }));
     let dialog = screen.getByRole("dialog", { name: "Edit method" });
-    fireEvent.click(within(dialog).getByRole("checkbox"));
+    fireEvent.click(within(dialog).getByRole("checkbox", { name: ON }));
     fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
     expect(
       within(dialog).getByText("Keep at least one method turned on."),
     ).toBeTruthy();
-    fireEvent.click(within(dialog).getByRole("checkbox"));
+    fireEvent.click(within(dialog).getByRole("checkbox", { name: ON }));
     fireEvent.change(within(dialog).getByLabelText(/^Method name/), {
       target: { value: "Cash (USD or riel)" },
     });
@@ -644,6 +648,80 @@ describe("Settings: Business", () => {
     await Promise.resolve();
     expect(screen.queryByText("Saved.")).toBeNull();
     expect(race.property.load).toHaveBeenLastCalledWith("property-2");
+  });
+
+  it("TEST-FE-2141 a Payment Method can be used for ABA QR payments: the list marks it, ticking another method says the mark moves and the save takes it off the first one, a method that is off cannot have it, and untick saves no mark (DL-227)", async () => {
+    const marked = METHODS.map((method) =>
+      method.code === "ABA_PAY" ? { ...method, aba_qr: true } : method,
+    );
+    const api = apiOf(() =>
+      Promise.resolve({ ...PROPERTY, payment_methods: marked }),
+    );
+    api.property.updatePaymentMethods.mockImplementation(() =>
+      Promise.resolve({ ...PROPERTY, payment_methods: marked }),
+    );
+    show(api);
+    const row = (await screen.findByText("ABA PAY")).closest("li");
+    expect(row).not.toBeNull();
+    expect(within(row as HTMLElement).getByText("ABA QR")).toBeTruthy();
+    expect(
+      within(screen.getByText("Cash").closest("li") as HTMLElement).queryByText(
+        "ABA QR",
+      ),
+    ).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit: Cash" }));
+    let dialog = screen.getByRole("dialog", { name: "Edit method" });
+    const aba = within(dialog).getByRole("checkbox", { name: ABA });
+    expect((aba as HTMLInputElement).checked).toBe(false);
+    expect(
+      within(dialog).getByText(/Only one method can have it\./),
+    ).toBeTruthy();
+    fireEvent.click(aba);
+    expect(
+      within(dialog).getByText(
+        "ABA PAY is used for ABA QR payments now. Saving moves it to this method.",
+      ),
+    ).toBeTruthy();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    await screen.findByText("Cash saved.");
+    expect(api.property.updatePaymentMethods).toHaveBeenLastCalledWith(
+      expect.anything(),
+      [
+        { ...METHODS[0], aba_qr: true },
+        { ...METHODS[1], aba_qr: false },
+        METHODS[2],
+      ],
+    );
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).toBeNull();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit: Cheque" }));
+    dialog = screen.getByRole("dialog", { name: "Edit method" });
+    fireEvent.click(within(dialog).getByRole("checkbox", { name: ABA }));
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    expect(
+      within(dialog).getByText(
+        "Turn this method on to use it for ABA QR payments.",
+      ),
+    ).toBeTruthy();
+    expect(api.property.updatePaymentMethods).toHaveBeenCalledTimes(1);
+    expect(document.activeElement?.id).toBe("pm-aba");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit: ABA PAY" }));
+    dialog = screen.getByRole("dialog", { name: "Edit method" });
+    const held = within(dialog).getByRole("checkbox", { name: ABA });
+    expect((held as HTMLInputElement).checked).toBe(true);
+    fireEvent.click(held);
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    await waitFor(() => {
+      expect(api.property.updatePaymentMethods).toHaveBeenLastCalledWith(
+        expect.anything(),
+        [METHODS[0], { ...METHODS[1], aba_qr: false }, METHODS[2]],
+      );
+    });
   });
 
   it("TEST-FE-1135 a business rule change needs a value that fits, a start day today or later and a reason, shows the history, and a day already used says so; Add rule makes a code from the English name and starts Not used yet", async () => {

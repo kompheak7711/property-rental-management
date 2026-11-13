@@ -1333,6 +1333,7 @@ export function App({
           code: normalizedCode,
           display_name: displayName.trim(),
           accepted: true,
+          aba_qr: false,
         },
       ],
     });

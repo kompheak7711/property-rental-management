@@ -69755,6 +69755,27 @@
       "notes": "UI v81 module batch 4 Utilities: Add meter is the page's button in the head and Replace meter is on the meter page, each with Manager only beside the button, not inside it; the meter page has the shared record head with Back on top."
     },
     {
+      "test_id": "TEST-FE-2141",
+      "upstream_ids": [
+        "DL-227",
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/settings/BusinessTab.test.tsx",
+      "status": "implemented",
+      "notes": "Settings, Business, payment method dialog: the 'Use for ABA QR payments' switch. The list marks the method with ABA QR; ticking another method says the mark moves and the save takes it off the first one; a method that is off cannot have it; untick saves no mark."
+    },
+    {
+      "test_id": "TEST-FE-2142",
+      "upstream_ids": [
+        "DL-227"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/propertyClient.test.tsx",
+      "status": "implemented",
+      "notes": "The property client reads aba_qr as true or false (no mark from the server = false), refuses a mark that is not true or false, and sends the mark with a Payment Methods save."
+    },
+    {
       "test_id": "TEST-FE-2186",
       "upstream_ids": [
         "UI-008",

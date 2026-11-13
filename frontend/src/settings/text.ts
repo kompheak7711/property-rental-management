@@ -585,6 +585,21 @@ const TEXT = {
     "Staff can use it on new Receipts",
     "បុគ្គលិកអាចប្រើវានៅលើបង្កាន់ដៃថ្មី",
   ],
+  // DL-227 (PR #34): the Payment Method that records ABA QR payments.
+  pm_aba: ["Use for ABA QR payments", "ប្រើសម្រាប់ការបង់ប្រាក់តាម ABA QR"],
+  pm_aba_note: [
+    "Money paid by the ABA QR on an Invoice is recorded with this method. Only one method can have it.",
+    "ប្រាក់ដែលបង់តាម ABA QR លើវិក្កយបត្រ ត្រូវកត់ត្រាជាមួយវិធីនេះ។ មានតែវិធីមួយប៉ុណ្ណោះ។",
+  ],
+  pm_aba_move: [
+    "{0} is used for ABA QR payments now. Saving moves it to this method.",
+    "{0} កំពុងប្រើសម្រាប់ ABA QR។ ការរក្សាទុកនឹងប្តូរមកវិធីនេះ។",
+  ],
+  pm_e_aba: [
+    "Turn this method on to use it for ABA QR payments.",
+    "សូមបើកវិធីនេះសិន ដើម្បីប្រើសម្រាប់ការបង់ប្រាក់តាម ABA QR។",
+  ],
+  pm_aba_chip: ["ABA QR", "ABA QR"],
   pm_e_last: [
     "Keep at least one method turned on.",
     "ត្រូវបើកយ៉ាងហោចណាស់មួយវិធី។",
