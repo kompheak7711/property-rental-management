@@ -69878,6 +69878,39 @@
       "test_path": "frontend/src/utilities/UtilitiesPage.test.tsx",
       "status": "implemented",
       "notes": "Operations screen (owner 13/11/2026): the Meters list has one row for each Unit with its Electricity and Water meters side by side; a type card shows only that column."
+    },
+    {
+      "test_id": "TEST-FE-2200",
+      "upstream_ids": [
+        "UI-008",
+        "PR-SS-STEP5"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shortstays/ShortStaysPage.test.tsx",
+      "status": "implemented",
+      "notes": "Owner 13/11/2026 (Leasing thread): the Short stays Bookings list has a search box (guest, phone, booking number or Unit); the status counts follow the search."
+    },
+    {
+      "test_id": "TEST-FE-2201",
+      "upstream_ids": [
+        "UI-008",
+        "PR-SS-STEP5"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shortstays/ShortStaysPage.test.tsx",
+      "status": "implemented",
+      "notes": "Owner 13/11/2026 (Leasing thread): Housekeeping is one card of short rows; a late task is first and red with Late; done and skipped tasks fold under the list; the booking number link is 44 px high."
+    },
+    {
+      "test_id": "TEST-FE-2202",
+      "upstream_ids": [
+        "UI-008",
+        "PR-SS-STEP5"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shortstays/ShortStaysPage.test.tsx",
+      "status": "implemented",
+      "notes": "Owner 14/11/2026 00:00 (Leasing thread): the Short stays tabs are the page head's tab links like Invoices (?tab=cal|list|clean), the open one marked; New booking sits at the right of the tab row."
     }
   ]
 }

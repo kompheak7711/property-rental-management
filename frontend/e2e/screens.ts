@@ -159,6 +159,22 @@ export const SCREENS: readonly Screen[] = [
     ready: "Chan Sophea",
     clock: "2026-11-13T03:00:00Z",
   },
+  // Owner 13/11/2026: the Bookings list (search, cards on a phone) and Housekeeping (short rows,
+  // late first, done and skipped folded), same made-up guests.
+  {
+    name: "shortstays-bookings",
+    hash: "#/shortstays?tab=list",
+    fixture: "shortstays",
+    ready: "Ouk Sreyneang",
+    clock: "2026-11-13T03:00:00Z",
+  },
+  {
+    name: "shortstays-housekeeping",
+    hash: "#/shortstays?tab=clean",
+    fixture: "shortstays",
+    ready: "Sam Dalin",
+    clock: "2026-11-13T03:00:00Z",
+  },
 ];
 
 /** The five sizes of the owner's rule (width × height). */

@@ -16,13 +16,14 @@ import {
 } from "../customerClient";
 import { dayText, todayInPhnomPenh, usdFromCents } from "../shell/format";
 import { Icon } from "../shell/icons";
-import { hashForPage } from "../shell/navigation";
+import { hashForPage, pageName } from "../shell/navigation";
 import {
   openPageInAddress,
   useHashDetail,
   useShowFromAddress,
 } from "../shell/useHashPage";
-import { Chip, SubTabs, type Tone, useSubTab } from "../shell/ui";
+import { Chip, type Tone, useSubTab } from "../shell/ui";
+import { TabHead } from "../shell/layouts";
 import type { Language } from "../signInText";
 import { BookingDetail } from "./BookingDetail";
 import { CleaningList } from "./CleaningList";
@@ -134,6 +135,7 @@ export function ShortStaysPage({
   const tabs = ALL_TABS;
   const shownTab: Tab = tabs.includes(tab) ? tab : "cal";
   const [status, setStatusState] = useState<BookingStatus | "all">("all");
+  const [query, setQuery] = useState("");
   // UI v81 round 11: Home's two Short stays cards open the Bookings list on their status
   // ("Short stay bookings" on Booked, "Short stays checked in" on Checked in).
   const keepShow = useShowFromAddress("shortstays", (show) => {
@@ -375,7 +377,20 @@ export function ShortStaysPage({
     </div>
   );
 
-  const listed = (bookings ?? []).filter(
+  // Owner 13/11/2026: the Bookings list has a search box (guest, phone, booking number or Unit);
+  // the status counts are of the bookings that match it.
+  const words = query.trim().toLowerCase();
+  const matched = (bookings ?? []).filter(
+    (booking) =>
+      words === "" ||
+      [
+        booking.guest_name,
+        booking.guest_phone ?? "",
+        booking.booking_number,
+        booking.unit_number,
+      ].some((value) => value.toLowerCase().includes(words)),
+  );
+  const listed = matched.filter(
     (booking) => status === "all" || booking.status === status,
   );
   const listView =
@@ -392,6 +407,20 @@ export function ShortStaysPage({
         )}
         {bookings.length > 0 && (
           <div className="ui-filters">
+            <label className="ui-sr" htmlFor="shortstays-search">
+              {st(language, "f_search")}
+            </label>
+            <input
+              className="ui-search"
+              id="shortstays-search"
+              maxLength={100}
+              onChange={(event) => {
+                setQuery(event.currentTarget.value);
+              }}
+              placeholder={st(language, "f_search")}
+              type="search"
+              value={query}
+            />
             <div
               aria-label={st(language, "c_status")}
               className="ui-seg"
@@ -404,7 +433,7 @@ export function ShortStaysPage({
                     value === "BOOKED" ||
                     value === "CHECKED_IN" ||
                     value === status ||
-                    bookings.some((booking) => booking.status === value),
+                    matched.some((booking) => booking.status === value),
                 )
                 .map((value) => (
                   <button
@@ -420,8 +449,8 @@ export function ShortStaysPage({
                       : st(language, `st_${value}`)}{" "}
                     <span className="ui-num">
                       {value === "all"
-                        ? bookings.length
-                        : bookings.filter((booking) => booking.status === value)
+                        ? matched.length
+                        : matched.filter((booking) => booking.status === value)
                             .length}
                     </span>
                   </button>
@@ -437,7 +466,7 @@ export function ShortStaysPage({
           ) : (
             <>
               <div className="ui-tablewrap">
-                <table className="ui-table">
+                <table className="ui-table ss-booklist">
                   <thead>
                     <tr>
                       <th scope="col">{st(language, "c_no")}</th>
@@ -536,8 +565,29 @@ export function ShortStaysPage({
       </>
     );
 
+  // Owner 14/11/2026 00:00: the tabs look like the Invoices tabs (a line under the chosen one)
+  // and are the page's head; New booking sits at the right end of the tab row.
   return (
-    <>
+    <TabHead
+      tabs={
+        <nav aria-label={st(language, "tabs")} className="ui-subtabs ss-tabs">
+          {tabs.map((value) => (
+            <a
+              aria-current={shownTab === value ? "page" : undefined}
+              href={`${hashForPage("shortstays")}?tab=${value}`}
+              key={value}
+              onClick={() => {
+                setTabState(value);
+                if (value === "list") setStatusState("all");
+              }}
+            >
+              {st(language, `tab_${value}`)}
+            </a>
+          ))}
+        </nav>
+      }
+      title={pageName("shortstays", language)}
+    >
       <PageHead>
         <p>{st(language, "sub")}</p>
         {may("short_stays.desk") && (
@@ -552,19 +602,6 @@ export function ShortStaysPage({
           </div>
         )}
       </PageHead>
-      <SubTabs
-        current={shownTab}
-        idPrefix="shortstays"
-        label={st(language, "tabs")}
-        onChange={(id) => {
-          setTabState(id as Tab);
-          if (id === "list") setStatusState("all");
-        }}
-        tabs={tabs.map((value) => ({
-          id: value,
-          label: st(language, `tab_${value}`),
-        }))}
-      />
       {shownTab === "cal" ? (
         calendarView
       ) : shownTab === "list" ? (
@@ -579,6 +616,6 @@ export function ShortStaysPage({
           today={today}
         />
       )}
-    </>
+    </TabHead>
   );
 }

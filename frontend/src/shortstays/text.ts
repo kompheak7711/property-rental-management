@@ -26,6 +26,10 @@ const TEXT = {
   tabs: ["Views", "ទិដ្ឋភាព"],
   tab_cal: ["Calendar", "ប្រតិទិន"],
   tab_list: ["Bookings", "ការកក់"],
+  f_search: [
+    "Search guest, phone, booking or Unit",
+    "ស្វែងរកភ្ញៀវ ទូរស័ព្ទ ការកក់ ឬបន្ទប់",
+  ],
   prev: ["Earlier", "មុន"],
   next: ["Later", "បន្ទាប់"],
   this_week: ["Today", "ថ្ងៃនេះ"],
@@ -536,6 +540,14 @@ const TEXT = {
   cl_DONE: ["Done", "រួចរាល់"],
   cl_SKIPPED: ["Skipped", "បានរំលង"],
   cl_late: ["Due {0}", "ត្រូវធ្វើ {0}"],
+  // Owner 13/11/2026: a task not done on its day shows red, and done or skipped ones fold.
+  cl_late_chip: ["Late", "យឺត"],
+  cl_all_done: [
+    "Nothing left to do on this day.",
+    "មិនមានការងារនៅសល់ក្នុងថ្ងៃនេះទេ។",
+  ],
+  cl_finished: ["Done and skipped ({0})", "រួចរាល់ និងបានរំលង ({0})"],
+  cl_finished_list: ["Done and skipped", "រួចរាល់ និងបានរំលង"],
   cl_done_b: ["Done", "រួចរាល់"],
   cl_skip: ["Skip", "រំលង"],
   cl_reason: ["Why it is skipped", "មូលហេតុដែលរំលង"],

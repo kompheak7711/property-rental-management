@@ -519,7 +519,7 @@ describe("Daily and weekly rent: Short stays", () => {
 
   it("TEST-FE-1601 lists bookings and opens one with its price lines and history", async () => {
     const { api } = show();
-    fireEvent.click(await screen.findByRole("tab", { name: "Bookings" }));
+    fireEvent.click(await screen.findByRole("link", { name: "Bookings" }));
     const row = await screen.findByRole("row", { name: /ST260001/ });
     expect(within(row).getByText("$60.90")).toBeInTheDocument();
     expect(within(row).getByText("3 nights")).toBeInTheDocument();
@@ -1145,7 +1145,7 @@ describe("Daily and weekly rent: Short stays", () => {
       ]),
     );
     show({ api: fakeApi({ damageDue }) });
-    fireEvent.click(await screen.findByRole("tab", { name: "Bookings" }));
+    fireEvent.click(await screen.findByRole("link", { name: "Bookings" }));
     await screen.findByRole("table");
     expect(damageDue).not.toHaveBeenCalled();
     cleanup();
@@ -1153,7 +1153,7 @@ describe("Daily and weekly rent: Short stays", () => {
       api: fakeApi({ damageDue }),
       capabilities: new Set([...DESK, "damage_charges.bill"]),
     });
-    fireEvent.click(await screen.findByRole("tab", { name: "Bookings" }));
+    fireEvent.click(await screen.findByRole("link", { name: "Bookings" }));
     const title =
       "1 stay(s) wait for a damage decision. Open each booking and choose Charge the guest or No charge.";
     const due = await screen.findByRole("region", { name: title });
@@ -1318,7 +1318,7 @@ describe("Daily and weekly rent: Short stays", () => {
       api: fakeApi({ cleaning, finishTask }),
       capabilities: new Set([...DESK, "short_stays.housekeeping"]),
     });
-    fireEvent.click(await screen.findByRole("tab", { name: "Housekeeping" }));
+    fireEvent.click(await screen.findByRole("link", { name: "Housekeeping" }));
     expect(await screen.findByText("Daily clean")).toBeInTheDocument();
     expect(cleaning).toHaveBeenCalledWith("p-1", "2026-11-04");
     expect(screen.getByText("2 to do")).toBeInTheDocument();
@@ -1517,7 +1517,7 @@ describe("Daily and weekly rent: Short stays", () => {
     );
     // Without the credit right: no list of credits and no End credit.
     show({ api: fakeApi({ creditsDue }) });
-    fireEvent.click(await screen.findByRole("tab", { name: "Bookings" }));
+    fireEvent.click(await screen.findByRole("link", { name: "Bookings" }));
     await screen.findByRole("table");
     expect(creditsDue).not.toHaveBeenCalled();
     cleanup();
@@ -1529,7 +1529,7 @@ describe("Daily and weekly rent: Short stays", () => {
       }),
       capabilities: new Set([...DESK, "short_stays.credit"]),
     });
-    fireEvent.click(await screen.findByRole("tab", { name: "Bookings" }));
+    fireEvent.click(await screen.findByRole("link", { name: "Bookings" }));
     expect(
       await screen.findByText(
         "1 guest credit(s) passed the use-by day. Open each booking and end the credit.",
@@ -1720,7 +1720,7 @@ describe("Daily and weekly rent: Short stays", () => {
   it("TEST-FE-1620 hides Booking sites without the approve right", async () => {
     show();
     expect(await screen.findByRole("table")).toBeInTheDocument();
-    expect(screen.queryByRole("tab", { name: "Booking sites" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Booking sites" })).toBeNull();
   });
 
   it("TEST-FE-1621 warns that a booking site holds the nights, except for that site's own guest", async () => {
@@ -1890,7 +1890,7 @@ describe("Daily and weekly rent: Short stays", () => {
     // Leasing batch (owner 13/11/2026): the Quotes tab is gone.
     show({ capabilities: new Set([...DESK, "short_stays.approve"]) });
     expect(await screen.findByRole("table")).toBeInTheDocument();
-    expect(screen.queryByRole("tab", { name: "Quotes" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Quotes" })).toBeNull();
     cleanup();
     const made: StayQuote = {
       quote_id: "q-1",
@@ -1998,7 +1998,7 @@ describe("Daily and weekly rent: Short stays", () => {
     // Owner 13/11/2026 evening: the report is in Reports now (ReportsPage), not a tab here.
     show({ capabilities: new Set([...DESK, "short_stays.approve"]) });
     expect(await screen.findByRole("table")).toBeInTheDocument();
-    expect(screen.queryByRole("tab", { name: "Weekly report" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Weekly report" })).toBeNull();
     cleanup();
     render(
       <WeekReportView
@@ -2040,7 +2040,7 @@ describe("Daily and weekly rent: Short stays", () => {
   it("TEST-FE-1605 speaks Khmer and hides New booking without the front-desk right", async () => {
     show({ capabilities: new Set(["short_stays.read"]), language: "km" });
     expect(await screen.findByRole("table")).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "ប្រតិទិន" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "ប្រតិទិន" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /ការកក់ថ្មី/ })).toBeNull();
     expect(screen.getAllByText("ទំនេរ").length).toBeGreaterThan(0);
   });
@@ -2295,9 +2295,9 @@ describe("Daily and weekly rent: Short stays", () => {
     const row = await screen.findByRole("group", { name: "Status" });
     expect(
       screen
-        .getByRole("tab", { name: "Bookings" })
-        .getAttribute("aria-selected"),
-    ).toBe("true");
+        .getByRole("link", { name: "Bookings" })
+        .getAttribute("aria-current"),
+    ).toBe("page");
     // Booked and Checked in always show; another status shows only when a booking has it.
     expect(
       within(row)
@@ -2650,6 +2650,130 @@ describe("Daily and weekly rent: Short stays", () => {
       expect(
         within(table).queryByRole("link", { name: /New booking/ }),
       ).not.toBeInTheDocument();
+    });
+  });
+
+  describe("Bookings and Housekeeping (owner 13/11/2026)", () => {
+    const stay = (
+      id: string,
+      number: string,
+      guest: string,
+      unit: string,
+      status: Booking["status"],
+    ): Booking => ({
+      ...BOOKING,
+      booking_id: id,
+      booking_number: number,
+      guest_name: guest,
+      unit_number: unit,
+      status,
+    });
+
+    it("TEST-FE-2200 the Bookings search finds a guest, booking number or Unit, and the status counts follow it", async () => {
+      const api = fakeApi({
+        list: vi.fn(() =>
+          Promise.resolve([
+            stay("b-1", "ST260001", "Sok Dara", "U101", "BOOKED"),
+            stay("b-2", "ST260002", "Kim Lina", "U102", "CHECKED_IN"),
+            stay("b-3", "ST260003", "Sok Vanna", "U305", "CHECKED_IN"),
+          ]),
+        ),
+      });
+      show({ api });
+      fireEvent.click(await screen.findByRole("link", { name: "Bookings" }));
+      const box = await screen.findByRole("searchbox", {
+        name: "Search guest, phone, booking or Unit",
+      });
+      const numbers = () =>
+        screen
+          .getAllByRole("row")
+          .slice(1)
+          .map((row) => within(row).getAllByRole("link")[0]?.textContent);
+      expect(numbers()).toEqual(["ST260001", "ST260002", "ST260003"]);
+      fireEvent.change(box, { target: { value: "sok" } });
+      expect(numbers()).toEqual(["ST260001", "ST260003"]);
+      const status = screen.getByRole("group", { name: "Status" });
+      expect(
+        within(status).getByRole("button", { name: /All/ }),
+      ).toHaveTextContent("2");
+      fireEvent.change(box, { target: { value: "u305" } });
+      expect(numbers()).toEqual(["ST260003"]);
+      fireEvent.change(box, { target: { value: "260002" } });
+      expect(numbers()).toEqual(["ST260002"]);
+    });
+
+    it("TEST-FE-2201 Housekeeping lists a late task first in red, folds done and skipped tasks, and the booking number is a full-size link", async () => {
+      const task = (
+        id: string,
+        unit: string,
+        status: "TO_DO" | "DONE" | "SKIPPED",
+        late: boolean,
+      ) => ({
+        task_id: id,
+        kind: "DAILY_CLEAN" as const,
+        task_on: late ? "2026-11-03" : "2026-11-04",
+        status,
+        note: null,
+        done_at: null,
+        unit_id: `u-${unit}`,
+        unit_number: unit,
+        booking_id: `b-${id}`,
+        booking_number: `ST26000${id}`,
+        guest_name: "Lim Dara",
+        late,
+      });
+      const day = {
+        day: "2026-11-04",
+        today: "2026-11-04",
+        tasks: [
+          task("1", "U501", "TO_DO", false),
+          task("2", "U502", "DONE", false),
+          task("3", "U503", "TO_DO", true),
+        ],
+      };
+      show({
+        api: fakeApi({ cleaning: vi.fn(() => Promise.resolve(day)) }),
+        capabilities: new Set([...DESK, "short_stays.housekeeping"]),
+      });
+      fireEvent.click(
+        await screen.findByRole("link", { name: "Housekeeping" }),
+      );
+      const list = await screen.findByRole("list", { name: "Housekeeping" });
+      const rows = within(list).getAllByRole("listitem");
+      expect(rows.map((row) => row.textContent)).toEqual([
+        expect.stringContaining("U503"),
+        expect.stringContaining("U501"),
+      ]);
+      expect(rows[0]).toHaveClass("late");
+      expect(within(rows[0]).getByText("Late")).toBeInTheDocument();
+      expect(
+        within(rows[0]).getByRole("link", { name: "ST260003" }),
+      ).toHaveClass("ss-tasklink");
+      expect(screen.getByText("Done and skipped (1)")).toBeInTheDocument();
+      const done = screen.getByRole("list", { name: "Done and skipped" });
+      expect(done.closest("details")).not.toHaveAttribute("open");
+      expect(within(done).getByText("U502")).toBeInTheDocument();
+    });
+
+    it("TEST-FE-2202 the Short stays tabs are the page head's links, as on Invoices, with the open one marked", async () => {
+      window.location.hash = "#/shortstays?tab=list";
+      show({ api: fakeApi({ list: vi.fn(() => Promise.resolve([])) }) });
+      const tabs = screen.getByRole("navigation", { name: "Views" });
+      const links = within(tabs).getAllByRole("link");
+      expect(links.map((link) => link.textContent)).toEqual([
+        "Calendar",
+        "Bookings",
+        "Housekeeping",
+      ]);
+      expect(links.map((link) => link.getAttribute("href"))).toEqual([
+        "#/shortstays?tab=cal",
+        "#/shortstays?tab=list",
+        "#/shortstays?tab=clean",
+      ]);
+      expect(links[1]).toHaveAttribute("aria-current", "page");
+      expect(links[0]).not.toHaveAttribute("aria-current");
+      expect(screen.queryByRole("tab")).toBeNull();
+      expect(await screen.findByText("No bookings yet.")).toBeInTheDocument();
     });
   });
 });

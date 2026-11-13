@@ -104,6 +104,113 @@ export function CleaningList({
   const tasks = found?.tasks ?? [];
   const toDo = tasks.filter((task) => task.status === "TO_DO").length;
 
+  // Owner 13/11/2026: one short row per task; late first, then the rest to do; done and skipped
+  // folded under the list.
+  const open = tasks
+    .filter((task) => task.status === "TO_DO")
+    .sort((a, b) => Number(b.late) - Number(a.late));
+  const finished = tasks.filter((task) => task.status !== "TO_DO");
+
+  const row = (task: CleaningTask) => {
+    const due = found !== null && task.task_on <= found.today;
+    const doable = task.status === "TO_DO" && due && mayClean;
+    return (
+      <li className={task.late ? "ss-task late" : "ss-task"} key={task.task_id}>
+        <div className="ss-taskwhat">
+          <div className="ui-hrow">
+            <b className="ui-num">{task.unit_number}</b>
+            <span>{st(language, `cl_${task.kind}`)}</span>
+            {task.late ? (
+              <Chip tone="err">{st(language, "cl_late_chip")}</Chip>
+            ) : (
+              <Chip tone={TONES[task.status]}>
+                {st(language, `cl_${task.status}`)}
+              </Chip>
+            )}
+            {task.late && (
+              <span className="ui-small ss-latedate ui-num">
+                {st(language, "cl_late", dayText(task.task_on))}
+              </span>
+            )}
+          </div>
+          {task.booking_id !== null && (
+            <p className="ui-small">
+              <a
+                className="ss-tasklink ui-num"
+                href={hashForPage("shortstays", `st:${task.booking_id}`)}
+              >
+                {task.booking_number}
+              </a>
+              {task.guest_name !== null && ` · ${task.guest_name}`}
+            </p>
+          )}
+          {task.note !== null && (
+            <p className="ui-small ui-muted">{task.note}</p>
+          )}
+          {doable && skipping === task.task_id && (
+            <div className="ui-field">
+              <label htmlFor={`ss-skip-${task.task_id}`}>
+                {st(language, "cl_reason")}
+                <span className="req">{st(language, "required")}</span>
+              </label>
+              <input
+                autoComplete="off"
+                disabled={busy}
+                id={`ss-skip-${task.task_id}`}
+                maxLength={500}
+                onChange={(event) => {
+                  setReason(event.currentTarget.value);
+                }}
+                value={reason}
+              />
+            </div>
+          )}
+        </div>
+        {doable && task.kind === "ROOM_CHECK" && task.booking_id !== null && (
+          <div className="ss-taskdo">
+            <a
+              className="ui-btn primary"
+              href={hashForPage("shortstays", `st:${task.booking_id}`)}
+            >
+              {st(language, "cl_room")}
+            </a>
+          </div>
+        )}
+        {doable && task.kind !== "ROOM_CHECK" && (
+          <div className="ss-taskdo">
+            <button
+              className="ui-btn primary"
+              disabled={busy}
+              onClick={() => {
+                finish(task, false);
+              }}
+              type="button"
+            >
+              <Icon name="check" small />
+              {st(language, "cl_done_b")}
+            </button>
+            <button
+              className="ui-btn"
+              disabled={busy}
+              onClick={() => {
+                if (skipping === task.task_id) {
+                  finish(task, true);
+                } else {
+                  setSkipping(task.task_id);
+                  setReason("");
+                  setProblem(null);
+                }
+              }}
+              type="button"
+            >
+              {st(language, "cl_skip")}
+            </button>
+          </div>
+        )}
+      </li>
+    );
+  };
+
   return (
     <>
       <div className="ui-filters">
@@ -133,6 +240,7 @@ export function CleaningList({
             type="button"
           >
             {st(language, "cl_next")}
+            <Icon name="forward" small />
           </button>
         </div>
         <span className="ui-muted ui-num">{dayText(day)}</span>
@@ -161,112 +269,29 @@ export function CleaningList({
       ) : tasks.length === 0 ? (
         <p className="ui-empty">{st(language, "cl_none")}</p>
       ) : (
-        <ul
-          aria-label={st(language, "tab_clean")}
-          className="ui-plain ss-clean"
-        >
-          {tasks.map((task) => {
-            const due = task.task_on <= found.today;
-            const open = task.status === "TO_DO" && due && mayClean;
-            return (
-              <li className="ui-card" key={task.task_id}>
-                <div className="ui-hrow">
-                  <b className="ui-num">{task.unit_number}</b>
-                  <span>{st(language, `cl_${task.kind}`)}</span>
-                  <Chip tone={TONES[task.status]}>
-                    {st(language, `cl_${task.status}`)}
-                  </Chip>
-                  {task.late && (
-                    <span className="ui-small ui-muted ui-num">
-                      {st(language, "cl_late", dayText(task.task_on))}
-                    </span>
-                  )}
-                </div>
-                {task.booking_id !== null && (
-                  <p className="ui-small">
-                    <a
-                      href={hashForPage("shortstays", `st:${task.booking_id}`)}
-                    >
-                      {task.booking_number}
-                    </a>
-                    {task.guest_name !== null && ` · ${task.guest_name}`}
-                  </p>
-                )}
-                {task.note !== null && (
-                  <p className="ui-small ui-muted">{task.note}</p>
-                )}
-                {open &&
-                  task.kind === "ROOM_CHECK" &&
-                  task.booking_id !== null && (
-                    <div className="ui-actions">
-                      <a
-                        className="ui-btn primary"
-                        href={hashForPage(
-                          "shortstays",
-                          `st:${task.booking_id}`,
-                        )}
-                      >
-                        {st(language, "cl_room")}
-                      </a>
-                    </div>
-                  )}
-                {open && task.kind !== "ROOM_CHECK" && (
-                  <div className="ui-stack">
-                    {skipping === task.task_id && (
-                      <div className="ui-field">
-                        <label htmlFor={`ss-skip-${task.task_id}`}>
-                          {st(language, "cl_reason")}
-                          <span className="req">
-                            {st(language, "required")}
-                          </span>
-                        </label>
-                        <input
-                          autoComplete="off"
-                          disabled={busy}
-                          id={`ss-skip-${task.task_id}`}
-                          maxLength={500}
-                          onChange={(event) => {
-                            setReason(event.currentTarget.value);
-                          }}
-                          value={reason}
-                        />
-                      </div>
-                    )}
-                    <div className="ui-actions">
-                      <button
-                        className="ui-btn primary"
-                        disabled={busy}
-                        onClick={() => {
-                          finish(task, false);
-                        }}
-                        type="button"
-                      >
-                        <Icon name="check" small />
-                        {st(language, "cl_done_b")}
-                      </button>
-                      <button
-                        className="ui-btn"
-                        disabled={busy}
-                        onClick={() => {
-                          if (skipping === task.task_id) {
-                            finish(task, true);
-                          } else {
-                            setSkipping(task.task_id);
-                            setReason("");
-                            setProblem(null);
-                          }
-                        }}
-                        type="button"
-                      >
-                        {st(language, "cl_skip")}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </li>
-            );
-          })}
-        </ul>
+        <>
+          {open.length > 0 && (
+            <div className="ui-card pad0">
+              <ul aria-label={st(language, "tab_clean")} className="ss-tasks">
+                {open.map(row)}
+              </ul>
+            </div>
+          )}
+          {open.length === 0 && (
+            <p className="ui-empty">{st(language, "cl_all_done")}</p>
+          )}
+          {finished.length > 0 && (
+            <details className="ui-card pad0 ss-taskdone">
+              <summary>{st(language, "cl_finished", finished.length)}</summary>
+              <ul
+                aria-label={st(language, "cl_finished_list")}
+                className="ss-tasks"
+              >
+                {finished.map(row)}
+              </ul>
+            </details>
+          )}
+        </>
       )}
     </>
   );

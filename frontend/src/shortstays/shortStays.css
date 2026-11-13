@@ -516,6 +516,89 @@ fieldset.ss-problems > legend {
   gap: 8px;
 }
 
+/* Owner 13/11/2026: Housekeeping is one card of short rows (what, booking, guest at the left;
+   Done and Skip at the right), the late ones first in red; done and skipped fold under it. */
+.ss-tasks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ss-task {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px 16px;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.ss-task:last-child {
+  border-bottom: 0;
+}
+
+.ss-task.late {
+  box-shadow: inset 4px 0 0 var(--err);
+  background: var(--err-bg);
+}
+
+.ss-taskwhat {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ss-taskwhat .ui-hrow {
+  flex-wrap: wrap;
+  gap: 4px 8px;
+}
+
+.ss-taskwhat p {
+  margin: 0;
+}
+
+.ss-latedate {
+  color: var(--err);
+  font-weight: 600;
+}
+
+/* The booking number is a link a finger can hit (44 px high). */
+a.ss-tasklink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  min-width: 44px;
+}
+
+.ss-taskdo {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.ss-taskdone > summary {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ss-taskdone[open] > summary {
+  border-bottom: 1px solid var(--border);
+}
+
+@media (max-width: 639px) {
+  .ss-task {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ss-taskdo {
+    justify-content: flex-start;
+  }
+}
+
 /* Step 5b: a message to copy for the guest (quote, review request) and the guest's notes. */
 .ss-message {
   width: 100%;
@@ -590,17 +673,8 @@ form.ss-form .ui-date input {
   justify-self: stretch;
 }
 
-/* Owner 13/11/2026: the Short stays tabs, and the Week / 2 weeks / Month switch, each have the
-   same width. */
-.ui-subtabs[role="tablist"]:has(#shortstays-cal) {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 10rem));
-}
-
-.ui-subtabs[role="tablist"]:has(#shortstays-cal) [role="tab"] {
-  justify-content: center;
-}
-
+/* Owner 13/11/2026: the Week / 2 weeks / Month switch buttons each have the same width. The
+   Short stays tabs are the page head's tabs (owner 14/11/2026, like Invoices). */
 .ss-views {
   display: inline-grid;
   grid-template-columns: repeat(3, 6.5rem);
@@ -611,19 +685,101 @@ form.ss-form .ui-date input {
 }
 
 @media (max-width: 640px) {
-  .ui-subtabs[role="tablist"]:has(#shortstays-cal) {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    margin-right: 0;
-    margin-left: 0;
-    padding: 2px 0;
-    overflow: visible;
-  }
-
-  .ui-subtabs[role="tablist"]:has(#shortstays-cal) [role="tab"] {
-    padding: 0 6px;
-  }
-
   .ss-views {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+}
+
+/* Owner 13/11/2026: on a phone each booking is a small card, so the dates, Total and Status
+   never sit off the screen. Row 1: number and status; row 2: guest and total; row 3: the dates and
+   the Unit. The column headings stay for screen readers only. */
+@media (max-width: 639px) {
+  table.ui-table.ss-booklist,
+  table.ui-table.ss-booklist tbody {
+    display: block;
+    min-width: 0;
+  }
+
+  table.ui-table.ss-booklist thead,
+  table.ui-table.ss-booklist thead th {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    padding: 0;
+    border: 0;
+  }
+
+  table.ui-table.ss-booklist tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px 12px;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  table.ui-table.ss-booklist tr:last-child {
+    border-bottom: 0;
+  }
+
+  table.ui-table.ss-booklist td {
+    display: block;
+    padding: 0;
+    border: 0;
+    white-space: normal;
+  }
+
+  table.ui-table.ss-booklist td:nth-child(1) {
+    grid-row: 1;
+    grid-column: 1;
+  }
+
+  table.ui-table.ss-booklist td:nth-child(6) {
+    grid-row: 1;
+    grid-column: 2;
+    justify-self: end;
+  }
+
+  table.ui-table.ss-booklist td:nth-child(2) {
+    grid-row: 2;
+    grid-column: 1;
+    font-weight: 600;
+  }
+
+  table.ui-table.ss-booklist td:nth-child(5) {
+    grid-row: 2;
+    grid-column: 2;
+    font-weight: 700;
+    text-align: right;
+  }
+
+  table.ui-table.ss-booklist td:nth-child(4) {
+    grid-row: 3;
+    grid-column: 1;
+  }
+
+  table.ui-table.ss-booklist td:nth-child(3) {
+    grid-row: 3;
+    grid-column: 2;
+    text-align: right;
+  }
+
+  table.ui-table.ss-booklist td:nth-child(7) {
+    display: none;
+  }
+
+  table.ui-table.ss-booklist td .ui-sub2 {
+    display: block;
+  }
+}
+
+/* The tab row is the page head (owner 14/11/2026): one line under it, the head's, as on
+   Invoices. */
+.shell-head-tabbed > .ss-tabs {
+  flex: 1 1 auto;
+  margin: 0;
+  border-bottom: 0;
 }
