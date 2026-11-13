@@ -43,34 +43,54 @@ export function CountCard({
   pressed,
   onPress,
   valueText,
+  top = false,
 }: {
   icon: ShellIcon;
   tone: Tone | "brand" | "none";
   label: string;
   value: number;
-  note: string;
+  /** A short line under the number; left out when the card name says enough. */
+  note?: string;
   pressed: boolean;
   onPress: () => void;
   /** How the value is written, such as "$1,250.00"; the plain number by default. */
   valueText?: string;
+  /** The number at the top right, beside the name, as on the Home cards. */
+  top?: boolean;
 }) {
   const shown = valueText ?? String(value);
+  const hasNote = note !== undefined && note !== "";
+  const name = (
+    <span className="ui-kpi-label">
+      <span className="ui-kpi-icon">
+        <Icon name={icon} small />
+      </span>
+      {top ? <span>{label}</span> : label}
+    </span>
+  );
+  const number = <span className="ui-kpi-value ui-num">{shown}</span>;
   return (
     <button
-      aria-label={`${label}: ${shown}. ${note}`}
+      aria-label={
+        hasNote ? `${label}: ${shown}. ${note}` : `${label}: ${shown}.`
+      }
       aria-pressed={pressed}
-      className={`ui-kpi ${value === 0 ? "none" : tone}`}
+      className={`ui-kpi${top ? " ui-kpi-top" : ""} ${value === 0 ? "none" : tone}`}
       onClick={onPress}
       type="button"
     >
-      <span className="ui-kpi-label">
-        <span className="ui-kpi-icon">
-          <Icon name={icon} small />
+      {top ? (
+        <span className="ui-kpi-head">
+          {name}
+          {number}
         </span>
-        {label}
-      </span>
-      <span className="ui-kpi-value ui-num">{shown}</span>
-      <span className="ui-kpi-note">{note}</span>
+      ) : (
+        <>
+          {name}
+          {number}
+        </>
+      )}
+      {hasNote && <span className="ui-kpi-note">{note}</span>}
     </button>
   );
 }
