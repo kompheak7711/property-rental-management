@@ -997,6 +997,32 @@ TEXTS: Final[dict[str, dict[str, str]]] = {
         "km": "🧹 ការងារថ្មីសម្រាប់អ្នក៖ {task} · បន្ទប់ {unit} · ថ្ងៃ {day}។",
         "en": "🧹 ការងារថ្មីសម្រាប់អ្នក៖ {task} · បន្ទប់ {unit} · ថ្ងៃ {day}។",
     },
+    # The cleaner's tap on Cleaned or Not cleaned (owner card 14 Nov 2026: "Telegram: get and
+    # tick tasks").
+    "staff.task_done": {
+        "km": "✅ បានកត់ត្រា៖ បន្ទប់ {unit} សម្អាតរួច។ អរគុណ!",
+        "en": "✅ បានកត់ត្រា៖ បន្ទប់ {unit} សម្អាតរួច។ អរគុណ!",
+    },
+    "staff.task_why": {
+        "km": "បន្ទប់ {unit}៖ ហេតុអ្វីមិនបានសម្អាត? សូមជ្រើសរើស។",
+        "en": "បន្ទប់ {unit}៖ ហេតុអ្វីមិនបានសម្អាត? សូមជ្រើសរើស។",
+    },
+    "staff.task_skipped": {
+        "km": "✅ បានកត់ត្រា៖ បន្ទប់ {unit} មិនបានសម្អាតថ្ងៃនេះ។",
+        "en": "✅ បានកត់ត្រា៖ បន្ទប់ {unit} មិនបានសម្អាតថ្ងៃនេះ។",
+    },
+    "staff.task_closed": {
+        "km": "ការងារបន្ទប់ {unit} នេះបានបញ្ចប់រួចហើយ។",
+        "en": "ការងារបន្ទប់ {unit} នេះបានបញ្ចប់រួចហើយ។",
+    },
+    "staff.task_not_due": {
+        "km": "ការងារបន្ទប់ {unit} នេះមិនទាន់ដល់ថ្ងៃទេ។",
+        "en": "ការងារបន្ទប់ {unit} នេះមិនទាន់ដល់ថ្ងៃទេ។",
+    },
+    "staff.task_not_yours": {
+        "km": "ការងារនេះមិនមែនសម្រាប់អ្នកទេ។ សូមសួរផ្នែកទទួលភ្ញៀវ។",
+        "en": "ការងារនេះមិនមែនសម្រាប់អ្នកទេ។ សូមសួរផ្នែកទទួលភ្ញៀវ។",
+    },
     # Report states as the tenant sees them (the app's words, Building > Problem reports).
     "status.RECEIVED": {"km": "បានទទួល", "en": "Received"},
     "status.PLANNED": {"km": "បានរៀបចំការមកពិនិត្យ", "en": "Visit planned"},

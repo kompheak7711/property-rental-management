@@ -1305,7 +1305,6 @@ describe("Daily and weekly rent: Short stays", () => {
           late: false,
           assigned_to: null,
           assigned_name: null,
-          mine: false,
           done_by_name: null,
         },
         {
@@ -1323,7 +1322,6 @@ describe("Daily and weekly rent: Short stays", () => {
           late: true,
           assigned_to: null,
           assigned_name: null,
-          mine: false,
           done_by_name: null,
         },
       ],
@@ -2743,7 +2741,6 @@ describe("Daily and weekly rent: Short stays", () => {
         late,
         assigned_to: null,
         assigned_name: null,
-        mine: false,
         done_by_name: null,
       });
       const day = {
@@ -2841,7 +2838,7 @@ describe("Daily and weekly rent: Short stays", () => {
       expect(within(table).queryByRole("row", { name: /U603/ })).toBeNull();
     });
 
-    it("TEST-FE-2204 (DL-236) the front desk gives a task to one person; My tasks shows only the reader's; a finished task names who did it", async () => {
+    it("TEST-FE-2204 (DL-236) the front desk gives a task to a cleaner from the staff list, marks who has no Telegram, has no My tasks, and a finished task names who did it", async () => {
       const task = (
         id: string,
         unit: string,
@@ -2861,13 +2858,22 @@ describe("Daily and weekly rent: Short stays", () => {
         late: false,
         assigned_to: null,
         assigned_name: null,
-        mine: false,
         done_by_name: null,
         ...extra,
       });
       const cleaners = [
-        { actor_id: "a-1", name: "Chan Thida", telegram: true },
-        { actor_id: "a-2", name: "Sok Mony", telegram: false },
+        {
+          employee_id: "e-1",
+          name: "Chan Thida",
+          name_km: "ចាន់ ធីតា",
+          telegram: true,
+        },
+        {
+          employee_id: "e-2",
+          name: "Sok Mony",
+          name_km: "សុខ មុនី",
+          telegram: false,
+        },
       ];
       const day = (tasks: CleaningTask[]): CleaningDay => ({
         day: "2026-11-04",
@@ -2878,9 +2884,8 @@ describe("Daily and weekly rent: Short stays", () => {
       const first = day([
         task("1", "U501"),
         task("2", "U502", {
-          assigned_to: "a-2",
+          assigned_to: "e-2",
           assigned_name: "Sok Mony",
-          mine: true,
         }),
         task("3", "U503", {
           status: "DONE",
@@ -2889,7 +2894,7 @@ describe("Daily and weekly rent: Short stays", () => {
         }),
       ]);
       const given = day([
-        task("1", "U501", { assigned_to: "a-1", assigned_name: "Chan Thida" }),
+        task("1", "U501", { assigned_to: "e-1", assigned_name: "Chan Thida" }),
         ...first.tasks.slice(1),
       ]);
       const assignTask = vi.fn(() => Promise.resolve(given));
@@ -2912,30 +2917,32 @@ describe("Daily and weekly rent: Short stays", () => {
           .getAllByRole("option")
           .map((option) => option.textContent),
       ).toEqual(["Nobody yet", "Chan Thida", "Sok Mony (no Telegram)"]);
-      fireEvent.change(box, { target: { value: "a-1" } });
+      fireEvent.change(box, { target: { value: "e-1" } });
       await waitFor(() => {
-        expect(assignTask).toHaveBeenCalledWith("p-1", "1", "a-1");
+        expect(assignTask).toHaveBeenCalledWith("p-1", "1", "e-1");
       });
       await waitFor(() => {
         expect(
           screen.getAllByRole("combobox", { name: /Assign to/ })[0],
-        ).toHaveValue("a-1");
+        ).toHaveValue("e-1");
       });
       expect(screen.getByText("Done by Chan Thida")).toBeInTheDocument();
-      fireEvent.click(screen.getByRole("button", { name: "My tasks" }));
-      const mine = screen.getByRole("list", { name: "Housekeeping" });
-      expect(
-        within(mine)
-          .getAllByRole("listitem")
-          .map((row) => row.textContent),
-      ).toEqual([expect.stringContaining("U502")]);
+      // Owner card 14/11/2026: cleaners use the Staff bot, so there is no "My tasks".
+      expect(screen.queryByRole("button", { name: "My tasks" })).toBeNull();
     });
 
     it("TEST-FE-2205 (DL-236) a housekeeper without the desk right sees who a task is given to, with no box", async () => {
       const day: CleaningDay = {
         day: "2026-11-04",
         today: "2026-11-04",
-        cleaners: [{ actor_id: "a-1", name: "Chan Thida", telegram: true }],
+        cleaners: [
+          {
+            employee_id: "e-1",
+            name: "Chan Thida",
+            name_km: "ចាន់ ធីតា",
+            telegram: true,
+          },
+        ],
         tasks: [
           {
             task_id: "1",
@@ -2950,9 +2957,8 @@ describe("Daily and weekly rent: Short stays", () => {
             booking_number: "ST260001",
             guest_name: "Lim Dara",
             late: false,
-            assigned_to: "a-1",
+            assigned_to: "e-1",
             assigned_name: "Chan Thida",
-            mine: true,
             done_by_name: null,
           },
         ],

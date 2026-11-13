@@ -574,20 +574,19 @@ export interface CleaningTask {
   guest_name: string | null;
   /** Due on an earlier day and not done yet (shown today). */
   late: boolean;
-  /** DL-236: the person the task is given to (null: nobody yet). */
+  /** DL-236: the cleaner (an employee) the task is given to (null: nobody yet). */
   assigned_to: string | null;
   assigned_name: string | null;
-  /** Given to the person reading the list ("My tasks"). */
-  mine: boolean;
-  /** The person who ticked it done or not cleaned. */
+  /** The person who ticked it done or not cleaned (in the app or the Staff bot). */
   done_by_name: string | null;
 }
 
-/** DL-236: a person a Housekeeping task may be given to. */
+/** DL-236: a cleaner from the staff list (HR) a Housekeeping task may be given to. */
 export interface Cleaner {
-  actor_id: string;
+  employee_id: string;
   name: string;
-  /** The Staff bot can tell this person on Telegram when a task is given to them. */
+  name_km: string;
+  /** The Staff bot can send this cleaner the task, to tick in Telegram. */
   telegram: boolean;
 }
 
@@ -644,11 +643,11 @@ export interface ShortStaysApi {
     taskId: string,
     finish: { skip: boolean; note?: string },
   ) => Promise<CleaningDay>;
-  /** DL-236: gives a task still to do to one person, or to nobody (short_stays.desk). */
+  /** DL-236: gives a task still to do to one cleaner, or to nobody (short_stays.desk). */
   assignTask: (
     propertyId: string,
     taskId: string,
-    actorId: string | null,
+    employeeId: string | null,
   ) => Promise<CleaningDay>;
   siteCalendars: (propertyId: string) => Promise<SiteCalendar[]>;
   saveSiteCalendar: (
@@ -1316,15 +1315,15 @@ export function cleaningOf(value: unknown): CleaningDay {
         late: task.late === true,
         assigned_to: maybeText(task.assigned_to),
         assigned_name: maybeText(task.assigned_name),
-        mine: task.mine === true,
         done_by_name: maybeText(task.done_by_name),
       };
     }),
     cleaners: list(row.cleaners ?? []).map((entry) => {
       const person = record(entry);
       return {
-        actor_id: text(person.actor_id),
+        employee_id: text(person.employee_id),
         name: text(person.name),
+        name_km: text(person.name_km),
         telegram: person.telegram === true,
       };
     }),
@@ -1406,11 +1405,11 @@ export const shortStaysApi: ShortStaysApi = {
         post(finish),
       ),
     ),
-  assignTask: async (propertyId, taskId, actorId) =>
+  assignTask: async (propertyId, taskId, employeeId) =>
     cleaningOf(
       await request(
         `${base(propertyId)}/housekeeping/${encodeURIComponent(taskId)}/assign`,
-        post({ actor_id: actorId }),
+        post({ employee_id: employeeId }),
       ),
     ),
   siteCalendars: async (propertyId) =>

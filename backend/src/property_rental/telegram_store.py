@@ -110,6 +110,10 @@ class TelegramStore(Protocol):
 
     def staff_join(self, user: int, name: str, phone: str) -> dict[str, Any]: ...
 
+    def staff_task_tap(
+        self, inbound_id: str, user: int, chat: int, data: str
+    ) -> dict[str, Any]: ...
+
     def staff_check(self, user: int, scan: dict[str, Any], at: str) -> dict[str, Any]: ...
 
     def staff_card(self, user: int, scan: dict[str, Any], at: str) -> dict[str, Any]: ...
@@ -509,6 +513,18 @@ class PostgresTelegramStore:
             "SELECT app.telegram_staff_who(%s, %s, %s, %s)",
             self._property,
             user,
+            self._staff(),
+            self._actor,
+        )
+
+    def staff_task_tap(self, inbound_id: str, user: int, chat: int, data: str) -> dict[str, Any]:
+        return self._staff_dict(
+            "SELECT app.telegram_staff_task_tap(%s, %s, %s, %s, %s, %s, %s)",
+            self._property,
+            inbound_id,
+            user,
+            chat,
+            data,
             self._staff(),
             self._actor,
         )

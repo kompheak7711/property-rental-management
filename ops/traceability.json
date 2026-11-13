@@ -66460,6 +66460,17 @@
       "notes": "Telegram bots step 4a: Every Staff bot text is Khmer in both languages (owner rule)."
     },
     {
+      "test_id": "test_a_cleaner_taps_a_housekeeping_task_and_the_database_answers",
+      "upstream_ids": [
+        "DL-236",
+        "DB-HK-001"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_telegram_staff_bot.py",
+      "status": "implemented",
+      "notes": "A tap on a Housekeeping task button in a private chat goes to the database with its inbound id; another button or a group chat is not a task tap; without the bot service the bot says it is not ready."
+    },
+    {
       "test_id": "test_staff_report_a_problem_with_a_photo",
       "upstream_ids": [
         "DL-175",
@@ -69945,7 +69956,7 @@
       "test_level": "UI component",
       "test_path": "frontend/src/shortstays/ShortStaysPage.test.tsx",
       "status": "implemented",
-      "notes": "Owner 13/11/2026 (Leasing thread, DL-236): the front desk gives a Housekeeping task to a person with Assign to; My tasks shows only the tasks given to the person reading; a finished task says Done by and the person's name."
+      "notes": "Owner 13-14/11/2026 (Leasing thread, DL-236): the front desk gives a Housekeeping task to a cleaner from the staff list with Assign to; a cleaner with no Staff bot shows (no Telegram); there is no My tasks; a finished task says Done by and the name."
     },
     {
       "test_id": "TEST-FE-2205",
@@ -70006,7 +70017,7 @@
       "notes": "Migration 20270725_410 follows 20270725_412 (Problem type order) on ui-v81 and is forward-only."
     },
     {
-      "test_id": "test_a_task_is_given_to_one_person_and_names_who_finished_it",
+      "test_id": "test_the_front_desk_gives_a_task_to_a_cleaner_from_the_staff_list",
       "upstream_ids": [
         "DL-236",
         "DB-HK-001",
@@ -70015,10 +70026,10 @@
       "test_level": "integration",
       "test_path": "backend/tests/test_housekeeping_task_assign_migration.py",
       "status": "implemented",
-      "notes": "The front desk gives a task still to do to a person who may do housekeeping, to another, or to nobody; the History keeps each change; anyone with the housekeeping right finishes it and the list names who did; a finished task, an unknown person and a bad answer are refused."
+      "notes": "The cleaners are HR employees who work today with job Cleaner or the Cleaner Staff bot role, each marked with Telegram or not; the front desk gives a task to one, another or nobody; the Staff bot sends the task with Cleaned and Not cleaned; a non-cleaner, an unknown person, a bad answer and a finished task are refused; the History keeps each change."
     },
     {
-      "test_id": "test_the_staff_bot_tells_the_person_given_the_task",
+      "test_id": "test_the_cleaner_ticks_the_task_in_the_staff_bot",
       "upstream_ids": [
         "DL-236",
         "DB-HK-001"
@@ -70026,7 +70037,18 @@
       "test_level": "integration",
       "test_path": "backend/tests/test_housekeeping_task_assign_migration.py",
       "status": "implemented",
-      "notes": "The Staff bot queues one Khmer message (task, room, day) to the linked Telegram of the employee given a task, once for each change; a person with no linked Telegram gets none, and the cleaners list says who has Telegram."
+      "notes": "Only the cleaner given the task may tap; Cleaned finishes it and names the cleaner; Not cleaned asks why with three reasons and the reason finishes it as not cleaned; a finished task answers already finished; each tap is answered once; the History keeps it."
+    },
+    {
+      "test_id": "test_a_room_check_is_given_without_buttons_and_cannot_be_ticked",
+      "upstream_ids": [
+        "DL-236",
+        "DB-HK-001"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_housekeeping_task_assign_migration.py",
+      "status": "implemented",
+      "notes": "A room check's Staff bot message has no buttons and a tap on it is refused; the room check stays on the booking page."
     },
     {
       "test_id": "TEST-FE-2190",

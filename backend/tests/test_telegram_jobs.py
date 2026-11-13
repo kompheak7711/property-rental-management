@@ -143,6 +143,7 @@ class FakeStore:
         self.staff_joins: list[tuple[int, str, str]] = []
         self.staff_scans: list[tuple[str, int, dict[str, Any], str]] = []
         self.staff_answers: list[dict[str, Any]] = []
+        self.staff_taps: list[tuple[str, int, int, str]] = []
         self.staff_data: dict[str, Any] = {"choices": {}, "users": []}
         self.photos_due: list[dict[str, Any]] = []
         self.photos_removed: list[str] = []
@@ -321,6 +322,11 @@ class FakeStore:
         if user in self.staff:
             return {"linked": True, **self.staff[user]}
         return {"linked": False, "waiting": user in self.staff_waiting}
+
+    def staff_task_tap(self, inbound_id: str, user: int, chat: int, data: str) -> dict[str, Any]:
+        self._staff_ready()
+        self.staff_taps.append((inbound_id, user, chat, data))
+        return {"result": "DONE"}
 
     def staff_join(self, user: int, name: str, phone: str) -> dict[str, Any]:
         self._staff_ready()

@@ -11,6 +11,7 @@ import { Chip, type Tone } from "../shell/ui";
 import type { Language } from "../signInText";
 import {
   addDays,
+  type Cleaner,
   type CleaningDay,
   type CleaningTask,
   type ShortStaysApi,
@@ -23,6 +24,11 @@ const TONES: Record<CleaningTask["status"], Tone> = {
   DONE: "ok",
   SKIPPED: "neutral",
 };
+
+/** A cleaner's name in the screen's language (HR keeps both). */
+function cleanerName(language: Language, person: Cleaner): string {
+  return language === "km" ? person.name_km : person.name;
+}
 
 function problemOf(error: unknown): StaysTextKey {
   if (!(error instanceof ShortStaysError)) return "f_failed";
@@ -53,7 +59,6 @@ export function CleaningList({
   const [skipping, setSkipping] = useState<string | null>(null);
   const [reason, setReason] = useState("");
   // DL-236: all tasks, or only those given to the person reading ("My tasks").
-  const [onlyMine, setOnlyMine] = useState(false);
   const sequence = useRef(0);
 
   const load = useCallback(() => {
@@ -103,12 +108,12 @@ export function CleaningList({
   };
 
   // DL-236: the front desk gives a task to one person, or to nobody.
-  const assign = (task: CleaningTask, actorId: string | null) => {
+  const assign = (task: CleaningTask, employeeId: string | null) => {
     const operation = ++sequence.current;
     setBusy(true);
     setProblem(null);
     void api
-      .assignTask(propertyId, task.task_id, actorId)
+      .assignTask(propertyId, task.task_id, employeeId)
       .then((answer) => {
         if (operation === sequence.current) setFound(answer);
       })
@@ -125,7 +130,9 @@ export function CleaningList({
   const mayClean = may("short_stays.housekeeping");
   const mayAssign = may("short_stays.desk");
   const cleaners = found?.cleaners ?? [];
-  const tasks = (found?.tasks ?? []).filter((task) => !onlyMine || task.mine);
+  // Owner card 14/11/2026: the cleaners see their tasks in the Staff bot, so there is no
+  // "My tasks" here.
+  const tasks = found?.tasks ?? [];
   const toDo = tasks.filter((task) => task.status === "TO_DO").length;
 
   // Owner 13/11/2026: one short row per task; late first, then the rest to do; done and skipped
@@ -186,17 +193,21 @@ export function CleaningList({
                   {/* A person who lost the right keeps the task until it is moved. */}
                   {task.assigned_to !== null &&
                     !cleaners.some(
-                      (person) => person.actor_id === task.assigned_to,
+                      (person) => person.employee_id === task.assigned_to,
                     ) && (
                       <option value={task.assigned_to}>
                         {task.assigned_name ?? task.assigned_to}
                       </option>
                     )}
                   {cleaners.map((person) => (
-                    <option key={person.actor_id} value={person.actor_id}>
+                    <option key={person.employee_id} value={person.employee_id}>
                       {person.telegram
-                        ? person.name
-                        : st(language, "cl_no_tg", person.name)}
+                        ? cleanerName(language, person)
+                        : st(
+                            language,
+                            "cl_no_tg",
+                            cleanerName(language, person),
+                          )}
                     </option>
                   ))}
                 </select>
@@ -308,32 +319,6 @@ export function CleaningList({
         {found !== null && toDo > 0 && (
           <Chip tone="warn">{st(language, "cl_count", toDo)}</Chip>
         )}
-        {mayClean && (
-          <div
-            aria-label={st(language, "cl_whose")}
-            className="ui-seg ss-whose"
-            role="group"
-          >
-            <button
-              aria-pressed={!onlyMine}
-              onClick={() => {
-                setOnlyMine(false);
-              }}
-              type="button"
-            >
-              {st(language, "cl_all")}
-            </button>
-            <button
-              aria-pressed={onlyMine}
-              onClick={() => {
-                setOnlyMine(true);
-              }}
-              type="button"
-            >
-              {st(language, "cl_mine")}
-            </button>
-          </div>
-        )}
       </div>
       {problem !== null && (
         <div className="ui-notice warn" role="alert">
@@ -354,9 +339,7 @@ export function CleaningList({
           {st(language, "loading")}
         </p>
       ) : tasks.length === 0 ? (
-        <p className="ui-empty">
-          {st(language, onlyMine ? "cl_mine_none" : "cl_none")}
-        </p>
+        <p className="ui-empty">{st(language, "cl_none")}</p>
       ) : (
         <>
           {open.length > 0 && (

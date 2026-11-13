@@ -611,10 +611,6 @@ fieldset.ss-problems > legend {
   color: var(--text-2);
 }
 
-.ss-whose {
-  margin-left: auto;
-}
-
 .ss-taskdo {
   display: flex;
   gap: 8px;

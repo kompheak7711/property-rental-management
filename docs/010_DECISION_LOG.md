@@ -3199,13 +3199,12 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **Links:** DL-060, DL-121, DL-181, BR-MONEY-004, BR-MONEY-007.
 - **Decision date:** 2026-11-13.
 
-## DL-236 — A Housekeeping task is given to one person
+## DL-236 — A Housekeeping task is given to one cleaner, who gets and ticks it in the Staff bot
 
-- **Source:** the owner on 13 Nov 2026 in the thread "Improve the Leasing screen": "no assign to task to who?". On the decision card the owner chose "Yes, assign to a person".
-- **Before.** A Housekeeping task belonged to nobody. Anyone with the housekeeping right ticked any task, and the list did not say who did it.
-- **Now.** The front desk (`short_stays.desk`) gives a task still to do to one person who may tick Housekeeping tasks at the Property, to another person, or to nobody. The housekeeper can show only "My tasks". A finished task names the person who finished it ("Done by"). Anyone with the housekeeping right may still finish any task (a colleague covers a day off). A finished task is not given to anyone any more. The History keeps each change of person.
-- **Not changed.** No money, Invoice or Unit status. Tasks made before stay given to nobody.
-- **Telegram.** The owner then asked "after assign, send task to cleaning via telegram?". The Staff bot sends the person given a task one Khmer message: the task, the room and the day. Only a person whose employee record (HR) has a linked Staff bot account gets it; the "Assign to" box marks the others "(no Telegram)". The task is still ticked in the app; ticking it in Telegram is a later step, not promised.
-- **Database:** migration `20270725_410` (DB-HK-001). **API:** API-HK-001. **Screens:** Housekeeping tab: "Assign to" box for the front desk, "All tasks / My tasks", "Given to", "Done by".
-- **Links:** DL-222, PR-SS-STEP5.
-- **Decision date:** 2026-11-13.
+- **Source:** the owner on 13 and 14 Nov 2026 in the thread "Improve the Leasing screen": "no assign to task to who?" (decision card: "Yes, assign to a person"), "after assign, send task to cleaning via telegram?", then "how could cleaner can tap my task, if the cleaner can not access the application" (decision card: "Telegram: get and tick tasks").
+- **Before.** A Housekeeping task belonged to nobody. Anyone with the housekeeping right ticked any task in the app, and the list did not say who did it.
+- **Now.** The front desk (`short_stays.desk`) gives a task still to do to one cleaner from the staff list (HR: job Cleaner, or reports as Cleaner in the Staff bot), to another, or to nobody. The Staff bot sends the cleaner the task in Khmer (task, room, day) with the buttons Cleaned and Not cleaned; Not cleaned asks why (guest asked no cleaning, guest did not open the door, Do not disturb sign). The tap finishes the task in the app and the bot answers. The list shows "Given to" and "Done by". A cleaner with no linked Staff bot shows "(no Telegram)" in the box; the front desk ticks for them. A room check is still done on the booking page (its message has no buttons). Anyone with the housekeeping right may still finish any task in the app. A finished task is not given to anyone any more. The History keeps each change.
+- **Not changed.** No money, Invoice or Unit status. Tasks made before stay given to nobody. The office app has no "My tasks"; cleaners see their tasks in Telegram.
+- **Database:** migration `20270725_410` (DB-HK-001). **API:** API-HK-001. **Telegram:** the Staff bot reads the button taps (`telegram_staff_bot.py`). **Screens:** Housekeeping tab: "Assign to" box for the front desk, "Given to", "Done by".
+- **Links:** DL-174, DL-222, PR-SS-STEP5.
+- **Decision date:** 2026-11-14.
