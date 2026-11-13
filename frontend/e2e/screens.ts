@@ -172,7 +172,7 @@ export const SCREENS: readonly Screen[] = [
     name: "shortstays-housekeeping",
     hash: "#/shortstays?tab=clean",
     fixture: "shortstays",
-    ready: "Sam Dalin",
+    ready: "Finished (2)",
     clock: "2026-11-13T03:00:00Z",
   },
   // Administration review (owner 13/11/2026 "All"): the tab row is the head, the 11 Ledger tabs

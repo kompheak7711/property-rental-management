@@ -157,17 +157,7 @@ export function CleaningList({
               </span>
             )}
           </div>
-          {task.booking_id !== null && (
-            <p className="ui-small">
-              <a
-                className="ss-tasklink ui-num"
-                href={hashForPage("shortstays", `st:${task.booking_id}`)}
-              >
-                {task.booking_number}
-              </a>
-              {task.guest_name !== null && ` · ${task.guest_name}`}
-            </p>
-          )}
+          {/* Owner 14/11/2026 01:39: no booking number or guest name on a task. */}
           {task.note !== null && (
             <p className="ui-small ui-muted">{task.note}</p>
           )}

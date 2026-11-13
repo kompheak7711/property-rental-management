@@ -69910,7 +69910,7 @@
       "test_level": "UI component",
       "test_path": "frontend/src/shortstays/ShortStaysPage.test.tsx",
       "status": "implemented",
-      "notes": "Owner 13/11/2026 (Leasing thread): Housekeeping is one card of short rows; a late task is first and red with Late; done and skipped tasks fold under the list; the booking number link is 44 px high."
+      "notes": "Owner 13/11/2026 (Leasing thread): Housekeeping is one card of short rows; a late task is first and red with Late; done and skipped tasks fold under the list. Owner 14/11/2026 01:39: a task shows no booking number or guest name."
     },
     {
       "test_id": "TEST-FE-2202",

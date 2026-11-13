@@ -581,14 +581,6 @@ fieldset.ss-problems > legend {
   font-weight: 600;
 }
 
-/* The booking number is a link a finger can hit (44 px high). */
-a.ss-tasklink {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  min-width: 44px;
-}
-
 /* DL-236: the person a task is given to (a box for the front desk). */
 .ss-assign {
   display: flex;

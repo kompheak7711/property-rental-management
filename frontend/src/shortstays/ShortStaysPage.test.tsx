@@ -2722,7 +2722,7 @@ describe("Daily and weekly rent: Short stays", () => {
       expect(numbers()).toEqual(["ST260002"]);
     });
 
-    it("TEST-FE-2201 Housekeeping lists a late task first in red, folds done and skipped tasks, and the booking number is a full-size link", async () => {
+    it("TEST-FE-2201 Housekeeping lists a late task first in red, folds done and skipped tasks, and shows no booking number or guest name", async () => {
       const task = (
         id: string,
         unit: string,
@@ -2773,9 +2773,9 @@ describe("Daily and weekly rent: Short stays", () => {
       if (!first) throw new Error("no Housekeeping rows");
       expect(first).toHaveClass("late");
       expect(within(first).getByText("Late")).toBeInTheDocument();
-      expect(within(first).getByRole("link", { name: "ST260003" })).toHaveClass(
-        "ss-tasklink",
-      );
+      // Owner 14/11/2026 01:39: a task shows no booking number or guest name.
+      expect(within(first).queryByRole("link")).toBeNull();
+      expect(within(list).queryByText(/ST26000|Lim Dara/)).toBeNull();
       expect(screen.getByText("Finished (1)")).toBeInTheDocument();
       const done = screen.getByRole("list", { name: "Finished" });
       expect(done.closest("details")).not.toHaveAttribute("open");
