@@ -164,6 +164,12 @@ button.ss-kpi:hover {
   text-decoration: underline;
 }
 
+/* Owner 13/11/2026: every button in the Today panel has the same width. */
+.ss-guests > li > .ui-btn {
+  flex: none;
+  width: 9.5rem;
+}
+
 .ss-warn {
   color: var(--warn);
   font-weight: 600;
