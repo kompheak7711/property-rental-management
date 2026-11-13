@@ -15,7 +15,7 @@ import {
   type TodoItem,
 } from "../reportsClient";
 import { hashForPage } from "../shell/navigation";
-import { HomeScreen } from "./HomeScreen";
+import { HomeScreen, partsText, readingsMissing } from "./HomeScreen";
 
 afterEach(() => {
   cleanup();
@@ -173,7 +173,7 @@ describe("Home", () => {
       "Paid this month",
       "Overdue",
       "Approvals",
-      "Meter readings missing",
+      "Missing readings",
       "Notices due",
       "Birthdays",
     ]);
@@ -191,16 +191,18 @@ describe("Home", () => {
     expect(card(/Vacant Units/).getAttribute("href")).toBe(
       "#/units?show=vacant",
     );
-    expect(card(/Approvals/).textContent).toContain(
-      "1 to confirm · Refunds pending $5.00",
+    // Owner 14/11/2026: a card has a note only when it tells something the number does not.
+    expect(card(/Approvals/).textContent).toBe(
+      "Approvals1Refunds pending $5.00",
     );
-    expect(card(/Pending payment/).textContent).toContain(
-      "$6,091.2533 Invoices not fully paid",
+    expect(card(/Pending payment/).textContent).toBe(
+      "Pending payment$6,091.25",
     );
-    // Paid this month counts Invoices due this month: 371,620 of 911,125 is 40.8%.
-    expect(card(/Paid this month/).textContent).toContain(
-      "$3,716.2040% of $9,111.25 due in November",
+    // Paid this month counts the Invoices due this month that are paid; no note, no bar.
+    expect(card(/Paid this month/).textContent).toBe(
+      "Paid this month$3,716.20",
     );
+    expect(document.querySelector(".ui-home-meter")).toBeNull();
     expect(card(/Overdue/).getAttribute("href")).toBe(
       "#/invoices?show=overdue",
     );
@@ -208,9 +210,9 @@ describe("Home", () => {
       "End before 02/01/2027",
     );
     expect(card(/Approvals/).getAttribute("href")).toBe("#/approvals");
-    expect(card(/Meter readings missing/).textContent).toContain(
-      "Reading day 24/11/2026",
-    );
+    // The business date (03/11) is before the Reading day (24/11): nothing is missing yet.
+    expect(card(/Missing readings/).textContent).toBe("Missing readings0");
+    expect(card(/Missing readings/)).toHaveClass("none");
     expect(card(/Notices due/).getAttribute("href")).toBe("#/letters?show=due");
     expect(
       screen.getByText(
@@ -267,7 +269,7 @@ describe("Home", () => {
         visitsApi={visitsApi}
       />,
     );
-    expect(await screen.findByText("Viewing requests waiting")).toBeTruthy();
+    expect(await screen.findByText("Viewing requests")).toBeTruthy();
     expect(visitsApi.visitRequests).toHaveBeenCalledWith("property-1");
     const labels = Array.from(
       document.querySelectorAll(".ui-home-kpi .ui-kpi-label"),
@@ -276,11 +278,11 @@ describe("Home", () => {
     // Problem reports sits before Birthdays.
     expect(labels.slice(0, 3)).toEqual([
       "Vacant Units",
-      "Viewing requests waiting",
+      "Viewing requests",
       "Leases ending soon",
     ]);
     expect(labels.slice(-2)).toEqual(["Problem reports", "Birthdays"]);
-    const visits = card(/Viewing requests waiting/);
+    const visits = card(/Viewing requests/);
     expect(visits.textContent).toContain("21 late · 2 visits this week");
     expect(visits.getAttribute("href")).toBe("#/visitreqs?show=waiting");
     expect(visits.className).toContain("err");
@@ -302,7 +304,7 @@ describe("Home", () => {
     expect(taskCard(/^Overdue/).textContent).toBe(
       "Overdue2Oldest: 29 days late",
     );
-    expect(taskCard(/^Today/).textContent).toBe("Today2Do them today");
+    expect(taskCard(/^Today/).textContent).toBe("Today2");
     expect(taskCard(/^This week/).textContent).toBe(
       "This week1Next: in 2 days",
     );
@@ -378,11 +380,8 @@ describe("Home", () => {
     expect(window.location.hash).toBe("#/home");
     expect(taskCard(/^Later/).getAttribute("aria-pressed")).toBe("false");
     expect(titles()).toEqual([]);
-    expect(
-      within(list).getByText(
-        "Tap a card to see its list. Tap it again to close the list.",
-      ),
-    ).toBeTruthy();
+    // Owner 14/11/2026: no help line under the Tasks.
+    expect(screen.queryByText(/Tap a card to see its list/)).toBeNull();
   });
 
   it("TEST-FE-1915 the Tasks card named in the address opens at once (#/home?tasks=later); with nothing overdue no list is open and the Overdue count is not red", async () => {
@@ -410,12 +409,12 @@ describe("Home", () => {
     );
     const quiet = await screen.findByRole("region", { name: "Tasks" });
     const overdue = within(quiet).getByRole("button", { name: /^Overdue/ });
-    expect(overdue.textContent).toBe("Overdue0Nothing overdue");
+    expect(overdue.textContent).toBe("Overdue0");
     expect(overdue.className).not.toContain("err");
     expect(overdue.getAttribute("aria-pressed")).toBe("false");
     expect(
       within(quiet).getByRole("button", { name: /^Today/ }).textContent,
-    ).toBe("Today0Nothing here");
+    ).toBe("Today0");
     expect(within(quiet).queryAllByRole("listitem")).toHaveLength(0);
     expect(window.location.hash).toBe("#/home");
   });
@@ -448,14 +447,20 @@ describe("Home", () => {
     );
     expect(document.querySelectorAll(".ui-home-kpi")).toHaveLength(2);
     expect(screen.queryByText("Pending payment")).toBeNull();
-    expect(screen.getByText("Nothing overdue")).toBeTruthy();
-    expect(screen.getAllByText("Nothing here")).toHaveLength(3);
+    // Owner 14/11/2026: an empty Tasks card has no "Nothing here" line.
+    expect(screen.queryByText("Nothing overdue")).toBeNull();
+    expect(screen.queryByText("Nothing here")).toBeNull();
     expect(screen.queryByText(/Do them from the top down/)).toBeNull();
+    // The warning is a slim bar under the title, before the cards (owner 14/11/2026).
+    const jobs = screen.getByText(
+      "No billing run has finished yet · Next Invoices: 25/11/2026",
+    ).parentElement;
+    expect(jobs).toHaveClass("ui-notice", "warn", "ui-home-jobs");
     expect(
-      screen.getByText(
-        "No billing run has finished yet · Next Invoices: 25/11/2026",
+      jobs?.compareDocumentPosition(
+        document.querySelector(".ui-home-kpis") as Node,
       ),
-    ).toBeTruthy();
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     expect(screen.queryByRole("link", { name: "Receive payment" })).toBeNull();
     expect(
       screen.queryByRole("link", { name: "Enter meter readings" }),
@@ -492,11 +497,9 @@ describe("Home", () => {
     show(() => Promise.resolve(PAGE), { language: "km" });
     expect(await screen.findByText("បន្ទប់ទំនេរ")).toBeTruthy();
     expect(screen.getByText("ការងារត្រូវធ្វើ")).toBeTruthy();
-    // "Paid this month" names the month in the note: "{0}% of {1} due in វិច្ឆិកា".
     await waitFor(() => {
       expect(screen.getByText("បានបង់ខែនេះ")).toBeTruthy();
     });
-    expect(screen.getByText(/ដល់កំណត់ក្នុង វិច្ឆិកា/)).toBeTruthy();
   });
 
   it("TEST-FE-1294 the Problem reports card shows open, urgent and late to a person who may read them; a Manager who checks repair costs sees each cost still waiting with a link; a person without the right reads nothing", async () => {
@@ -689,15 +692,15 @@ describe("Home", () => {
     await waitFor(() => {
       expect(names()).toEqual([
         "Vacant Units",
-        "Viewing requests waiting",
+        "Viewing requests",
         "Leases ending soon",
-        "Short stay bookings",
-        "Short stays checked in",
+        "Bookings",
+        "Checked in",
         "Pending payment",
         "Paid this month",
         "Overdue",
         "Approvals",
-        "Meter readings missing",
+        "Missing readings",
         "Notices due",
         "Problem reports",
         "Birthdays",
@@ -710,19 +713,16 @@ describe("Home", () => {
     expect(reads.attendanceApi.day).toHaveBeenCalledWith("property-1", null);
 
     // Booked and not checked in yet; one of the three arrives on the business date.
-    const booked = card(/Short stay bookings/);
-    expect(booked.textContent).toBe("Short stay bookings31 arrives today");
+    const booked = card(/Bookings/);
+    expect(booked.textContent).toBe("Bookings31 arrives today");
     expect(booked.getAttribute("href")).toBe("#/shortstays?show=booked");
     // Staying now; nobody checks out on the business date.
-    const staying = card(/Short stays checked in/);
-    expect(staying.textContent).toBe(
-      "Short stays checked in2None check out today",
-    );
+    const staying = card(/Checked in/);
+    // Owner 14/11/2026: "None check out today" is not drawn.
+    expect(staying.textContent).toBe("Checked in2");
     expect(staying.getAttribute("href")).toBe("#/shortstays?show=checked_in");
     const low = card(/Low stock/);
-    expect(low.textContent).toBe(
-      "Low stock2Products at or below the reorder level",
-    );
+    expect(low.textContent).toBe("Low stock2");
     expect(low.getAttribute("href")).toBe("#/products?show=low");
     // Three people need a look: two scans to check, two with no check-out (one has both).
     const attendance = card(/Attendance/);
@@ -749,12 +749,10 @@ describe("Home", () => {
       },
     });
     expect(await screen.findByText("Attendance")).toBeTruthy();
-    expect(card(/Attendance/).textContent).toBe(
-      "Attendance0Nothing to check today",
-    );
+    expect(card(/Attendance/).textContent).toBe("Attendance0");
     expect(card(/Attendance/)).toHaveClass("none");
-    expect(names()).not.toContain("Short stay bookings");
-    expect(names()).not.toContain("Short stays checked in");
+    expect(names()).not.toContain("Bookings");
+    expect(names()).not.toContain("Checked in");
     expect(names()).not.toContain("Low stock");
     cleanup();
 
@@ -786,11 +784,13 @@ describe("Home", () => {
       expect(
         Array.from(head?.children ?? []).map((part) => part.className),
       ).toEqual(["ui-kpi-label", "ui-kpi-value ui-num"]);
-      expect(head?.nextElementSibling).toHaveClass("ui-kpi-note");
+      // Owner 14/11/2026: the note, when there is one, is under the head.
+      const note = head?.nextElementSibling;
+      if (note !== null && note !== undefined)
+        expect(note).toHaveClass("ui-kpi-note");
     }
-    const bars = document.querySelectorAll(".ui-home-meter");
-    expect(bars).toHaveLength(1);
-    expect(bars[0]?.closest("a")?.textContent).toContain("Paid this month");
+    // No bar under Paid this month any more (owner 14/11/2026).
+    expect(document.querySelectorAll(".ui-home-meter")).toHaveLength(0);
   });
 
   it('TEST-FE-1942 (owner 12/11/2026: "check all card is link to correct place") each Home card opens the part of its page that the card counts, named by a word in the address; Approvals, which has one view, opens the page', async () => {
@@ -844,16 +844,16 @@ describe("Home", () => {
     await waitFor(() => {
       expect(addresses()).toEqual([
         ["Vacant Units", "#/units?show=vacant"],
-        ["Viewing requests waiting", "#/visitreqs?show=waiting"],
+        ["Viewing requests", "#/visitreqs?show=waiting"],
         ["Leases ending soon", "#/leases?show=ending"],
-        ["Short stay bookings", "#/shortstays?show=booked"],
-        ["Short stays checked in", "#/shortstays?show=checked_in"],
+        ["Bookings", "#/shortstays?show=booked"],
+        ["Checked in", "#/shortstays?show=checked_in"],
         ["Pending payment", "#/invoices?show=open"],
         // The paid Invoices of this month: the list the card's amount adds up.
         ["Paid this month", "#/invoices?show=paid&period=month"],
         ["Overdue", "#/invoices?show=overdue"],
         ["Approvals", "#/approvals"],
-        ["Meter readings missing", "#/utilities?show=missing"],
+        ["Missing readings", "#/utilities?show=missing"],
         ["Notices due", "#/letters?show=due"],
         ["Problem reports", "#/problems?show=open"],
         ["Birthdays", "#/customers?show=birthdays"],
@@ -861,5 +861,61 @@ describe("Home", () => {
         ["Attendance", "#/attendance?show=day"],
       ]);
     });
+  });
+
+  it("TEST-FE-2220 (Home screen review, owner 14/11/2026) Missing readings is 0 before the Reading day and the server's count from that day; a note says only the parts above 0", async () => {
+    const readings = { count: 46, reading_date: "2026-11-24" };
+    expect(readingsMissing(readings, "2026-11-13")).toBe(0);
+    expect(readingsMissing(readings, "2026-11-24")).toBe(46);
+    expect(readingsMissing(readings, "2026-11-30")).toBe(46);
+    expect(
+      partsText([
+        [0, "0 urgent"],
+        [0, "0 late"],
+      ]),
+    ).toBeUndefined();
+    expect(
+      partsText([
+        [1, "1 urgent"],
+        [0, "0 late"],
+      ]),
+    ).toBe("1 urgent");
+    expect(
+      partsText([
+        [1, "1 urgent"],
+        [2, "2 late"],
+      ]),
+    ).toBe("1 urgent · 2 late");
+
+    // On the Reading day the card shows the server's count.
+    show(() =>
+      Promise.resolve({
+        ...PAGE,
+        business_date: "2026-11-24",
+      }),
+    );
+    expect(await screen.findByText("Vacant Units")).toBeTruthy();
+    expect(card(/Missing readings/).textContent).toBe("Missing readings15");
+    // No card note that only says what the card opens.
+    expect(screen.queryByText("Day-20 and day-30 notices")).toBeNull();
+    expect(card(/Notices due/).querySelector(".ui-kpi-note")).toBeNull();
+  });
+
+  it("TEST-FE-2221 (Home screen review, owner 14/11/2026) the two head buttons share one equal-width group; a calm jobs line stays under the Tasks and no warning bar shows", async () => {
+    show(() => Promise.resolve(PAGE));
+    expect(await screen.findByText("Vacant Units")).toBeTruthy();
+    const buttons = [
+      screen.getByRole("link", { name: "Receive payment" }),
+      screen.getByRole("link", { name: "Enter meter readings" }),
+    ];
+    for (const button of buttons) expect(button).toHaveClass("ui-homeact");
+    expect(buttons[0]?.parentElement).toBe(buttons[1]?.parentElement);
+    expect(buttons[0]?.parentElement).toHaveClass("ui-pagehead-actions");
+    expect(document.querySelector(".ui-home-jobs")).toBeNull();
+    const calm = screen.getByText(/Rent and Utility Invoices made on/)
+      .parentElement as Node;
+    expect(
+      document.querySelector(".ui-todo-card")?.compareDocumentPosition(calm),
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
   });
 });

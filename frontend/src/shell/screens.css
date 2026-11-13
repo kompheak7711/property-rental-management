@@ -487,8 +487,9 @@
     grid-column: span 6;
   }
 
-  .ui-kpis:not(.ui-om):not(.ui-tasks) > :nth-child(odd):last-child,
-  .ui-kpis.ui-om > * {
+  /* Home screen review (owner 14/11/2026): the Financial summary is two in a row on a phone
+     too, like the other cards; a card left over fills the last row. */
+  .ui-kpis > :nth-child(odd):last-child {
     grid-column: span 12;
   }
 
@@ -751,6 +752,19 @@
 
   .ui-kpi.ui-kpi-top .ui-kpi-value {
     line-height: 1.3;
+  }
+}
+
+/* Home screen review (owner 14/11/2026): an amount stays at the top right of a narrow card; the
+   name takes two lines beside it ("Pending / payment"). Only when even that does not fit (five
+   in a row on an upright iPad) does the amount go under the name. */
+@container kpi (max-width: 200px) {
+  .ui-kpi-amount .ui-kpi-head > .ui-kpi-label {
+    min-width: 4.6em;
+  }
+
+  .ui-kpi.ui-kpi-amount .ui-kpi-value {
+    font-size: 1rem;
   }
 }
 
@@ -4093,4 +4107,34 @@ table.ui-table.ui-meters-unit td {
   table.ui-table.ui-meters-unit {
     min-width: 0;
   }
+}
+
+/* Home screen review (owner 14/11/2026). The two buttons beside the title have the same width;
+   on a phone each one fills the width, one under the other. */
+.ui-pagehead-actions:has(> .ui-homeact) {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+}
+
+.ui-pagehead-actions > .ui-homeact {
+  justify-content: center;
+}
+
+@media (max-width: 639px) {
+  .ui-pagehead-row:has(.ui-homeact) > .ui-pagehead-actions {
+    width: 100%;
+    grid-auto-flow: row;
+  }
+}
+
+/* A warning about the automatic jobs (no billing run, no ABA rate) is a slim bar under the
+   title, not small text under the Tasks. */
+.ui-notice.ui-home-jobs {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: 0;
+  padding: 8px 12px;
+  font-size: 0.9rem;
 }

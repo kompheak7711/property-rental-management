@@ -88,14 +88,15 @@ function MoneyCard({
   tone: string;
   label: string;
   value: number | null;
-  note: string;
+  /** Owner 14/11/2026: only a line that tells something ("Budget $500.00"). */
+  note?: string;
   page: PageId;
   /** UI v81 round 11: the statement the card's number comes from, so the card opens it. */
   show: string;
 }) {
   return (
     <a
-      className={`ui-kpi ui-home-kpi ui-kpi-top ${value === null ? "none" : tone}`}
+      className={`ui-kpi ui-home-kpi ui-kpi-top ui-kpi-amount ${value === null ? "none" : tone}`}
       href={hashForShow(page, show)}
     >
       {/* Owner 12/11/2026: the number sits at the top right, beside the name. */}
@@ -110,7 +111,7 @@ function MoneyCard({
           {value === null ? "—" : usdFromCents(value)}
         </span>
       </span>
-      <span className="ui-kpi-note">{note}</span>
+      {note !== undefined && <span className="ui-kpi-note">{note}</span>}
     </a>
   );
 }
@@ -175,7 +176,6 @@ export function OwnerMoney({
         <MoneyCard
           icon="payments"
           label={hmt(language, "om_cash")}
-          note={hmt(language, "om_cash_s")}
           page="statements"
           show="balance-sheet"
           tone="brand"
@@ -184,7 +184,6 @@ export function OwnerMoney({
         <MoneyCard
           icon="customers"
           label={hmt(language, "om_owe")}
-          note={hmt(language, "om_owe_s")}
           page="statements"
           show="customer-aging"
           tone={(numbers.owe ?? 0) > 0 ? "warn" : "ok"}
@@ -193,7 +192,6 @@ export function OwnerMoney({
         <MoneyCard
           icon="history"
           label={hmt(language, "om_over")}
-          note={hmt(language, "om_owe_s")}
           page="statements"
           show="customer-aging"
           tone={(numbers.over30 ?? 0) > 0 ? "err" : "ok"}
@@ -215,7 +213,6 @@ export function OwnerMoney({
         <MoneyCard
           icon="reports"
           label={hmt(language, "om_profit")}
-          note={hmt(language, "om_profit_s", numbers.year)}
           page="statements"
           show="profit-and-loss"
           tone={(numbers.profit ?? 0) >= 0 ? "ok" : "err"}

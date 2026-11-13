@@ -30,79 +30,39 @@ const TEXT = {
   k_vac: ["Vacant Units", "បន្ទប់ទំនេរ"], // new
   k_vac_s: ["{0} Units · {1} reserved", "បន្ទប់ {0} · បានកក់ {1}"], // new
   k_pend: ["Pending payment", "ប្រាក់មិនទាន់បង់"],
-  k_pend_s: ["{0} Invoices not fully paid", "វិក្កយបត្រ {0} មិនទាន់បង់គ្រប់"],
-  // new
-  k_pend_s1: ["1 Invoice not fully paid", "វិក្កយបត្រ 1 មិនទាន់បង់គ្រប់"],
   k_paid: ["Paid this month", "បានបង់ខែនេះ"],
-  k_paid_s: ["{0}% of {1} due in {2}", "{0}% នៃ {1} ដល់កំណត់ក្នុង {2}"],
-  // new
-  k_paid_none: [
-    "Nothing billed for this month yet",
-    "មិនទាន់មានវិក្កយបត្រសម្រាប់ខែនេះ",
-  ],
-  // new
-  k_paid_recv: [
-    "Received this month · {0} payments",
-    "បានទទួលខែនេះ · ការបង់ប្រាក់ {0}",
-  ],
-  // new
-  k_paid_recv1: [
-    "Received this month · 1 payment",
-    "បានទទួលខែនេះ · ការបង់ប្រាក់ 1",
-  ],
   k_over: ["Overdue", "ហួសកំណត់"],
-  k_over_s: [
-    "{0} Invoices past the due date",
-    "វិក្កយបត្រ {0} ហួសថ្ងៃកំណត់បង់",
-  ],
-  // new
-  k_over_s1: ["1 Invoice past the due date", "វិក្កយបត្រ 1 ហួសថ្ងៃកំណត់បង់"],
   n_lease: ["Leases ending soon", "កិច្ចសន្យាជិតផុតកំណត់"],
   n_lease_s: ["End before {0}", "ផុតកំណត់មុន {0}"],
   n_appr: ["Approvals", "រង់ចាំការអនុម័ត"],
   // "Refunds pending" is the approved word for money out (docs/ui-audit/04_GLOSSARY.md).
-  n_appr_s: [
-    "{0} to confirm · Refunds pending {1}",
-    "{0} ត្រូវបញ្ជាក់ · ការសងប្រាក់កំពុងរង់ចាំ {1}",
-  ],
-  // new
-  n_appr_c: ["{0} to confirm", "{0} ត្រូវបញ្ជាក់"],
-  n_read: ["Meter readings missing", "អំណានដែលខ្វះ"],
-  n_read_s: ["Reading day {0}", "ថ្ងៃអាន {0}"],
+  // Owner 14/11/2026: the Approvals note says only the money going out.
+  n_appr_m: ["Refunds pending {0}", "ការសងប្រាក់កំពុងរង់ចាំ {0}"],
+  // Home screen review (owner 14/11/2026): shorter English names so each fits one line.
+  n_read: ["Missing readings", "អំណានដែលខ្វះ"],
   n_letters: ["Notices due", "លិខិតត្រូវផ្តល់"],
-  // Owner 07/11/2026: "notices", not "letters". Khmer is new and needs the native check.
-  n_letters_s: [
-    "Day-20 and day-30 notices",
-    "សេចក្ដីជូនដំណឹងថ្ងៃទី២០ និងថ្ងៃទី៣០",
-  ],
   // DL-131 (mock-up round 32 A10); Khmer is new and needs the native check.
   n_problems: ["Problem reports", "របាយការណ៍បញ្ហា"],
   // Design v81 i18n13 (Viewing requests waiting on Home). Khmer from the design.
-  n_vr: ["Viewing requests waiting", "សំណើមើលបន្ទប់កំពុងរង់ចាំ"],
-  n_vr_s: [
-    "{0} late · {1} visits this week",
-    "{0} យឺត · {1} ការមកមើលសប្តាហ៍នេះ",
-  ],
-  n_problems_s: ["{0} urgent · {1} late", "{0} បន្ទាន់ · {1} យឺត"],
+  n_vr: ["Viewing requests", "សំណើមើលបន្ទប់កំពុងរង់ចាំ"],
+  // Owner 14/11/2026: a note says only the parts above 0.
+  n_vr_late: ["{0} late", "{0} យឺត"],
+  n_vr_week: ["{0} visits this week", "{0} ការមកមើលសប្តាហ៍នេះ"],
+  n_problems_urgent: ["{0} urgent", "{0} បន្ទាន់"],
+  n_problems_late: ["{0} late", "{0} យឺត"],
   n_costs: ["Repair costs to check", "ថ្លៃជួសជុលត្រូវពិនិត្យ"],
   // UI v81 round 4 (owner 08/11/2026): the Birthdays card (design i18n).
   n_bday: ["Birthdays", "ថ្ងៃកំណើត"],
   n_week_s: ["Today to {0}", "ថ្ងៃនេះ ដល់ {0}"],
   // Owner 12/11/2026: two Short stays cards, and Low stock in place of Paid on time. Khmer is
   // new and needs the native check.
-  n_ssb: ["Short stay bookings", "ការកក់ស្នាក់នៅខ្លី"], // new
+  n_ssb: ["Bookings", "ការកក់ស្នាក់នៅខ្លី"], // new
   n_ssb_s: ["{0} arrive today", "{0} មកដល់ថ្ងៃនេះ"], // new
   n_ssb_s1: ["1 arrives today", "1 មកដល់ថ្ងៃនេះ"], // new
-  n_ssb_s0: ["None arrive today", "គ្មានអ្នកមកដល់ថ្ងៃនេះ"], // new
-  n_ssin: ["Short stays checked in", "ភ្ញៀវស្នាក់នៅខ្លីបានចូល"], // new
+  n_ssin: ["Checked in", "ភ្ញៀវស្នាក់នៅខ្លីបានចូល"], // new
   n_ssin_s: ["{0} check out today", "{0} ចេញថ្ងៃនេះ"], // new
   n_ssin_s1: ["1 checks out today", "1 ចេញថ្ងៃនេះ"], // new
-  n_ssin_s0: ["None check out today", "គ្មានអ្នកចេញថ្ងៃនេះ"], // new
   n_low: ["Low stock", "ស្តុកតិច"],
-  n_low_s: [
-    "Products at or below the reorder level",
-    "ផលិតផលស្មើ ឬក្រោមកម្រិតបញ្ជាទិញឡើងវិញ",
-  ], // new
 
   todo_t: ["Tasks", "ការងារត្រូវធ្វើ"],
   g_overdue: ["Overdue", "ហួសកំណត់"],
@@ -115,14 +75,7 @@ const TEXT = {
   show_less: ["Hide", "លាក់"],
   // UI v81 round 3 (owner 07/11/2026 17:30): the Tasks are four cards, one list open at a time.
   tk_oldest: ["Oldest: {0}", "ចាស់បំផុត៖ {0}"], // new (UI v81 round 3)
-  tk_today_s: ["Do them today", "ធ្វើថ្ងៃនេះ"], // new (UI v81 round 3)
   tk_next: ["Next: {0}", "បន្ទាប់៖ {0}"], // new (UI v81 round 3)
-  tk_none: ["Nothing here", "គ្មានអ្វីទេ"], // new (UI v81 round 3)
-  tk_over_none: ["Nothing overdue", "គ្មានអ្វីហួសកំណត់"], // new (UI v81 round 3)
-  tk_hint: [
-    "Tap a card to see its list. Tap it again to close the list.",
-    "ចុចកាតដើម្បីមើលបញ្ជី។ ចុចម្ដងទៀតដើម្បីបិទ។",
-  ], // new (UI v81 round 3)
 
   r_over: ["{0}: {1} not paid", "{0}៖ {1} មិនទាន់បង់"],
   // new
@@ -204,22 +157,18 @@ const TEXT = {
   // is named "Financial summary" and no longer says "Only the Owner sees this".
   om_t: ["Financial summary", "សង្ខេបហិរញ្ញវត្ថុ"], // new
   om_cash: ["Cash and bank today", "សាច់ប្រាក់ និងធនាគារថ្ងៃនេះ"], // new
-  om_cash_s: ["Opens the Balance sheet", "បើកតារាងតុល្យការ"], // new
   om_owe: ["Customers owe", "អតិថិជនជំពាក់"], // new
-  om_owe_s: ["Opens Accounts receivable aging", "បើកអាយុបំណុលអតិថិជន"], // new
   om_over: ["Owed over 30 days", "ជំពាក់លើស ៣០ ថ្ងៃ"], // new
   om_spent: ["Spent this month", "ចំណាយខែនេះ"], // new
   om_spent_s: ["Budget {0}", "ថវិកា {0}"], // new
   om_nobudget: ["No budget for this month", "គ្មានថវិកាសម្រាប់ខែនេះ"], // new
   om_profit: ["Profit this year", "ចំណេញឆ្នាំនេះ"], // new
-  om_profit_s: ["{0} so far", "{0} រហូតមកដល់ពេលនេះ"], // new
   // Owner 12/11/2026: Attendance is a card like the others, named "Attendance".
   at_t: ["Attendance", "វត្តមាន"],
   at_n: [
     "Needs check {0} · No check-out {1}",
     "ត្រូវពិនិត្យ {0} · គ្មានការចុះចេញ {1}",
   ], // new
-  at_0: ["Nothing to check today", "ថ្ងៃនេះគ្មានអ្វីត្រូវពិនិត្យ"], // new
 } as const satisfies Record<string, readonly [string, string]>;
 
 export type HomeTextKey = keyof typeof TEXT;
