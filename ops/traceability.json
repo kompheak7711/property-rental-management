@@ -50806,7 +50806,7 @@
       "test_level": "UI component",
       "test_path": "frontend/src/shell/AppShell.test.tsx",
       "status": "implemented",
-      "notes": "Letters and Move-out are tabs of Leases (the Leases menu item stays marked; UI v81 side menu: its sub-item Notices carries the current mark); Bookings shows no tab bar while it has one tab (V1-058 R1 app shell, owner menu approval of 24/10/2026)."
+      "notes": "Letters and Move-out are tabs of Leases (the Leases menu item stays marked; UI v81 side menu: its sub-item Notices carries the current mark); Bookings shows no tab bar while it has one tab (V1-058 R1 app shell, owner menu approval of 24/10/2026). Leasing batch 13/11/2026: Leasing menu order Viewing requests, Long stays (Reservations, Leases, Move-outs), Short stays, Notices, Customers."
     },
     {
       "test_id": "test_actor_access_lists_the_actors_own_capabilities_and_properties_for_the_menu",
@@ -65971,7 +65971,7 @@
       "test_level": "UI component",
       "test_path": "frontend/src/shortstays/ShortStaysPage.test.tsx",
       "status": "implemented",
-      "notes": "Short stays: shows one row per Unit and one square per night, each with a word."
+      "notes": "Short stays: shows one row per Unit and one bar per stay with the guest's name (Leasing batch 13/11/2026: the Calendar as a booking chart, the Units under their Unit type; not paid is said on the bar); a free night opens New booking."
     },
     {
       "test_id": "TEST-FE-1601",
@@ -66142,7 +66142,7 @@
       "test_level": "UI component",
       "test_path": "frontend/src/shortstays/ShortStaysPage.test.tsx",
       "status": "implemented",
-      "notes": "Short stays: shows a booking site's nights, and a clash with our own booking."
+      "notes": "Short stays: shows a booking site's nights as one bar, and a clash with our own booking."
     },
     {
       "test_id": "TEST-FE-1619",
@@ -66206,16 +66206,6 @@
       "test_path": "frontend/src/shortstays/ShortStaysPage.test.tsx",
       "status": "implemented",
       "notes": "Short stays: asks for a review once after the check-out."
-    },
-    {
-      "test_id": "TEST-FE-1625",
-      "upstream_ids": [
-        "PR-SS-STEP5"
-      ],
-      "test_level": "UI component",
-      "test_path": "frontend/src/shortstays/ShortStaysPage.test.tsx",
-      "status": "implemented",
-      "notes": "Short stays: makes a quote with today's price and a message for the guest."
     },
     {
       "test_id": "TEST-FE-1626",
@@ -69413,7 +69403,7 @@
       "test_level": "UI component",
       "test_path": "frontend/src/shortstays/ShortStaysPage.test.tsx",
       "status": "implemented",
-      "notes": "UI v81 round 11 Short stays: the Bookings list has a status row with a count each (All, Booked, Checked in, and any other status a booking has); \"?show=booked\" and \"?show=checked_in\" open the list on that status; the choice is kept in the address."
+      "notes": "UI v81 round 11 Short stays: the Bookings list has a status row with a count each (All, Booked, Checked in, and any other status a booking has); \"?show=booked\" and \"?show=checked_in\" open the list on that status; the choice is kept in the address. Leasing batch 13/11/2026: the list is the Bookings tab, so the address also says ?tab=list."
     },
     {
       "test_id": "TEST-FE-1947",
@@ -69634,6 +69624,115 @@
       "test_path": "frontend/src/quotations/QuotationsPage.test.tsx",
       "status": "implemented",
       "notes": "UI v81 module batch 3 Invoices: New Quotation and one Quotation have their own page head with Back on top, the title as the page's heading and the buttons on the right."
+    },
+    {
+      "test_id": "TEST-FE-2176",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shell/AppShell.test.tsx",
+      "status": "implemented",
+      "notes": "Leasing batch (owner 13/11/2026): the Short stays tabs are its menu sub-items at the tabs' own addresses (Calendar, Bookings, Housekeeping, Weekly report, Booking sites); the Weekly report and Booking sites only for the Owner and the Manager."
+    },
+    {
+      "test_id": "TEST-FE-2177",
+      "upstream_ids": [
+        "UI-008",
+        "PR-SS-STEP5"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shortstays/ShortStaysPage.test.tsx",
+      "status": "implemented",
+      "notes": "Leasing batch (owner 13/11/2026): no Quotes tab; New booking copies the price message for the guest (made by the server as a quote, so the data is kept)."
+    },
+    {
+      "test_id": "TEST-FE-2178",
+      "upstream_ids": [
+        "UI-008",
+        "PR-SS-STEP2"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shortstays/ShortStaysPage.test.tsx",
+      "status": "implemented",
+      "notes": "Leasing batch Calendar: shows a week, 2 weeks or a month; Earlier and Later move a week, or a month on Month."
+    },
+    {
+      "test_id": "TEST-FE-2179",
+      "upstream_ids": [
+        "UI-008",
+        "PR-SS-STEP2"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shortstays/ShortStaysPage.test.tsx",
+      "status": "implemented",
+      "notes": "Leasing batch Calendar: the row of each Unit type counts the free rooms each night (Full when none); the room's own state (Ready, Needs cleaning) is under the Unit number."
+    },
+    {
+      "test_id": "TEST-FE-2180",
+      "upstream_ids": [
+        "UI-008",
+        "PR-SS-STEP2"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shortstays/ShortStaysPage.test.tsx",
+      "status": "implemented",
+      "notes": "Leasing batch Calendar: quick numbers Full tonight, Arriving today, Leaving today, Not paid yet (opens the Booked list); Booking sites status only for the Owner and the Manager, naming a link that could not be read."
+    },
+    {
+      "test_id": "TEST-FE-2181",
+      "upstream_ids": [
+        "UI-008",
+        "PR-SS-STEP3"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shortstays/ShortStaysPage.test.tsx",
+      "status": "implemented",
+      "notes": "Leasing batch Today panel: the step still missing before a check-in follows the database's check-in rule (migration 20270602_312) in the desk's order: payment, deposit held, ID number, room ready."
+    },
+    {
+      "test_id": "TEST-FE-2182",
+      "upstream_ids": [
+        "UI-008",
+        "PR-SS-STEP3"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shortstays/ShortStaysPage.test.tsx",
+      "status": "implemented",
+      "notes": "Leasing batch Today panel: a guest who has not paid gets Take payment, which opens the booking; a room not ready opens Housekeeping; no Check in button then."
+    },
+    {
+      "test_id": "TEST-FE-2183",
+      "upstream_ids": [
+        "UI-008",
+        "PR-SS-STEP3"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shortstays/ShortStaysPage.test.tsx",
+      "status": "implemented",
+      "notes": "Leasing batch Today panel: Check in asks the two ticks (ID copy, house rules), sends nothing until both are ticked, then checks the guest in with the booking's version and the Calendar reads again."
+    },
+    {
+      "test_id": "TEST-FE-2184",
+      "upstream_ids": [
+        "UI-008",
+        "PR-SS-STEP3"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shortstays/ShortStaysPage.test.tsx",
+      "status": "implemented",
+      "notes": "Leasing batch Today panel: Check out for a guest leaving today, with the booking's version."
+    },
+    {
+      "test_id": "TEST-FE-2185",
+      "upstream_ids": [
+        "UI-008",
+        "PR-SS-STEP3"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shortstays/ShortStaysPage.test.tsx",
+      "status": "implemented",
+      "notes": "Leasing batch Today panel: a person without the desk right sees the guests but no Check in or Check out button, and a free night does not open New booking."
     }
   ]
 }

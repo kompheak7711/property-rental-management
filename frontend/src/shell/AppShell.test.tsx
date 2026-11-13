@@ -429,10 +429,9 @@ describe("V1-058 R1 app shell", () => {
         ["Leases", "#/leases"],
         ["Move-outs", "#/moveout"],
       ]);
-      expect(within(menu).getByRole("link", { name: "Leases" })).toHaveAttribute(
-        "aria-current",
-        "page",
-      );
+      expect(
+        within(menu).getByRole("link", { name: "Leases" }),
+      ).toHaveAttribute("aria-current", "page");
       expect(
         menu.querySelector(
           '.shell-nitem[data-menu-page="reservations"] > .shell-item',
