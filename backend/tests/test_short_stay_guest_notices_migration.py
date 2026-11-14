@@ -165,7 +165,7 @@ def test_migration_414_follows_the_ui_v81_join_403() -> None:
     config = Config(str(Path(__file__).parents[1] / "alembic.ini"))
     scripts = ScriptDirectory.from_config(config)
     revision = scripts.get_revision(REVISION)
-    assert revision is not None and revision.down_revision == "20270726_403"
+    assert revision is not None and revision.down_revision == "20270727_404"
     with pytest.raises(RuntimeError, match="forward-only"):
         revision.module.downgrade()
 

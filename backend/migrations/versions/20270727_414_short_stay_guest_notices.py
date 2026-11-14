@@ -37,7 +37,7 @@ owner's 2026-10-23 22:30 rule; the four notices and their times are the owner's.
 Forward-only.
 
 Revision ID: 20270727_414
-Revises: 20270726_403
+Revises: 20270727_404
 """
 
 from collections.abc import Sequence
@@ -45,7 +45,7 @@ from collections.abc import Sequence
 from alembic import op
 
 revision: str = "20270727_414"
-down_revision: str | None = "20270726_403"
+down_revision: str | None = "20270727_404"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
