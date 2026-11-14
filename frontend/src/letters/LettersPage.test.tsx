@@ -647,19 +647,33 @@ describe("Letters page (V1-058 R3)", () => {
     const dialog = await screen.findByRole("dialog", {
       name: "Termination letter · U102",
     });
-    // Ready to send: the end date 30 days from today, the number, and Telegram for a linked
-    // tenant. The paper letter stays the official copy.
+    // Ready: the end date 30 days from today and the number. The termination letter is always
+    // given on paper, also to a linked tenant: the paper letter is the official copy and the
+    // Tenant bot sends a copy. So how the paper was given is never filled in by the app.
     const ends = addDays(today, 30);
     expect(
-      within(dialog).getByText(/The Tenant bot also sends it in Telegram/),
+      within(dialog).getByText(
+        /Print the letter and give it on paper\. The paper letter is the official copy\. The Tenant bot also sends a copy in Telegram/,
+      ),
     ).toBeTruthy();
     expect(
       within(dialog).getByLabelText<HTMLSelectElement>(/How it was given/)
         .value,
-    ).toBe("TG");
+    ).toBe("");
     expect(
       within(dialog).getByLabelText<HTMLInputElement>(/Letter number/).value,
     ).toBe("TL-INV26U102");
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Send termination letter" }),
+    );
+    expect(within(dialog).getByText("Choose how it was given.")).toBeTruthy();
+    expect(api.recordLetter).not.toHaveBeenCalled();
+    fireEvent.change(within(dialog).getByLabelText(/How it was given/), {
+      target: { value: "HAND" },
+    });
+    fireEvent.change(within(dialog).getByLabelText(/Details/), {
+      target: { value: " the tenant signed our copy " },
+    });
     api.recordNotice.mockRejectedValueOnce(new LettersUnavailableError());
     fireEvent.click(
       within(dialog).getByRole("button", { name: "Send termination letter" }),
@@ -677,7 +691,7 @@ describe("Letters page (V1-058 R3)", () => {
     expect(api.recordLetter.mock.calls[0]?.[1]).toEqual({
       event_kind: "THIRTY_DAY_SERIOUS_DEFAULT",
       reason: "Termination letter sent",
-      communication_record: "Sent by Telegram: by the Tenant bot",
+      communication_record: "Handed to the tenant: the tenant signed our copy",
       notice_document_reference: "TL-INV26U102",
     });
     expect(api.recordNotice).toHaveBeenCalledTimes(2);
@@ -695,7 +709,7 @@ describe("Letters page (V1-058 R3)", () => {
       approved_grounds:
         "Rent unpaid on day 30 after the three notices (DL-237)",
       evidence_reference: "TL-INV26U102",
-      communication_record: "Sent by Telegram: by the Tenant bot",
+      communication_record: "Handed to the tenant: the tenant signed our copy",
     });
     expect(notice?.notice_text).toContain("U102");
     cleanup();

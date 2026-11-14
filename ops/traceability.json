@@ -68015,7 +68015,7 @@
       "test_level": "UI component",
       "test_path": "frontend/src/letters/LettersPage.test.tsx",
       "status": "implemented",
-      "notes": "On day 30 a Manager opens the termination letter ready to send (end date 30 days on, number, Telegram for a linked tenant); Send records the day-30 step and the termination notice, and Try again sends the very same requests; without a link how it was given must be written and the end date cannot be before today."
+      "notes": "On day 30 a Manager opens the termination letter ready (end date 30 days on, number); it is always given on paper, so how it was given is never filled in by the app, also for a linked tenant, who gets a copy from the Tenant bot; Send records the day-30 step and the termination notice, and Try again sends the very same requests; the end date cannot be before today."
     },
     {
       "test_id": "TEST-FE-2254",

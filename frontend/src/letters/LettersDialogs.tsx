@@ -371,11 +371,11 @@ export function TerminationLetterDialog({
   const today = todayInPhnomPenh();
   const [ends, setEnds] = useState(addDays(today, 30));
   const [number, setNumber] = useState(`TL-${row.alert.invoice_number}`);
-  // A linked tenant gets the letter from the Tenant bot; the form is ready to send.
-  const [how, setHow] = useState<How | "">(a.telegram_linked ? "TG" : "");
-  const [details, setDetails] = useState(
-    a.telegram_linked ? storedText("tl_bot") : "",
-  );
+  // The termination letter is always given on paper, also to a linked tenant (the paper letter
+  // is the official copy; the Tenant bot sends a copy). So how the paper was given is written
+  // by the person who gave it, never filled in by the app.
+  const [how, setHow] = useState<How | "">("");
+  const [details, setDetails] = useState("");
   const [problems, setProblems] = useState<Record<string, string>>({});
   const caseId = useRef<string | null>(row.alert.case_id);
   const caseKey = useRef(crypto.randomUUID());

@@ -176,8 +176,8 @@ const TEXT = {
   ],
   tl_no_e: ["Write the letter number.", "សូមសរសេរលេខលិខិត។"],
   tl_tg: [
-    "This tenant has Telegram. The Tenant bot also sends it in Telegram when you press Send. The paper letter is the official copy.",
-    "អ្នកជួលនេះមាន Telegram។ Tenant bot ក៏ផ្ញើវាតាម Telegram ពេលអ្នកចុចផ្ញើ។ លិខិតក្រដាសគឺជាច្បាប់ផ្លូវការ។",
+    "Print the letter and give it on paper. The paper letter is the official copy. The Tenant bot also sends a copy in Telegram when you press Send.",
+    "សូមបោះពុម្ពលិខិត ហើយផ្តល់ជាក្រដាស។ លិខិតក្រដាសគឺជាច្បាប់ផ្លូវការ។ Tenant bot ក៏ផ្ញើច្បាប់ចម្លងតាម Telegram ពេលអ្នកចុចផ្ញើ។",
   ],
   tl_paper: [
     "This tenant has no Telegram link. Print the letter and give it on paper.",
@@ -193,7 +193,6 @@ const TEXT = {
     "The Lease of {0} ends on {1} because the Rent is still unpaid after the notices of day 10, day 20 and day 25.",
     "កិច្ចសន្យា {0} បញ្ចប់នៅ {1} ព្រោះថ្លៃឈ្នួលនៅមិនទាន់បង់ បន្ទាប់ពីលិខិតជូនដំណឹងថ្ងៃទី១០ ទី២០ និងទី២៥។",
   ],
-  tl_bot: ["by the Tenant bot", "ដោយ Tenant bot"],
   // new
   unknown: [
     "No answer came back, so it is not known whether it was saved. Press Try again: the same request is sent and it is saved only once.",
