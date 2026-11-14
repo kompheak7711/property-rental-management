@@ -37,7 +37,11 @@ function state(): EntryState {
 /** The name of the page on screen: the record heading when a record is open, else the page title. */
 export function currentPageLabel(): string {
   const view = document.getElementById("shell-view");
-  const record = view?.querySelector<HTMLElement>("[data-record-title]");
+  // Batch 6: other pages stay mounted but hidden, so only a record heading on show counts
+  // (a hidden page's heading made Back read "Back to Home" on a Reservation opened from the list).
+  const record = Array.from(
+    view?.querySelectorAll<HTMLElement>("[data-record-title]") ?? [],
+  ).find((element) => element.closest("[hidden]") === null);
   const title = record ?? document.getElementById("page-title");
   return (title?.textContent ?? "").trim();
 }

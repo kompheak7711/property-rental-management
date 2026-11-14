@@ -257,7 +257,9 @@ describe("Reservation page", () => {
     expect(deposit).toHaveTextContent(
       "Suggested$100.0020% of the agreed Rent, not a minimum",
     );
-    expect(deposit).toHaveTextContent("Accepted$100.00same as the suggestion");
+    // Batch 6: the full amount agreed, by its New Reservation name, with no comparison note.
+    expect(deposit).toHaveTextContent("Full Security Deposit$100.00");
+    expect(deposit).not.toHaveTextContent("same as the suggestion");
     expect(deposit).toHaveTextContent(
       "This money is already the Security Deposit and continues into the Lease.",
     );
@@ -751,5 +753,70 @@ describe("Make Reservation on the list (V1-060 B7)", () => {
     expect(await screen.findByDisplayValue("Sokha Chan")).toBeInTheDocument();
     expect(screen.getByDisplayValue("+85512800200")).toBeInTheDocument();
     expect(screen.getByDisplayValue("sokha@example.com")).toBeInTheDocument();
+  });
+});
+
+// UI v81 batch 6 (Reservations): one head, History names the person, the list folds.
+describe("Reservations batch 6", () => {
+  it("TEST-FE-2145 the Reservation page has one head with Back on top, and History names the person for every step", async () => {
+    const named = reservation("U301", {
+      made_by_name: "Kompheak",
+      receipts: [
+        {
+          receipt_id: "receipt-U301",
+          payment_id: "payment-U301",
+          amount_usd_cents: 10000,
+          occurred_at: "2026-10-15T03:00:00Z",
+          actor_id: "actor-2",
+          actor_name: "Chan Dara",
+        },
+      ],
+      extension_notice: {
+        notice_id: "notice-2",
+        previous_expiration_date: addDays(today, -2),
+        new_expiration_date: addDays(today, 5),
+        approved_at: "2026-10-20T03:00:00Z",
+        reason_memo: "Bank transfer next week",
+        approved_by_name: "Sok Dara",
+      },
+      reservation_date: "2026-10-15",
+    });
+    window.location.hash = "#/reservations/U301";
+    show(api({ get: vi.fn().mockResolvedValue(named) }));
+
+    const title = await screen.findByRole("heading", {
+      level: 1,
+      name: "Reservation · U301",
+    });
+    const back = screen.getByRole("button", { name: /^Back to/ });
+    expect(
+      back.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+
+    const history = screen.getByRole("region", { name: "History" });
+    const steps = within(history).getAllByRole("listitem");
+    expect(steps.map((step) => step.textContent)).toEqual([
+      expect.stringContaining("Approved by Sok Dara"),
+      expect.stringContaining("By Chan Dara"),
+      expect.stringContaining("By Kompheak"),
+    ]);
+    expect(steps[2]).toHaveTextContent("Reservation made for Customer U301.");
+  });
+
+  it("TEST-FE-2146 the list keeps Reserved on under the Customer and is ready to be cards on a phone", async () => {
+    window.location.hash = "#/reservations";
+    show(api());
+
+    const row = await screen.findByRole("link", { name: "U102" });
+    const table = row.closest("table");
+    expect(table).toHaveClass("ui-pcards", "ui-reslist");
+    const line = row.closest("tr");
+    expect(line).not.toBeNull();
+    const cells = within(line as HTMLElement);
+    expect(
+      cells.getByText(`Reserved on ${dayText(fresh.reservation_date)}`),
+    ).toHaveClass("rs-on-sub");
+    expect(cells.getByText("Expires")).toHaveClass("pc-label");
   });
 });

@@ -129,11 +129,11 @@ def outbox(db: HrDatabase, chat: int) -> list[tuple[str, dict[str, Any], Any]]:
     return [(row[0], row[1], row[2]) for row in rows]
 
 
-def test_migration_410_follows_the_problem_type_order() -> None:
+def test_migration_410_follows_the_ui_v81_join_402() -> None:
     config = Config(str(Path(__file__).parents[1] / "alembic.ini"))
     scripts = ScriptDirectory.from_config(config)
     revision = scripts.get_revision(REVISION)
-    assert revision is not None and revision.down_revision == "20270725_412"
+    assert revision is not None and revision.down_revision == "20270725_402"
     with pytest.raises(RuntimeError, match="forward-only"):
         revision.module.downgrade()
 

@@ -10,7 +10,7 @@ import {
 import { useEffect, useState } from "react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { BackLink, useRemembered } from "./backNav";
+import { BackLink, currentPageLabel, useRemembered } from "./backNav";
 
 /** A tiny page frame: the Unit page links to its Customer; the Customer page has Back. */
 function Frame() {
@@ -124,5 +124,23 @@ describe("Back helper (UI v81 B3)", () => {
     cleanup();
     render(<List />);
     expect(screen.getByRole("button", { name: "overdue" })).toBeTruthy();
+  });
+});
+
+describe("Back names the page on show (batch 6)", () => {
+  afterEach(cleanup);
+
+  it("TEST-FE-2147 a hidden page's record heading is not taken as the page left", () => {
+    render(
+      <div id="shell-view">
+        <section hidden>
+          <h1 data-record-title="">Home</h1>
+        </section>
+        <section>
+          <h1 id="page-title">Reservations</h1>
+        </section>
+      </div>,
+    );
+    expect(currentPageLabel()).toBe("Reservations");
   });
 });

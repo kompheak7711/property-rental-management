@@ -4678,3 +4678,52 @@ body
   .ui-kpi-note {
   grid-column: 1;
 }
+
+/* UI v81 batch 6, Reservations: the table did not fit an iPad standing up and was cut on a
+   phone. Below 1024px the Reserved on column folds under the Customer; on a phone each
+   Reservation is a card: Unit and status, the Customer, then Expires and the deposit. */
+table.ui-table.ui-reslist .rs-on-sub {
+  display: none;
+}
+@media (max-width: 1023px) {
+  table.ui-table.ui-reslist .rs-on {
+    display: none;
+  }
+  table.ui-table.ui-reslist .rs-on-sub {
+    display: block;
+  }
+}
+@media (max-width: 639px) {
+  /* The headings stay for screen readers; each is as small as its row, so none is cut. */
+  table.ui-table.ui-pcards.ui-reslist thead th {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    padding: 0;
+    border: 0;
+  }
+  table.ui-table.ui-pcards.ui-reslist td.rs-unit {
+    order: 1;
+    flex: 1 1 auto;
+  }
+  table.ui-table.ui-pcards.ui-reslist td.rs-status {
+    order: 2;
+    margin-left: auto;
+    text-align: right;
+  }
+  table.ui-table.ui-pcards.ui-reslist td.rs-cust {
+    order: 3;
+    flex: 1 1 100%;
+  }
+  table.ui-table.ui-pcards.ui-reslist td.rs-exp {
+    order: 4;
+  }
+  table.ui-table.ui-pcards.ui-reslist td.rs-dep {
+    order: 5;
+    margin-left: auto;
+    text-align: right;
+  }
+}

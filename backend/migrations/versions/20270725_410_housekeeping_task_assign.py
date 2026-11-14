@@ -34,7 +34,7 @@ or Unit status changes.
 Forward-only.
 
 Revision ID: 20270725_410
-Revises: 20270725_412
+Revises: 20270725_402
 """
 
 from collections.abc import Sequence
@@ -42,7 +42,7 @@ from collections.abc import Sequence
 from alembic import op
 
 revision: str = "20270725_410"
-down_revision: str | None = "20270725_412"
+down_revision: str | None = "20270725_402"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

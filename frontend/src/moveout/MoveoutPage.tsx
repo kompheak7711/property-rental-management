@@ -37,7 +37,10 @@ import type { UnitApi } from "../unitClient";
 import type { UtilityApi } from "../utilityClient";
 import type { EvidenceRecord, UtilityLeaseApi } from "../utilityLeaseClient";
 import { daysBetween } from "../reservations/reservationsData";
-import type { SettlementApi } from "../settlementClient";
+import {
+  type SettlementApi,
+  settlementApi as defaultSettlementApi,
+} from "../settlementClient";
 import {
   type CleaningRate,
   CleaningChargeDialog,
@@ -58,6 +61,7 @@ import {
 } from "./finalReadings";
 import { FinalReadingsDialog, countMetersOn } from "./FinalReadingsDialog";
 import { HandBackDialog, rentRuleText } from "./HandBackDialog";
+import { HandBackRentStep } from "./HandBackRentStep";
 import { InspectionDialog } from "./InspectionDialog";
 import {
   MoveOutUnavailableError,
@@ -149,6 +153,8 @@ export interface MoveoutPageProps {
   capabilities: ReadonlySet<string> | null;
   /** DL-132: the Problem reports made from findings; tests pass their own. */
   problemsApi?: Pick<ProblemsApi, "list">;
+  /** DL-229: the Rent for the days used after a hand-back; tests pass their own. */
+  handBackApi?: Pick<SettlementApi, "handBackAssessment" | "resolveHandBack">;
 }
 
 export function MoveoutPage(props: MoveoutPageProps) {
@@ -555,6 +561,7 @@ function MoveoutDetail({
   capabilities,
   leaseId,
   problemsApi = defaultProblemsApi,
+  handBackApi = defaultSettlementApi,
 }: MoveoutPageProps & { leaseId: string }) {
   const [lease, setLease] = useState<LeaseResource | null>(null);
   const [timeline, setTimeline] = useState<LeaseTimelineEvent[]>([]);
@@ -1251,6 +1258,23 @@ function MoveoutDetail({
                     <p className="ui-small">
                       {rentRuleText(language, current.actual_move_out_date)}
                     </p>
+                    {/* DL-229: the server says if the rule covers this ended Lease. */}
+                    {terminated && (
+                      <HandBackRentStep
+                        capabilities={capabilities}
+                        handBackDay={current.actual_move_out_date}
+                        invoiceApi={invoiceApi}
+                        language={language}
+                        leaseId={leaseId}
+                        onDone={(message) => {
+                          setWarning(null);
+                          setNotice(message);
+                          load();
+                        }}
+                        propertyId={propertyId}
+                        settlementApi={handBackApi}
+                      />
+                    )}
                   </>
                 ) : neverIn ? (
                   <p>{mt(language, "st2_skip")}</p>
