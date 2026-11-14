@@ -291,7 +291,8 @@ def test_each_step_of_a_stay_needs_its_own_right() -> None:
     assert desk.post(assign, json={"employee_id": "Sokha"}, headers=HEADERS).status_code == 422
     assert desk.post(assign, json={"name": "Sokha"}, headers=HEADERS).status_code == 422
     assert desk.post(assign, json={"employee_id": None}, headers=HEADERS).status_code == 200
-    assert flow.calls[-1][0] == "assign_task" and flow.calls[-1][1][1] == {}
+    action, sent_assign = flow.calls[-1]
+    assert action == "assign_task" and isinstance(sent_assign, tuple) and sent_assign[1] == {}
     # DL-222: the room check reports problems, never a cost.
     cleaner = client(flow, "short_stays.housekeeping")
     for wrong_check in (

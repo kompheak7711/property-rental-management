@@ -315,7 +315,7 @@ describe("Home", () => {
     const rows = within(list).getAllByRole("listitem");
     expect(titles()).toEqual([
       "INV260006: $210.00 not paid",
-      "Day 20 letter due: U201",
+      "Rent notice due: U201",
     ]);
     expect(rows[0]?.textContent).toContain("Ouk Chanthy · U201 · Initial Rent");
     expect(rows[0]?.textContent).toContain("05/10/202629 days late");
@@ -328,7 +328,7 @@ describe("Home", () => {
     ).toBe(hashForPage("invoices", "inv:inv-6"));
     expect(
       within(list)
-        .getByRole("link", { name: "Open Notices: Day 20 letter due: U201" })
+        .getByRole("link", { name: "Open Notices: Rent notice due: U201" })
         .getAttribute("href"),
     ).toBe("#/letters");
 

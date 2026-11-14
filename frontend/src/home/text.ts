@@ -91,11 +91,11 @@ const TEXT = {
   r_lease: ["Lease for {0} ends", "កិច្ចសន្យា {0} ផុតកំណត់"],
   r_lease_d: ["{0}. Ask about renewing.", "{0}។ សួរអំពីការបន្ត។"],
   r_appr: ["{0} pending approval", "{0} រង់ចាំការអនុម័ត"],
-  r_letter: ["{0} letter due: {1}", "លិខិត{0} ត្រូវផ្តល់៖ {1}"],
+  r_letter: ["{0} due: {1}", "{0} ត្រូវផ្តល់៖ {1}"],
   // new
   r_letter_d: ["{0} · {1} still owed", "{0} · {1} នៅជំពាក់"],
-  day20: ["Day 20", "ថ្ងៃទី២០"],
-  day30: ["Day 30", "ថ្ងៃទី៣០"],
+  day20: ["Rent notice", "លិខិតជូនដំណឹងថ្លៃឈ្នួល"],
+  day30: ["Termination letter", "លិខិតបញ្ចប់កិច្ចសន្យា"],
   r_depdec: [
     "Deposit pending a decision: {0}",
     "ប្រាក់កក់រង់ចាំការសម្រេច៖ {0}",
