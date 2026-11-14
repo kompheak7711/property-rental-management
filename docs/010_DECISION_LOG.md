@@ -3220,6 +3220,20 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **Links:** DL-068, DL-069, DL-090, DL-226; BR-RENT-006, BR-RENT-012, BR-SVC-013.
 - **Decision date:** 2026-11-12 (the owner's decision D1); built 2026-11-13.
 
+## DL-230 — The Utilities rate is chosen by the first day of the period of use (Q3 is built)
+
+- **Type:** `OWNER DECISION`.
+- **Source.** The owner on 12 Nov 2026 (DL-226, question Q3, answer B): a new rate is used only for use from its start date; the rate is chosen by the start of the period.
+- **Before** (BR-UTIL-014, DL-075). The rate in force on the day the Invoice was made was used for the whole period. A rate that started after the use was over could still price that use, when the Invoice was made late.
+- **Now.** The latest rate that had started on or before the first day of the period of use prices the whole period, whatever day the Invoice is made. This is the same for the monthly Invoice, the catch-up Invoice, the final Invoice at move-out and a broken-Meter estimate (there the first day is the first day of the estimated time).
+- **Example.** Old rate 0.25 USD, new rate 0.30 USD from 24 November. Use up to the reading of 24 November (100 units) is 25.00 USD, also when its Invoice is made on 25 November. Use after that reading is at 0.30 USD. The first day of a period is the day after its start reading.
+- **How the build read the rest.** Not asked; the pull request is merged only after the owner's own word, and the owner can change it:
+  1. A period that started before the first rate ever set of its kind has no older price. It uses that first rate, and its Invoice can be made only once that rate has started, as today (DL-105). Without this, the first use after the start of the app could never be billed, because the first rate starts on a reading day after today (DL-075).
+- **Kept.** A period is never split. A new rate starts on a reading day after today, the first rate too (DL-075). No issued Invoice changes; every Utilities line keeps the rate and the rate's start date that were used. The words of the refusal when no rate can be used, and the API reason `UTILITY_RATE_NOT_IN_EFFECT` (DL-105).
+- **Database:** migration `20270727_379` (DB-BS-008), forward-only; no data is changed or deleted. **API:** no field changes; the amendments of DL-230 in docs/005. **Screen:** no change. Settings already said "readings before it keep the old Rate".
+- **Links:** DL-075, DL-105, DL-226; BR-UTIL-014.
+- **Decision date:** 2026-11-12 (the owner's decision Q3); built 2026-11-13.
+
 ## DL-237 — Unpaid Rent: notices on day 10, 20 and 25 sent by the app, termination letter on day 30 sent by a Manager
 
 - **Type:** `OWNER DECISION`.
