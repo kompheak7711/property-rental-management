@@ -416,7 +416,8 @@ describe("Leases list", () => {
         .getAllByRole("columnheader")
         .map((cell) => cell.textContent),
     ).toEqual([
-      "Unit",
+      // UI v81 (owner 08/11/2026): the first column names the Lease by its number.
+      "Lease",
       "Primary Tenant",
       "Period",
       "Monthly Rent",
@@ -460,6 +461,28 @@ describe("Leases list", () => {
     fireEvent.click(screen.getByRole("link", { name: "U202" }));
     expect(window.location.hash).toBe("#/leases/lease-U202");
   });
+
+  it('TEST-FE-2120 (owner 12/11/2026: "check all card is link to correct place") "#/leases?show=ending" opens the list on the Ending soon card; a card chosen by hand is kept in the address, and choosing it again gives the plain address', async () => {
+    window.location.hash = "#/leases?show=ending";
+    show(api());
+    const ending = await screen.findByRole("button", {
+      name: /^Ending soon: 1\./,
+      pressed: true,
+    });
+    // Only the Lease of U102 ends soon.
+    expect(screen.getByText("1 Lease")).toBeInTheDocument();
+    expect(rowOf("U102")).toBeInTheDocument();
+    expect(screen.queryByText("Tenant U101")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /^Drafts: 2\./ }));
+    expect(window.location.hash).toBe("#/leases?show=draft");
+    expect(screen.getByText("2 Leases")).toBeInTheDocument();
+    fireEvent.click(ending);
+    expect(window.location.hash).toBe("#/leases?show=ending");
+    fireEvent.click(ending);
+    expect(window.location.hash).toBe("#/leases");
+    expect(screen.getByText("7 Leases")).toBeInTheDocument();
+  });
 });
 
 describe("Lease page", () => {
@@ -483,7 +506,10 @@ describe("Lease page", () => {
     // Start on the 10th of a 31-day month: $500.00 × 22 ÷ 31 = $354.84, due 5 days later.
     const rent = screen.getByRole("region", { name: "Rent and services" });
     expect(rent).toHaveTextContent("$500.00 × 22 ÷ 31 days = $354.84.");
-    expect(rent).toHaveTextContent("Initial Rent $354.84, due 15/12/2026.");
+    // UI v81 pilot (design v81): the figure, the Period and the Due date as rows.
+    expect(rent).toHaveTextContent("Initial Rent$354.84");
+    expect(rent).toHaveTextContent("Period10/12/2026 – 31/12/2026");
+    expect(rent).toHaveTextContent("Due date15/12/2026");
     const money = await screen.findByText(
       "$400.00 due by 15/12/2026, with the Initial Rent.",
     );
@@ -585,9 +611,7 @@ describe("Lease page", () => {
     const depositClient = deposits();
     show(api({ get }), depositClient, new Set(["leases.read"]));
 
-    expect(
-      await screen.findByText(/could not be read just now/),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/could not be loaded/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
     expect(
       await screen.findByRole("heading", { name: "Lease · U101" }),
@@ -893,7 +917,7 @@ describe("Lease actions", () => {
       await within(dialog).findByRole("button", { name: "Try again" }),
     );
     expect(
-      await within(dialog).findByText(/The server refused this/),
+      await within(dialog).findByText(/This could not be saved/),
     ).toBeInTheDocument();
     expect(update.mock.calls[0]?.[1]).toMatchObject({
       start_date: "2026-12-10",
@@ -1140,7 +1164,9 @@ describe("Lease actions", () => {
       target: { value: "Deposit agreed again" },
     });
     fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
-    expect(dialog).toHaveTextContent("Type the Security Deposit, more than 0.");
+    expect(dialog).toHaveTextContent(
+      "Enter the Security Deposit, more than 0.",
+    );
     expect(update).not.toHaveBeenCalled();
     fireEvent.change(box, { target: { value: "450" } });
     fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
@@ -1246,7 +1272,7 @@ describe("Lease actions", () => {
     // Not known is never "none" on the page either.
     expect(
       await screen.findByText(
-        "The Security Deposit could not be read just now. Reload the page to see it.",
+        "The Security Deposit could not be loaded. Reload the page to see it.",
       ),
     ).toBeInTheDocument();
     expect(
@@ -2043,7 +2069,7 @@ describe("New Lease and Renew", () => {
     expect(screen.getByLabelText("End Date")).toHaveValue(
       dayText("2027-12-31"),
     );
-    fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save as draft" }));
     expect(screen.getByText("Enter the monthly Rent.")).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("Monthly Rent"), {
@@ -2064,12 +2090,14 @@ describe("New Lease and Renew", () => {
     fireEvent.change(screen.getByLabelText("Which pet"), {
       target: { value: "One small cat" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save as draft" }));
     const dialog = screen.getByRole("dialog", {
       name: "Save the draft · U402?",
     });
     expect(create).not.toHaveBeenCalled();
-    fireEvent.click(within(dialog).getByRole("button", { name: "Save draft" }));
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Save as draft" }),
+    );
     fireEvent.click(
       await within(dialog).findByRole("button", { name: "Try again" }),
     );
@@ -2142,9 +2170,11 @@ describe("New Lease and Renew", () => {
     fireEvent.change(screen.getByLabelText("Monthly Rent"), {
       target: { value: "300" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save as draft" }));
     const dialog = screen.getByRole("dialog");
-    fireEvent.click(within(dialog).getByRole("button", { name: "Save draft" }));
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Save as draft" }),
+    );
     expect(
       await within(dialog).findByText(
         /^The draft is saved\. No answer came back for its Security Deposit/,
@@ -2213,19 +2243,21 @@ describe("New Lease and Renew", () => {
     fireEvent.change(screen.getByLabelText("Monthly Rent"), {
       target: { value: "300" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save as draft" }));
     fireEvent.click(
       within(screen.getByRole("dialog")).getByRole("button", {
-        name: "Save draft",
+        name: "Save as draft",
       }),
     );
     await within(screen.getByRole("dialog")).findByRole("button", {
       name: "Try again",
     });
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
-    fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save as draft" }));
     const dialog = screen.getByRole("dialog");
-    fireEvent.click(within(dialog).getByRole("button", { name: "Save draft" }));
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Save as draft" }),
+    );
     expect(
       await within(dialog).findByText(
         "The draft is saved, but its Security Deposit is not. The Security Deposit must be more than 0. Try again saves only the Security Deposit. Close opens the draft, where Edit draft can add it.",
@@ -2262,9 +2294,11 @@ describe("New Lease and Renew", () => {
     fireEvent.change(screen.getByLabelText("Monthly Rent"), {
       target: { value: "300" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save as draft" }));
     const dialog = screen.getByRole("dialog");
-    fireEvent.click(within(dialog).getByRole("button", { name: "Save draft" }));
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Save as draft" }),
+    );
     expect(await within(dialog).findByText(reason)).toBeInTheDocument();
     expect(dialog).not.toHaveTextContent("The server refused the draft");
     expect(get).not.toHaveBeenCalled();
@@ -2275,10 +2309,12 @@ describe("New Lease and Renew", () => {
     fireEvent.change(screen.getByLabelText("Start Date"), {
       target: { value: "2027-02-01" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save as draft" }));
     const again = screen.getByRole("dialog");
     expect(again).not.toHaveTextContent(reason);
-    fireEvent.click(within(again).getByRole("button", { name: "Save draft" }));
+    fireEvent.click(
+      within(again).getByRole("button", { name: "Save as draft" }),
+    );
     await waitFor(() => {
       expect(create).toHaveBeenCalledTimes(2);
     });
@@ -2548,9 +2584,9 @@ describe("New Lease and Renew", () => {
     });
     // The Services could not be read: the draft waits, Retry reads them again.
     expect(
-      await screen.findByText(/The Services could not be read just now/),
+      await screen.findByText(/The Services could not be loaded/),
     ).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save as draft" }));
     expect(
       screen.getByText("The Services are not read yet. Press Retry above."),
     ).toBeInTheDocument();
@@ -2590,12 +2626,14 @@ describe("New Lease and Renew", () => {
       "Trash, large bin: $6.00 a month from the Start Date",
     );
     expect(preview).toHaveTextContent("Car park: $20.00 a month");
-    fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save as draft" }));
     const dialog = screen.getByRole("dialog", {
       name: "Save the draft · U402?",
     });
     expect(dialog).toHaveTextContent("Services: Trash, large bin, Car park.");
-    fireEvent.click(within(dialog).getByRole("button", { name: "Save draft" }));
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Save as draft" }),
+    );
     await waitFor(() => {
       expect(create).toHaveBeenCalled();
     });
@@ -2654,11 +2692,11 @@ describe("New Lease and Renew", () => {
     fireEvent.change(screen.getByLabelText("Monthly Rent"), {
       target: { value: "300" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save as draft" }));
     fireEvent.click(
       within(
         screen.getByRole("dialog", { name: "Save the draft · U401?" }),
-      ).getByRole("button", { name: "Save draft" }),
+      ).getByRole("button", { name: "Save as draft" }),
     );
     await waitFor(() => {
       expect(create).toHaveBeenCalledTimes(1);
@@ -2730,12 +2768,12 @@ describe("New Lease and Renew", () => {
         ),
       );
     const save = async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
+      fireEvent.click(screen.getByRole("button", { name: "Save as draft" }));
       const confirm = await screen.findByRole("dialog", {
         name: "Save the draft · U402?",
       });
       fireEvent.click(
-        within(confirm).getByRole("button", { name: "Save draft" }),
+        within(confirm).getByRole("button", { name: "Save as draft" }),
       );
     };
     window.location.hash = "#/leases/new";
@@ -2767,7 +2805,7 @@ describe("New Lease and Renew", () => {
     fireEvent.change(screen.getByLabelText("Monthly Rent"), {
       target: { value: "400" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save as draft" }));
     expect(
       await screen.findByText(
         "The Rent is below this Unit's default Rent of $450.00. Only a Manager or the Owner can agree a lower Rent.",
@@ -2811,7 +2849,7 @@ describe("New Lease and Renew", () => {
     fireEvent.change(screen.getByLabelText("Monthly Rent"), {
       target: { value: "400" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save as draft" }));
     expect(
       await screen.findByText("Say why the Rent is lower."),
     ).toBeInTheDocument();
@@ -2858,10 +2896,10 @@ describe("New Lease and Renew", () => {
     ).toHaveTextContent(
       "Security Deposit: $80.00 received of $400.00 from the Booking; $320.00 is paid when the Lease is signed.",
     );
-    fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save as draft" }));
     fireEvent.click(
       within(screen.getByRole("dialog")).getByRole("button", {
-        name: "Save draft",
+        name: "Save as draft",
       }),
     );
     await waitFor(() => {
@@ -2909,7 +2947,7 @@ describe("New Lease and Renew", () => {
       money,
     );
 
-    const box = await screen.findByLabelText("Security Deposit (USD)");
+    const box = await screen.findByLabelText("Security Deposit");
     expect(box).toHaveValue("400.00");
     expect(
       screen.getByText(
@@ -2921,7 +2959,7 @@ describe("New Lease and Renew", () => {
       screen.queryByLabelText("Why the Security Deposit changed"),
     ).toBeNull();
     fireEvent.change(box, { target: { value: "79.99" } });
-    fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save as draft" }));
     expect(
       screen.getByText(
         "The Security Deposit cannot be less than the $80.00 already received.",
@@ -2942,10 +2980,10 @@ describe("New Lease and Renew", () => {
     ).toHaveTextContent(
       "Security Deposit: $80.00 received of $450.00 from the Booking; $370.00 is paid when the Lease is signed.",
     );
-    fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save as draft" }));
     fireEvent.click(
       within(screen.getByRole("dialog")).getByRole("button", {
-        name: "Save draft",
+        name: "Save as draft",
       }),
     );
     await waitFor(() => {
@@ -2979,10 +3017,10 @@ describe("New Lease and Renew", () => {
     ).toHaveTextContent(
       "Security Deposit: the old Lease's deposit does not move by itself.",
     );
-    fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save as draft" }));
     fireEvent.click(
       within(screen.getByRole("dialog")).getByRole("button", {
-        name: "Save draft",
+        name: "Save as draft",
       }),
     );
     await waitFor(() => {
@@ -3028,10 +3066,10 @@ describe("New Lease and Renew", () => {
     fireEvent.change(screen.getByLabelText("Monthly Rent"), {
       target: { value: "300" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save as draft" }));
     fireEvent.click(
       within(screen.getByRole("dialog")).getByRole("button", {
-        name: "Save draft",
+        name: "Save as draft",
       }),
     );
     await within(screen.getByRole("dialog")).findByRole("button", {
@@ -3041,10 +3079,10 @@ describe("New Lease and Renew", () => {
     fireEvent.change(screen.getByLabelText("Monthly Rent"), {
       target: { value: "320" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save as draft" }));
     fireEvent.click(
       within(screen.getByRole("dialog")).getByRole("button", {
-        name: "Save draft",
+        name: "Save as draft",
       }),
     );
     await waitFor(() => {
@@ -3065,7 +3103,7 @@ describe("New Lease and Renew", () => {
     expect(
       await screen.findByText(/The Booking of Bopha is no longer active/),
     ).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Save draft" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Save as draft" })).toBeNull();
   });
 
   function lw(sequence: number): LeaseWarning {
@@ -3120,8 +3158,12 @@ describe("New Lease and Renew", () => {
         }),
       );
     show(api({ terminate }));
-    const button = await screen.findByRole("button", { name: /^Terminate/ });
-    expect(within(button).getByText("Manager")).toBeInTheDocument();
+    // UI v81 pilot: "Manager only" is text beside the button, never inside it.
+    const button = await screen.findByRole("button", {
+      name: "Terminate Lease",
+    });
+    expect(button).not.toHaveTextContent("Manager");
+    expect(screen.getByText("Manager only")).toBeInTheDocument();
     const dialog = await openTerminate();
     fireEvent.click(within(dialog).getByRole("button", { name: "Terminate" }));
     expect(within(dialog).getByText("Choose the ground.")).toBeInTheDocument();
@@ -3327,7 +3369,7 @@ describe("New Lease and Renew", () => {
     const record = await screen.findByRole("dialog", {
       name: "Termination notice · U101",
     });
-    fireEvent.change(within(record).getByLabelText(/Letter number/), {
+    fireEvent.change(within(record).getByLabelText(/Notice number/), {
       target: { value: "TN-7" },
     });
     fireEvent.change(within(record).getByLabelText(/How it was given/), {
@@ -3514,7 +3556,7 @@ describe("New Lease and Renew", () => {
     const record = await screen.findByRole("dialog", {
       name: "Termination notice · U101",
     });
-    fireEvent.change(within(record).getByLabelText(/Letter number/), {
+    fireEvent.change(within(record).getByLabelText(/Notice number/), {
       target: { value: "TN-8" },
     });
     fireEvent.change(within(record).getByLabelText(/How it was given/), {
@@ -3534,7 +3576,7 @@ describe("New Lease and Renew", () => {
     });
     const [n1, n2] = recordNotice.mock.calls;
     expect(n2).toEqual(n1);
-    fireEvent.change(within(record).getByLabelText(/Letter number/), {
+    fireEvent.change(within(record).getByLabelText(/Notice number/), {
       target: { value: "TN-9" },
     });
     // The letter text follows the Lease end date until somebody writes it.
@@ -4110,7 +4152,7 @@ describe("Add occupant (DL-102)", () => {
     fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
     expect(
       await within(dialog).findByText(
-        "The server refused this. Nothing was saved. Check the details, or ask the Owner.",
+        "This could not be saved. Nothing was saved. Check the details, or ask the Owner.",
       ),
     ).toBeInTheDocument();
 
@@ -4131,8 +4173,80 @@ describe("Add occupant (DL-102)", () => {
     );
     expect(
       await screen.findByText(
-        "The Customers could not be read just now. Close and try again.",
+        "The Customers could not be loaded. Close and try again.",
       ),
     ).toBeInTheDocument();
+  });
+
+  it("TEST-FE-1923 Owner 08/11/2026: the Lease number is in the title and the list, the History names the person of each step, and the History button shows even with two steps", async () => {
+    window.location.hash = "#/leases/lease-U101";
+    const numbered = lease("U101", {
+      lease_number: "U101L0026",
+      timeline: [
+        {
+          event_id: "event-1",
+          event_kind: "lease.draft",
+          occurred_at: "2026-02-20T03:00:00Z",
+          reason: "New Lease",
+          actor_id: "actor-1",
+          actor_name: "Chan Sophea",
+          subject_name: null,
+          source_reference: null,
+          source_href: null,
+        },
+        {
+          event_id: "event-2",
+          event_kind: "lease.signer.sign",
+          occurred_at: "2026-03-01T03:00:00Z",
+          reason: "",
+          actor_id: "actor-2",
+          actor_name: "Chan Dara",
+          subject_name: "Keo Vannak",
+          source_reference: null,
+          source_href: null,
+        },
+      ],
+    });
+    show(
+      api({
+        get: vi.fn().mockResolvedValue(numbered),
+        list: vi.fn().mockResolvedValue({
+          items: [numbered, lease("U102")],
+          next_cursor: null,
+          can_create: true,
+        }),
+      }),
+    );
+
+    expect(
+      await screen.findByRole("heading", { name: "Lease · U101L0026" }),
+    ).toBeInTheDocument();
+    const history = screen.getByRole("region", { name: "History" });
+    const steps = within(history).getAllByRole("listitem");
+    expect(steps).toHaveLength(2);
+    expect(steps[0]).toHaveTextContent(
+      "Signed by Keo VannakRecorded by Chan Dara",
+    );
+    expect(steps[1]).toHaveTextContent("Draft made by Chan SopheaNew Lease");
+    expect(
+      within(history).getByRole("button", { name: /^History/ }),
+    ).toHaveTextContent("History (2)");
+
+    cleanup();
+    window.location.hash = "#/leases";
+    show(
+      api({
+        list: vi.fn().mockResolvedValue({
+          items: [numbered, lease("U102")],
+          next_cursor: null,
+          can_create: true,
+        }),
+      }),
+    );
+    expect(
+      await screen.findByRole("link", { name: "U101L0026" }),
+    ).toHaveAttribute("href", "#/leases/lease-U101");
+    // A Lease read without a number still names its Unit.
+    expect(screen.getByRole("link", { name: "U102" })).toBeInTheDocument();
   });
 });

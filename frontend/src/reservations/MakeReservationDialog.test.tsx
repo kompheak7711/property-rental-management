@@ -235,7 +235,7 @@ describe("Make Reservation (V1-060 B6)", () => {
       />,
     );
     const dialog = await screen.findByRole("dialog", {
-      name: "Make Reservation",
+      name: "New Reservation",
     });
     await within(dialog).findByLabelText("Unit");
     expect(within(dialog).getByLabelText("Reservation Date")).toHaveValue(
@@ -324,7 +324,7 @@ describe("Make Reservation (V1-060 B6)", () => {
       />,
     );
     const dialog = await screen.findByRole("dialog", {
-      name: "Make Reservation",
+      name: "New Reservation",
     });
     expect(await within(dialog).findByLabelText("Unit")).toHaveValue("unit-2");
     fireEvent.change(
@@ -407,7 +407,7 @@ describe("Make Reservation (V1-060 B6)", () => {
     };
     const { rerender } = render(<MakeReservationDialog {...props} />);
     const dialog = await screen.findByRole("dialog", {
-      name: "Make Reservation",
+      name: "New Reservation",
     });
     const expires = within(dialog).getByLabelText("Expires on");
     expect(expires).toHaveValue(dayText(addDays(today, 21)));
@@ -446,7 +446,7 @@ describe("Make Reservation (V1-060 B6)", () => {
     );
     expect(
       within(dialog).getByText(
-        "Pick a day after the Reservation Date, at most 30 days later.",
+        "Choose a day after the Reservation Date, at most 30 days later.",
       ),
     ).toBeInTheDocument();
   });
@@ -480,7 +480,7 @@ describe("Make Reservation (V1-060 B6)", () => {
       />,
     );
     const dialog = await screen.findByRole("dialog", {
-      name: "Make Reservation",
+      name: "New Reservation",
     });
     await within(dialog).findByLabelText("Unit");
     fireEvent.change(within(dialog).getByLabelText("Customer"), {
@@ -582,7 +582,7 @@ describe("Make Reservation (V1-060 B7)", () => {
       />,
     );
     const dialog = await screen.findByRole("dialog", {
-      name: "Make Reservation",
+      name: "New Reservation",
     });
     await within(dialog).findByLabelText("Unit");
     fireEvent.change(within(dialog).getByLabelText("Customer"), {
@@ -638,7 +638,7 @@ describe("Make Reservation (V1-060 B7)", () => {
       />,
     );
     const away = await screen.findByRole("dialog", {
-      name: "Make Reservation",
+      name: "New Reservation",
     });
     expect(await within(away).findByLabelText("Unit")).toHaveValue("");
     fireEvent.change(within(away).getByLabelText("Unit"), {
@@ -665,7 +665,7 @@ describe("Make Reservation (V1-060 B7)", () => {
     );
     expect(
       within(away).getByText(
-        "Your rights could not be read just now, so less than the suggested $100.00 cannot be checked before the money is taken. Reload the page, or receive at least $100.00.",
+        "Your rights could not be loaded, so less than the suggested $100.00 cannot be checked before the money is taken. Reload the page, or receive at least $100.00.",
       ),
     ).toBeInTheDocument();
     expect(create).not.toHaveBeenCalled();
@@ -857,7 +857,7 @@ describe("Make Reservation (V1-060 B7)", () => {
       />,
     );
     const dialog = await screen.findByRole("dialog", {
-      name: "Make Reservation",
+      name: "New Reservation",
     });
     await within(dialog).findByRole("option", { name: /U102/ });
     fireEvent.change(within(dialog).getByLabelText("Customer"), {
@@ -995,12 +995,12 @@ describe("Make Reservation (V1-061)", () => {
       ],
       [
         null,
-        "Your rights could not be read just now, so a Rent below $500.00 cannot be checked before the money is taken. Reload the page, or agree at least $500.00.",
+        "Your rights could not be loaded, so a Rent below $500.00 cannot be checked before the money is taken. Reload the page, or agree at least $500.00.",
       ],
     ] as const) {
       const view = open(right);
       const dialog = await screen.findByRole("dialog", {
-        name: "Make Reservation",
+        name: "New Reservation",
       });
       await fill(dialog);
       fireEvent.click(
@@ -1013,7 +1013,7 @@ describe("Make Reservation (V1-061)", () => {
 
     open(true);
     const dialog = await screen.findByRole("dialog", {
-      name: "Make Reservation",
+      name: "New Reservation",
     });
     await fill(dialog);
     fireEvent.click(

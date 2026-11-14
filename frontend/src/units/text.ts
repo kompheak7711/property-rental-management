@@ -3,13 +3,14 @@
 // the mock-up.
 
 import type { Language } from "../signInText";
+import { singular } from "../shell/plural";
 
 const TEXT = {
   sub: ["{0} Units at CHETANA Residence", "បន្ទប់ {0} នៅ CHETANA Residence"],
   loading: ["Loading the Units…", "កំពុងផ្ទុកបន្ទប់…"],
   // new
   failed: [
-    "The Units could not be read. Retry when the service is available.",
+    "The Units could not be loaded. Retry when the service is available.",
     "មិនអាចអានបន្ទប់បានទេ។ សូមព្យាយាមម្តងទៀតពេលសេវាអាចប្រើបាន។",
   ],
   // new
@@ -21,7 +22,7 @@ const TEXT = {
   ],
   // new
   lists_failed: [
-    "The Settings lists could not be read, so Units cannot be added or changed now.",
+    "The Settings lists could not be loaded, so Units cannot be added or changed now.",
     "មិនអាចអានបញ្ជីការកំណត់បានទេ ដូច្នេះមិនអាចបន្ថែម ឬកែបន្ទប់បានឥឡូវនេះ។",
   ],
   // new
@@ -44,7 +45,7 @@ const TEXT = {
   ],
   c_vacant: ["Vacant", "ទំនេរ"],
   c_vacant_s: ["Ready to reserve or lease", "រួចរាល់សម្រាប់កក់ ឬជួល"],
-  c_na: ["Not available", "មិនអាចប្រើបាន"],
+  c_na: ["Unavailable", "មិនអាចប្រើបាន"],
   c_na_s: [
     "Cleaning, maintenance or out of service",
     "កំពុងសម្អាត ជួសជុល ឬឈប់ប្រើ",
@@ -72,7 +73,7 @@ const TEXT = {
     "This Unit was not found. Go back to the Units list.",
     "រកមិនឃើញបន្ទប់នេះទេ។ ត្រឡប់ទៅបញ្ជីបន្ទប់។",
   ],
-  make_reservation: ["Make Reservation", "ធ្វើការកក់"],
+  make_reservation: ["New Reservation", "ធ្វើការកក់"],
   new_lease: ["New Lease", "កិច្ចសន្យាថ្មី"],
   new_lease_from_res: ["New Lease from Reservation", "កិច្ចសន្យាថ្មីពីការកក់"],
   open_lease: ["Open Lease", "បើកកិច្ចសន្យា"],
@@ -81,12 +82,8 @@ const TEXT = {
   change_status: ["Change status", "ប្តូរស្ថានភាព"],
   update_unit: ["Update Unit", "ធ្វើបច្ចុប្បន្នភាពបន្ទប់"],
   details: ["Unit details", "ព័ត៌មានលម្អិតបន្ទប់"],
-  no_photo: ["No photo of this Unit yet.", "មិនទាន់មានរូបថតបន្ទប់នេះទេ។"],
+  no_photo: ["No photo yet", "មិនទាន់មានរូបថតទេ"],
   // new
-  photo_later: [
-    "Adding a photo comes with the file storage step.",
-    "ការបន្ថែមរូបថតនឹងមកជាមួយជំហានរក្សាទុកឯកសារ។",
-  ],
   size: ["Size", "ទំហំ"],
   m2: ["{0} m²", "{0} ម²"],
   beds: ["Bedrooms", "បន្ទប់គេង"],
@@ -116,7 +113,7 @@ const TEXT = {
   ],
   uf_add: ["Add", "បន្ថែម"],
   uf_note: [
-    "Each feature can be 1 to 9. A shop or office lists only what it has, for example Main room ×1. New features are added in Settings → Unit setup. Every change is kept in History.",
+    "Each feature can be 1 to 9. A shop or office lists only what it has, for example Main room ×1. New features are added in Settings → Unit setup. Every change is kept in the audit log.",
     "លក្ខណៈនីមួយៗអាចមានពី ១ ដល់ ៩។ ហាង ឬការិយាល័យ បង្ហាញតែអ្វីដែលវាមាន ឧទាហរណ៍ បន្ទប់ធំ ×១។ លក្ខណៈថ្មីត្រូវបន្ថែមនៅក្នុង ការកំណត់ → ការរៀបចំបន្ទប់។ ការផ្លាស់ប្តូរនីមួយៗត្រូវបានរក្សាក្នុងប្រវត្តិ។",
   ],
   uf_saved: [
@@ -168,10 +165,14 @@ const TEXT = {
   end: ["End Date", "ថ្ងៃបញ្ចប់"],
   invoices: ["Invoices for this Unit", "វិក្កយបត្រសម្រាប់បន្ទប់នេះ"],
   // new
-  invoices_later: [
-    "Unpaid Invoices for this Unit show here when Invoices are rebuilt (step R5).",
-    "វិក្កយបត្រមិនទាន់បង់សម្រាប់បន្ទប់នេះនឹងបង្ហាញនៅទីនេះ ពេលរៀបចំវិក្កយបត្រឡើងវិញ (ជំហាន R5)។",
+  // Property fix 5 (owner 14/11/2026): the current Lease's unpaid Invoices. Khmer new.
+  inv_none: ["No unpaid Invoices.", "គ្មានវិក្កយបត្រមិនទាន់បង់ទេ។"],
+  inv_no_lease: ["No Lease is running.", "គ្មានកិច្ចសន្យាជួលកំពុងដំណើរការទេ។"],
+  inv_failed: [
+    "The Invoices could not be loaded.",
+    "មិនអាចអានវិក្កយបត្របានទេ។",
   ],
+  inv_due: ["due {0}", "ផុតកំណត់ {0}"],
   history: ["History", "ប្រវត្តិ"],
   // new
   history_none: ["No history yet.", "មិនទាន់មានប្រវត្តិ។"],
@@ -218,7 +219,7 @@ const TEXT = {
     "បន្ទប់ {0} បានរក្សាទុក ប៉ុន្តែថ្លៃឈ្នួល និងសេវាមិនទាន់រក្សាទុកទេ។ សូមកំណត់វានៅទំព័របន្ទប់ ដោយចុច ប្តូរ។",
   ],
   edit_note: [
-    "Changes are dated and kept in History. The Unit number cannot change.",
+    "Changes are dated and kept in the audit log. The Unit number cannot change.",
     "ការផ្លាស់ប្តូរមានកាលបរិច្ឆេទ និងរក្សាទុកក្នុងប្រវត្តិ។ លេខបន្ទប់មិនអាចប្តូរបានទេ។",
   ],
   save: ["Save", "រក្សាទុក"],
@@ -242,7 +243,7 @@ const TEXT = {
     "ការផ្លាស់ប្តូរមិនត្រូវបានរក្សាទុកទេ។ សូមព្យាយាមម្តងទៀតពេលសេវាអាចប្រើបាន។",
   ],
   blocked_lease: [
-    "This Unit has a signed Lease. Its status changes only through Move-out.",
+    "This Unit has a signed Lease. Its status changes only through a move-out.",
     "បន្ទប់នេះមានកិច្ចសន្យាបានចុះហត្ថលេខា។ ស្ថានភាពប្តូរបានតែតាមរយៈការចាកចេញប៉ុណ្ណោះ។",
   ],
   blocked_res: [
@@ -288,7 +289,7 @@ const TEXT = {
     "គណនីរបស់អ្នកមិនអាចអានទឹកភ្លើងបានទេ។",
   ],
   u_failed: [
-    "The Utility prices could not be read. Open this page again later.",
+    "The Utility prices could not be loaded. Open this page again later.",
     "មិនអាចអានតម្លៃទឹកភ្លើងបានទេ។ សូមបើកទំព័រនេះម្តងទៀតពេលក្រោយ។",
   ],
   u_settings: [
@@ -328,7 +329,7 @@ const TEXT = {
     "បន្ទប់មួយអាចតម្រូវសេវាបានច្រើនបំផុត 20។",
   ],
   rt_services_failed: [
-    "The Services could not be read, so this cannot be saved now. Open it again later.",
+    "The Services could not be loaded, so this cannot be saved now. Open it again later.",
     "មិនអាចអានសេវាបានទេ ដូច្នេះមិនអាចរក្សាទុកបានឥឡូវនេះ។ សូមបើកម្តងទៀតពេលក្រោយ។",
   ],
   rt_no_property_services: [
@@ -400,7 +401,9 @@ export function ut(
   key: UnitTextKey,
   ...values: (string | number)[]
 ): string {
-  return TEXT[key][language === "en" ? 0 : 1].replace(/\{(\d)\}/g, (_, n) =>
-    String(values[Number(n)] ?? ""),
+  return singular(
+    TEXT[key][language === "en" ? 0 : 1].replace(/\{(\d)\}/g, (_, n) =>
+      String(values[Number(n)] ?? ""),
+    ),
   );
 }

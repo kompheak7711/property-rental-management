@@ -5,6 +5,7 @@
 // page is open. Export makes a spreadsheet or a PDF through the V1-057 export, which writes its
 // own History row.
 
+import { BackLink } from "../shell/backNav";
 import "../shell/screens.css";
 import "./reports.css";
 
@@ -64,6 +65,12 @@ import {
 } from "./reportsData";
 import { rpt } from "./text";
 import { TotalsContent } from "./TotalsView";
+import {
+  type ShortStaysApi,
+  shortStaysApi,
+} from "../shortstays/shortStaysClient";
+import { WeekReport } from "../shortstays/WeekReport";
+import { PageHead } from "../shell/pageHead";
 
 export interface ReportApi {
   totals: (
@@ -96,7 +103,12 @@ export interface ReportsPageProps {
   today: string;
   /** The clock, for the Generated line. */
   now?: () => number;
+  /** The Short stays weekly report (tests pass a fake). */
+  stayApi?: ShortStaysApi;
 }
+
+/** The address word of the Short stays weekly report ("#/reports/short_stay_week"). */
+const WEEK_REPORT = "short_stay_week";
 
 interface UnitChoice {
   id: string;
@@ -126,6 +138,7 @@ export function ReportsPage({
   units,
   today,
   now = Date.now,
+  stayApi = shortStaysApi,
 }: ReportsPageProps) {
   const detail = useHashDetail("reports");
   const [params, setParams] = useState<Params>(START_PARAMS);
@@ -183,9 +196,47 @@ export function ReportsPage({
 
   if (!active || propertyId === "") return null;
 
+  // Owner 13/11/2026 (Leasing thread): the Short stays weekly report moved here from Short
+  // stays; for the Owner and the Manager, as before.
+  const mayWeek =
+    capabilities === null || capabilities.has("short_stays.approve");
+  if (detail === WEEK_REPORT && mayWeek) {
+    return (
+      <>
+        <BackLink language={language} parent="reports" />
+        <PageHead>
+          <div>
+            <div className="ui-hrow">
+              <h2>{rpt(language, "r_short_stay_week")}</h2>
+              <Chip icon="lock" tone="info">
+                {rpt(language, "tag")}
+              </Chip>
+            </div>
+            <p>{rpt(language, "d_short_stay_week")}</p>
+          </div>
+        </PageHead>
+        <WeekReport
+          api={stayApi}
+          key={propertyId}
+          language={language}
+          may={(capability) =>
+            capabilities === null || capabilities.has(capability)
+          }
+          propertyId={propertyId}
+          today={today}
+        />
+      </>
+    );
+  }
   const def = reportDef(detail);
   if (def === null) {
-    return <ReportsList capabilities={capabilities} language={language} />;
+    return (
+      <ReportsList
+        capabilities={capabilities}
+        language={language}
+        mayWeek={mayWeek}
+      />
+    );
   }
 
   // Floors in the Settings order, then any other floor a Unit uses (as on the Units list).
@@ -221,9 +272,11 @@ export function ReportsPage({
 function ReportsList({
   language,
   capabilities,
+  mayWeek,
 }: {
   language: Language;
   capabilities: ReadonlySet<string> | null;
+  mayWeek: boolean;
 }) {
   const allowed = REPORTS.filter((def) => mayRead(def, capabilities));
   const groups = [
@@ -232,9 +285,9 @@ function ReportsList({
   ] as const;
   return (
     <>
-      <div className="ui-head">
+      <PageHead>
         <p>{rpt(language, "rp_sub")}</p>
-      </div>
+      </PageHead>
       {allowed.length === 0 && (
         <div className="ui-notice warn" role="note">
           <Icon name="lock" />
@@ -282,6 +335,32 @@ function ReportsList({
               </ul>
             </section>
           ),
+      )}
+      {mayWeek && (
+        <section aria-labelledby="rp-g_stays" className="rp-groupsec">
+          <h2 className="rp-group" id="rp-g_stays">
+            {rpt(language, "g_stays")}
+          </h2>
+          <ul className="rp-cards">
+            <li>
+              <a className="rp-card" href={hashForPage("reports", WEEK_REPORT)}>
+                <span className="rp-card-name">
+                  <span className="rp-card-icon">
+                    <Icon name="calendar" small />
+                  </span>
+                  {rpt(language, "r_short_stay_week")}
+                </span>
+                <span className="rp-card-desc">
+                  {rpt(language, "d_short_stay_week")}
+                </span>
+                <span className="rp-card-foot">
+                  <span className="rp-tag">{rpt(language, "tag")}</span>
+                  <span className="rp-card-open">{rpt(language, "open")}</span>
+                </span>
+              </a>
+            </li>
+          </ul>
+        </section>
       )}
       <p className="ui-small ui-muted">
         {rpt(language, "staff_note")} {rpt(language, "currency")}
@@ -453,11 +532,8 @@ function ReportView({
 
   const head = (
     <>
-      <a className="ui-crumb" href={hashForPage("reports")}>
-        <Icon name="back" small />
-        {rpt(language, "back")}
-      </a>
-      <div className="ui-head">
+      <BackLink language={language} parent="reports" />
+      <PageHead>
         <div>
           <div className="ui-hrow">
             <h2>{name}</h2>
@@ -469,7 +545,7 @@ function ReportView({
           </div>
           <p>{rpt(language, `d_${def.key}`)}</p>
         </div>
-      </div>
+      </PageHead>
     </>
   );
 

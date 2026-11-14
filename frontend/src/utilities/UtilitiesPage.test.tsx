@@ -362,9 +362,10 @@ describe("Utilities page (V1-058 R4)", () => {
     // The replaced meter of U201 is not on the list; the new one is.
     expect(within(rowOf("U201")).getByText("EL-U201")).toBeTruthy();
     expect(screen.queryByText("EL-OLD-201")).toBeNull();
+    // UI v81 Utilities batch: the switch says how many are left, in the design's words.
     expect(
       screen.getByRole("button", { name: /Electricity/ }).textContent,
-    ).toContain("1/3");
+    ).toContain("2 to read");
 
     fireEvent.change(screen.getByLabelText("All floors"), {
       target: { value: "2" },
@@ -533,7 +534,7 @@ describe("Utilities page (V1-058 R4)", () => {
       within(rowOf("U101")).getByRole("button", { name: /^Save U/ }),
     );
     await screen.findByText(
-      "The reading was refused. It may be lower than a reading already saved, or dated before the meter was put in.",
+      "The reading could not be saved. It may be lower than a reading already saved, or dated before the meter was put in.",
     );
     const keys = recordReading.mock.calls.map((call) => String(call[2]));
     expect(keys[0]).toBe(keys[1]);
@@ -554,7 +555,7 @@ describe("Utilities page (V1-058 R4)", () => {
   it("TEST-FE-1226 Before reading day only the test app shows Import, with a note that the readings get today's date; the dialog opens", async () => {
     show({ today: "2026-10-10" });
     await screen.findByText(
-      "Reading day is 24/10/2026. The list to type the readings opens that day.",
+      "Reading day is 24/10/2026. The list to enter the readings opens that day.",
     );
     expect(screen.queryByRole("button", { name: "Import" })).toBeNull();
     cleanup();
@@ -577,7 +578,7 @@ describe("Utilities page (V1-058 R4)", () => {
       capabilities: new Set(["utility_readings.read"]),
     });
     await screen.findByText(
-      "Reading day is 24/10/2026. The list to type the readings opens that day.",
+      "Reading day is 24/10/2026. The list to enter the readings opens that day.",
     );
     expect(screen.queryByRole("button", { name: "Import" })).toBeNull();
   });
@@ -586,17 +587,24 @@ describe("Utilities page (V1-058 R4)", () => {
     show({ today: "2026-10-10" });
     expect(
       await screen.findByText(
-        "Reading day is 24/10/2026. The list to type the readings opens that day.",
+        "Reading day is 24/10/2026. The list to enter the readings opens that day.",
       ),
     ).toBeTruthy();
     expect(within(rowOf("U102")).getByText("330")).toBeTruthy();
     expect(screen.queryByText("U101", { selector: "b" })).toBeNull();
     expect(screen.queryByRole("textbox", { name: /New reading/ })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: /Water/ }));
-    expect(screen.getByText("No readings in October 2026.")).toBeTruthy();
+    // Operations fix 5 (owner 13/11/2026): with no Water reading in October yet, the list shows
+    // the last month that has them, and the note says so.
+    expect(
+      screen.getByText(
+        /Until then, this list shows the last readings, September 2026\./,
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByText("No readings in October 2026.")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: /Electricity/ }));
 
-    fireEvent.click(screen.getByRole("button", { name: "Pick a month" }));
+    fireEvent.click(screen.getByRole("button", { name: "Choose month" }));
     fireEvent.change(screen.getByLabelText("Month", { selector: "select" }), {
       target: { value: "2026-09" },
     });
@@ -670,7 +678,7 @@ describe("Utilities page (V1-058 R4)", () => {
     fireEvent.blur(box);
     expect(
       screen.getByText(
-        'No Unit "u999". Type a Unit number such as U101, or clear the box to see all Units.',
+        'No Unit "u999". Enter a Unit number such as U101, or clear the box to see all Units.',
       ),
     ).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "All Units" }));
@@ -780,7 +788,7 @@ describe("Utilities page (V1-058 R4)", () => {
     show({ api });
     expect(
       await screen.findByText(
-        "The meters of U201 could not be read. Try again.",
+        "The meters of U201 could not be loaded. Try again.",
       ),
     ).toBeTruthy();
     expect(screen.getByText("1 of 4 meters read")).toBeTruthy();
@@ -818,6 +826,44 @@ describe("Utilities page (V1-058 R4)", () => {
     fireEvent.change(box, { target: { value: "U101" } });
     expect(screen.getByRole("button", { name: "All Units" })).toBeTruthy();
   });
+
+  it('TEST-FE-2121 (owner 12/11/2026: "check all card is link to correct place") "#/utilities?show=missing" opens This month on every floor with Only not read ticked, so the list is the Meters still to read; opening it again puts the floor back to all floors', async () => {
+    window.location.hash = "#/utilities?show=missing";
+    show();
+    expect(await screen.findByText("1 of 6 meters read")).toBeTruthy();
+    const onlyMissing =
+      screen.getByLabelText<HTMLInputElement>("Only not read");
+    await waitFor(() => {
+      expect(onlyMissing.checked).toBe(true);
+    });
+    expect(
+      screen
+        .getByRole("button", { name: "This month" })
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
+    // The electricity Meter of U102 is read already; the one of U101 is not.
+    expect(screen.queryByText("U102", { selector: "b" })).toBeNull();
+    expect(screen.getByText("U101", { selector: "b" })).toBeTruthy();
+    expect(screen.getByText("U201", { selector: "b" })).toBeTruthy();
+
+    // By hand: one floor and every Meter. The card's address then shows the missing ones of
+    // every floor again.
+    fireEvent.change(screen.getByLabelText("All floors"), {
+      target: { value: "2" },
+    });
+    fireEvent.click(onlyMissing);
+    expect(screen.queryByText("U101", { selector: "b" })).toBeNull();
+    window.location.hash = "#/utilities?show=missing";
+    window.dispatchEvent(new HashChangeEvent("hashchange"));
+    await waitFor(() => {
+      expect(onlyMissing.checked).toBe(true);
+    });
+    expect(screen.getByLabelText<HTMLSelectElement>("All floors").value).toBe(
+      "all",
+    );
+    expect(screen.getByText("U101", { selector: "b" })).toBeTruthy();
+    expect(screen.queryByText("U102", { selector: "b" })).toBeNull();
+  });
 });
 
 describe("Utilities Meters tab (V1-058 R4b)", () => {
@@ -846,9 +892,10 @@ describe("Utilities Meters tab (V1-058 R4b)", () => {
       "WA-U101",
       "EL-U102",
       "WA-U102",
+      // Operations fix 6: one row for each Unit, the replaced meter under the Unit's new one.
       "EL-U201",
-      "WA-U201",
       "EL-OLD-201",
+      "WA-U201",
     ]);
     expect(screen.getByText("Replaced 24/08/2026")).toBeTruthy();
     expect(screen.getByText("7 meters")).toBeTruthy();
@@ -973,9 +1020,10 @@ describe("Utilities Meters tab (V1-058 R4b)", () => {
       await screen.findByRole("heading", { name: "EL-OLD-201" }),
     ).toBeTruthy();
     expect(screen.queryByRole("link", { name: "Meter readings" })).toBeNull();
+    // UI v81 (B3): opened directly, Back names the parent tab.
     expect(
-      screen.getByRole("link", { name: /Back to Meters/ }).getAttribute("href"),
-    ).toBe("#/utilities/meters");
+      screen.getByRole("button", { name: "Back to Meters" }),
+    ).toBeInTheDocument();
     expect(screen.getByText("Found broken")).toBeTruthy();
     expect(screen.getByText("20/08/2026")).toBeTruthy();
     expect(
@@ -1394,6 +1442,30 @@ describe("Utilities Meters tab (V1-058 R4b)", () => {
       expect(units.list).toHaveBeenCalledTimes(2);
     });
   });
+  it("TEST-FE-2197 (owner 13/11/2026) the Meters list has one row for each Unit with its Electricity and Water meters side by side, and a type card shows only that type's column", async () => {
+    openMeters();
+    show();
+    await screen.findByRole("button", { name: /^Electricity meters: 3/ });
+    const table = screen.getByRole("table");
+    expect(
+      within(table)
+        .getAllByRole("columnheader")
+        .map((cell) => cell.textContent.trim()),
+    ).toEqual(["Unit", "Electricity", "Water"]);
+    // Three Units, three rows (the replaced U201 meter sits in the U201 row).
+    expect(within(table).getAllByRole("row")).toHaveLength(4);
+    const u201 = within(table).getByText("U201").closest("tr");
+    expect(u201).not.toBeNull();
+    expect(within(u201 as HTMLElement).getByText("EL-OLD-201")).toBeTruthy();
+    expect(within(u201 as HTMLElement).getByText("WA-U201")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: /^Water meters: 3/ }));
+    expect(
+      within(screen.getByRole("table"))
+        .getAllByRole("columnheader")
+        .map((cell) => cell.textContent.trim()),
+    ).toEqual(["Unit", "Water"]);
+  });
 });
 
 describe("Utilities Import readings (V1-058 R4c)", () => {
@@ -1516,7 +1588,7 @@ describe("Utilities Import readings (V1-058 R4c)", () => {
     for (const text of [
       "Lower than previous",
       "Already saved this month: 330",
-      "Empty. Type the reading.",
+      "Empty. Enter the reading.",
       "There is no Unit U999.",
     ]) {
       expect(within(dialog).getByText(text)).toBeTruthy();
@@ -1649,7 +1721,7 @@ describe("Utilities Import readings (V1-058 R4c)", () => {
     ).toBeTruthy();
     // An empty Water box of a Unit that has a water meter needs fixing; a Unit with no meter
     // of that kind is named, and its empty box is left out.
-    expect(within(dialog).getByText("Empty. Type the reading.")).toBeTruthy();
+    expect(within(dialog).getByText("Empty. Enter the reading.")).toBeTruthy();
     expect(
       within(dialog).getByText(
         "This Unit has no electricity meter. A Manager adds it on the Meters tab.",
@@ -1765,7 +1837,7 @@ describe("Utilities Import readings (V1-058 R4c)", () => {
       await screen.findByText("100 readings confirmed from readings.csv."),
     ).toBeTruthy();
     expect(
-      screen.getAllByText(/: Not saved\. Type it on the screen\.$/),
+      screen.getAllByText(/: Not saved\. Enter it on the screen\.$/),
     ).toHaveLength(10);
     await waitFor(() => {
       expect(units.list).toHaveBeenCalledTimes(2);
@@ -1849,7 +1921,7 @@ describe("Utilities Import readings (V1-058 R4c)", () => {
     const dialog = await openCheck();
     expect(
       within(dialog)
-        .getByText("Broken: mark the meter and make a Problem report")
+        .getByText("Broken: mark the meter and create a Problem report.")
         .closest("tr")?.textContent,
     ).toContain("U101Electricity");
     expect(
@@ -1863,7 +1935,7 @@ describe("Utilities Import readings (V1-058 R4c)", () => {
     );
     expect(
       await screen.findByText(
-        "1 readings confirmed from readings.csv. 1 meters marked broken, each with a Problem report.",
+        "1 reading confirmed from readings.csv. 1 meter marked broken, each with a Problem report.",
       ),
     ).toBeTruthy();
     const [, , items] = recordBatch.mock.calls[0] ?? [];
@@ -1885,5 +1957,50 @@ describe("Utilities Import readings (V1-058 R4c)", () => {
       urgent: false,
       unit_id: "unit-U101",
     });
+  });
+});
+
+describe("Utilities on design v81 (UI v81 module batch 4)", () => {
+  it("TEST-FE-2139 Import is the page's button in the head on reading day, not in the filter row, and the progress line says how many are left", async () => {
+    show();
+    await screen.findAllByText(/meters read/);
+    const head = document.querySelector(".ui-head");
+    if (!(head instanceof HTMLElement)) throw new Error("no head");
+    expect(within(head).getByText("Meter readings and meters")).toBeTruthy();
+    expect(within(head).getByRole("button", { name: "Import" })).toBeTruthy();
+    const filters = document.querySelector(".ui-filters");
+    if (!(filters instanceof HTMLElement)) throw new Error("no filters");
+    expect(
+      within(filters).queryByRole("button", { name: "Import" }),
+    ).toBeNull();
+    const line = document.querySelector(".ui-progline");
+    if (!(line instanceof HTMLElement)) throw new Error("no progress");
+    expect(line.querySelector(".ui-chip")?.textContent).toMatch(
+      /^\d+ to read$/,
+    );
+  });
+
+  it("TEST-FE-2140 Add meter is the page's button in the head, with Manager only beside it and not inside it; the meter page has the shared record head and does the same for Replace meter", async () => {
+    window.location.hash = "#/utilities/meters";
+    show();
+    await screen.findByText("7 meters");
+    const head = document.querySelector(".ui-head");
+    if (!(head instanceof HTMLElement)) throw new Error("no head");
+    const add = within(head).getByRole("button", { name: "Add meter" });
+    expect(add.textContent).not.toMatch(/Manager/);
+    expect(add.nextElementSibling?.textContent).toBe("Manager only");
+    window.location.hash = "#/utilities/meter%3Ael-101";
+    window.dispatchEvent(new HashChangeEvent("hashchange"));
+    const replace = await screen.findByRole("button", {
+      name: "Replace meter",
+    });
+    expect(replace.nextElementSibling?.textContent).toBe("Manager only");
+    // The meter page has the shared record head: Back on top, the serial as the h1.
+    const record = replace.closest("header.ui-pagehead");
+    if (!(record instanceof HTMLElement)) throw new Error("no record head");
+    expect(record.firstElementChild?.textContent).toMatch(/Back to Meters/);
+    expect(
+      within(record).getByRole("heading", { level: 1, name: "EL-U101" }),
+    ).toBeTruthy();
   });
 });

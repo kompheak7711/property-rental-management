@@ -16,7 +16,11 @@ import {
 } from "../shell/format";
 import { Icon } from "../shell/icons";
 import { hashForPage } from "../shell/navigation";
-import { useHashDetail } from "../shell/useHashPage";
+import {
+  showInAddress,
+  useHashDetail,
+  useShowFromAddress,
+} from "../shell/useHashPage";
 import { Chip, Dialog } from "../shell/ui";
 import type { Language } from "../signInText";
 import {
@@ -43,6 +47,7 @@ import {
   monthLabel,
   typeName,
 } from "./text";
+import { PageHead } from "../shell/pageHead";
 
 export type LedgerTab = "journal" | "needscheck" | "chart" | "statements";
 
@@ -290,7 +295,7 @@ function JournalTab({
                 <th scope="col">{lt(language, "no")}</th>
                 <th scope="col">{lt(language, "date")}</th>
                 <th scope="col">{lt(language, "what")}</th>
-                <th scope="col">{lt(language, "from")}</th>
+                <th scope="col">{lt(language, "source")}</th>
                 <th className="r" scope="col">
                   {lt(language, "amount")}
                 </th>
@@ -428,7 +433,7 @@ function EntryDetail({
           {data.description}
         </p>
         <p className="pad">
-          {lt(language, "from")}:{" "}
+          {lt(language, "source")}:{" "}
           {data.reverses !== null ? (
             <>
               {lt(language, "rev_of", "")}
@@ -1178,7 +1183,7 @@ function ChartTab({
   return (
     <>
       <section aria-labelledby="chart-title" className="ui-card">
-        <div className="ui-head">
+        <PageHead>
           <div>
             <h2 id="chart-title">{lt(language, "a_title")}</h2>
             <p className="ui-muted">{lt(language, "a_sub")}</p>
@@ -1189,7 +1194,7 @@ function ChartTab({
               {lt(language, "ob_t")}
             </a>
           </span>
-        </div>
+        </PageHead>
       </section>
       {ACCOUNT_TYPES.map((type) => {
         const accounts = data.accounts.filter(
@@ -1518,9 +1523,29 @@ function StatementsTab({
   api: LedgerApi;
 }) {
   const today = todayInPhnomPenh();
-  const [chosen, setChosen] = useState<StatementKey>("profit-and-loss");
+  // The statement the address names is the first one read (no read of another one before it).
+  const [chosen, setChosenState] = useState<StatementKey>(
+    () =>
+      STATEMENTS.find(
+        (statement) => statement === showInAddress("statements"),
+      ) ?? "profit-and-loss",
+  );
   const [month, setMonth] = useState(`${today.slice(0, 7)}-01`);
   const [asOf, setAsOf] = useState(today);
+  // UI v81 round 11: Home's Financial summary cards open their own statement for today
+  // ("#/statements?show=balance-sheet", "customer-aging", "budget", "profit-and-loss"); a
+  // statement chosen by hand is kept in the address too.
+  const keepShow = useShowFromAddress("statements", (show) => {
+    const asked = STATEMENTS.find((statement) => statement === show);
+    if (asked === undefined) return;
+    setChosenState(asked);
+    setMonth(`${today.slice(0, 7)}-01`);
+    setAsOf(today);
+  });
+  const setChosen = (next: StatementKey) => {
+    setChosenState(next);
+    keepShow(next === "profit-and-loss" ? null : next);
+  };
   const [from, setFrom] = useState(`${today.slice(0, 7)}-01`);
   const [to, setTo] = useState(today);
   const [busy, setBusy] = useState(false);
@@ -1592,7 +1617,7 @@ function StatementsTab({
   return (
     <>
       <section aria-labelledby="statements-title" className="ui-card">
-        <div className="ui-head">
+        <PageHead>
           <div>
             <h2 id="statements-title">{lt(language, "r_title")}</h2>
             <p>{lt(language, "r_sub")}</p>
@@ -1623,7 +1648,7 @@ function StatementsTab({
               </button>
             </span>
           )}
-        </div>
+        </PageHead>
         <div
           aria-label={lt(language, "r_title")}
           className="ui-seg"
@@ -1757,7 +1782,9 @@ function Statement({
         <p className="ui-muted pad">{lt(language, "r_none")}</p>
       ) : (
         <div className="ui-tablewrap">
-          <table className="ui-table">
+          {/* Administration review fix 6: "ui-stmt" lets long column names wrap, so the
+              Difference column fits on a laptop. */}
+          <table className="ui-table ui-stmt">
             <thead>
               <tr>
                 {report.columns.map((column) => (

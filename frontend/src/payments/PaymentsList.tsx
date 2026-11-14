@@ -1,7 +1,11 @@
-// V1-058 R5c-3: the Payments list (DESIGN.md "Summary cards (Payments)"): the period switch, eight
-// cards that filter the list (Total received and the seven kinds of what the money paid), the
+// V1-058 R5c-3: the Payments list (DESIGN.md "Summary cards (Payments)"): the period switch, the
+// cards that filter the list (Total received and the kinds of what the money paid), the
 // add-up line, and the list of payments with their Receipt, Customer, amount, what they paid
 // and whether all the money is used. The server splits each payment, so the cards add up.
+//
+// UI v81 round 9 (owner 12/11/2026): the list said "Move-out charges" for a Receipt whose page
+// said "Short stay". The one-time charges are now split by the type of the Invoice (DL-221):
+// Short stay, Products, Damage, Other charges, the names the Receipt page uses.
 
 import {
   type FormEvent,
@@ -26,6 +30,7 @@ import {
   type PaymentsSummary,
 } from "./paymentsClient";
 import { pyt, type PaymentsTextKey } from "./text";
+import { PageHead } from "../shell/pageHead";
 
 export type PayPeriod = "all" | "today" | "month" | "last" | "pick";
 
@@ -35,7 +40,10 @@ const KIND_LOOK: Record<PayKind, [ShellIcon, Tone | "brand"]> = {
   SVC: ["list", "brand"],
   LATE: ["clock", "warn"],
   DEPOSIT: ["lease", "info"],
-  MOVEOUT: ["moveout", "brand"],
+  SHORT_STAY: ["calendar", "brand"],
+  PRODUCTS: ["box", "brand"],
+  DAMAGE: ["wrench", "brand"],
+  OTHER: ["invoice", "brand"],
   CREDIT: ["customers", "brand"],
 };
 
@@ -130,6 +138,9 @@ export function PaymentsList({
   const [toText, setToText] = useState(dayText(picked[1]));
   const [pickError, setPickError] = useState(false);
   const [card, setCard] = useState<PayKind | "all">("all");
+  // Owner 13/11/2026 (Operations fix 1): the cards of kinds with no money in the period fold
+  // away behind one "more" card, so the list starts higher.
+  const [showZero, setShowZero] = useState(false);
   const [onlyLeft, setOnlyLeft] = useState(false);
   const [summary, setSummary] = useState<PaymentsSummary | null>(null);
   const [failed, setFailed] = useState(false);
@@ -172,13 +183,41 @@ export function PaymentsList({
     openPageInAddress("payments", false, `receipt:${paymentId}`);
   };
 
+  // Owner 13/11/2026 (Operations screen): no date line under the title; the period switch sits
+  // beside the title instead (it wraps under it on a narrow screen).
+  const periodSwitch = (
+    <div
+      aria-label={pyt(language, "pc_period")}
+      className="ui-seg ui-headseg"
+      role="group"
+    >
+      {(
+        [
+          ["all", "f_all"],
+          ["today", "pc_today"],
+          ["month", "pc_month"],
+          ["last", "pc_last"],
+          ["pick", "pc_pick"],
+        ] as const
+      ).map(([value, key]) => (
+        <button
+          aria-pressed={period === value}
+          key={value}
+          onClick={() => {
+            setPeriod(value);
+            setCard("all");
+          }}
+          type="button"
+        >
+          {pyt(language, key)}
+        </button>
+      ))}
+    </div>
+  );
+
   const head = (
-    <div className="ui-head">
-      <div>
-        <p className="ui-num">
-          {pyt(language, "pc_range", dayText(from), dayText(to))}
-        </p>
-      </div>
+    <PageHead>
+      {periodSwitch}
       {mayReceive && (
         <div className="ui-actions">
           <a
@@ -190,39 +229,12 @@ export function PaymentsList({
           </a>
         </div>
       )}
-    </div>
+    </PageHead>
   );
 
-  const filters = (
+  const filters = period === "pick" && (
     <div className="ui-filters">
-      <div
-        aria-label={pyt(language, "pc_period")}
-        className="ui-seg"
-        role="group"
-      >
-        {(
-          [
-            ["all", "f_all"],
-            ["today", "pc_today"],
-            ["month", "pc_month"],
-            ["last", "pc_last"],
-            ["pick", "pc_pick"],
-          ] as const
-        ).map(([value, key]) => (
-          <button
-            aria-pressed={period === value}
-            key={value}
-            onClick={() => {
-              setPeriod(value);
-              setCard("all");
-            }}
-            type="button"
-          >
-            {pyt(language, key)}
-          </button>
-        ))}
-      </div>
-      {period === "pick" && (
+      {
         <form className="ui-pick" noValidate onSubmit={pick}>
           <label>
             {pyt(language, "pc_from")}{" "}
@@ -264,7 +276,7 @@ export function PaymentsList({
             </p>
           )}
         </form>
-      )}
+      }
     </div>
   );
 
@@ -293,10 +305,19 @@ export function PaymentsList({
       </>
     );
 
-  const seven = PAY_KINDS.reduce(
+  const kindsTotal = PAY_KINDS.reduce(
     (total, kind) => total + summary.kinds[kind].cents,
     0,
   );
+  const zeroKinds = PAY_KINDS.filter(
+    (kind) =>
+      summary.kinds[kind].cents === 0 &&
+      summary.kinds[kind].payments === 0 &&
+      card !== kind,
+  );
+  const shownKinds = showZero
+    ? PAY_KINDS
+    : PAY_KINDS.filter((kind) => !zeroKinds.includes(kind));
   const inCard = (row: PaymentRow) =>
     card === "all" || (row.status !== "REVERSED" && (row.kinds[card] ?? 0) > 0);
   const listed = summary.rows.filter(inCard);
@@ -305,23 +326,24 @@ export function PaymentsList({
   const anyLeft = rows.some((row) => row.left > 0);
   const reversed = listed.filter((row) => row.status === "REVERSED").length;
   // The app checks the sum itself, so a kind of money the cards miss shows as a problem.
-  const addsUp = seven + summary.refunded + summary.left === summary.received;
+  const addsUp =
+    kindsTotal + summary.refunded + summary.left === summary.received;
   const addUp = [
     !addsUp
       ? pyt(
           language,
           "pc_addup_bad",
-          usdFromCents(seven),
+          usdFromCents(kindsTotal),
           usdFromCents(summary.refunded),
           usdFromCents(summary.left),
-          usdFromCents(seven + summary.refunded + summary.left),
+          usdFromCents(kindsTotal + summary.refunded + summary.left),
           usdFromCents(summary.received),
         )
       : summary.refunded > 0
         ? pyt(
             language,
             "pc_addup_r",
-            usdFromCents(seven),
+            usdFromCents(kindsTotal),
             usdFromCents(summary.refunded),
             usdFromCents(summary.left),
             usdFromCents(summary.received),
@@ -330,7 +352,7 @@ export function PaymentsList({
           ? pyt(
               language,
               "pc_addup",
-              usdFromCents(seven),
+              usdFromCents(kindsTotal),
               usdFromCents(summary.left),
               usdFromCents(summary.received),
             )
@@ -370,7 +392,7 @@ export function PaymentsList({
           value={summary.received}
           valueText={usdFromCents(summary.received)}
         />
-        {PAY_KINDS.map((kind) => {
+        {shownKinds.map((kind) => {
           const [icon, tone] = KIND_LOOK[kind];
           const { cents, payments } = summary.kinds[kind];
           return (
@@ -389,6 +411,29 @@ export function PaymentsList({
             />
           );
         })}
+        {zeroKinds.length > 0 && (
+          <button
+            aria-expanded={showZero}
+            className="ui-kpi none ui-kpi-more"
+            onClick={() => {
+              setShowZero(!showZero);
+            }}
+            type="button"
+          >
+            <span className="ui-kpi-label">
+              <span className="ui-kpi-icon">
+                <Icon name={showZero ? "x" : "plus"} small />
+              </span>
+              {pyt(language, showZero ? "c_fewer" : "c_more")}
+            </span>
+            <span className="ui-kpi-value ui-num">
+              {String(zeroKinds.length)}
+            </span>
+            <span className="ui-kpi-note">
+              {pyt(language, showZero ? "c_fewer_s" : "c_more_s")}
+            </span>
+          </button>
+        )}
       </div>
       <p className={addsUp ? "ui-addup" : "ui-addup ui-warnv"}>
         <Icon name={addsUp ? "check" : "alert"} small />
