@@ -105,6 +105,11 @@ class InMemoryStays:
         self.calls.append(("damage_due", None))
         return [{"booking_id": str(self.booking_id), "problem_count": 1}]
 
+    def notices(self, property_id: UUID, *, actor_id: str) -> Json:
+        self._check(property_id)
+        self.calls.append(("notices", None))
+        return {"notices": [], "stays": [], "rules": {"days": 90}}
+
     def act(
         self, property_id: UUID, action: Action, target: UUID, body: Json, *, actor_id: str
     ) -> Json:
@@ -469,3 +474,31 @@ def test_the_weekly_report_needs_the_approve_right_and_a_complaint_the_desk() ->
         .status_code
         == 422
     )
+
+
+def test_guest_notices_read_with_the_read_right_and_warnings_need_the_desk() -> None:
+    # DL-238: the short-stay tab of the Notices page, a house-rule warning, a notice told.
+    flow = InMemoryStays()
+    page = f"{base(flow)}/notices"
+    assert client(flow).get(page).status_code == 403
+    answer = client(flow, "short_stays.read").get(page)
+    assert answer.status_code == 200 and answer.headers["Cache-Control"] == "private, no-store"
+    assert answer.json()["data"]["rules"] == {"days": 90}
+    warn = f"{base(flow)}/bookings/{flow.booking_id}/warning"
+    body = {"reason": " Loud music after 22:00. "}
+    reader = client(flow, "short_stays.read")
+    assert reader.post(warn, json=body, headers=HEADERS).status_code == 403
+    desk = client(flow, "short_stays.desk")
+    assert desk.post(warn, json=body).status_code == 403  # no browser mutation checks
+    for wrong in ({}, {"reason": "   "}, {"reason": "x" * 501}, body | {"number": 2}):
+        assert desk.post(warn, json=wrong, headers=HEADERS).status_code == 422
+    assert desk.post(warn, json=body, headers=HEADERS).status_code == 200
+    assert flow.calls[-1] == (
+        "warn_guest",
+        (flow.booking_id, {"reason": "Loud music after 22:00."}),
+    )
+    notice = uuid4()
+    told = f"{base(flow)}/notices/{notice}/told"
+    assert reader.post(told, headers=HEADERS).status_code == 403
+    assert desk.post(told, headers=HEADERS).status_code == 200
+    assert flow.calls[-1] == ("notice_told", (notice, {}))

@@ -255,6 +255,10 @@ class FakeStore:
         self.rent_steps.append("queue")
         return 0
 
+    def short_stay_notices_run(self) -> int:
+        self.rent_steps.append("short_stays")
+        return 0
+
     def visit_requests_remove_old(self) -> int:
         return 0
 
@@ -500,7 +504,8 @@ def test_each_run_makes_the_rent_notices_before_it_queues_the_messages() -> None
     # DL-237: the notice the app records by itself goes to the tenant in the same run.
     store = FakeStore()
     queue_warnings(store)
-    assert store.rent_steps == ["notices", "queue"]
+    # DL-238: the short-stay guest notices run in the same step, after the Lease messages.
+    assert store.rent_steps == ["notices", "queue", "short_stays"]
 
 
 def test_an_item_that_cannot_be_opened_or_whose_photo_changed_stays_in_the_relay(

@@ -298,6 +298,109 @@ TEXTS: Final[dict[str, dict[str, str]]] = {
             "The office's paper letter is the official copy."
         ),
     },
+    # DL-238 (owner 14 Nov 2026): notices for short-stay guests, to the links of the booking
+    # (check-in QR). The check-out reminder at 18:00 the evening before, the late check-out notice,
+    # the house-rule warnings staff write, and a charge still unpaid. Khmer is new: native check.
+    "tenant.ss_check_out": {
+        "km": (
+            "🧳 រំលឹកអំពីការចាកចេញ\n{unit}\n"
+            "ការចាកចេញរបស់លោកអ្នកគឺនៅថ្ងៃស្អែក {date} ម៉ោង {time}។\n"
+            "ការចាកចេញយឺតរហូតដល់ម៉ោង {until} មានតម្លៃ {fee}។ "
+            "សូមសួរផ្នែកទទួលភ្ញៀវមុនម៉ោង {time}។\n"
+            "សូមអរគុណដែលបានស្នាក់នៅជាមួយយើង។"
+        ),
+        "en": (
+            "🧳 Check-out reminder\n{unit}\n"
+            "Your check-out is tomorrow, {date}, at {time}.\n"
+            "Late check-out until {until} costs {fee}. Please ask the front desk before {time}.\n"
+            "Thank you for staying with us."
+        ),
+    },
+    "tenant.ss_check_out_free": {
+        "km": (
+            "🧳 រំលឹកអំពីការចាកចេញ\n{unit}\n"
+            "ការចាកចេញរបស់លោកអ្នកគឺនៅថ្ងៃស្អែក {date} ម៉ោង {time}។\n"
+            "ការចាកចេញយឺតរហូតដល់ម៉ោង {until} គឺឥតគិតថ្លៃសម្រាប់ការស្នាក់នៅរបស់លោកអ្នក។ "
+            "សូមប្រាប់ផ្នែកទទួលភ្ញៀវមុនម៉ោង {time}។\n"
+            "សូមអរគុណដែលបានស្នាក់នៅជាមួយយើង។"
+        ),
+        "en": (
+            "🧳 Check-out reminder\n{unit}\n"
+            "Your check-out is tomorrow, {date}, at {time}.\n"
+            "Late check-out until {until} is free for your stay. "
+            "Please tell the front desk before {time}.\n"
+            "Thank you for staying with us."
+        ),
+    },
+    "tenant.ss_check_out_late": {
+        "km": (
+            "🧳 រំលឹកអំពីការចាកចេញ\n{unit}\n"
+            "ការចាកចេញរបស់លោកអ្នកគឺនៅថ្ងៃស្អែក {date} ម៉ោង {until} (ចាកចេញយឺត)។\n"
+            "សូមអរគុណដែលបានស្នាក់នៅជាមួយយើង។"
+        ),
+        "en": (
+            "🧳 Check-out reminder\n{unit}\n"
+            "Your check-out is tomorrow, {date}, at {until} (late check-out).\n"
+            "Thank you for staying with us."
+        ),
+    },
+    "tenant.ss_late": {
+        "km": (
+            "⏰ ម៉ោងចាកចេញបានហួសហើយ\n{unit}\n"
+            "ម៉ោងចាកចេញថ្ងៃនេះគឺ {time}។\n"
+            "សូមចាកចេញឥឡូវនេះ ឬមកផ្នែកទទួលភ្ញៀវ ប្រសិនបើលោកអ្នកត្រូវការពេលបន្ថែម។"
+        ),
+        "en": (
+            "⏰ Check-out time has passed\n{unit}\n"
+            "Check-out time today was {time}.\n"
+            "Please check out now, or come to the front desk if you need more time."
+        ),
+    },
+    "tenant.ss_warning_1": {
+        "km": (
+            "⚠️ ការព្រមានអំពីវិន័យស្នាក់នៅ លើកទី ១\n{unit}\n"
+            "កាលបរិច្ឆេទ៖ {date}\n\n"
+            "អ្វីដែលបានកើតឡើង៖ {text}\n\n"
+            "សូមគោរពវិន័យស្នាក់នៅ ដែលលោកអ្នកបានចុះហត្ថលេខានៅពេលចូលស្នាក់នៅ។ "
+            "ការព្រមានលើកទី ២ គឺជាការព្រមានចុងក្រោយ។"
+        ),
+        "en": (
+            "⚠️ House-rule warning 1\n{unit}\n"
+            "Date: {date}\n\n"
+            "What happened: {text}\n\n"
+            "Please follow the house rules you signed at check-in. "
+            "A second warning is the final warning."
+        ),
+    },
+    "tenant.ss_warning_2": {
+        "km": (
+            "🔴 ការព្រមានចុងក្រោយអំពីវិន័យស្នាក់នៅ\n{unit}\n"
+            "កាលបរិច្ឆេទ៖ {date}\n\n"
+            "អ្វីដែលបានកើតឡើង៖ {text}\n\n"
+            "នេះជាការព្រមានចុងក្រោយ។ ប្រសិនបើវិន័យស្នាក់នៅត្រូវបានបំពានម្តងទៀត "
+            "អ្នកគ្រប់គ្រងអាចបញ្ចប់ការស្នាក់នៅរបស់លោកអ្នកមុនកាលកំណត់។ "
+            "យប់ដែលមិនបានប្រើ មិនត្រូវបានសងប្រាក់វិញទេ។"
+        ),
+        "en": (
+            "🔴 Final house-rule warning\n{unit}\n"
+            "Date: {date}\n\n"
+            "What happened: {text}\n\n"
+            "This is the final warning. If the house rules are broken again, the manager may "
+            "end your stay early. Nights not used are not paid back."
+        ),
+    },
+    "tenant.ss_unpaid": {
+        "km": (
+            "💳 នៅមានប្រាក់ត្រូវបង់\n{unit}\n"
+            "វិក្កយបត្រ {invoice}៖ នៅត្រូវបង់ {amount}។\n"
+            "សូមបង់នៅផ្នែកទទួលភ្ញៀវនៅថ្ងៃនេះ។ សូមអរគុណ។"
+        ),
+        "en": (
+            "💳 Payment still due\n{unit}\n"
+            "Invoice {invoice}: {amount} still to pay.\n"
+            "Please pay at the front desk today. Thank you."
+        ),
+    },
     "tenant.menu": {
         "km": "តើយើងអាចជួយអ្វីលោកអ្នកបាន?",
         "en": "How can we help you?",

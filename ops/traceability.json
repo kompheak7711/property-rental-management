@@ -70006,6 +70006,124 @@
       "notes": "A room check's Staff bot message has no buttons and a tap on it is refused; the room check stays on the booking page."
     },
     {
+      "test_id": "test_migration_414_follows_the_ui_v81_join_403",
+      "upstream_ids": [
+        "DL-238",
+        "DB-SSN-001"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_short_stay_guest_notices_migration.py",
+      "status": "implemented",
+      "notes": "Migration 20270727_414 follows the ui-v81 join 20270726_403 (410 and main 413) and is forward-only."
+    },
+    {
+      "test_id": "test_the_check_out_reminder_goes_at_18_00_the_evening_before",
+      "upstream_ids": [
+        "DL-238",
+        "DB-SSN-001"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_short_stay_guest_notices_migration.py",
+      "status": "implemented",
+      "notes": "From 18:00 the evening before check-out a checked-in stay gets one reminder with the check-out time, the late check-out until 18:00 and the $5 fee; free from 7 nights; it goes once to the guest's Telegram link in the guest's language."
+    },
+    {
+      "test_id": "test_the_late_check_out_notice_comes_30_minutes_after_the_time_to_leave",
+      "upstream_ids": [
+        "DL-238",
+        "DB-SSN-001"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_short_stay_guest_notices_migration.py",
+      "status": "implemented",
+      "notes": "A guest still checked in 30 minutes after the check-out time gets the late notice; with late check-out added the time is 18:00 and the reminder names it; nothing is recorded after 22:00; no money is added."
+    },
+    {
+      "test_id": "test_staff_give_warning_1_then_the_final_warning_2",
+      "upstream_ids": [
+        "DL-238",
+        "DB-SSN-001"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_short_stay_guest_notices_migration.py",
+      "status": "implemented",
+      "notes": "The front desk gives a checked-in guest warning 1, then the final warning 2, each with its reason and sent at once; a third, an empty or malformed reason and a guest not checked in are refused; the booking History keeps both."
+    },
+    {
+      "test_id": "test_a_charge_still_unpaid_on_a_later_day",
+      "upstream_ids": [
+        "DL-238",
+        "DB-SSN-001"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_short_stay_guest_notices_migration.py",
+      "status": "implemented",
+      "notes": "An extension Invoice still unpaid gets one notice from 09:00 the day after it was added, with its number and the amount still to pay; none on the day it was added."
+    },
+    {
+      "test_id": "test_the_notices_page_and_a_guest_told_in_person",
+      "upstream_ids": [
+        "DL-238",
+        "DB-SSN-001"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_short_stay_guest_notices_migration.py",
+      "status": "implemented",
+      "notes": "The page lists each notice with how it reached the guest (No Telegram for a guest with no link), the warnings with who gave them, the checked-in stays with their warnings, and the times; a notice is marked told in person once."
+    },
+    {
+      "test_id": "test_the_pull_job_runs_the_notices_with_the_telegram_right",
+      "upstream_ids": [
+        "DL-238",
+        "DB-SSN-001"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_short_stay_guest_notices_migration.py",
+      "status": "implemented",
+      "notes": "The pull job's account runs the notices and sends what was not sent yet; staff without the Telegram right are refused; the notice rows are never removed."
+    },
+    {
+      "test_id": "test_the_check_out_reminder_names_the_time_and_the_late_check_out",
+      "upstream_ids": [
+        "DL-238"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_short_stay_guest_notice_texts.py",
+      "status": "implemented",
+      "notes": "The three check-out reminders read with the time, the late check-out fee, free, or the late time already added, in English and Khmer."
+    },
+    {
+      "test_id": "test_the_late_check_out_notice_adds_no_money",
+      "upstream_ids": [
+        "DL-238"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_short_stay_guest_notice_texts.py",
+      "status": "implemented",
+      "notes": "The late check-out notice names the time and asks the guest to check out or come to the front desk; it names no money."
+    },
+    {
+      "test_id": "test_the_two_house_rule_warnings_and_the_unpaid_charge",
+      "upstream_ids": [
+        "DL-238"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_short_stay_guest_notice_texts.py",
+      "status": "implemented",
+      "notes": "Warning 1 says a second is final; the final warning says the manager may end the stay early and unused nights are not paid back; the unpaid charge names the Invoice and amount; every short-stay text has Khmer and English."
+    },
+    {
+      "test_id": "test_guest_notices_read_with_the_read_right_and_warnings_need_the_desk",
+      "upstream_ids": [
+        "DL-238",
+        "API-SSN-001"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_short_stays_api.py",
+      "status": "implemented",
+      "notes": "The notices page needs short_stays.read; a warning and a notice told need short_stays.desk and the browser mutation checks; a warning needs a reason of 1 to 500 characters and nothing else."
+    },
+    {
       "test_id": "TEST-FE-2190",
       "upstream_ids": [
         "DL-228",
