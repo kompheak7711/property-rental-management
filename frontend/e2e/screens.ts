@@ -199,6 +199,15 @@ export const SCREENS: readonly Screen[] = [
     ready: "VR260003",
     clock: "2026-11-13T03:00:00Z",
   },
+  // DL-238 (owner 14/11/2026 "Yes, build all four"): Notices › Short-stay guest notices. Made-up
+  // guests (e2e/fixtures/guestnotices.har.json).
+  {
+    name: "guest-notices",
+    hash: "#/letters/short-stays",
+    fixture: "guestnotices",
+    ready: "Late check-out notice",
+    clock: "2026-11-13T03:00:00Z",
+  },
   // Administration review (owner 13/11/2026 "All"): the tab row is the head, the 11 Ledger tabs
   // slide in one row, tables are cards on a phone, the Telegram paper-copy lists show 5 rows,
   // Users and access › History lists the access changes. Made-up data from the cloud review app

@@ -273,6 +273,86 @@ const TEXT = {
     "In English until the next steps replace them",
     "ជាភាសាអង់គ្លេស រហូតដល់ជំហានបន្ទាប់ជំនួសវា",
   ],
+  // DL-238 (owner 14 Nov 2026): notices for short-stay guests. Khmer is new: native check.
+  tab_ss: ["Short-stay guest notices", "សេចក្ដីជូនដំណឹងភ្ញៀវស្នាក់នៅខ្លី"],
+  ss_rule: [
+    "The Tenant bot sends guests the check-out reminder at {0} the evening before, the late check-out notice {1} minutes after the time to leave, and a note of a charge still unpaid from {2} the next day. A guest with no Telegram is told in person.",
+    "Tenant bot ផ្ញើទៅភ្ញៀវនូវការរំលឹកអំពីការចាកចេញនៅម៉ោង {0} ល្ងាចមុនថ្ងៃចាកចេញ ការជូនដំណឹងចាកចេញយឺត {1} នាទីបន្ទាប់ពីម៉ោងត្រូវចាកចេញ និងការរំលឹកប្រាក់មិនទាន់បង់ចាប់ពីម៉ោង {2} ថ្ងៃបន្ទាប់។ ភ្ញៀវដែលគ្មាន Telegram ត្រូវប្រាប់ផ្ទាល់។",
+  ],
+  ss_c_tell: ["To tell in person", "ត្រូវប្រាប់ផ្ទាល់"],
+  ss_c_stays: ["Guests checked in", "ភ្ញៀវកំពុងស្នាក់នៅ"],
+  ss_c_warned: ["Guests with a warning", "ភ្ញៀវដែលមានការព្រមាន"],
+  ss_new: ["Give a warning", "ផ្ដល់ការព្រមាន"],
+  ss_none: [
+    "No notices in the last {0} days.",
+    "មិនមានសេចក្ដីជូនដំណឹងក្នុងរយៈពេល {0} ថ្ងៃចុងក្រោយទេ។",
+  ],
+  ss_col_when: ["Date", "កាលបរិច្ឆេទ"],
+  ss_col_guest: ["Unit and guest", "បន្ទប់ និងភ្ញៀវ"],
+  ss_col_notice: ["Notice", "សេចក្ដីជូនដំណឹង"],
+  ss_col_sent: ["How the guest got it", "របៀបដែលភ្ញៀវបានទទួល"],
+  k_CHECK_OUT_REMINDER: ["Check-out reminder", "រំលឹកអំពីការចាកចេញ"],
+  k_LATE_CHECK_OUT: ["Late check-out notice", "ជូនដំណឹងចាកចេញយឺត"],
+  k_HOUSE_RULE_WARNING: [
+    "House-rule warning {0}",
+    "ការព្រមានអំពីវិន័យស្នាក់នៅ លើកទី {0}",
+  ],
+  k_final: ["Final house-rule warning", "ការព្រមានចុងក្រោយអំពីវិន័យស្នាក់នៅ"],
+  k_UNPAID_CHARGE: ["Unpaid charge", "ប្រាក់មិនទាន់បង់"],
+  ss_d_out: ["Check-out {0}", "ចាកចេញ {0}"],
+  ss_d_late: ["Time to leave {0}", "ម៉ោងត្រូវចាកចេញ {0}"],
+  ss_d_unpaid: ["{0}: {1} to pay", "{0}៖ ត្រូវបង់ {1}"],
+  ss_d_auto: ["Sent by the app", "ផ្ញើដោយកម្មវិធី"],
+  ss_d_by: ["By {0}", "ដោយ {0}"],
+  t_SENT: ["Sent by Telegram", "បានផ្ញើតាម Telegram"],
+  t_WAITING: ["Sending", "កំពុងផ្ញើ"],
+  t_NOT_DELIVERED: [
+    "Not delivered: tell in person",
+    "មិនបានទៅដល់៖ ប្រាប់ផ្ទាល់",
+  ],
+  t_NO_TELEGRAM: [
+    "No Telegram: tell in person",
+    "គ្មាន Telegram៖ ប្រាប់ផ្ទាល់",
+  ],
+  ss_told: ["Told by {0} on {1}", "{0} បានប្រាប់នៅថ្ងៃ {1}"],
+  ss_told_btn: ["Told in person", "បានប្រាប់ផ្ទាល់"],
+  ss_told_toast: [
+    "Marked as told in person: {0}.",
+    "បានកត់ថាបានប្រាប់ផ្ទាល់៖ {0}។",
+  ],
+  ss_d_t: ["Give a house-rule warning", "ផ្ដល់ការព្រមានអំពីវិន័យស្នាក់នៅ"],
+  ss_d_guest: ["Guest", "ភ្ញៀវ"],
+  ss_d_reason: ["What happened", "អ្វីដែលបានកើតឡើង"],
+  ss_d_reason_e: ["Write what happened.", "សូមសរសេរអ្វីដែលបានកើតឡើង។"],
+  ss_d_next1: [
+    "This is warning 1. A second warning is the final warning.",
+    "នេះជាការព្រមានលើកទី ១។ ការព្រមានលើកទី ២ គឺជាការព្រមានចុងក្រោយ។",
+  ],
+  ss_d_next2: [
+    "This is the final warning. After it a Manager may end the stay early; unused nights stay paid.",
+    "នេះជាការព្រមានចុងក្រោយ។ បន្ទាប់ពីនេះ អ្នកគ្រប់គ្រងអាចបញ្ចប់ការស្នាក់នៅមុនកាលកំណត់។ យប់ដែលមិនបានប្រើ មិនសងប្រាក់វិញទេ។",
+  ],
+  ss_d_full: ["final warning given", "បានផ្ដល់ការព្រមានចុងក្រោយ"],
+  ss_d_no_stay: [
+    "No guest is checked in now.",
+    "ឥឡូវនេះមិនមានភ្ញៀវកំពុងស្នាក់នៅទេ។",
+  ],
+  ss_d_no_tg: [
+    "This guest has no Telegram: tell the guest in person.",
+    "ភ្ញៀវនេះគ្មាន Telegram៖ សូមប្រាប់ភ្ញៀវផ្ទាល់។",
+  ],
+  ss_toast_tg: [
+    "Warning {0} given to {1} and sent by Telegram.",
+    "បានផ្ដល់ការព្រមានលើកទី {0} ដល់ {1} និងបានផ្ញើតាម Telegram។",
+  ],
+  ss_toast_person: [
+    "Warning {0} given to {1}. No Telegram: tell the guest in person.",
+    "បានផ្ដល់ការព្រមានលើកទី {0} ដល់ {1}។ គ្មាន Telegram៖ សូមប្រាប់ភ្ញៀវផ្ទាល់។",
+  ],
+  ss_save_e: [
+    "It was not saved. Please try again.",
+    "មិនបានរក្សាទុកទេ។ សូមព្យាយាមម្ដងទៀត។",
+  ],
 } as const;
 
 export type LettersTextKey = keyof typeof TEXT;

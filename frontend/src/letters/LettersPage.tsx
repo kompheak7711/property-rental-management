@@ -4,6 +4,7 @@
 // DL-237 (owner 13 Nov 2026): unpaid Rent gets a notice on day 10, 20 and 25 of its month and
 // the termination letter on day 30. The Tenant bot sends the notices of a linked tenant by
 // itself; a Manager or the Owner sends the termination letter.
+// DL-238 (owner 14 Nov 2026): "#/letters/short-stays" shows the notices of short-stay guests.
 
 import "../shell/screens.css";
 
@@ -22,6 +23,11 @@ import {
   RecordWarningDialog,
   TerminationLetterDialog,
 } from "./LettersDialogs";
+import {
+  guestNoticesApi,
+  type GuestNoticesApi,
+} from "../shortstays/shortStaysClient";
+import { GuestNoticesTab } from "./GuestNotices";
 import type { LettersApi, RentLetterEvent } from "./lettersClient";
 import {
   LeaseWarnings,
@@ -53,9 +59,11 @@ export interface LettersPageProps {
   api: LettersApi;
   leaseApi: Pick<LeaseApi, "list">;
   capabilities: ReadonlySet<string> | null;
+  /** DL-238: the short-stay guest notices (the real routes unless a test gives its own). */
+  guestApi?: GuestNoticesApi;
 }
 
-type Tab = "rent" | "warn";
+type Tab = "rent" | "warn" | "ss";
 
 export function LettersPage({
   language,
@@ -64,14 +72,20 @@ export function LettersPage({
   api,
   leaseApi,
   capabilities,
+  guestApi = guestNoticesApi,
 }: LettersPageProps) {
   const detail = useHashDetail("letters");
   const may = (capability: string) =>
     capabilities === null || capabilities.has(capability);
   const mayRent = may("rent_nonpayment.read");
   const mayWarn = may("leases.read");
+  const mayShort = may("short_stays.read");
   const tab: Tab =
-    (detail === "warnings" && mayWarn) || !mayRent ? "warn" : "rent";
+    (detail === "short-stays" && mayShort) || (!mayRent && !mayWarn)
+      ? "ss"
+      : (detail === "warnings" && mayWarn) || !mayRent
+        ? "warn"
+        : "rent";
 
   const [leases, setLeases] = useState<LeaseResource[] | null>(null);
   const [rent, setRent] = useState<RentLetters | null>(null);
@@ -80,7 +94,7 @@ export function LettersPage({
   const sequence = useRef(0);
 
   const load = useCallback(() => {
-    if (propertyId === "") return;
+    if (propertyId === "" || tab === "ss") return;
     const operation = ++sequence.current;
     setFailed(false);
     void loadLeasesData(leaseApi, propertyId)
@@ -121,7 +135,7 @@ export function LettersPage({
       </div>
     );
   }
-  if (!mayRent && !mayWarn) {
+  if (!mayRent && !mayWarn && !mayShort) {
     return (
       <div className="ui-notice warn" role="status">
         <Icon name="info" />
@@ -152,24 +166,46 @@ export function LettersPage({
           )}
         </p>
       </PageHead>
-      {mayRent && mayWarn && (
+      {[mayRent, mayWarn, mayShort].filter(Boolean).length > 1 && (
         <nav aria-label={ltr(language, "sub")} className="ui-subtabs">
-          <a
-            aria-current={tab === "rent" ? "page" : undefined}
-            href={hashForPage("letters")}
-          >
-            {ltr(language, "tab_rent")}
-          </a>
-          <a
-            aria-current={tab === "warn" ? "page" : undefined}
-            href={hashForPage("letters", "warnings")}
-          >
-            {ltr(language, "tab_warn")}
-          </a>
+          {mayRent && (
+            <a
+              aria-current={tab === "rent" ? "page" : undefined}
+              href={hashForPage("letters")}
+            >
+              {ltr(language, "tab_rent")}
+            </a>
+          )}
+          {mayWarn && (
+            <a
+              aria-current={tab === "warn" ? "page" : undefined}
+              href={hashForPage("letters", "warnings")}
+            >
+              {ltr(language, "tab_warn")}
+            </a>
+          )}
+          {mayShort && (
+            <a
+              aria-current={tab === "ss" ? "page" : undefined}
+              href={hashForPage("letters", "short-stays")}
+            >
+              {ltr(language, "tab_ss")}
+            </a>
+          )}
         </nav>
       )}
-      {failure}
-      {shown === null || leases === null ? (
+      {tab === "ss" ? (
+        <GuestNoticesTab
+          active={active}
+          api={guestApi}
+          canGive={may("short_stays.desk")}
+          language={language}
+          propertyId={propertyId}
+        />
+      ) : (
+        failure
+      )}
+      {tab === "ss" ? null : shown === null || leases === null ? (
         !failed && (
           <p className="ui-muted" role="status">
             {ltr(language, "loading")}

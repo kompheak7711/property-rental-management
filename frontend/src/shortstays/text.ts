@@ -205,6 +205,8 @@ const TEXT = {
   d_price: ["Price", "តម្លៃ"],
   d_hist: ["History", "ប្រវត្តិ"],
   ev_BOOKED: ["Booked", "បានកក់"],
+  // DL-238: a house-rule warning the front desk gave (the note is what happened).
+  ev_HOUSE_RULE_WARNING: ["House-rule warning", "ការព្រមានអំពីវិន័យស្នាក់នៅ"],
   // Step 3: payment, deposit, check-in, check-out, room check, damage. All new.
   cal_unpaid: ["Not paid", "មិនទាន់បង់"],
   pay_t: ["Payment", "ការបង់ប្រាក់"],

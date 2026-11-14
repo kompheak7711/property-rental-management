@@ -282,7 +282,7 @@ const PAGE_NEEDS: Record<PageId, readonly string[] | null> = {
   // Daily and weekly rent: the calendar and bookings read with short_stays.read.
   shortstays: ["short_stays.read"],
   leases: ["leases.read"],
-  letters: ["rent_nonpayment.read", "leases.warn"],
+  letters: ["rent_nonpayment.read", "leases.warn", "short_stays.read"],
   moveout: ["deposits.read", "final_settlements.prepare", "leases.move_out"],
   // V1-060 B6: anyone who may read one report (frontend/src/reports/reportsData.ts REPORTS;
   // Unit occupancy also needs leases.read).

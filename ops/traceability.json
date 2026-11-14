@@ -69938,6 +69938,50 @@
       "notes": "Owner 14/11/2026 01:43 (Leasing thread): Viewing requests This month is number cards (4 a row, 2 on a phone); Why closed and Where from are lists inside the card; the request list has six columns (contact way under the phone, the day wanted under the Unit type, a note only when written) and is cards on a phone."
     },
     {
+      "test_id": "TEST-FE-2260",
+      "upstream_ids": [
+        "DL-238",
+        "API-SSN-001"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/letters/GuestNotices.test.tsx",
+      "status": "implemented",
+      "notes": "Notices has a Short-stay guest notices tab that does not read the Lease letters; each notice shows its kind, details, who gave it or Sent by the app, and how the guest got it; the count cards To tell in person and Guests with a warning show only their notices."
+    },
+    {
+      "test_id": "TEST-FE-2261",
+      "upstream_ids": [
+        "DL-238",
+        "API-SSN-001"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/letters/GuestNotices.test.tsx",
+      "status": "implemented",
+      "notes": "Give a warning lists the guests checked in (one with the final warning cannot be chosen), says whether it is warning 1 or the final warning and when the guest has no Telegram, needs what happened, sends the trimmed reason and reads the list again."
+    },
+    {
+      "test_id": "TEST-FE-2262",
+      "upstream_ids": [
+        "DL-238",
+        "API-SSN-001"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/letters/GuestNotices.test.tsx",
+      "status": "implemented",
+      "notes": "Told in person shows only on a notice with no Telegram or not delivered and not told yet, marks it once and shows who told it; with short_stays.read only there is no Give a warning, no Told in person and no tab row."
+    },
+    {
+      "test_id": "TEST-FE-2263",
+      "upstream_ids": [
+        "DL-238",
+        "API-SSN-001"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/letters/GuestNotices.test.tsx",
+      "status": "implemented",
+      "notes": "A page that cannot be read says so and Retry reads it again; an answer with an unknown kind or a wrong field type is refused by the client."
+    },
+    {
       "test_id": "test_new_rate_records_have_no_markup_and_old_records_keep_theirs",
       "upstream_ids": [
         "DL-228",
