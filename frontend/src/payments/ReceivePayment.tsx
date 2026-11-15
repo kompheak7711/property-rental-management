@@ -1002,6 +1002,7 @@ const CATEGORIES = [
   "SHORT_STAY",
   "SHORT_STAY_DAMAGE",
   "PRODUCTS",
+  "LATE_PAYMENT",
 ] as const;
 
 function isCategory(value: string): value is (typeof CATEGORIES)[number] {

@@ -65,7 +65,8 @@ type InvoiceKind =
   | "DAMAGE_CHARGES"
   | "SHORT_STAY"
   | "SHORT_STAY_DAMAGE"
-  | "PRODUCTS";
+  | "PRODUCTS"
+  | "LATE_PAYMENT";
 
 const LINE_NAMES = {
   LATE_PAYMENT_CHARGE: "pfl_row",

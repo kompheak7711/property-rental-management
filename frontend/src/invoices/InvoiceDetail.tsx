@@ -432,6 +432,8 @@ export function InvoiceDetail({
     .join(" · ");
   // D3 (DL-232): an Invoice for a missed amount links to the Invoice where it was missed.
   const missedOn = invoice.missed_on ?? null;
+  // L1 (DL-233): a Late-payment Invoice links to the Invoice that was paid late.
+  const lateOf = invoice.late_payment_of ?? null;
 
   return (
     <>
@@ -519,15 +521,29 @@ export function InvoiceDetail({
         badge={<InvoiceChip language={language} state={state} />}
         numeric
         summary={
-          missedOn === null ? (
+          missedOn === null && lateOf === null ? (
             summaryText
           ) : (
             <>
               <span>{summaryText}</span>
-              {" · "}
-              <a href={hashForPage("invoices", `inv:${missedOn.invoice_id}`)}>
-                {ivt(language, "missed_of", missedOn.invoice_number)}
-              </a>
+              {missedOn !== null && (
+                <>
+                  {" · "}
+                  <a
+                    href={hashForPage("invoices", `inv:${missedOn.invoice_id}`)}
+                  >
+                    {ivt(language, "missed_of", missedOn.invoice_number)}
+                  </a>
+                </>
+              )}
+              {lateOf !== null && (
+                <>
+                  {" · "}
+                  <a href={hashForPage("invoices", `inv:${lateOf.invoice_id}`)}>
+                    {ivt(language, "late_of", lateOf.invoice_number)}
+                  </a>
+                </>
+              )}
             </>
           )
         }
