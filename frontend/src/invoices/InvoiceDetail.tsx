@@ -18,6 +18,7 @@ import type { LateChargeCard, PaymentsApi } from "../payments/paymentsClient";
 import { dayText, momentText, usdFromCents } from "../shell/format";
 import { Icon } from "../shell/icons";
 import { hashForPage } from "../shell/navigation";
+import { openPageInAddress } from "../shell/useHashPage";
 import type { Language } from "../signInText";
 import { AdjustDialog, VoidDialog } from "./ChangeDialogs";
 import { editableItems } from "./CreateInvoice";
@@ -237,7 +238,10 @@ export function InvoiceDetail({
   payerCard,
 }: {
   language: Language;
-  api: Pick<InvoiceApi, "get" | "issue" | "adjust" | "void">;
+  api: Pick<
+    InvoiceApi,
+    "get" | "issue" | "adjust" | "void" | "createWithItems"
+  >;
   /** The late-payment card read and the Reduce or waive command; none hides the card. */
   lateApi?: Pick<PaymentsApi, "lateCharge" | "reduceLateCharge">;
   /** The reads of the shared Customer card (design v81); none shows the short card. */
@@ -423,6 +427,12 @@ export function InvoiceDetail({
     Date.parse(when.length === 10 ? `${when}T00:00:00+07:00` : when);
   history.sort((left, right) => momentOf(left[0]) - momentOf(right[0]));
 
+  const summaryText = [ivt(language, invoiceType(invoice)), name, unit]
+    .filter((part) => part !== null && part !== "")
+    .join(" · ");
+  // D3 (DL-232): an Invoice for a missed amount links to the Invoice where it was missed.
+  const missedOn = invoice.missed_on ?? null;
+
   return (
     <>
       <PageHeader
@@ -508,9 +518,19 @@ export function InvoiceDetail({
         back={back}
         badge={<InvoiceChip language={language} state={state} />}
         numeric
-        summary={[ivt(language, invoiceType(invoice)), name, unit]
-          .filter((part) => part !== null && part !== "")
-          .join(" · ")}
+        summary={
+          missedOn === null ? (
+            summaryText
+          ) : (
+            <>
+              <span>{summaryText}</span>
+              {" · "}
+              <a href={hashForPage("invoices", `inv:${missedOn.invoice_id}`)}>
+                {ivt(language, "missed_of", missedOn.invoice_number)}
+              </a>
+            </>
+          )
+        }
         title={
           state === "draft"
             ? ivt(language, "ni_draft_no")
@@ -597,7 +617,17 @@ export function InvoiceDetail({
             },
           };
           return dialog === "adjust" ? (
-            <AdjustDialog {...props} />
+            <AdjustDialog
+              {...props}
+              canBill={may("invoices.create")}
+              onBilled={(draft) => {
+                // D3 (DL-232): open the new Draft, so it can be checked and issued.
+                setDialog(null);
+                onChanged();
+                openPageInAddress("invoices", false, `inv:${draft.id}`);
+              }}
+              propertyId={propertyId}
+            />
           ) : (
             <VoidDialog {...props} />
           );
