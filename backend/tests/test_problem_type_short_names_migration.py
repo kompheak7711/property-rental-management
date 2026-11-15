@@ -25,7 +25,7 @@ def test_migrations_411_and_412_follow_401_and_are_forward_only() -> None:
     assert revision is not None and revision.down_revision == PREVIOUS
     safety = scripts.get_revision(SAFETY_BACK)
     assert safety is not None and safety.down_revision == REVISION
-    assert scripts.get_heads() == ["20270730_407"]  # main's 396 joins in 407
+    assert scripts.get_heads() == ["20270731_408"]  # main's 397 joins in 408
     for step in (revision, safety):
         with pytest.raises(NotImplementedError, match="forward-only"):
             step.module.downgrade()

@@ -57,7 +57,10 @@ export interface LeasesPageProps {
   /** V1-060 B6 (DL-100): the draft's Security Deposit and Sign Lease with money; the real
    * server when not given. */
   settlementApi?: SigningApi &
-    Pick<SettlementApi, "planSecurityDeposit" | "receiveSecurityDeposit">;
+    Pick<
+      SettlementApi,
+      "planSecurityDeposit" | "planPetDeposit" | "receiveSecurityDeposit"
+    >;
   paymentsApi?: PaymentsApi;
   /** UI v81 pilot: the Lease page's Customer card (the ledger position and "Paid on time"). */
   ledgerApi?: Pick<CustomerLedgerApi, "read">;
