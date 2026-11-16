@@ -10,7 +10,7 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { InspectionsPage } from "../inspections/InspectionsPage";
-import { reportOf } from "../problems/problemsClient";
+import { type ProblemsApi, reportOf } from "../problems/problemsClient";
 import {
   type FileRole,
   type JointApi,
@@ -259,12 +259,19 @@ function fakeApi(start: JointInspection, rows: JointRow[] = []) {
   return { api, saves, files, now: () => current };
 }
 
+// The Property's older move-out inspections and Unit checks: none here.
+const NO_OTHER_INSPECTIONS = {
+  inspections: () =>
+    Promise.resolve({ as_of: "2026-11-16", move_outs: [], unit_checks: [] }),
+} as unknown as ProblemsApi;
+
 function openForm(api: JointApi, capabilities: ReadonlySet<string> = ALL) {
   window.location.hash = "#/inspections/ji%3Aji-1";
   render(
     <InspectionsPage
-      api={api}
+      api={NO_OTHER_INSPECTIONS}
       capabilities={capabilities}
+      jointApi={api}
       language="en"
       propertyId={PROPERTY}
     />,
@@ -294,8 +301,9 @@ describe("Joint Inspection (DL-243)", () => {
     ]);
     render(
       <InspectionsPage
-        api={api}
+        api={NO_OTHER_INSPECTIONS}
         capabilities={ALL}
+        jointApi={api}
         language="en"
         propertyId={PROPERTY}
       />,
@@ -317,9 +325,9 @@ describe("Joint Inspection (DL-243)", () => {
       "href",
       "#/inspections/ji%3Aji-3",
     );
-    // The older inspections are still found where they were.
+    // The older move-out inspections and Unit checks are listed below.
     expect(
-      screen.getByRole("link", { name: "Open Move-outs" }),
+      await screen.findByRole("heading", { name: /Move-out inspections/ }),
     ).toBeInTheDocument();
   });
 

@@ -1886,6 +1886,7 @@ export function App({
       >
         <InspectionsPage
           active={shown("inspections")}
+          api={problemsApi}
           capabilities={capabilities}
           language={language}
           propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}

@@ -43,7 +43,7 @@ from alembic import op
 from sqlalchemy import text
 
 revision: str = "20270805_423"
-down_revision: str | None = "20270806_430"
+down_revision: str | None = "20270804_422"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
