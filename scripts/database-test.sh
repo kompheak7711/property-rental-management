@@ -424,6 +424,7 @@ database_test_suites='
   tests/test_v12_late_payment_invoice_migration.py
   tests/test_v12_pet_deposit_at_signing_migration.py
   tests/test_v12_extra_money_credit_migration.py
+  tests/test_v12_draft_delete_migration.py
   tests/test_v12_invoice_type_stored_migration.py
   tests/test_short_stay_guest_notices_migration.py
 '
