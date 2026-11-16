@@ -3774,7 +3774,12 @@ describe("New Lease and Renew", () => {
     expect(
       within(dialog).queryByRole("radio", { name: /Initial Rent not paid/ }),
     ).toBeNull();
-    expect(within(dialog).getAllByRole("radio")).toHaveLength(3);
+    // Only the Ground choices: the notice choices of a Rent ground load later.
+    expect(
+      within(
+        within(dialog).getByRole("group", { name: "Ground" }),
+      ).getAllByRole("radio"),
+    ).toHaveLength(3);
 
     // The notice: an unknown result, Try again, then a changed value.
     fireEvent.click(
