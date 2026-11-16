@@ -34,6 +34,7 @@ from fastapi import APIRouter, Query, Request, Response, status
 from psycopg.types.json import Jsonb
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
+from property_rental.access_control import UNITS_READ_CAPABILITY
 from property_rental.browser_security import require_browser_mutation
 from property_rental.identity import ActorResolver
 from property_rental.products_api import (
@@ -53,7 +54,6 @@ PROBLEM_REPORTS_ADD = "problem_reports.add"
 PROBLEM_REPORTS_PLAN = "problem_reports.plan"
 PROBLEM_REPORTS_JOIN = "problem_reports.join"
 PROBLEM_REPORTS_COSTS = "problem_reports.costs"
-UNITS_READ = "units.read"
 Text = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=500)]
 Name = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=120)]
 Floor = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=20)]
@@ -431,7 +431,7 @@ def create_problem_reports_router(
 
     @router.get("/inspections")
     def property_inspections(property_id: UUID, request: Request, response: Response) -> Json:
-        actor = _require(request, resolver, UNITS_READ, property_id)
+        actor = _require(request, resolver, UNITS_READ_CAPABILITY, property_id)
         response.headers["Cache-Control"] = "private, no-store"
         try:
             return envelope(request, flow.inspections(property_id, actor_id=actor.actor_id))
