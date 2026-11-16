@@ -28,6 +28,8 @@ const TEXT = {
     "Tenant bot accounts linked to a Lease. A link ends by itself when the Lease ends.",
     "គណនីបូតអ្នកជួលដែលភ្ជាប់នឹងកិច្ចសន្យា។ ការភ្ជាប់បញ្ចប់ដោយខ្លួនឯង ពេលកិច្ចសន្យាបញ្ចប់។",
   ],
+  // Telegram review fix 2 (owner 17/11/2026): new Khmer, needs the native check.
+  links_h: ["Links", "ការភ្ជាប់"],
   linked_now: ["Linked now", "កំពុងភ្ជាប់"],
   c_acc: ["Telegram account", "គណនីតេឡេក្រាម"],
   c_cust: ["Customer", "អតិថិជន"],
@@ -142,11 +144,9 @@ const TEXT = {
   ],
   k_pull: ["Last message check", "ការទាញពីរ៉េឡេចុងក្រោយ"],
   k_pull_s: ["{0} received", "បានរក្សាទុក {0}"],
-  k_pull_none: [
-    "Not checked yet",
-    // new
-    "មិនទាន់បានទាញទេ",
-  ],
+  // Telegram review fix 6 (owner 17/11/2026): new Khmer, needs the native check.
+  k_pull_not_yet: ["Not yet", "មិនទាន់"],
+  not_used: ["Not used yet", "មិនទាន់ប្រើ"],
   k_wait: ["Waiting to send", "រង់ចាំផ្ញើ"],
   k_wait_s: [
     "The app retries automatically",
@@ -381,20 +381,22 @@ const TEXT = {
     "មិនទាន់អនុម័ត",
   ],
   edit: ["Edit", "កែ"],
+  // Telegram review fix 7 (owner 17/11/2026): new Khmer, needs the native check.
   none_faq: [
-    "No questions yet. The bots say there are no questions and offer Contact office.",
-    // new
-    "មិនទាន់មានសំណួរទេ។ បូតប្រាប់ថាមិនទាន់មានសំណួរ ហើយណែនាំឱ្យទាក់ទងការិយាល័យ។",
+    "No questions yet. Tenants who ask the bot are sent to Contact office.",
+    "មិនទាន់មានសំណួរទេ។ អ្នកជួលដែលសួរបូត ត្រូវបានបញ្ជូនទៅទាក់ទងការិយាល័យ។",
   ],
   // new: DL-179.
-  faq_starter: ["Load the 15 starter questions", "ផ្ទុកសំណួរចាប់ផ្តើម ១៥"],
+  // Telegram review fix 7 (owner 17/11/2026): new Khmer, needs the native check.
+  faq_starter: ["Add the 15 starter questions", "បន្ថែមសំណួរចាប់ផ្តើម ១៥"],
+  // Telegram review fix 7 (owner 17/11/2026): new Khmer, needs the native check.
   faq_starter_sub: [
-    "The questions from the FAQ draft. Each waits for the Owner to approve it before a bot shows it.",
-    "សំណួរពីសេចក្តីព្រាង FAQ។ សំណួរនីមួយៗរង់ចាំម្ចាស់អនុម័ត មុនពេលបូតបង្ហាញ។",
+    "The Owner approves each one before a bot shows it.",
+    "ម្ចាស់អនុម័តសំណួរនីមួយៗ មុនពេលបូតបង្ហាញ។",
   ],
   faq_starter_done: [
-    "15 questions loaded. Each waits for the Owner to approve it.",
-    "បានផ្ទុកសំណួរ ១៥។ សំណួរនីមួយៗរង់ចាំម្ចាស់អនុម័ត។",
+    "15 questions added. Each waits for the Owner to approve it.",
+    "បានបន្ថែមសំណួរ ១៥។ សំណួរនីមួយៗរង់ចាំម្ចាស់អនុម័ត។",
   ],
   faq_read_only: [
     "Only the Owner and the Manager change the FAQ.",
@@ -641,6 +643,9 @@ const TEXT = {
   inv_failed: ["Not delivered", "មិនបានទៅដល់"],
   inv_paper: ["Give a paper copy", "ផ្តល់ច្បាប់ចម្លងក្រដាស"],
   inv_no_reminder: ["Not yet", "មិនទាន់"],
+  // Telegram review fix 1 (owner 17/11/2026): new Khmer, needs the native check.
+  inv_paid: ["Paid", "បានបង់"],
+  inv_no_need: ["Not needed", "មិនចាំបាច់"],
   // Receipts on Telegram (DL-215, owner 11 Nov 2026). All Khmer here is new and needs the native
   // check.
   rec_h: ["Receipts on Telegram", "បង្កាន់ដៃតាមតេឡេក្រាម"],

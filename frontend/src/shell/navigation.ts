@@ -287,7 +287,9 @@ const PAGE_NAMES: Record<PageId, readonly [string, string]> = {
   tgcontact: ["Contact office", "ទាក់ទងការិយាល័យ"],
   tgfaq: ["FAQ", "សំណួរញឹកញាប់"],
   // DL-216; Khmer new.
-  tgnotices: ["Notices", "សេចក្តីជូនដំណឹង"],
+  // Telegram review fix 8 (owner 17/11/2026): not "Notices", the unpaid-Rent notices page of
+  // Leasing. Khmer new, needs the native check.
+  tgnotices: ["Office news", "ព័ត៌មានការិយាល័យ"],
   tghealth: ["Telegram health", "ស្ថានភាពតេឡេក្រាម"],
   // new
   account: ["My account", "គណនីរបស់ខ្ញុំ"],
