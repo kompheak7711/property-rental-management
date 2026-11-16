@@ -364,6 +364,7 @@ database_test_suites='
   tests/test_problem_report_costs_migration.py
   tests/test_problem_report_month_migration.py
   tests/test_problem_report_from_finding_migration.py
+  tests/test_problem_type_short_names_migration.py
   tests/test_hr_employees_migration.py
   tests/test_hr_payroll_migration.py
   tests/test_hr_attendance_migration.py
