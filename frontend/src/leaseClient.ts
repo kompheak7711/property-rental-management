@@ -31,6 +31,10 @@ export interface LeaseTimelineEvent {
   actor_id: string;
   source_reference: string | null;
   source_href: string | null;
+  /** UI v81 (owner 08/11/2026): the name of the person who recorded the step. */
+  actor_name?: string | null;
+  /** For a Signer step: the Customer it was about. */
+  subject_name?: string | null;
 }
 
 export interface LeaseServiceTermResource {
@@ -54,6 +58,8 @@ export interface LeaseResource {
   property_id: string;
   unit_id: string;
   unit_number: string;
+  /** UI v81 (owner 08/11/2026, migration 20270712_363): Unit + "L" + running number. */
+  lease_number?: string | null;
   primary_tenant_id: string;
   primary_tenant_name: string;
   status: LeaseStatus;

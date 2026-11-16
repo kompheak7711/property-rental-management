@@ -315,9 +315,7 @@ describe("Registers", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Show more" }));
     expect(
-      await screen.findByText(
-        "More rows could not be read just now. Try again.",
-      ),
+      await screen.findByText("More rows could not be loaded. Try again."),
     ).toBeTruthy();
     expect(page.register).toHaveBeenLastCalledWith(
       PROPERTY,
@@ -335,7 +333,7 @@ describe("Registers", () => {
     ).toEqual(["INV-0001", "INV-0002", "INV-0003"]);
     expect(screen.queryByRole("button", { name: "Show more" })).toBeNull();
     expect(
-      screen.queryByText("More rows could not be read just now. Try again."),
+      screen.queryByText("More rows could not be loaded. Try again."),
     ).toBeNull();
   });
 
@@ -581,13 +579,13 @@ describe("Registers", () => {
       ["Occupied", "1"],
       ["Reserved", "1"],
       ["Vacant", "1"],
-      ["Not available", "1"],
+      ["Unavailable", "1"],
     ]);
     expect(barRows(summary, "Units by status")).toEqual([
       ["Occupied", "1"],
       ["Reserved", "1"],
       ["Vacant", "1"],
-      ["Not available", "1"],
+      ["Unavailable", "1"],
     ]);
     expect(within(table).getByRole("link", { name: "U302" })).toHaveAttribute(
       "href",
@@ -721,7 +719,7 @@ describe("Registers", () => {
     const summary = summaryCard();
     expect(facts(summary)).toEqual([["Events", "42"]]);
     expect(
-      within(summary).getByRole("link", { name: "Open History" }),
+      within(summary).getByRole("link", { name: "Open Audit log" }),
     ).toHaveAttribute("href", hashForPage("history"));
     expect(
       bodyRows(within(summary).getByRole("table", { name: "By person" })),
