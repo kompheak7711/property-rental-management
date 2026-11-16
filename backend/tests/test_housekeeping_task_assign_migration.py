@@ -78,9 +78,11 @@ def task(db: HrDatabase, kind: str = "DAILY_CLEAN") -> tuple[str, str]:
     unit = uuid.uuid4()
     number = f"HK{unit.hex[:6].upper()}"
     with psycopg.connect(db.owner_url) as connection:
+        # Since C2 (DL-241) the stored status is only the condition; who holds the Unit comes
+        # from its records, so a new Unit is stored ready (VACANT).
         connection.execute(
             "INSERT INTO app.units(id,property_id,unit_number,floor,unit_type,status,created_by,"
-            "updated_by) VALUES (%s,%s,%s,'1','STUDIO','OCCUPIED',%s,%s)",
+            "updated_by) VALUES (%s,%s,%s,'1','STUDIO','VACANT',%s,%s)",
             (unit, db.property_id, number, db.owner, db.owner),
         )
         made = connection.execute(

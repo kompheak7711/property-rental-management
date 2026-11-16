@@ -929,13 +929,13 @@ describe("Utilities Meters tab (V1-058 R4b)", () => {
       (label) => label.textContent,
     );
     expect(labels.indexOf("Installed on")).toBeLessThan(
-      labels.findIndex((text) => text?.startsWith("Serial") === true),
+      labels.findIndex((text) => text.startsWith("Serial")),
     );
     expect(labels.indexOf("Installed on")).toBeGreaterThan(
-      labels.findIndex((text) => text?.startsWith("Unit") === true),
+      labels.findIndex((text) => text.startsWith("Unit")),
     );
     const serial = () =>
-      (within(dialog).getByLabelText(/^Serial/) as HTMLInputElement).value;
+      within(dialog).getByLabelText<HTMLInputElement>(/^Serial/).value;
     expect(serial()).toBe("");
     fireEvent.change(within(dialog).getByLabelText(/^Unit/), {
       target: { value: "unit-U301" },
@@ -983,7 +983,7 @@ describe("Utilities Meters tab (V1-058 R4b)", () => {
     });
     // A serial the staff member typed stays when the Unit changes (owner 16/11/2026).
     expect(
-      (within(dialog).getByLabelText(/^Serial/) as HTMLInputElement).value,
+      within(dialog).getByLabelText<HTMLInputElement>(/^Serial/).value,
     ).toBe("EL-U101-B");
     fireEvent.click(within(dialog).getByRole("button", { name: "Add meter" }));
     expect(

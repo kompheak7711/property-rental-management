@@ -1404,6 +1404,7 @@ export function autoSerial(
   installed: string,
 ): string {
   if (!isDay(installed)) return "";
-  const day = installed.slice(8, 10) + installed.slice(5, 7) + installed.slice(0, 4);
+  const day =
+    installed.slice(8, 10) + installed.slice(5, 7) + installed.slice(0, 4);
   return `${type === "ELECTRICITY" ? "EL" : "WA"}-${unitNumber}${day}`;
 }

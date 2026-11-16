@@ -36,9 +36,9 @@ FACTS = (
 )
 
 
-def _migration() -> ModuleType:
+def _migration(name: str = REVISION) -> ModuleType:
     config = Config(str(Path(__file__).parents[1] / "alembic.ini"))
-    revision = ScriptDirectory.from_config(config).get_revision(REVISION)
+    revision = ScriptDirectory.from_config(config).get_revision(name)
     assert revision is not None
     return revision.module
 
@@ -63,7 +63,7 @@ def test_migration_365_follows_the_payments_paid_for_and_is_forward_only() -> No
     scripts = ScriptDirectory.from_config(config)
     revision = scripts.get_revision(REVISION)
     assert revision is not None and revision.down_revision == PREVIOUS
-    assert scripts.get_heads() == ["20270802_416"]
+    assert scripts.get_heads() == ["20270803_417"]
     with pytest.raises(NotImplementedError, match="forward-only"):
         revision.module.downgrade()
 
@@ -103,6 +103,10 @@ def test_the_home_page_at_the_head_holds_every_fix_once(migrated_database_url: s
     module = _migration()
     with psycopg.connect(migrated_database_url) as connection:
         definition = _definition(connection)
+    # Main's 421 (C2, DL-241; joined by 417) reads who holds each Unit for the Units card, so the
+    # card reads a worked-out status instead of app.units; the for-rent rule stays.
+    held = _migration("20270803_417")
+    definition = definition.replace(cast(str, held.UNITS_AFTER), cast(str, held.UNITS_BEFORE))
     for old, new in cast(tuple[tuple[str, str], ...], module.REPLACEMENTS):
         assert definition.count(new) == 1 and old not in definition
     for kept in cast(tuple[str, ...], module.KEPT):
