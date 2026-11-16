@@ -52,7 +52,7 @@ function TaskState({
   const name = task.done_by_name ?? "—";
   if (task.status === "DONE")
     return (
-      <p className="ss-taskdo ss-state ok">
+      <p className="ss-state ok">
         <Icon name="check" small />
         {st(
           language,
@@ -63,13 +63,13 @@ function TaskState({
     );
   if (task.status === "SKIPPED")
     return (
-      <p className="ss-taskdo ss-state">
+      <p className="ss-state">
         {st(language, "cl_not_cleaned", task.note ?? name)}
       </p>
     );
   if (task.problem_found_at !== null)
     return (
-      <div className="ss-taskdo ss-state err">
+      <div className="ss-state err">
         <span>
           <Icon name="alert" small />
           {st(language, "cl_problem_by", task.problem_found_by_name ?? "—")}
@@ -85,7 +85,7 @@ function TaskState({
       </div>
     );
   return (
-    <p className="ss-taskdo ss-state muted">
+    <p className="ss-state muted">
       {task.assigned_name === null
         ? st(language, "cl_wait_nobody")
         : cleaners.some(
@@ -173,59 +173,58 @@ export function CleaningList({
 
   const row = (task: CleaningTask) => (
     <li className={task.late ? "ss-task late" : "ss-task"} key={task.task_id}>
-      <div className="ss-taskwhat">
-        <div className="ui-hrow">
-          <b className="ui-num">{task.unit_number}</b>
-          <span>{st(language, `cl_${task.kind}`)}</span>
-          {task.late && (
-            <>
-              <Chip tone="err">{st(language, "cl_late_chip")}</Chip>
-              <span className="ui-small ss-latedate ui-num">
-                {st(language, "cl_late", dayText(task.task_on))}
-              </span>
-            </>
-          )}
-        </div>
-        {/* Owner 14/11/2026 01:39: no booking number or guest name on a task. */}
-        {task.status === "TO_DO" &&
-          (mayAssign && cleaners.length > 0 ? (
-            <label className="ss-assign">
-              <span className="ui-small">{st(language, "cl_assign")}</span>
-              <select
-                disabled={busy}
-                onChange={(event) => {
-                  const chosen = event.currentTarget.value;
-                  assign(task, chosen === "" ? null : chosen);
-                }}
-                value={task.assigned_to ?? ""}
-              >
-                <option value="">{st(language, "cl_nobody")}</option>
-                {/* A person who lost the right keeps the task until it is moved. */}
-                {task.assigned_to !== null &&
-                  !cleaners.some(
-                    (person) => person.employee_id === task.assigned_to,
-                  ) && (
-                    <option value={task.assigned_to}>
-                      {task.assigned_name ?? task.assigned_to}
-                    </option>
-                  )}
-                {cleaners.map((person) => (
-                  <option key={person.employee_id} value={person.employee_id}>
-                    {person.telegram
-                      ? cleanerName(language, person)
-                      : st(language, "cl_no_tg", cleanerName(language, person))}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ) : (
-            <p className="ui-small ss-given">
-              {task.assigned_name === null
-                ? st(language, "cl_nobody_yet")
-                : st(language, "cl_given", task.assigned_name)}
-            </p>
-          ))}
+      {/* Owner 16/11/2026: the "Assign to" box sits top right, on the title line. */}
+      <div className="ui-hrow ss-tasktitle">
+        <b className="ui-num">{task.unit_number}</b>
+        <span>{st(language, `cl_${task.kind}`)}</span>
+        {task.late && (
+          <>
+            <Chip tone="err">{st(language, "cl_late_chip")}</Chip>
+            <span className="ui-small ss-latedate ui-num">
+              {st(language, "cl_late", dayText(task.task_on))}
+            </span>
+          </>
+        )}
       </div>
+      {/* Owner 14/11/2026 01:39: no booking number or guest name on a task. */}
+      {task.status === "TO_DO" &&
+        (mayAssign && cleaners.length > 0 ? (
+          <label className="ss-assign ss-taskside">
+            <span className="ui-small">{st(language, "cl_assign")}</span>
+            <select
+              disabled={busy}
+              onChange={(event) => {
+                const chosen = event.currentTarget.value;
+                assign(task, chosen === "" ? null : chosen);
+              }}
+              value={task.assigned_to ?? ""}
+            >
+              <option value="">{st(language, "cl_nobody")}</option>
+              {/* A person who lost the right keeps the task until it is moved. */}
+              {task.assigned_to !== null &&
+                !cleaners.some(
+                  (person) => person.employee_id === task.assigned_to,
+                ) && (
+                  <option value={task.assigned_to}>
+                    {task.assigned_name ?? task.assigned_to}
+                  </option>
+                )}
+              {cleaners.map((person) => (
+                <option key={person.employee_id} value={person.employee_id}>
+                  {person.telegram
+                    ? cleanerName(language, person)
+                    : st(language, "cl_no_tg", cleanerName(language, person))}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : (
+          <p className="ui-small ss-given ss-taskside">
+            {task.assigned_name === null
+              ? st(language, "cl_nobody_yet")
+              : st(language, "cl_given", task.assigned_name)}
+          </p>
+        ))}
       <TaskState
         cleaners={cleaners}
         language={language}
