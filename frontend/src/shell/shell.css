@@ -1386,3 +1386,31 @@ a.shell-me-text[aria-current="page"] b {
     width: 100%;
   }
 }
+
+/* Owner 16/11/2026: with many tabs (Ledger, 11) the page's buttons sit on their own row under
+   the tab row, at its right end, so the tabs keep the whole width. */
+.shell-head.shell-head-tabbed.shell-head-many {
+  flex-wrap: wrap;
+  row-gap: 12px;
+  border-bottom: 0;
+}
+
+.shell-head-tabbed.shell-head-many > .shell-tabs {
+  flex: 1 1 100%;
+  border-bottom: 1px solid var(--border);
+}
+
+.shell-head-tabbed.shell-head-many > .shell-head-actions {
+  flex: 1 1 100%;
+  padding-bottom: 0;
+}
+
+/* Owner 16/11/2026: on a phone the buttons under a long tab row share one row, equal width. */
+@media (max-width: 640px) {
+  .shell-head.shell-head-many > .shell-head-actions > .ui-actions {
+    display: grid;
+    grid-auto-columns: minmax(0, 1fr);
+    grid-auto-flow: column;
+    gap: 8px;
+  }
+}

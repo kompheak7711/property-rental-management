@@ -108,10 +108,12 @@ export function FixedAssetsPage({
                 setDone(null);
                 setOpen(true);
               }}
+              aria-label={lt(language, "fa_new")}
+              title={lt(language, "fa_new")}
               type="button"
             >
               <Icon name="plus" small />
-              {lt(language, "fa_new")}
+              {lt(language, "b_asset")}
             </button>
           )}
         </PageHead>
@@ -428,6 +430,7 @@ function AddAssetDialog({
       onClose={onClose}
       onSubmit={submit}
       submitLabel={lt(language, "save")}
+      aria-label={lt(language, "fa_new")}
       title={lt(language, "fa_new")}
     >
       <div className="ui-field">
