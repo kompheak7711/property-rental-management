@@ -817,10 +817,6 @@ def test_fastapi_openapi_inventory_has_no_bootstrap_or_unauthenticated_owner_res
         "/api/v1/properties/{property_id}/leases/{lease_id}/final-utility-invoice": {"post"},
         "/api/v1/properties/{property_id}/leases/{lease_id}/utility-catch-up-invoice": {"post"},
         "/api/v1/properties/{property_id}/unbilled-utility-periods": {"get"},
-        "/api/v1/properties/{property_id}/lease-terminations/{termination_event_id}"
-        "/unpaid-initial-never-moved-in": {"post"},
-        "/api/v1/properties/{property_id}/lease-terminations/{termination_event_id}"
-        "/unpaid-initial-moved-in-credit": {"post"},
         "/api/v1/properties/{property_id}/leases/{lease_id}/termination-notices": {"get", "post"},
         "/api/v1/financial-workspaces": {"get"},
         "/api/v1/properties/{property_id}/financial-capabilities": {"get"},
@@ -1144,6 +1140,12 @@ def test_fastapi_openapi_inventory_has_no_bootstrap_or_unauthenticated_owner_res
         "/api/v1/properties/{property_id}/short-stays/housekeeping": {"get"},
         "/api/v1/properties/{property_id}/short-stays/site-calendars": {"get", "post"},
         "/api/v1/properties/{property_id}/short-stays/housekeeping/{task_id}": {"post"},
+        # DL-236 and DL-238 (Leasing thread on ui-v81): give a task to a cleaner, and the
+        # short-stay guest notices.
+        "/api/v1/properties/{property_id}/short-stays/housekeeping/{task_id}/assign": {"post"},
+        "/api/v1/properties/{property_id}/short-stays/bookings/{booking_id}/warning": {"post"},
+        "/api/v1/properties/{property_id}/short-stays/notices": {"get"},
+        "/api/v1/properties/{property_id}/short-stays/notices/{notice_id}/told": {"post"},
         "/api/v1/properties/{property_id}/ledger/bank-cash": {"get"},
         "/api/v1/properties/{property_id}/ledger/month-end": {"get"},
         "/api/v1/properties/{property_id}/ledger/asset-register": {"get"},
