@@ -153,7 +153,7 @@ describe("V1-058 R5c-3 Payments list", () => {
     ).toHaveAttribute("aria-pressed", "true");
     expect(
       screen.getByRole("button", {
-        name: /^Rent: \$800\.00\. Rent lines\n2 payments/,
+        name: /^Rent: \$800\.00\.$/,
       }),
     ).toBeInTheDocument();
     expect(
@@ -763,12 +763,12 @@ describe("UI v81 round 9 (owner 12/11/2026) the list and the Receipt page say th
     expect(screen.queryByText(/Move-out charges/)).toBeNull();
     expect(
       screen.getByRole("button", {
-        name: /^Short stay: \$52\.80\. Daily and weekly guests\n1 payment/,
+        name: /^Short stay: \$52\.80\.$/,
       }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", {
-        name: /^Other charges: \$15\.00\. Cleaning and other one-time charges\n1 payment/,
+        name: /^Other charges: \$15\.00\.$/,
       }),
     ).toBeInTheDocument();
     // The cards still add up to the money received.
@@ -1074,5 +1074,31 @@ describe("Operations screen (owner 13/11/2026)", () => {
     fireEvent.click(screen.getByRole("button", { name: /^Products:/ }));
     fireEvent.click(screen.getByRole("button", { name: /Fewer cards/ }));
     expect(labels()).toContain("Products");
+  });
+
+  it("TEST-FE-2198 (owner 16/11/2026) a large screen shows every card and no More cards card", async () => {
+    const before = window.matchMedia;
+    window.matchMedia = ((query: string) => ({
+      matches: query === "(min-width: 1600px)",
+      media: query,
+      onchange: null,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      addListener: () => undefined,
+      removeListener: () => undefined,
+      dispatchEvent: () => false,
+    })) as typeof window.matchMedia;
+    try {
+      showList(api(SUMMARY));
+      await screen.findByRole("button", { name: /^Total received:/ });
+      expect(document.querySelectorAll(".ui-kpis-pay .ui-kpi")).toHaveLength(
+        11,
+      );
+      expect(
+        screen.queryByRole("button", { name: /More cards/ }),
+      ).not.toBeInTheDocument();
+    } finally {
+      window.matchMedia = before;
+    }
   });
 });

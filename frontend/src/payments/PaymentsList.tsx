@@ -29,7 +29,7 @@ import {
   type PaymentsApi,
   type PaymentsSummary,
 } from "./paymentsClient";
-import { pyt, type PaymentsTextKey } from "./text";
+import { pyt } from "./text";
 import { PageHead } from "../shell/pageHead";
 
 export type PayPeriod = "all" | "today" | "month" | "last" | "pick";
@@ -141,6 +141,9 @@ export function PaymentsList({
   // Owner 13/11/2026 (Operations fix 1): the cards of kinds with no money in the period fold
   // away behind one "more" card, so the list starts higher.
   const [showZero, setShowZero] = useState(false);
+  // Owner 16/11/2026: a large screen already shows all twelve cards in two rows of six, so
+  // nothing folds there; only a phone, iPad or laptop folds the $0.00 cards.
+  const allFit = useAllCardsFit();
   const [onlyLeft, setOnlyLeft] = useState(false);
   const [summary, setSummary] = useState<PaymentsSummary | null>(null);
   const [failed, setFailed] = useState(false);
@@ -311,6 +314,7 @@ export function PaymentsList({
   );
   const zeroKinds = PAY_KINDS.filter(
     (kind) =>
+      !allFit &&
       summary.kinds[kind].cents === 0 &&
       summary.kinds[kind].payments === 0 &&
       card !== kind,
@@ -377,13 +381,6 @@ export function PaymentsList({
         <CountCard
           icon="payments"
           label={pyt(language, "c_total")}
-          note={`${countText(language, summary.payments)}\n${
-            summary.left > 0
-              ? pyt(language, "c_unm", usdFromCents(summary.left))
-              : summary.payments > 0
-                ? pyt(language, "c_allm")
-                : ""
-          }`}
           onPress={() => {
             setCard("all");
           }}
@@ -394,13 +391,12 @@ export function PaymentsList({
         />
         {shownKinds.map((kind) => {
           const [icon, tone] = KIND_LOOK[kind];
-          const { cents, payments } = summary.kinds[kind];
+          const { cents } = summary.kinds[kind];
           return (
             <CountCard
               icon={icon}
               key={kind}
               label={pyt(language, `c_${kind}`)}
-              note={`${pyt(language, `c_${kind}_s` as PaymentsTextKey)}\n${countText(language, payments)}`}
               onPress={() => {
                 setCard(card === kind ? "all" : kind);
               }}
@@ -414,23 +410,23 @@ export function PaymentsList({
         {zeroKinds.length > 0 && (
           <button
             aria-expanded={showZero}
-            className="ui-kpi none ui-kpi-more"
+            aria-label={`${pyt(language, showZero ? "c_fewer" : "c_more")}: ${String(zeroKinds.length)}. ${pyt(language, showZero ? "c_fewer_s" : "c_more_s")}`}
+            className="ui-kpi ui-kpi-top none ui-kpi-more"
             onClick={() => {
               setShowZero(!showZero);
             }}
             type="button"
           >
-            <span className="ui-kpi-label">
-              <span className="ui-kpi-icon">
-                <Icon name={showZero ? "x" : "plus"} small />
+            <span className="ui-kpi-head">
+              <span className="ui-kpi-label">
+                <span className="ui-kpi-icon">
+                  <Icon name={showZero ? "x" : "plus"} small />
+                </span>
+                <span>{pyt(language, showZero ? "c_fewer" : "c_more")}</span>
               </span>
-              {pyt(language, showZero ? "c_fewer" : "c_more")}
-            </span>
-            <span className="ui-kpi-value ui-num">
-              {String(zeroKinds.length)}
-            </span>
-            <span className="ui-kpi-note">
-              {pyt(language, showZero ? "c_fewer_s" : "c_more_s")}
+              <span className="ui-kpi-value ui-num">
+                {String(zeroKinds.length)}
+              </span>
             </span>
           </button>
         )}
@@ -606,4 +602,27 @@ export function PaymentsList({
       </div>
     </>
   );
+}
+
+/** The width from which the Payments cards sit six to a row (shell/screens.css, round 10). */
+const ALL_CARDS_FIT = "(min-width: 1600px)";
+
+/** True while the window is wide enough for all twelve Payments cards in two rows. */
+function useAllCardsFit(): boolean {
+  const query = () =>
+    typeof window.matchMedia === "function" &&
+    window.matchMedia(ALL_CARDS_FIT).matches;
+  const [fit, setFit] = useState(query);
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+    const media = window.matchMedia(ALL_CARDS_FIT);
+    const changed = () => {
+      setFit(media.matches);
+    };
+    media.addEventListener("change", changed);
+    return () => {
+      media.removeEventListener("change", changed);
+    };
+  }, []);
+  return fit;
 }

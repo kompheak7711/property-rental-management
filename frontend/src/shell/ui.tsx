@@ -43,7 +43,7 @@ export function CountCard({
   pressed,
   onPress,
   valueText,
-  top = false,
+  top = true,
 }: {
   icon: ShellIcon;
   tone: Tone | "brand" | "none";
@@ -55,7 +55,8 @@ export function CountCard({
   onPress: () => void;
   /** How the value is written, such as "$1,250.00"; the plain number by default. */
   valueText?: string;
-  /** The number at the top right, beside the name, as on the Home cards. */
+  /** The number at the top right, beside the name, as on the Home cards (owner 16/11/2026: on
+   * every card). False keeps the older look with the number under the name. */
   top?: boolean;
 }) {
   const shown = valueText ?? String(value);
@@ -75,7 +76,7 @@ export function CountCard({
         hasNote ? `${label}: ${shown}. ${note}` : `${label}: ${shown}.`
       }
       aria-pressed={pressed}
-      className={`ui-kpi${top ? " ui-kpi-top" : ""} ${value === 0 ? "none" : tone}`}
+      className={`ui-kpi${top ? " ui-kpi-top" : ""}${top && valueText !== undefined ? " ui-kpi-amount" : ""} ${value === 0 ? "none" : tone}`}
       onClick={onPress}
       type="button"
     >
