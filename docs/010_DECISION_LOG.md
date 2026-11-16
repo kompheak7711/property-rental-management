@@ -3432,6 +3432,7 @@ The unpublished due-attribution implementation is removed by a forward commit: m
   4. Problem found keeps the Unit check to do and marks it. The Housekeeping list says "Problem found by" the cleaner, with a link to the booking, where the front desk writes the Problem report and the damage choice as before (DL-222). The Unit stays Cleaning until then.
   5. The Housekeeping list has no buttons. It shows what happened as text: Waiting for a cleaner, Waiting for (name) in Telegram, Cleaned by, Not cleaned: (reason), Unit checked by, Problem found by.
   6. "Room check" is called "Unit check" on every screen.
+  7. Each task row has the "Assign to" box at the top right, on the same line as the Unit and the task (owner 16 Nov 2026); staff can still change the cleaner there.
 - **Not changed.** No money, Invoice or Lease. The Unit check on the booking page stays for the front desk (a problem, or a cleaner with no Telegram). The task kinds in the database keep their codes (`ROOM_CHECK`).
 - **Database:** migration `20270804_415` (DB-HK-002), forward-only; nothing made before is changed. **API:** the Housekeeping list answer gains `problem_found_at` and `problem_found_by_name` (amendment in API-HK-001). **Telegram:** buttons `hk:ok` and `hk:bad`, texts `staff.unit_ok` and `staff.unit_problem` (Khmer); the pull job calls `app.housekeeping_auto_assign`. **Screens:** Housekeeping tab (TEST-FE-1613 changed, TEST-FE-2264).
 - **Open.** A native Khmer check of the new messages and screen words.

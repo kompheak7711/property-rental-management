@@ -6228,7 +6228,7 @@ Migration `20270727_414_short_stay_guest_notices` (Leasing range, on the ui-v81 
 
 ## DB-HK-002 — Housekeeping tasks are given out by themselves; the cleaner reports the Unit check in the Staff bot (DL-242)
 
-Migration `20270804_415_housekeeping_auto_assign` (Leasing range, on the ui-v81 join `20270803_417`). Forward-only. No money, Invoice or Lease change; nothing made before is changed.
+Migration `20270804_415_housekeeping_auto_assign` (Leasing range, after `20270803_417`). Forward-only. No money, Invoice or Lease change; nothing made before is changed.
 
 - `app.housekeeping_tasks` gets `problem_found_at` and `problem_found_by` (an employee): a Unit check still to do where the cleaner tapped Problem found. Both or neither; only on `ROOM_CHECK`. `app.protect_short_stay_step` lets a task still to do take them once (only those columns and its version change).
 - `app.housekeeping_task_buttons(task, kind)` and `app.housekeeping_send_task(task, day, actor)` (internal): the Staff bot message `staff.task_given`, once per version of the task, with Cleaned and Not cleaned (`hk:done`, `hk:skip`) for a clean or Unit OK and Problem found (`hk:ok`, `hk:bad`) for a Unit check. `app.assign_housekeeping_task` (DB-HK-001) now sends through it.
