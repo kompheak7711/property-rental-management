@@ -9,11 +9,11 @@ afterEach(() => {
 });
 
 describe("Inspections (UI v81 round 2)", () => {
-  it("TEST-FE-1914 says where inspections are for now and opens Move-outs and Problem reports", () => {
+  it("TEST-FE-1914 says where the older inspections are and opens Move-outs and Problem reports", () => {
     render(<InspectionsPage language="en" />);
     expect(
       screen.getByText(
-        "This page does not list inspections yet. For now, find them here:",
+        "Older move-out inspections and Unit Checks are found here:",
       ),
     ).toBeInTheDocument();
     // Property fix 5 (owner 14/11/2026): no build-step notes for staff.

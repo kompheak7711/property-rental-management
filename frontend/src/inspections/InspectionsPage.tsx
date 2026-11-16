@@ -1,11 +1,18 @@
-// UI v81 round 2 (owner 07/11/2026): Property › Inspections, the menu item of design v81. The
-// Joint Inspection and Unit Check records are built in V1.2 (DL-201), so until then the page
-// says where today's inspection work is: the move-out inspection on each Lease's Move-out page
-// and the Unit Checks the Staff bot sends as Problem reports. Display only.
+// UI v81 round 2 (owner 07/11/2026): Property › Inspections, the menu item of design v81.
+// DL-243: the Joint Inspections at move-in and move-out are listed first, and
+// "#/inspections/ji:<id>" opens one (the tablet form while it is a Draft). The older move-out
+// inspections and the Unit Checks the Staff bot sends are still found where they were.
 
+import { JointInspectionForm } from "../joint/JointInspectionForm";
+import { JointInspectionsList } from "../joint/JointInspectionsList";
+import {
+  type JointApi,
+  jointApi as defaultJointApi,
+} from "../joint/jointClient";
 import { Icon } from "../shell/icons";
 import { hashForPage } from "../shell/navigation";
 import { PageHead } from "../shell/pageHead";
+import { useHashDetail } from "../shell/useHashPage";
 import type { Language } from "../signInText";
 
 // Khmer is new and needs the native check.
@@ -15,10 +22,10 @@ const TEXT = {
     "ការត្រួតពិនិត្យរួមពេលចូល និងចាកចេញ និងការត្រួតពិនិត្យបន្ទប់ក្នុងពេលជួល",
   ],
   // Property fix 5 (owner 14/11/2026): plain words for staff, no build-step notes.
-  soon_t: ["Where inspections are now", "កន្លែងការត្រួតពិនិត្យឥឡូវនេះ"],
+  soon_t: ["Other inspections", "ការត្រួតពិនិត្យផ្សេងទៀត"],
   soon: [
-    "This page does not list inspections yet. For now, find them here:",
-    "ទំព័រនេះមិនទាន់បង្ហាញការត្រួតពិនិត្យនៅឡើយទេ។ សម្រាប់ពេលនេះ សូមរកនៅទីនេះ៖",
+    "Older move-out inspections and Unit Checks are found here:",
+    "ការត្រួតពិនិត្យពេលចាកចេញចាស់ៗ និងការត្រួតពិនិត្យបន្ទប់ មាននៅទីនេះ៖",
   ],
   moveout: [
     "The move-out inspection and its findings are on the Lease's Move-out page.",
@@ -39,21 +46,49 @@ function t(language: Language, key: keyof typeof TEXT): string {
 export function InspectionsPage({
   language,
   active = true,
+  propertyId = "",
+  capabilities = null,
+  api = defaultJointApi,
 }: {
   language: Language;
   /** Whether the page is on screen (its sub-line then sits in the shell's head row). */
   active?: boolean;
+  propertyId?: string;
+  capabilities?: ReadonlySet<string> | null;
+  api?: JointApi;
 }) {
+  const detail = useHashDetail("inspections");
+  const may = (capability: string) =>
+    capabilities === null || capabilities.has(capability);
+  if (propertyId !== "" && detail?.startsWith("ji:") === true) {
+    const inspectionId = detail.slice(3);
+    return (
+      <JointInspectionForm
+        api={api}
+        inspectionId={inspectionId}
+        key={`${inspectionId}:${propertyId}`}
+        language={language}
+        may={may}
+        propertyId={propertyId}
+      />
+    );
+  }
   return (
     <>
       <PageHead
         active={active}
         sub={<p className="ui-sub">{t(language, "sub")}</p>}
       />
+      {propertyId !== "" && (
+        <JointInspectionsList
+          active={active}
+          api={api}
+          language={language}
+          propertyId={propertyId}
+        />
+      )}
       <section aria-labelledby="inspections-soon" className="ui-card">
-        <h2 className="ui-sr" id="inspections-soon">
-          {t(language, "soon_t")}
-        </h2>
+        <h2 id="inspections-soon">{t(language, "soon_t")}</h2>
         <p className="ui-notice info" role="note">
           <Icon name="info" />
           <span>{t(language, "soon")}</span>
