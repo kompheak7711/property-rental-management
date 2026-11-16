@@ -71418,6 +71418,16 @@
       "test_path": "frontend/src/invoices/InvoicesPage.test.tsx",
       "status": "implemented",
       "notes": "Delete Draft shows on a Draft for invoices.create only, asks no reason, sends the version, goes back to the list; a refused Draft shows the text and Void instead."
+    },
+    {
+      "test_id": "TEST-FE-2233",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shell/ledgerGroups.test.tsx",
+      "status": "implemented",
+      "notes": "Ledger tab groups (owner 16/11/2026, card): the 11 Ledger pages show as 5 tabs (Spending, Books, Reports, Assets and cash, Month-end close), the side menu lists the same 5, and a person who may open only Expense requests sees no group tabs."
     }
   ]
 }

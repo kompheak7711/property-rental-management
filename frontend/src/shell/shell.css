@@ -1407,10 +1407,99 @@ a.shell-me-text[aria-current="page"] b {
 
 /* Owner 16/11/2026: on a phone the buttons under a long tab row share one row, equal width. */
 @media (max-width: 640px) {
-  .shell-head.shell-head-many > .shell-head-actions > .ui-actions {
+  .shell-head.shell-head-many > .shell-head-actions > .ui-actions,
+  .shell-head.shell-head-grouped > .shell-head-actions > .ui-actions {
     display: grid;
     grid-auto-columns: minmax(0, 1fr);
     grid-auto-flow: column;
     gap: 8px;
+  }
+}
+
+/* Owner 16/11/2026 (Ledger 11 tabs -> 5 groups): the open group's pages are picked with a small
+   switch under the tab row (the same look as Bank reconciliation / Cash count). On a phone the
+   switch comes right under the tabs and the page's buttons after it. */
+.shell-head.shell-head-tabbed.shell-head-grouped {
+  flex-wrap: wrap;
+  row-gap: 12px;
+  border-bottom: 0;
+}
+
+.shell-head-grouped > .shell-tabs {
+  border-bottom: 1px solid var(--border);
+}
+
+.shell-head-grouped > .shell-head-actions {
+  align-self: center;
+  padding-bottom: 0;
+}
+
+.shell-groupsw {
+  order: 5;
+  display: flex;
+  flex: 1 1 100%;
+  min-width: 0;
+  contain: inline-size;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.shell-groupsw > a {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  min-height: 44px;
+  margin-left: -1px;
+  padding: 0 16px;
+  border: 1px solid var(--btn-edge);
+  background: var(--btn-bg);
+  color: var(--btn-text);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.shell-groupsw > a:first-child {
+  margin-left: 0;
+  border-radius: 8px 0 0 8px;
+}
+
+.shell-groupsw > a:last-child {
+  border-radius: 0 8px 8px 0;
+}
+
+.shell-groupsw > a:hover {
+  background: var(--btn-hover);
+}
+
+.shell-groupsw > a[aria-current="page"] {
+  background: var(--selected);
+  box-shadow: inset 0 -3px 0 var(--primary);
+  color: var(--heading);
+  font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  .shell-head.shell-head-grouped > .shell-groupsw {
+    order: 1;
+  }
+
+  .shell-head.shell-head-grouped > .shell-head-actions {
+    order: 2;
+  }
+
+  .shell-groupsw {
+    contain: none;
+    overflow-x: visible;
+  }
+
+  /* Equal parts across the phone; a long name ("Chart of accounts") takes two lines. */
+  .shell-groupsw > a {
+    flex: 1 1 0;
+    justify-content: center;
+    min-width: 0;
+    padding: 4px 8px;
+    text-align: center;
+    white-space: normal;
   }
 }

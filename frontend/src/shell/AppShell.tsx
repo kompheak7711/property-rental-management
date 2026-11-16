@@ -27,6 +27,7 @@ import { installTableFit } from "./tableFit";
 import { openPageInAddress } from "./useHashPage";
 import {
   MENU,
+  allowedGroupsOf,
   allowedPagesOf,
   groupLabel,
   hashForPage,
@@ -36,6 +37,7 @@ import {
   pageName,
   subItemsOf,
   subTabFromHash,
+  switchName,
   type MenuItem,
   type PageId,
   type SubItem,
@@ -443,7 +445,34 @@ export function AppShell({
 
   const clock = phnomPenhClock(instant, language);
   const tabs = openItem === null ? [] : allowedPagesOf(openItem, capabilities);
-  const tabbedHead = tabs.length > 1 && TABBED_HEAD.has(page);
+  // Owner 16/11/2026: a menu item with tab groups (Ledger) shows one tab per group; the open
+  // group's pages are picked with a switch under the head.
+  const groups =
+    openItem === null ? [] : allowedGroupsOf(openItem, capabilities, language);
+  const openGroup = groups.find((group) => group.pages.includes(page)) ?? null;
+  const tabEntries: {
+    key: string;
+    target: PageId;
+    label: string;
+    current: boolean;
+  }[] =
+    groups.length > 0
+      ? groups.map((group) => ({
+          key: group.id,
+          target: group.pages[0] ?? page,
+          label: group.label,
+          current: group === openGroup,
+        }))
+      : tabs.map((tab) => ({
+          key: tab,
+          target: tab,
+          label: pageName(tab, language),
+          current: tab === page,
+        }));
+  const groupSwitch =
+    openGroup !== null && openGroup.pages.length > 1 ? openGroup.pages : [];
+  const tabbedHead =
+    (tabEntries.length > 1 || groupSwitch.length > 1) && TABBED_HEAD.has(page);
   // Administration review fix 2: the tab row slides sideways, so the open tab is brought into
   // view when the page opens (the row itself scrolls; the page does not move).
   useEffect(() => {
@@ -779,30 +808,52 @@ export function AppShell({
             // Owner 16/11/2026: with many tabs (Ledger has 11) the page's buttons sit on their
             // own row under the tab row, so the tabs keep the whole width.
             <div
-              className={`shell-head shell-head-tabbed${tabs.length > MANY_TABS ? " shell-head-many" : ""}`}
+              className={`shell-head shell-head-tabbed${tabEntries.length > MANY_TABS ? " shell-head-many" : ""}${groupSwitch.length > 1 ? " shell-head-grouped" : ""}`}
             >
               <h1 className="ui-sr" id="page-title">
                 {title}
               </h1>
               <div className="shell-head-sub" hidden ref={setHeadSub} />
               <nav aria-label={tabsName} className="shell-tabs">
-                {tabs.map((tab) => (
+                {tabEntries.map((tab) => (
                   <a
-                    aria-current={tab === page ? "page" : undefined}
+                    aria-current={tab.current ? "page" : undefined}
                     className="shell-tab"
-                    href={hashForPage(tab)}
-                    key={tab}
+                    href={hashForPage(tab.target)}
+                    key={tab.key}
                     onClick={(event) => {
                       if (event.metaKey || event.ctrlKey || event.shiftKey)
                         return;
                       event.preventDefault();
-                      openPageInAddress(tab, true);
+                      openPageInAddress(tab.target, true);
                     }}
                   >
-                    {pageName(tab, language)}
+                    {tab.label}
                   </a>
                 ))}
               </nav>
+              {groupSwitch.length > 1 && (
+                <nav
+                  aria-label={openGroup?.label ?? title}
+                  className="shell-groupsw"
+                >
+                  {groupSwitch.map((target) => (
+                    <a
+                      aria-current={target === page ? "page" : undefined}
+                      href={hashForPage(target)}
+                      key={target}
+                      onClick={(event) => {
+                        if (event.metaKey || event.ctrlKey || event.shiftKey)
+                          return;
+                        event.preventDefault();
+                        openPageInAddress(target, true);
+                      }}
+                    >
+                      {switchName(target, language)}
+                    </a>
+                  ))}
+                </nav>
+              )}
               <div className="shell-head-actions" ref={setHeadActions} />
             </div>
           )}

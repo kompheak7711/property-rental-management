@@ -78,6 +78,23 @@ export interface MenuItem {
   label?: readonly [string, string];
   /** Pages shown as tabs under one menu item (owner, 24/10/2026). */
   tabs?: readonly PageId[];
+  /** Owner 16/11/2026 (Ledger, 11 tabs -> 5): the tabs are these groups of pages; a switch
+   *  under the tab row picks the page inside the open group. */
+  groups?: readonly TabGroup[];
+}
+
+export interface TabGroup {
+  id: string;
+  label: readonly [string, string];
+  /** The group's pages, in switch order; `tabs` above lists the same pages. */
+  pages: readonly PageId[];
+}
+
+/** A tab group the person may see, with only the pages they may open. */
+export interface AllowedGroup {
+  id: string;
+  label: string;
+  pages: PageId[];
 }
 
 export interface MenuGroup {
@@ -162,6 +179,35 @@ export const MENU: readonly MenuGroup[] = [
           "fassets",
           "bankcash",
           "lclose",
+        ],
+        // Owner 16/11/2026 (picked on the card): 11 tabs become 5 groups. Khmer group names are
+        // new and need the native check.
+        groups: [
+          {
+            id: "spending",
+            label: ["Spending", "ការចំណាយ"],
+            pages: ["exreqs", "expenses", "bills"],
+          },
+          {
+            id: "books",
+            label: ["Books", "សៀវភៅបញ្ជី"],
+            pages: ["journal", "needscheck", "chart"],
+          },
+          {
+            id: "reports",
+            label: ["Reports", "របាយការណ៍"],
+            pages: ["statements", "budget"],
+          },
+          {
+            id: "assets",
+            label: ["Assets and cash", "ទ្រព្យ និងសាច់ប្រាក់"],
+            pages: ["fassets", "bankcash"],
+          },
+          {
+            id: "close",
+            label: ["Month-end close", "ការបិទចុងខែ"],
+            pages: ["lclose"],
+          },
         ],
       },
       { page: "reports", icon: "reports" },
@@ -337,6 +383,39 @@ export function allowedPagesOf(
   );
 }
 
+/** The tab groups of a menu item the person may see (empty groups left out); none without groups. */
+export function allowedGroupsOf(
+  item: MenuItem,
+  capabilities: ReadonlySet<string> | null,
+  language: Language,
+): AllowedGroup[] {
+  return (item.groups ?? []).flatMap((group) => {
+    const pages = group.pages.filter((page) => pageAllowed(page, capabilities));
+    return pages.length === 0
+      ? []
+      : [
+          {
+            id: group.id,
+            label: group.label[language === "en" ? 0 : 1],
+            pages,
+          },
+        ];
+  });
+}
+
+// Owner 16/11/2026: inside the Spending group the first page is just "Requests".
+const SWITCH_NAMES: Partial<Record<PageId, readonly [string, string]>> = {
+  exreqs: ["Requests", "សំណើ"],
+};
+
+/** A page's name on the switch inside a tab group. */
+export function switchName(page: PageId, language: Language): string {
+  const short = SWITCH_NAMES[page];
+  return short === undefined
+    ? pageName(page, language)
+    : short[language === "en" ? 0 : 1];
+}
+
 export const PAGE_IDS = Object.keys(PAGE_NAMES) as PageId[];
 
 export function pageName(page: PageId, language: Language): string {
@@ -501,6 +580,16 @@ export function subItemsOf(
   capabilities: ReadonlySet<string> | null,
   language: Language,
 ): SubItem[] {
+  const groups = allowedGroupsOf(item, capabilities, language);
+  const first = groups[0];
+  if (groups.length > 1 || (first !== undefined && first.pages.length > 1)) {
+    return groups.map((group) => ({
+      key: group.id,
+      href: hashForPage(group.pages[0] ?? item.page),
+      label: group.label,
+      current: group.pages.includes(page),
+    }));
+  }
   const pages = allowedPagesOf(item, capabilities);
   if (pages.length > 1) {
     return pages.map((tabPage) => ({
