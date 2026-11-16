@@ -41,7 +41,7 @@ import {
 } from "../letters/lettersClient";
 import { formModeOf } from "./LeaseForm";
 import { LeasesPage, type LeasesPageProps } from "./LeasesPage";
-import { addDays, endingLimit, initialRent } from "./leasesData";
+import { addDays, initialRent } from "./leasesData";
 
 afterEach(() => {
   cleanup();
@@ -454,9 +454,7 @@ describe("Leases list", () => {
       screen.getByRole("button", { name: /^Current: 3\./ }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", {
-        name: `Ending soon: 1. End Date before ${dayText(endingLimit(today))}`,
-      }),
+      screen.getByRole("button", { name: "Ending soon: 1." }),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /^Drafts: 2\./ }));
     expect(screen.getByText("2 Leases")).toBeInTheDocument();
