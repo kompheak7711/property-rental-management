@@ -449,7 +449,7 @@ export function ReceivePayment({
               {done.allocations.length === 0
                 ? pyt(
                     language,
-                    "done_pay_kept",
+                    done.credit > 0 ? "done_pay_credit_all" : "done_pay_kept",
                     received,
                     chosen?.name ?? "",
                     done.receiptNumber,
@@ -464,6 +464,12 @@ export function ReceivePayment({
                   )}
             </p>
           </div>
+          {done.allocations.length > 0 && done.credit > 0 && (
+            <div className="ui-notice ok" role="note">
+              <Icon name="check" />
+              <p>{pyt(language, "done_credit", money(done.credit))}</p>
+            </div>
+          )}
           {done.allocations.length > 0 && done.left > 0 && (
             <div className="ui-notice warn" role="note">
               <Icon name="alert" />
@@ -665,7 +671,7 @@ export function ReceivePayment({
                   ? pyt(language, "pf_all_used")
                   : plan.more
                     ? pyt(language, "pf_left_more", money(plan.rest))
-                    : pyt(language, "pf_left", money(plan.rest))}
+                    : pyt(language, "pf_left_credit", money(plan.rest))}
             </span>
           </div>
         </div>
