@@ -69691,6 +69691,16 @@
       "notes": "Operations screen (owner 16/11/2026): on a large screen (1600px and up) all Payments cards show and nothing folds behind More cards."
     },
     {
+      "test_id": "TEST-FE-2199",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/utilities/UtilitiesPage.test.tsx",
+      "status": "implemented",
+      "notes": "Operations screen (owner 16/11/2026): Add meter shows Installed on above Serial, and the serial fills itself from Type, Unit and Installed on (EL-U10315112026) until the staff member types their own."
+    },
+    {
       "test_id": "TEST-FE-2200",
       "upstream_ids": [
         "UI-008",
