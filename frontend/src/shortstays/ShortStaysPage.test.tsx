@@ -889,7 +889,7 @@ describe("Daily and weekly rent: Short stays", () => {
     // The room check never asks for money.
     expect(screen.queryByLabelText(/Cost/)).toBeNull();
     expect(screen.queryByLabelText(/Amount/)).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: /Room check done/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Unit check done/ }));
     expect(screen.getByText("Pick the type of problem.")).toBeInTheDocument();
     expect(screen.getByText("Say what is wrong.")).toBeInTheDocument();
     expect(step).not.toHaveBeenCalled();
@@ -910,7 +910,7 @@ describe("Daily and weekly rent: Short stays", () => {
     expect(urgent[1]).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: "Remove 2" }));
     expect(screen.queryByLabelText(/Type 2/)).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: /Room check done/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Unit check done/ }));
     expect(step).toHaveBeenCalledWith("p-1", "b-1", "room-check", {
       problems: [
         { problem_type_id: "pt-1", description: "Lamp broken", urgent: true },
@@ -982,7 +982,7 @@ describe("Daily and weekly rent: Short stays", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "The deposit ends after check-out and the room check, once the damage charge is decided.",
+        "The deposit ends after check-out and the Unit check, once the damage charge is decided.",
       ),
     ).toBeInTheDocument();
     expect(
@@ -1057,7 +1057,7 @@ describe("Daily and weekly rent: Short stays", () => {
     fireEvent.change(screen.getByLabelText("Note"), {
       target: { value: "All fine" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /Room check done/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Unit check done/ }));
     expect(step).toHaveBeenCalledWith("p-1", "b-1", "room-check", {
       note: "All fine",
     });
@@ -1339,7 +1339,7 @@ describe("Daily and weekly rent: Short stays", () => {
     expect(screen.getByText("2 to do")).toBeInTheDocument();
     expect(screen.getByText("Due 03/11/2026")).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: "Do the room check" }),
+      screen.getByRole("link", { name: "Do the Unit check" }),
     ).toHaveAttribute("href", "#/shortstays/st%3Ab-9");
     fireEvent.click(screen.getByRole("button", { name: "Not cleaned today" }));
     fireEvent.click(screen.getByRole("button", { name: "Not cleaned today" }));

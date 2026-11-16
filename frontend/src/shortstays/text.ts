@@ -253,7 +253,7 @@ const TEXT = {
     "ទុក {0} សម្រាប់ការខូចខាត ប្រគល់ {1} វិញ",
   ],
   dep_wait: [
-    "The deposit ends after check-out and the room check, once the damage charge is decided.",
+    "The deposit ends after check-out and the Unit check, once the damage charge is decided.",
     "ប្រាក់កក់បញ្ចប់ក្រោយចេញ និងពិនិត្យបន្ទប់ ពេលសម្រេចថ្លៃខូចខាតរួច។",
   ],
   in_t: ["Check-in", "ការចូល"],
@@ -276,7 +276,7 @@ const TEXT = {
   in_b: ["Check in", "ចូល"],
   out_t: ["Check-out", "ការចេញ"],
   out_s: [
-    "The Unit is Cleaning until the room check is done.",
+    "The Unit is Cleaning until the Unit check is done.",
     "បន្ទប់កំពុងសម្អាតរហូតដល់ពិនិត្យបន្ទប់រួច។",
   ],
   out_b: ["Check out", "ចេញ"],
@@ -293,9 +293,9 @@ const TEXT = {
   ], // new
   out_early_ok: ["Check out early", "ចុះចេញមុនថ្ងៃ"], // new
   out_early_keep: ["Keep the stay", "រក្សាការស្នាក់នៅ"], // new
-  room_t: ["Room check", "ពិនិត្យបន្ទប់"],
-  room_due: ["Room check due on {0}.", "ត្រូវពិនិត្យបន្ទប់នៅថ្ងៃ {0}។"],
-  room_done: ["Room checked {0}.", "បានពិនិត្យបន្ទប់ {0}។"],
+  room_t: ["Unit check", "ពិនិត្យបន្ទប់"],
+  room_due: ["Unit check due on {0}.", "ត្រូវពិនិត្យបន្ទប់នៅថ្ងៃ {0}។"],
+  room_done: ["Unit checked {0}.", "បានពិនិត្យបន្ទប់ {0}។"],
   // DL-222: the room check reports problems (Problem reports), never a cost. Khmer is new.
   room_problems: ["Problems found", "បញ្ហាដែលរកឃើញ"],
   room_hint: [
@@ -313,7 +313,7 @@ const TEXT = {
     "ដើម្បីរាយការណ៍បញ្ហា គណនីរបស់អ្នកត្រូវមានសិទ្ធិបន្ថែមរបាយការណ៍បញ្ហា។",
   ],
   room_note: ["Note", "កំណត់ចំណាំ"],
-  room_b: ["Room check done", "ពិនិត្យបន្ទប់រួច"],
+  room_b: ["Unit check done","ពិនិត្យបន្ទប់រួច"],
   e_type: ["Pick the type of problem.", "សូមជ្រើសរើសប្រភេទបញ្ហា។"],
   e_wrong: ["Say what is wrong.", "សូមប្រាប់ថាមានបញ្ហាអ្វី។"],
   e_cost: [
@@ -321,7 +321,7 @@ const TEXT = {
     "វាយតម្លៃជាដុល្លារ ឧទាហរណ៍ 80 ឬ 80.50។",
   ],
   dmg_t: ["Damage", "ការខូចខាត"],
-  dmg_problems: ["Problems from the room check", "បញ្ហាពីការពិនិត្យបន្ទប់"],
+  dmg_problems: ["Problems from the Unit check","បញ្ហាពីការពិនិត្យបន្ទប់"],
   dmg_due: [
     "Decide the damage charge. The deposit waits until then.",
     "សូមសម្រេចថ្លៃខូចខាត។ ប្រាក់កក់រង់ចាំរហូតដល់ពេលនោះ។",
@@ -379,7 +379,7 @@ const TEXT = {
   ev_DEPOSIT_TAKEN: ["Deposit taken", "បានទទួលប្រាក់កក់"],
   ev_CHECKED_IN: ["Checked in", "បានចូល"],
   ev_CHECKED_OUT: ["Checked out", "បានចេញ"],
-  ev_ROOM_CHECKED: ["Room checked", "បានពិនិត្យបន្ទប់"],
+  ev_ROOM_CHECKED: ["Unit checked","បានពិនិត្យបន្ទប់"],
   ev_DAMAGE_APPROVED: ["Damage approved", "បានអនុម័តការខូចខាត"],
   ev_DAMAGE_REFUSED: ["Damage rejected", "បានបដិសេធការខូចខាត"],
   ev_DAMAGE_CHARGED: ["Damage charged", "បានគិតថ្លៃការខូចខាត"],
@@ -537,7 +537,7 @@ const TEXT = {
   cl_count: ["{0} to do", "{0} ត្រូវធ្វើ"],
   cl_DAILY_CLEAN: ["Daily clean", "សម្អាតប្រចាំថ្ងៃ"],
   cl_CHANGE_OVER: ["Change-over clean", "សម្អាតពេលប្ដូរភ្ញៀវ"],
-  cl_ROOM_CHECK: ["Room check", "ពិនិត្យបន្ទប់"],
+  cl_ROOM_CHECK: ["Unit check","ពិនិត្យបន្ទប់"],
   cl_TO_DO: ["To do", "ត្រូវធ្វើ"],
   cl_DONE: ["Done", "រួចរាល់"],
   cl_SKIPPED: ["Not cleaned", "មិនបានសម្អាត"], // owner 14/11/2026: was "Skipped"
@@ -562,7 +562,7 @@ const TEXT = {
   cl_done_b: ["Cleaned", "បានសម្អាត"], // owner 14/11/2026: was "Done"
   cl_skip: ["Not cleaned today", "មិនបានសម្អាតថ្ងៃនេះ"], // owner 14/11/2026: was "Skip"
   cl_reason: ["Why it is not cleaned", "មូលហេតុដែលមិនបានសម្អាត"],
-  cl_room: ["Do the room check", "ធ្វើការពិនិត្យបន្ទប់"],
+  cl_room: ["Do the Unit check","ធ្វើការពិនិត្យបន្ទប់"],
   e_skip: [
     "Say why the room is not cleaned today.",
     "សូមប្រាប់មូលហេតុដែលមិនបានសម្អាតបន្ទប់ថ្ងៃនេះ។",
@@ -923,7 +923,7 @@ const TEXT = {
   ],
   td_out_t: ["Check out {0}", "ចុះឈ្មោះចេញ {0}"],
   td_out_s: [
-    "{0} leaves {1}. The room check comes next on the booking.",
+    "{0} leaves {1}. The Unit check comes next on the booking.",
     "{0} ចេញពី {1}។ ការពិនិត្យបន្ទប់បន្ទាប់នៅលើការកក់។",
   ],
   td_done_in: ["{0} is checked in.", "{0} បានចុះឈ្មោះចូល។"],
@@ -943,7 +943,7 @@ const TEXT = {
   pm_name: ["Type the guest's name first.", "សូមវាយឈ្មោះភ្ញៀវជាមុនសិន។"],
   pm_select: ["Select the message and copy it.", "សូមជ្រើសសារ ហើយចម្លងវា។"],
   q_message: [
-    "CHETANA Residence: quote {0}\nRoom {1}, {2} guests\n{3} to {4}, {5}\nTotal {6}\nCheck-in from {7}, check-out by {8}. Deposit {9} at check-in (cash or a card hold), given back after the room check.\nThis is today's price; the room is held only when you book.",
+    "CHETANA Residence: quote {0}\nRoom {1}, {2} guests\n{3} to {4}, {5}\nTotal {6}\nCheck-in from {7}, check-out by {8}. Deposit {9} at check-in (cash or a card hold), given back after the Unit check.\nThis is today's price; the room is held only when you book.",
     "CHETANA Residence៖ សម្រង់តម្លៃ {0}\nបន្ទប់ {1} ភ្ញៀវ {2} នាក់\n{3} ដល់ {4} {5}\nសរុប {6}\nចូលចាប់ពីម៉ោង {7} ចេញមុនម៉ោង {8}។ ប្រាក់កក់ {9} ពេលចូល (សាច់ប្រាក់ ឬកាត) ហើយប្រគល់វិញក្រោយពិនិត្យបន្ទប់។\nនេះជាតម្លៃថ្ងៃនេះ បន្ទប់ត្រូវបានរក្សាទុកតែពេលអ្នកកក់ប៉ុណ្ណោះ។",
   ],
   // Step 5c (new): month prices on a quote, the weekly report and complaints.
