@@ -375,7 +375,6 @@ function RentLettersTab({
             icon={icon}
             key={value}
             label={ltr(language, `c_${value}`)}
-            note={ltr(language, `c_${value}_s`)}
             onPress={() => {
               setCard(card === value ? "all" : value);
             }}

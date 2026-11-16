@@ -261,9 +261,8 @@ describe("tableFit", () => {
       if (from < 0) throw new Error(`No block ${start}`);
       return css.slice(from, css.indexOf("\n}\n", from));
     };
-    const pay = block("@media (min-width: 1600px) {\n  .ui-kpis.ui-kpis-pay {");
-    expect(pay).toContain("flex-wrap: wrap;");
-    expect(pay).toContain("flex: 1 1 calc((100% - 5 * 14px) / 6 - 1px);");
+    // Owner 16/11/2026: the Payments cards are five in a row like every row of cards.
+    expect(css).not.toContain(".ui-kpis.ui-kpis-pay {");
     const mid = block("\nbody.ui-fit.ui-mid .ui-kpis:not(.ui-tasks) .ui-kpi {");
     expect(mid).toContain("grid-template-columns: minmax(0, 1fr) auto;");
     // The note stays in the middle look, under the name and the number.

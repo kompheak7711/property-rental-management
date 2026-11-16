@@ -544,8 +544,23 @@ function Cards({
   const paid = cards.paid_this_month;
   if (paid !== undefined) {
     const label = hmt(language, "k_paid");
-    // Owner 14/11/2026: no note ("83% of $6,742.80 due in November") and no bar under it.
-    if (paid.billed_usd_cents !== undefined) {
+    // Owner 16/11/2026: "Paid this month" is the money received this month, the same amount as
+    // "Total received" on the Payments page (This month), and it opens that page. Only a person
+    // who cannot read Payments sees the paid part of this month's Invoices instead.
+    if (paid.received_usd_cents !== undefined) {
+      shown.push(
+        <Card
+          empty={paid.received_usd_cents === 0}
+          icon="payments"
+          key="paid"
+          label={label}
+          money
+          page="payments"
+          tone="ok"
+          value={usdFromCents(paid.received_usd_cents)}
+        />,
+      );
+    } else if (paid.billed_usd_cents !== undefined) {
       const settled = paid.billed_paid_usd_cents ?? 0;
       shown.push(
         <Card
@@ -559,19 +574,6 @@ function Cards({
           show="paid"
           tone="ok"
           value={usdFromCents(settled)}
-        />,
-      );
-    } else if (paid.received_usd_cents !== undefined) {
-      shown.push(
-        <Card
-          empty={paid.received_usd_cents === 0}
-          icon="payments"
-          key="paid"
-          label={label}
-          money
-          page="payments"
-          tone="ok"
-          value={usdFromCents(paid.received_usd_cents)}
         />,
       );
     }

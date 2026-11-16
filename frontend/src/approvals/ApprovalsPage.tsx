@@ -506,7 +506,7 @@ export function ApprovalsPage({
       note={
         name === "out" && unknownOut > 0
           ? apt(language, "apc_out_unknown", unknownOut)
-          : apt(language, `apc_${name}_s`)
+          : undefined
       }
       onPress={() => {
         toggle(name);

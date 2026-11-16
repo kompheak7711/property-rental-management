@@ -69681,6 +69681,16 @@
       "notes": "Operations screen (owner 13/11/2026): the Meters list has one row for each Unit with its Electricity and Water meters side by side; a type card shows only that column."
     },
     {
+      "test_id": "TEST-FE-2198",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/payments/PaymentsList.test.tsx",
+      "status": "implemented",
+      "notes": "Operations screen (owner 16/11/2026): on a large screen (1600px and up) all Payments cards show and nothing folds behind More cards."
+    },
+    {
       "test_id": "TEST-FE-2200",
       "upstream_ids": [
         "UI-008",

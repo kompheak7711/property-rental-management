@@ -813,7 +813,6 @@ function RequestsTab({
           <CountCard
             icon="customers"
             label={lt(language, "er_c_owed")}
-            note={lt(language, "er_c_owed_s")}
             onPress={() => {
               choose("owed");
             }}
@@ -2746,7 +2745,6 @@ function BillsTab({
           <CountCard
             icon="check"
             label={lt(language, "sb_c_paid")}
-            note={lt(language, "sb_c_paid_s")}
             onPress={() => {
               setFilter(filter === "paid" ? "open" : "paid");
             }}

@@ -326,9 +326,7 @@ describe("Invoices page (V1-058 R5)", () => {
     show();
     expect(await screen.findByText("All Invoices")).toBeTruthy();
     const card = (name: RegExp) => screen.getByRole("button", { name });
-    expect(
-      card(/^Total Invoice amount: \$930\.00\. Issued Invoices\n3 Invoices$/),
-    ).toBeTruthy();
+    expect(card(/^Total Invoice amount: \$930\.00\.$/)).toBeTruthy();
     expect(card(/^Total unpaid: \$700\.00\./)).toBeTruthy();
     expect(card(/^Total overdue: \$450\.00\./)).toBeTruthy();
     expect(card(/^Total paid: \$230\.00\./)).toBeTruthy();
