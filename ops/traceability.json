@@ -69698,7 +69698,7 @@
       "test_level": "UI component",
       "test_path": "frontend/src/utilities/UtilitiesPage.test.tsx",
       "status": "implemented",
-      "notes": "Operations screen (owner 16/11/2026): Add meter shows Installed on above Serial, and the serial fills itself from Type, Unit and Installed on (EL-U10315112026) until the staff member types their own."
+      "notes": "Operations screen (owner 16/11/2026): Add meter shows Installed on above Serial, and the serial fills itself as M + EL/WA + year installed + next free number (MEL2026001) until the staff member types their own."
     },
     {
       "test_id": "TEST-FE-2200",

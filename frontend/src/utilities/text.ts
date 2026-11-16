@@ -212,9 +212,9 @@ const TEXT = {
   mt_add_done: ["{0} added to {1}.", "បានបន្ថែម {0} ទៅ {1}។"],
   mt_serial: ["Serial", "លេខសៀរៀល"],
   mt_serial_help: [
-    "Filled in from Type, Unit and Installed on. Type the number printed on the meter instead if it has one.",
+    "Filled in from Type and the year of Installed on with the next free number. Type the number printed on the meter instead if it has one.",
     // new
-    "បំពេញដោយស្វ័យប្រវត្តិពីប្រភេទ បន្ទប់ និងថ្ងៃដំឡើង។ បើនាឡិកាស្ទង់មានលេខបោះពុម្ព សូមវាយលេខនោះជំនួស។",
+    "បំពេញដោយស្វ័យប្រវត្តិពីប្រភេទ និងឆ្នាំដំឡើង ជាមួយលេខបន្ទាប់។ បើនាឡិកាស្ទង់មានលេខបោះពុម្ព សូមវាយលេខនោះជំនួស។",
   ],
   mt_new_serial: ["New meter serial", "លេខសៀរៀលនាឡិកាស្ទង់ថ្មី"],
   mt_new_start: ["First reading", "អំណានដំបូង"],

@@ -806,8 +806,8 @@ export function AddMeterDialog({
 }) {
   const [unitId, setUnitId] = useState(preset?.unitId ?? "");
   const [type, setType] = useState<UtilityType>(preset?.type ?? "ELECTRICITY");
-  // Owner 16/11/2026: the serial fills itself from Type, Unit and Installed on ("EL-U103" and the
-  // day as DDMMYYYY: EL-U10315112026) until the staff member types their own.
+  // Owner 16/11/2026: the serial fills itself from Type and the year of Installed on with the next
+  // free number (MEL2026001) until the staff member types their own.
   const [typedSerial, setTypedSerial] = useState<string | null>(null);
   const [installed, setInstalled] = useState(today);
   const [first, setFirst] = useState("0");
@@ -816,7 +816,11 @@ export function AddMeterDialog({
   const unit = data.units.find((item) => item.unit_id === unitId);
   const serial =
     typedSerial ??
-    (unit === undefined ? "" : autoSerial(type, unit.unit_number, installed));
+    autoSerial(
+      type,
+      installed,
+      data.meters.map((meter) => meter.serial_number),
+    );
   // V1-060 B6 (owner, 28/10/2026): only Units without a current meter of this kind are offered;
   // a broken meter is changed with Replace meter on its page.
   const hasMeter = (id: string, kind: UtilityType) =>
@@ -1394,17 +1398,27 @@ function ReplaceMeterDialog({
 }
 
 /**
- * Owner 16/11/2026: the serial the Add meter dialog fills in: "EL" or "WA", a dash, the Unit and
- * the day it was installed as DDMMYYYY (Electricity, U103, 15/11/2026 gives "EL-U10315112026").
- * Empty while the day is not a whole day yet.
+ * Owner 16/11/2026: the serial the Add meter dialog fills in: "M" for meter, "EL" or "WA", the
+ * year it was installed and a running number of three digits or more, one after the highest
+ * serial of that kind and year already saved (the first electricity meter of 2026 is
+ * "MEL2026001"). Empty while the day is not a whole day yet. The server still refuses a serial in
+ * use, so two people adding a meter at once cannot both keep the same one.
  */
 export function autoSerial(
   type: UtilityType,
-  unitNumber: string,
   installed: string,
+  taken: readonly string[],
 ): string {
   if (!isDay(installed)) return "";
-  const day =
-    installed.slice(8, 10) + installed.slice(5, 7) + installed.slice(0, 4);
-  return `${type === "ELECTRICITY" ? "EL" : "WA"}-${unitNumber}${day}`;
+  const prefix = `M${type === "ELECTRICITY" ? "EL" : "WA"}${installed.slice(0, 4)}`;
+  let last = 0;
+  for (const serial of taken) {
+    const match = /^(\d{3,})$/.exec(
+      serial.toUpperCase().startsWith(prefix)
+        ? serial.slice(prefix.length)
+        : "",
+    );
+    if (match !== null) last = Math.max(last, Number(match[1]));
+  }
+  return `${prefix}${String(last + 1).padStart(3, "0")}`;
 }
