@@ -4734,3 +4734,70 @@ table.ui-table.ui-reslist .rs-on-sub {
 .ui-card.pad0 > .ui-qa.pad {
   padding: 0 24px 4px;
 }
+
+/* Property screen review (owner 16/11/2026): the Monthly report. "Reports by type" and "Reports
+   by place" are narrow cards beside "Late now" on a laptop; on an iPad the two sit side by side
+   and "Late now" takes the row under them. The two repair cost tables share a row on a laptop. */
+.ui-mrow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.ui-mrow + .ui-card {
+  margin-top: 16px;
+}
+
+.ui-mrow > .ui-card {
+  min-width: 0;
+}
+
+table.ui-table.ui-mcount {
+  min-width: 0;
+}
+
+table.ui-table.ui-mcount th,
+table.ui-table.ui-mcount td {
+  padding: 8px 4px;
+}
+
+/* A row's name reads like the other cells: no heading line under it, no heading weight. */
+.ui-mrow table.ui-table th[scope="row"] {
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  font-weight: 400;
+}
+
+.ui-mrow table.ui-table tbody tr:last-child > * {
+  border-bottom: 0;
+}
+
+.ui-mname {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (min-width: 640px) {
+  .ui-mrow-lists {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ui-mrow-lists > :nth-child(3) {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 1200px) {
+  .ui-mrow-lists {
+    grid-template-columns:
+      minmax(240px, max-content) minmax(240px, max-content)
+      minmax(0, 1fr);
+  }
+  .ui-mrow-lists > :nth-child(3) {
+    grid-column: auto;
+  }
+  .ui-mrow-cost {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

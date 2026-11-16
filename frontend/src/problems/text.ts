@@ -652,10 +652,6 @@ const TEXT = {
     "បានពិនិត្យថ្លៃជួសជុល៖ របាយការណ៍ចំណាយ {0}",
   ],
   m_title: ["Monthly report", "របាយការណ៍ប្រចាំខែ"],
-  m_sub: [
-    "One month of problem reports and what the repairs cost. Dollars and riel are shown apart.",
-    "របាយការណ៍បញ្ហាមួយខែ និងថ្លៃជួសជុល។ ដុល្លារ និងរៀល បង្ហាញដាច់ពីគ្នា។",
-  ],
   m_month: ["Month", "ខែ"],
   m_right: [
     "You need the right Plan repairs to see the Monthly report.",
@@ -676,14 +672,17 @@ const TEXT = {
     "Normal planned on time: {0} / {1}",
     "ធម្មតា រៀបចំទាន់ពេល៖ {0} / {1}",
   ],
+  m_damage: ["Damage charges", "ថ្លៃខូចខាត"],
   m_pays: [
-    "Owner pays {0} · Tenant pays {1} · Damage charges {2}",
-    "ម្ចាស់បង់ {0} · អ្នកជួលបង់ {1} · ថ្លៃខូចខាត {2}",
+    "Who pays: Owner {0} · Tenant {1}",
+    "អ្នកបង់៖ ម្ចាស់ {0} · អ្នកជួល {1}",
   ],
   m_cost_unit: ["Repair cost by Unit", "ថ្លៃជួសជុលតាមបន្ទប់"],
   m_cost_type: ["Repair cost by type", "ថ្លៃជួសជុលតាមប្រភេទ"],
   m_no_cost: ["No repair done this month.", "ខែនេះគ្មានការជួសជុលរួចរាល់ទេ។"],
-  m_where: ["Where", "ទីកន្លែង"],
+  m_unit: ["Unit", "បន្ទប់"],
+  m_type: ["Type", "ប្រភេទ"],
+  m_place: ["Place", "ទីកន្លែង"],
   m_reports: ["Reports", "របាយការណ៍"],
   m_building: ["Building (shared places)", "អគារ (កន្លែងរួម)"],
   m_repeats: [
@@ -695,6 +694,10 @@ const TEXT = {
   m_by_type: ["Reports by type", "របាយការណ៍តាមប្រភេទ"],
   m_by_place: ["Reports by place", "របាយការណ៍តាមទីកន្លែង"],
   m_late: ["Late now", "យឺតឥឡូវនេះ"],
+  m_report: ["Report", "របាយការណ៍"],
+  m_late_why: ["Why late", "ហេតុអ្វីយឺត"],
+  m_late_u: ["The tenant is not contacted yet", "មិនទាន់ទាក់ទងអ្នកជួល"],
+  m_late_n: ["Not planned in time", "មិនបានរៀបចំទាន់ពេល"],
   fi_from: [
     "From the move-out inspection of {0}, finding {1}. The Unit and the text come from the finding; you may change the text.",
     "ពីការត្រួតពិនិត្យពេលចាកចេញ ថ្ងៃ {0} ការរកឃើញទី {1}។ បន្ទប់ និងអត្ថបទ មកពីការរកឃើញ អ្នកអាចកែអត្ថបទបាន។",

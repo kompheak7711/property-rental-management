@@ -1131,10 +1131,25 @@ describe("Building › Problem reports (V1.1 part 7, DL-124)", () => {
     expect(screen.getByText("1 opened again · 0 not accepted")).toBeTruthy();
     expect(screen.getByText("1 / 2")).toBeTruthy();
     expect(screen.getByText("Normal planned on time: 3 / 3")).toBeTruthy();
+    // Owner 16/11/2026: the damage charges and who pays are the fifth card.
+    expect(screen.getByText("Damage charges")).toBeTruthy();
+    expect(screen.getByText("$25.00")).toBeTruthy();
+    expect(screen.getByText("Who pays: Owner 2 · Tenant 1")).toBeTruthy();
+    // By type and by place are small tables; the number column says "Reports".
+    const byType = screen.getByRole("region", { name: "Reports by type" });
     expect(
-      screen.getByText("Owner pays 2 · Tenant pays 1 · Damage charges $25.00"),
+      within(byType).getByRole("columnheader", { name: "Reports" }),
     ).toBeTruthy();
+    expect(within(byType).getByRole("row", { name: "Water 3" })).toBeTruthy();
+    const byPlace = screen.getByRole("region", { name: "Reports by place" });
+    expect(
+      within(byPlace).getByRole("columnheader", { name: "Place" }),
+    ).toBeTruthy();
+    expect(within(byPlace).getByRole("row", { name: "U101 3" })).toBeTruthy();
     const byUnit = screen.getByRole("region", { name: "Repair cost by Unit" });
+    expect(
+      within(byUnit).getByRole("columnheader", { name: "Unit" }),
+    ).toBeTruthy();
     const u101 = within(byUnit).getByRole("row", { name: /U101/ });
     expect(within(u101).getByText("$14.00 + 40,000 ៛")).toBeTruthy();
     expect(within(u101).getByText("40,000 ៛")).toBeTruthy();
@@ -1160,8 +1175,9 @@ describe("Building › Problem reports (V1.1 part 7, DL-124)", () => {
       ).getByText(/Lobby/),
     ).toBeTruthy();
     expect(
-      within(screen.getByRole("region", { name: "Late now" })).getByText(
-        /Late: the tenant is not contacted yet/,
+      within(screen.getByRole("region", { name: "Late now" })).getByRole(
+        "row",
+        { name: "BP260003 The tenant is not contacted yet" },
       ),
     ).toBeTruthy();
     fireEvent.change(screen.getByLabelText("Month"), {
