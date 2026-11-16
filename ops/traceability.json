@@ -68770,7 +68770,7 @@
       "test_level": "UI component",
       "test_path": "frontend/src/inspections/InspectionsPage.test.tsx",
       "status": "implemented",
-      "notes": "UI v81 round 2 Property > Inspections: says the Joint Inspection and Unit Check records come in V1.2 and opens Move-outs and Problem reports, in English and Khmer."
+      "notes": "Inspections page (owner 16/11/2026): with nothing recorded it says where move-out inspections and Unit checks come from, with no build-step notes; without Read Units it says the right is needed."
     },
     {
       "test_id": "TEST-FE-1915",
@@ -70091,6 +70091,56 @@
       "test_path": "backend/tests/test_problem_type_short_names_migration.py",
       "status": "implemented",
       "notes": "After the migrations the Problem types read Door/Lock and Furniture/appliance, Safety sits after Noise and before Other, and the Khmer names and Safety's always urgent stay as they were."
+    },
+    {
+      "test_id": "TEST-FE-2215",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/inspections/InspectionsPage.test.tsx",
+      "status": "implemented",
+      "notes": "Inspections page (owner 16/11/2026, \"Both, list first\"): lists the move-out inspections and the Staff bot's Unit checks with links to the Unit, the Move-out page and each Problem report; it reads only when on screen."
+    },
+    {
+      "test_id": "test_migration_422_follows_417_and_is_forward_only",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_property_inspections_read_migration.py",
+      "status": "implemented",
+      "notes": "Migration 20270804_422 (Inspections page read) follows 417, is the head and is forward-only."
+    },
+    {
+      "test_id": "test_the_inspections_page_lists_the_unit_checks_with_their_problem_reports",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_property_inspections_read_migration.py",
+      "status": "implemented",
+      "notes": "app.property_inspections_read lists a Staff bot Unit check with its Unit, date, kind, who checked and the Problem report each finding made; nothing recorded gives empty lists."
+    },
+    {
+      "test_id": "test_the_inspections_read_needs_the_read_units_right",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_property_inspections_read_migration.py",
+      "status": "implemented",
+      "notes": "app.property_inspections_read refuses an account without Read Units."
+    },
+    {
+      "test_id": "test_the_inspections_page_list_needs_the_read_units_right",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "integration",
+      "test_path": "backend/tests/test_problem_reports_api.py",
+      "status": "implemented",
+      "notes": "GET .../inspections needs units.read, answers private no-store and returns the read's lists."
     },
     {
       "test_id": "TEST-FE-2220",
