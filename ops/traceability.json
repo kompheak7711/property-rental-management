@@ -42543,7 +42543,7 @@
       "test_level": "DB",
       "test_path": "backend/tests/test_lease_security_deposit_migration.py",
       "status": "implemented",
-      "notes": "Review round 1 (security should-fix 1): the old Reservation move-in cannot link a Reservation's Deposit to a walk-in Lease that already has its Security Deposit; the deferred source check refuses it (23514, invalid in the move-in service) and nothing changes (V1-056 sub-slice 10e-2b-4c)."
+      "notes": "Review round 1 (security should-fix 1): the old Reservation move-in cannot link a Reservation's Deposit to a walk-in Lease that already has its Security Deposit; the deferred source check refuses it (23514, invalid in the move-in service) and nothing changes (V1-056 sub-slice 10e-2b-4c). Since C2 (DL-241) the Signed Lease holds the Unit whatever its condition, so that Reservation is refused at once."
     },
     {
       "test_id": "test_a_reversed_extra_receipt_is_not_shown_as_received",
