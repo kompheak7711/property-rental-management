@@ -4715,3 +4715,9 @@ table.ui-table.ui-reslist .rs-on-sub {
     text-align: right;
   }
 }
+
+/* Owner 16/11/2026 (Ledger review): the Journal entries month box lines up with the text
+   above it. */
+.ui-card.pad0 > .ui-qa.pad {
+  padding: 0 24px 4px;
+}

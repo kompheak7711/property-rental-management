@@ -98,6 +98,9 @@ const TABBED_HEAD: ReadonlySet<string> = new Set([
   "moveout",
 ]);
 
+/** More tabs than this and the page's buttons move under the tab row. */
+const MANY_TABS = 6;
+
 const RAIL_KEY = "chetana-rail";
 const GROUPS_KEY = "chetana-navgrp";
 const SUBS_KEY = "chetana-navopen";
@@ -773,7 +776,11 @@ export function AppShell({
             // Owner 13/11/2026 23:44 (iPad): on Invoices and Quotations the tabs already name
             // the page, so the title is for screen readers only, the sub-line is left out and
             // the page's buttons sit at the right end of the tab row.
-            <div className="shell-head shell-head-tabbed">
+            // Owner 16/11/2026: with many tabs (Ledger has 11) the page's buttons sit on their
+            // own row under the tab row, so the tabs keep the whole width.
+            <div
+              className={`shell-head shell-head-tabbed${tabs.length > MANY_TABS ? " shell-head-many" : ""}`}
+            >
               <h1 className="ui-sr" id="page-title">
                 {title}
               </h1>

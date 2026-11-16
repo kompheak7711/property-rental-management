@@ -7,6 +7,19 @@ import type { AccountType } from "./ledgerClient";
 import { singular } from "../shell/plural";
 
 const TEXT = {
+  // Owner 16/11/2026: one-word captions on the Ledger buttons; the full name is the tooltip
+  // and the dialog title. Khmer to be checked.
+  b_request: ["Request", "សំណើ"],
+  b_report: ["Report", "របាយការណ៍"],
+  b_expense: ["Record", "កត់ត្រា"],
+  b_bill: ["Bill", "វិក្កយបត្រ"],
+  b_asset: ["Asset", "ទ្រព្យសកម្ម"],
+  b_transfer: ["Transfer", "ផ្ទេរប្រាក់"],
+  b_topup: ["Top up", "បំពេញ"],
+  b_capital: ["Capital", "ប្រាក់ម្ចាស់"],
+  b_opening: ["Opening", "សមតុល្យដើម"],
+  b_excel: ["Excel", "Excel"],
+  b_pdf: ["PDF", "PDF"],
   loading: ["Loading…", "កំពុងផ្ទុក…"],
   failed: [
     "This list could not be loaded. Try again.",

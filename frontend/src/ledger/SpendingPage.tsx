@@ -663,10 +663,12 @@ function RequestsTab({
               setDone(null);
               setDialog({ kind: "new", urgent: true });
             }}
+            aria-label={lt(language, "er_new_rep")}
+            title={lt(language, "er_new_rep")}
             type="button"
           >
             <Icon name="plus" small />
-            {lt(language, "er_new_rep")}
+            {lt(language, "b_report")}
           </button>
           <button
             className="ui-btn primary"
@@ -675,10 +677,12 @@ function RequestsTab({
               setDone(null);
               setDialog({ kind: "new", urgent: false });
             }}
+            aria-label={lt(language, "er_new")}
+            title={lt(language, "er_new")}
             type="button"
           >
             <Icon name="plus" small />
-            {lt(language, "er_new")}
+            {lt(language, "b_request")}
           </button>
         </span>
       )}
@@ -1853,29 +1857,32 @@ function ExpensesTab({
   return (
     <>
       <Done text={done} />
-      <section aria-labelledby="ex-title" className="ui-card pad0">
-        <div className="ui-head pad">
-          <div>
-            <h2 id="ex-title">{lt(language, "x_title")}</h2>
-            <p>{lt(language, "x_sub")}</p>
-          </div>
-          {rights.pay && (
-            <span className="ui-actions">
-              <button
-                className="ui-btn primary"
-                disabled={formData === null}
-                onClick={() => {
-                  setDone(null);
-                  setOpen(true);
-                }}
-                type="button"
-              >
-                <Icon name="plus" small />
-                {lt(language, "x_new")}
-              </button>
-            </span>
-          )}
+      {/* Owner 16/11/2026: the button sits under the tab row like the other Ledger tabs. */}
+      <PageHead active={active}>
+        <div>
+          <h2 id="ex-title">{lt(language, "x_title")}</h2>
+          <p>{lt(language, "x_sub")}</p>
         </div>
+        {rights.pay && (
+          <span className="ui-actions">
+            <button
+              className="ui-btn primary"
+              disabled={formData === null}
+              onClick={() => {
+                setDone(null);
+                setOpen(true);
+              }}
+              aria-label={lt(language, "x_new")}
+              title={lt(language, "x_new")}
+              type="button"
+            >
+              <Icon name="plus" small />
+              {lt(language, "b_expense")}
+            </button>
+          </span>
+        )}
+      </PageHead>
+      <section aria-labelledby="ex-title" className="ui-card pad0">
         {rows === null ? (
           <div className="pad">
             <Waiting
@@ -2618,10 +2625,12 @@ function BillsTab({
               setDone(null);
               setAdding(true);
             }}
+            aria-label={lt(language, "sb_new")}
+            title={lt(language, "sb_new")}
             type="button"
           >
             <Icon name="plus" small />
-            {lt(language, "sb_new")}
+            {lt(language, "b_bill")}
           </button>
         </span>
       )}
