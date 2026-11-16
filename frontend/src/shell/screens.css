@@ -4079,10 +4079,13 @@ table.ui-table.ui-meters-unit td {
   white-space: normal;
 }
 
+/* Owner 16/11/2026: a meter is one line where the column has room ("EL-U101  10,050 kWh ·
+   24/10/2026  Working"); in a narrower column the parts wrap onto the next line. */
 .ui-metercell {
-  display: grid;
-  gap: 2px;
-  justify-items: start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  align-items: center;
 }
 
 .ui-metercell + .ui-metercell {
