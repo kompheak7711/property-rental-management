@@ -137,7 +137,9 @@
 }
 
 .ui-btn.link {
-  /* Still 44 px tall to press; the margin keeps the line as short as before. */
+  /* Still 44 px tall to press; the margin keeps the line as short as before. A short word
+     ("Edit") is still 44 px wide, whatever font the computer has (owner's 44 x 44 rule). */
+  min-width: 44px;
   min-height: 44px;
   margin: -6px 0;
   padding: 4px 6px;
