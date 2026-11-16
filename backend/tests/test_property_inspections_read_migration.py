@@ -30,11 +30,11 @@ UNIT_CHECK = "SELECT app.telegram_staff_unit_check(%s, %s, %s::jsonb, %s::jsonb,
 TECHNICIAN = 8870002
 
 
-def test_migration_422_follows_415_and_is_forward_only() -> None:
+def test_migration_422_follows_430_and_is_forward_only() -> None:
     config = Config(str(Path(__file__).parents[1] / "alembic.ini"))
     scripts = ScriptDirectory.from_config(config)
     revision = scripts.get_revision(REVISION)
-    assert revision is not None and revision.down_revision == "20270804_415"
+    assert revision is not None and revision.down_revision == "20270806_430"
     assert scripts.get_heads() == [REVISION]
     with pytest.raises(NotImplementedError, match="forward-only"):
         revision.module.downgrade()
