@@ -14,7 +14,7 @@ table changes, nothing is written. The Joint Inspection records (DL-201) come la
 this page. Forward-only.
 
 Revision ID: 20270804_422
-Revises: 20270803_417
+Revises: 20270804_415
 """
 
 from collections.abc import Sequence
@@ -22,7 +22,7 @@ from collections.abc import Sequence
 from alembic import op
 
 revision: str = "20270804_422"
-down_revision: str | Sequence[str] | None = "20270803_417"
+down_revision: str | Sequence[str] | None = "20270804_415"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
