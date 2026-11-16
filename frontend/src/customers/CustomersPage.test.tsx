@@ -323,10 +323,7 @@ describe("Customers list", () => {
     expect(rowOf("Pich Rina")).toHaveTextContent("Deactivated");
     expect(rowOf("Pich Rina")).toHaveTextContent("No Lease yet");
     expect(rowOf("Mok Thida")).toHaveTextContent("U101Former tenant");
-    for (const label of [
-      "Current tenants: 2.",
-      "Former tenants: 2.",
-    ])
+    for (const label of ["Current tenants: 2.", "Former tenants: 2."])
       expect(
         screen.getByRole("button", { name: new RegExp(`^${label}`) }),
       ).toBeInTheDocument();

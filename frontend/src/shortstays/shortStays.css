@@ -617,6 +617,34 @@ fieldset.ss-problems > legend {
   justify-content: flex-end;
 }
 
+/* DL-242: what happened to a task, as text (the cleaner reports in the Staff bot). */
+.ss-state {
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.ss-state span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ss-state.ok {
+  color: var(--ok);
+}
+
+.ss-state.err {
+  color: var(--err);
+}
+
+.ss-state.muted {
+  color: var(--text-2);
+  font-weight: 500;
+}
+
 .ss-taskdone > summary {
   display: flex;
   align-items: center;

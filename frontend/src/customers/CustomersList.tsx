@@ -52,7 +52,9 @@ const CARDS: [CustomerCard, ShellIcon, Tone | "brand"][] = [
 ];
 
 function inCard(kind: CustomerKind, card: CustomerCard): boolean {
-  return card === "tenant" ? kind === "tenant" || kind === "other" : kind === card;
+  return card === "tenant"
+    ? kind === "tenant" || kind === "other"
+    : kind === card;
 }
 
 export interface ServerMatch {
