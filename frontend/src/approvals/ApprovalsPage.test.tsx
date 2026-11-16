@@ -193,10 +193,10 @@ describe("Waiting for approval", () => {
       .getAllByRole("button", { pressed: false })
       .map((button) => button.getAttribute("aria-label"));
     expect(cards).toEqual([
-      "Pending approval: 4. Drafts to confirm",
-      "Refunds pending: $200.00. Refunds pending approval",
-      "Deposit forfeitures pending: $400.00. Forfeitures pending approval",
-      "Processed today: 1. Confirmed or rejected",
+      "Pending approval: 4.",
+      "Refunds pending: $200.00.",
+      "Deposit forfeitures pending: $400.00.",
+      "Processed today: 1.",
     ]);
     expect(rowLabels()).toEqual([
       "Refund: Reservation Deposit",

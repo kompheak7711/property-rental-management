@@ -239,11 +239,11 @@ export function MetersTab({
             icon={type === "ELECTRICITY" ? "zap" : "drop"}
             key={type}
             label={cardName(type)}
-            note={`${utt(language, "mt_c_inuse")} · ${
+            note={
               broken(type) > 0
                 ? utt(language, "mt_c_nbroken", broken(type))
-                : utt(language, "mt_c_allok")
-            }`}
+                : undefined
+            }
             onPress={() => {
               setCard(card === type ? "all" : type);
             }}
@@ -258,7 +258,7 @@ export function MetersTab({
           note={
             broken() > 0
               ? utt(language, "mt_c_before", dayText(nextReadingDay(today)))
-              : utt(language, "mt_c_none")
+              : undefined
           }
           onPress={() => {
             setCard(card === "broken" ? "all" : "broken");

@@ -876,11 +876,11 @@ describe("Utilities Meters tab (V1-058 R4b)", () => {
     show();
     expect(
       await screen.findByRole("button", {
-        name: "Electricity meters: 3. In use, one per Unit · All working",
+        name: "Electricity meters: 3.",
       }),
     ).toBeTruthy();
     expect(
-      screen.getByRole("button", { name: "Broken meters: 0. None broken" }),
+      screen.getByRole("button", { name: "Broken meters: 0." }),
     ).toBeTruthy();
     const serials = () =>
       screen

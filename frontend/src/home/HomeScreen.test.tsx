@@ -196,9 +196,9 @@ describe("Home", () => {
       "Approvals1Refunds pending $5.00",
     );
     expect(card(/^Unpaid/).textContent).toBe("Unpaid$6,091.25");
-    // Paid this month counts the Invoices due this month that are paid; no note, no bar.
+    // Paid this month is the money received this month (owner 16/11/2026); no note, no bar.
     expect(card(/Paid this month/).textContent).toBe(
-      "Paid this month$3,716.20",
+      "Paid this month$4,000.00",
     );
     expect(document.querySelector(".ui-home-meter")).toBeNull();
     expect(card(/Overdue/).getAttribute("href")).toBe(
@@ -847,8 +847,8 @@ describe("Home", () => {
         ["Bookings", "#/shortstays?show=booked"],
         ["Checked in", "#/shortstays?show=checked_in"],
         ["Unpaid", "#/invoices?show=open"],
-        // The paid Invoices of this month: the list the card's amount adds up.
-        ["Paid this month", "#/invoices?show=paid&period=month"],
+        // The money received this month: the Payments page, which opens on This month.
+        ["Paid this month", "#/payments"],
         ["Overdue", "#/invoices?show=overdue"],
         ["Approvals", "#/approvals"],
         ["Missing readings", "#/utilities?show=missing"],

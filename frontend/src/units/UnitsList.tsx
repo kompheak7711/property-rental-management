@@ -182,7 +182,6 @@ export function UnitsList({
             icon={icon}
             key={value}
             label={ut(language, `c_${value}`)}
-            note={ut(language, `c_${value}_s`)}
             onPress={() => {
               setCard(card === value ? "all" : value);
             }}

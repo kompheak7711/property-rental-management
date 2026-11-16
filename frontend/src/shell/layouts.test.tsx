@@ -215,7 +215,7 @@ describe("UI v81 shared layouts", () => {
     };
     const five = block(
       css,
-      "@media (min-width: 700px) {\n  .ui-kpis.ui-five {",
+      "@media (min-width: 700px) {\n  .ui-kpis:not(.ui-tasks) {",
     );
     expect(five).toContain("display: flex;");
     expect(five).toContain("flex-wrap: wrap;");
@@ -223,7 +223,7 @@ describe("UI v81 shared layouts", () => {
     expect(five).toContain("flex: 1 1 calc((100% - 4 * 14px) / 5 - 1px);");
     // One left over: the last six are 3 + 3. Two left over: the last seven are 4 + 3.
     expect(five).toMatch(
-      /:has\(> :nth-child\(5n \+ 1\):last-child\)\s+> :nth-last-child\(-n \+ 6\),\s+\.ui-kpis\.ui-five:has\(> :nth-child\(5n \+ 2\):last-child\)\s+> :nth-last-child\(-n \+ 3\) \{\s+flex-basis: calc\(\(100% - 2 \* 14px\) \/ 3 - 1px\);/,
+      /:has\(> :nth-child\(5n \+ 1\):last-child\)\s+> :nth-last-child\(-n \+ 6\),\s+\.ui-kpis:not\(\.ui-tasks\):has\(> :nth-child\(5n \+ 2\):last-child\)\s+> :nth-last-child\(-n \+ 3\) \{\s+flex-basis: calc\(\(100% - 2 \* 14px\) \/ 3 - 1px\);/,
     );
     expect(five).toMatch(
       /:has\(> :nth-child\(5n \+ 2\):last-child\)\s+> :nth-last-child\(-n \+ 7\) \{\s+flex-basis: calc\(\(100% - 3 \* 14px\) \/ 4 - 1px\);/,

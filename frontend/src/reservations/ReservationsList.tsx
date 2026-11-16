@@ -104,7 +104,6 @@ export function ReservationsList({
             icon={icon}
             key={value}
             label={rt(language, `c_${value}`)}
-            note={rt(language, `c_${value}_s`)}
             onPress={() => {
               setCard(card === value ? "all" : value);
             }}

@@ -141,8 +141,8 @@ export function PaymentsList({
   // Owner 13/11/2026 (Operations fix 1): the cards of kinds with no money in the period fold
   // away behind one "more" card, so the list starts higher.
   const [showZero, setShowZero] = useState(false);
-  // Owner 16/11/2026: a large screen already shows all twelve cards in two rows of six, so
-  // nothing folds there; only a phone, iPad or laptop folds the $0.00 cards.
+  // Owner 16/11/2026: a large screen has room for every card, so nothing folds there; only a
+  // phone, iPad or laptop folds the $0.00 cards.
   const allFit = useAllCardsFit();
   const [onlyLeft, setOnlyLeft] = useState(false);
   const [summary, setSummary] = useState<PaymentsSummary | null>(null);
@@ -604,10 +604,10 @@ export function PaymentsList({
   );
 }
 
-/** The width from which the Payments cards sit six to a row (shell/screens.css, round 10). */
+/** The width from which a large screen shows every Payments card (owner 16/11/2026). */
 const ALL_CARDS_FIT = "(min-width: 1600px)";
 
-/** True while the window is wide enough for all twelve Payments cards in two rows. */
+/** True while the window is a large screen, where every Payments card shows. */
 function useAllCardsFit(): boolean {
   const query = () =>
     typeof window.matchMedia === "function" &&

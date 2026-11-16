@@ -340,7 +340,6 @@ function MoveoutList({
             icon={icon}
             key={value}
             label={mt(language, `c_${value}`)}
-            note={mt(language, `c_${value}_s`)}
             onPress={() => {
               setCard(card === value ? "all" : value);
             }}

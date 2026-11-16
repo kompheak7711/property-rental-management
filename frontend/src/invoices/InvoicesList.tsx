@@ -378,15 +378,11 @@ export function InvoicesList({
       <div className="ui-kpis">
         {CARDS.map(([value, icon, tone, key]) => {
           const amount = amounts.get(value) ?? 0;
-          const count = issued.filter((invoice) =>
-            inCard(invoice, value, today),
-          ).length;
           return (
             <CountCard
               icon={icon}
               key={value}
               label={ivt(language, key)}
-              note={`${ivt(language, `${key}_s` as InvoicesTextKey)}\n${countText(language, count)}`}
               onPress={() => {
                 setCard(card === value && value !== "all" ? "all" : value);
               }}

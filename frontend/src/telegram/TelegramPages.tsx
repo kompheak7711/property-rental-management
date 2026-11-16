@@ -1389,7 +1389,7 @@ export function TelegramHealthPage({
             role="listitem"
           >
             <span className="ui-kpi-label">{label}</span>
-            <span className="ui-kpi-value ui-num">{value}</span>
+            <span className="ui-kpi-value ui-num ui-kpi-words">{value}</span>
             <span className="ui-kpi-note">{note}</span>
           </div>
         ))}
@@ -2773,7 +2773,6 @@ export function VisitRequestsPageView({
             icon={icon}
             key={value}
             label={tt(language, key)}
-            note={textOf(language, "", `${key}_s`)}
             onPress={() => {
               setCard(card === value ? "all" : value);
             }}

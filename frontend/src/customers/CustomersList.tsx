@@ -172,7 +172,6 @@ export function CustomersList({
               icon={icon}
               key={value}
               label={ct(language, `c_${value}`)}
-              note={ct(language, `c_${value}_s`)}
               onPress={() => {
                 setCard(card === value ? "all" : value);
               }}
