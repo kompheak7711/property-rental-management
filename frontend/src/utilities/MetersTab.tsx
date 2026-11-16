@@ -806,13 +806,17 @@ export function AddMeterDialog({
 }) {
   const [unitId, setUnitId] = useState(preset?.unitId ?? "");
   const [type, setType] = useState<UtilityType>(preset?.type ?? "ELECTRICITY");
-  const [serial, setSerial] = useState("");
+  // Owner 16/11/2026: the serial fills itself from Type, Unit and Installed on ("EL-U103" and the
+  // day as DDMMYYYY: EL-U10315112026) until the staff member types their own.
+  const [typedSerial, setTypedSerial] = useState<string | null>(null);
   const [installed, setInstalled] = useState(today);
   const [first, setFirst] = useState("0");
   const [problems, setProblems] = useState<Record<string, string>>({});
   const { busy, outcome, send } = useMeterSend();
   const unit = data.units.find((item) => item.unit_id === unitId);
-  const code = `${type === "ELECTRICITY" ? "EL" : "WA"}-${unit?.unit_number ?? data.units[0]?.unit_number ?? "U101"}`;
+  const serial =
+    typedSerial ??
+    (unit === undefined ? "" : autoSerial(type, unit.unit_number, installed));
   // V1-060 B6 (owner, 28/10/2026): only Units without a current meter of this kind are offered;
   // a broken meter is changed with Replace meter on its page.
   const hasMeter = (id: string, kind: UtilityType) =>
@@ -960,27 +964,6 @@ export function AddMeterDialog({
         <FieldError id="add-unit" text={problems.unit} />
       </div>
       <div className="ui-field">
-        <label htmlFor="add-serial">
-          {utt(language, "mt_serial")}
-          <span className="req">{utt(language, "required")}</span>
-        </label>
-        <input
-          aria-describedby={
-            problems.serial === undefined ? undefined : "add-serial-err"
-          }
-          aria-invalid={problems.serial !== undefined}
-          autoComplete="off"
-          id="add-serial"
-          maxLength={200}
-          onChange={(event) => {
-            setSerial(event.currentTarget.value);
-          }}
-          value={serial}
-        />
-        <p className="help">{utt(language, "mt_serial_help", code)}</p>
-        <FieldError id="add-serial" text={problems.serial} />
-      </div>
-      <div className="ui-field">
         <label htmlFor="add-day">{utt(language, "mt_installed")}</label>
         <DateInput
           language={language}
@@ -996,6 +979,27 @@ export function AddMeterDialog({
           value={installed}
         />
         <FieldError id="add-day" text={problems.installed} />
+      </div>
+      <div className="ui-field">
+        <label htmlFor="add-serial">
+          {utt(language, "mt_serial")}
+          <span className="req">{utt(language, "required")}</span>
+        </label>
+        <input
+          aria-describedby={
+            problems.serial === undefined ? undefined : "add-serial-err"
+          }
+          aria-invalid={problems.serial !== undefined}
+          autoComplete="off"
+          id="add-serial"
+          maxLength={200}
+          onChange={(event) => {
+            setTypedSerial(event.currentTarget.value);
+          }}
+          value={serial}
+        />
+        <p className="help">{utt(language, "mt_serial_help")}</p>
+        <FieldError id="add-serial" text={problems.serial} />
       </div>
       <div className="ui-field">
         <label htmlFor="add-first">{utt(language, "mt_new_start")}</label>
@@ -1387,4 +1391,19 @@ function ReplaceMeterDialog({
       </div>
     </Dialog>
   );
+}
+
+/**
+ * Owner 16/11/2026: the serial the Add meter dialog fills in: "EL" or "WA", a dash, the Unit and
+ * the day it was installed as DDMMYYYY (Electricity, U103, 15/11/2026 gives "EL-U10315112026").
+ * Empty while the day is not a whole day yet.
+ */
+export function autoSerial(
+  type: UtilityType,
+  unitNumber: string,
+  installed: string,
+): string {
+  if (!isDay(installed)) return "";
+  const day = installed.slice(8, 10) + installed.slice(5, 7) + installed.slice(0, 4);
+  return `${type === "ELECTRICITY" ? "EL" : "WA"}-${unitNumber}${day}`;
 }

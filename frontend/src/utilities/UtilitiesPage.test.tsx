@@ -920,6 +920,44 @@ describe("Utilities Meters tab (V1-058 R4b)", () => {
     expect(serials()).toEqual(["EL-U102", "WA-U102"]);
   });
 
+  it("TEST-FE-2199 (owner 16/11/2026) Add meter: Installed on sits above Serial, and the serial fills itself from Type, Unit and Installed on until the staff member types their own", async () => {
+    openMeters();
+    show({ api: utilityApi({}) });
+    fireEvent.click(await screen.findByRole("button", { name: /Add meter/ }));
+    const dialog = screen.getByRole("dialog");
+    const labels = [...dialog.querySelectorAll(".ui-field > label")].map(
+      (label) => label.textContent,
+    );
+    expect(labels.indexOf("Installed on")).toBeLessThan(
+      labels.findIndex((text) => text?.startsWith("Serial") === true),
+    );
+    expect(labels.indexOf("Installed on")).toBeGreaterThan(
+      labels.findIndex((text) => text?.startsWith("Unit") === true),
+    );
+    const serial = () =>
+      (within(dialog).getByLabelText(/^Serial/) as HTMLInputElement).value;
+    expect(serial()).toBe("");
+    fireEvent.change(within(dialog).getByLabelText(/^Unit/), {
+      target: { value: "unit-U301" },
+    });
+    fireEvent.change(within(dialog).getByLabelText("Installed on"), {
+      target: { value: "15/11/2026" },
+    });
+    expect(serial()).toBe("EL-U30115112026");
+    fireEvent.click(within(dialog).getByLabelText("Water"));
+    fireEvent.change(within(dialog).getByLabelText(/^Unit/), {
+      target: { value: "unit-U301" },
+    });
+    expect(serial()).toMatch(/^WA-U301\d{8}$/);
+    fireEvent.change(within(dialog).getByLabelText(/^Serial/), {
+      target: { value: "1234-ABC" },
+    });
+    fireEvent.change(within(dialog).getByLabelText("Installed on"), {
+      target: { value: "14/11/2026" },
+    });
+    expect(serial()).toBe("1234-ABC");
+  });
+
   it("TEST-FE-884 Add meter does not offer a Unit that has a working meter of the kind, sends the meter with its first reading on the day it is put in, and names a serial already used", async () => {
     openMeters();
     const installMeter = vi
@@ -943,11 +981,10 @@ describe("Utilities Meters tab (V1-058 R4b)", () => {
     fireEvent.change(within(dialog).getByLabelText(/^Unit/), {
       target: { value: "unit-U301" },
     });
+    // A serial the staff member typed stays when the Unit changes (owner 16/11/2026).
     expect(
-      within(dialog).getByText(
-        "The number printed on the meter. If it has none, use a code such as EL-U301.",
-      ),
-    ).toBeTruthy();
+      (within(dialog).getByLabelText(/^Serial/) as HTMLInputElement).value,
+    ).toBe("EL-U101-B");
     fireEvent.click(within(dialog).getByRole("button", { name: "Add meter" }));
     expect(
       await within(dialog).findByText(

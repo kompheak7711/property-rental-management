@@ -180,7 +180,7 @@ const TEXT = {
   mt_replaced_on: ["Replaced {0}", "បានប្តូរ {0}"],
   col_type: ["Type", "ប្រភេទ"],
   col_status: ["Status", "ស្ថានភាព"],
-  mt_installed: ["Put in on", "ដាក់ថ្ងៃ"],
+  mt_installed: ["Installed on", "ថ្ងៃដំឡើង"],
   mt_last: ["Last reading", "អំណានចុងក្រោយ"],
   mt_showing: ["{0} meters", "នាឡិកាស្ទង់ {0}"],
   mt_none: [
@@ -212,8 +212,9 @@ const TEXT = {
   mt_add_done: ["{0} added to {1}.", "បានបន្ថែម {0} ទៅ {1}។"],
   mt_serial: ["Serial", "លេខសៀរៀល"],
   mt_serial_help: [
-    "The number printed on the meter. If it has none, use a code such as {0}.",
-    "លេខដែលបោះពុម្ពលើនាឡិកាស្ទង់។ បើគ្មាន សូមប្រើកូដដូចជា {0}។",
+    "Filled in from Type, Unit and Installed on. Type the number printed on the meter instead if it has one.",
+    // new
+    "បំពេញដោយស្វ័យប្រវត្តិពីប្រភេទ បន្ទប់ និងថ្ងៃដំឡើង។ បើនាឡិកាស្ទង់មានលេខបោះពុម្ព សូមវាយលេខនោះជំនួស។",
   ],
   mt_new_serial: ["New meter serial", "លេខសៀរៀលនាឡិកាស្ទង់ថ្មី"],
   mt_new_start: ["First reading", "អំណានដំបូង"],
@@ -244,7 +245,7 @@ const TEXT = {
     "Not before the last good reading ({0}).",
     "មិនមុនអំណានល្អចុងក្រោយ ({0})។",
   ],
-  mt_new_day: ["Put in on", "ដាក់ថ្ងៃ"],
+  mt_new_day: ["Installed on", "ថ្ងៃដំឡើង"],
   // changed: V1 has no estimate screen yet.
   mt_replace_c: [
     "{0} stops on the day the new meter is put in. It stays in the history with all its readings. Use from the day after the last good reading until the new meter starts is estimated from earlier months. This is saved in the audit log.",
