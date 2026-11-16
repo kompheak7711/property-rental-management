@@ -411,8 +411,12 @@ describe("Building › Problem reports (V1.1 part 7, DL-124)", () => {
       ["Water", ""],
       ["Air conditioner", "ui-tile-long"],
       ["Furniture/appliance", "ui-tile-long"],
-      ["Safety (fire, gas, smoke)", "ui-tile-wide"],
+      ["Safety (fire, gas, smoke) Always urgent", "ui-tile-wide"],
     ]);
+    // Owner 16/11/2026: "Always urgent" runs on after the name, in the same line of text.
+    expect(
+      document.querySelector(".ui-tile-name > span > .ui-sub2")?.textContent,
+    ).toBe("Always urgent");
     const urgent = screen.getByRole("group", { name: "Is it urgent?" });
     expect(urgent.classList.contains("ui-radios-row")).toBe(true);
     expect(within(urgent).getAllByRole("radio")).toHaveLength(2);

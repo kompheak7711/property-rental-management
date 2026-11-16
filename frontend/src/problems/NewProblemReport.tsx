@@ -557,11 +557,20 @@ export function NewProblemReportForm({
                 />
                 <span className="ui-tile-name">
                   <Icon name={typeIcon(entry)} small />
-                  <span>{typeName(language, entry)}</span>
+                  {/* Owner 16/11/2026: "Always urgent" follows the name on the same line
+                      and wraps only when there is no room. */}
+                  <span>
+                    {typeName(language, entry)}
+                    {entry.always_urgent && (
+                      <>
+                        {" "}
+                        <span className="ui-sub2 warn">
+                          {pt(language, "always")}
+                        </span>
+                      </>
+                    )}
+                  </span>
                 </span>
-                {entry.always_urgent && (
-                  <span className="ui-sub2 warn">{pt(language, "always")}</span>
-                )}
               </label>
             ))}
           </div>

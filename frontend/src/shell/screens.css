@@ -4355,6 +4355,15 @@ table.ui-table.ui-problist {
   align-content: start;
   gap: 8px;
 }
+/* Owner 16/11/2026: on a wider screen each box has room for its words on one line. */
+@media (min-width: 640px) {
+  .ui-radios.ui-radios-row {
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  }
+  .ui-radios.ui-radios-row > .ui-chk {
+    white-space: nowrap;
+  }
+}
 .ui-radios.ui-radios-row > .ui-chk {
   gap: 6px;
   padding: 0 10px;
@@ -4374,8 +4383,9 @@ table.ui-table.ui-problist {
   justify-content: flex-end;
 }
 .ui-chk.ui-tile .ui-sub2 {
-  flex-basis: 100%;
-  margin-left: 28px;
+  display: inline-block;
+  margin-left: 4px;
+  white-space: nowrap;
 }
 /* Property fix 5 (owner 14/11/2026): with no photo the photo box is a low strip. */
 .ui-photo.ui-photo-small {
