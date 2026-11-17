@@ -3470,3 +3470,12 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **Open.** A native Khmer check of the caption and the PDF words.
 - **Links:** DL-201, DL-243.
 - **Decision date:** 2026-11-17.
+
+## DL-248 — The frontend audit blocks on the shipped packages; development tool findings are reported
+
+- **Type:** `OWNER DECISION`.
+- **Source.** On 18 Nov 2026 GitHub published GHSA-fc5q-39xc-vjpf (`picomatch`, high, ReDoS through repeated extglobs) with every version listed as affected and no fixed release. `picomatch` reaches the frontend only through development tools: `vite`, `vitest`, and `typescript-eslint` → `fast-glob` → `micromatch`. `npm audit --omit=dev` finds 0 vulnerabilities. `make frontend-audit` failed on it, and CI's "stop the other jobs" step then cancelled every job of every pull request (pull request 55). The owner chose option 2 of three (wait; audit the shipped packages strictly and report the tools; ignore the one advisory).
+- **The rule.** `make frontend-audit` runs `npm audit --audit-level=moderate --omit=dev`, which fails the build on any moderate or higher finding in the packages the app ships. It then runs the full audit; its findings are printed in the CI log but do not fail the build. The same kind of dev-only risk was accepted once before (DL-067, `braces`).
+- **Follow-up.** When `picomatch` publishes a fixed release, update the lock file (owner's rule of DL-067: only if it changes `package-lock.json` alone) and consider making the full audit blocking again.
+- **Decision date:** 2026-11-18.
+
