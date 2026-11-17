@@ -622,10 +622,60 @@ describe("Needs check", () => {
       "needscheck",
       fakeApi({ needsCheck: vi.fn(() => Promise.resolve([])) }),
     );
+    // Full test 17/11/2026 (finding 1): it no longer claims every record is in the ledger.
+    expect(await screen.findByText("Nothing to check.")).toBeInTheDocument();
+  });
+
+  it("says when the books were last updated, and warns when that was too long ago or never", async () => {
+    const recent = {
+      last: {
+        at: "2026-11-17T11:14:00+00:00",
+        posted: 107,
+        needsCheck: 0,
+        stale: false,
+      },
+      maxAgeMinutes: 10,
+    };
+    show(
+      "needscheck",
+      fakeApi({
+        needsCheck: vi.fn(() => Promise.resolve([])),
+        postingStatus: vi.fn(() => Promise.resolve(recent)),
+      }),
+    );
+    expect(
+      await screen.findByText(/^Books updated 17\/11\/2026 18:14\./),
+    ).toBeInTheDocument();
+    cleanup();
+    show(
+      "needscheck",
+      fakeApi({
+        needsCheck: vi.fn(() => Promise.resolve([])),
+        postingStatus: vi.fn(() =>
+          Promise.resolve({
+            ...recent,
+            last: { ...recent.last, stale: true },
+          }),
+        ),
+      }),
+    );
     expect(
       await screen.findByText(
-        "Nothing to check. Every money record is in the ledger.",
+        /^The books were last updated 17\/11\/2026 18:14\./,
       ),
+    ).toBeInTheDocument();
+    cleanup();
+    show(
+      "needscheck",
+      fakeApi({
+        needsCheck: vi.fn(() => Promise.resolve([])),
+        postingStatus: vi.fn(() =>
+          Promise.resolve({ last: null, maxAgeMinutes: 10 }),
+        ),
+      }),
+    );
+    expect(
+      await screen.findByText(/^Posting has not run yet/),
     ).toBeInTheDocument();
   });
 });

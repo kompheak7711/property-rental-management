@@ -187,9 +187,20 @@ const TEXT = {
   nc_open: ["To fix", "ត្រូវកែ"],
   nc_record: ["Record", "កំណត់ត្រា"],
   nc_reason: ["Reason", "មូលហេតុ"],
-  nc_none: [
-    "Nothing to check. Every money record is in the ledger.",
-    "គ្មានអ្វីត្រូវពិនិត្យទេ។ កំណត់ត្រាប្រាក់ទាំងអស់នៅក្នុងសៀវភៅបញ្ជី។",
+  // Full test 17/11/2026 (finding 1): "every record is in the ledger" was said even when no
+  // posting pass had run; the line about the last pass now says how up to date the books are.
+  nc_none: ["Nothing to check.", "គ្មានអ្វីត្រូវពិនិត្យទេ។"],
+  nc_pass_ok: [
+    "Books updated {0}. Posting runs every few minutes by itself.",
+    "សៀវភៅបញ្ជីបានធ្វើបច្ចុប្បន្នភាព {0}។ ការបញ្ចូលដំណើរការដោយខ្លួនឯងរៀងរាល់ប៉ុន្មាននាទីម្តង។",
+  ],
+  nc_pass_stale: [
+    "The books were last updated {0}. Payments and Invoices after that are not in the books yet, so Home and the Financial statements show less. Ask the office to restart the billing worker.",
+    "សៀវភៅបញ្ជីបានធ្វើបច្ចុប្បន្នភាពចុងក្រោយ {0}។ ការបង់ប្រាក់ និងវិក្កយបត្របន្ទាប់ពីនោះ មិនទាន់នៅក្នុងសៀវភៅបញ្ជីទេ ដូច្នេះទំព័រដើម និងរបាយការណ៍ហិរញ្ញវត្ថុបង្ហាញតិចជាងការពិត។ សូមសុំការិយាល័យឱ្យចាប់ផ្តើមកម្មវិធីចេញវិក្កយបត្រឡើងវិញ។",
+  ],
+  nc_pass_never: [
+    "Posting has not run yet: no Payment or Invoice is in the books. Ask the office to start the billing worker.",
+    "ការបញ្ចូលមិនទាន់ដំណើរការនៅឡើយ៖ គ្មានការបង់ប្រាក់ ឬវិក្កយបត្រណាមួយនៅក្នុងសៀវភៅបញ្ជីទេ។ សូមសុំការិយាល័យឱ្យចាប់ផ្តើមកម្មវិធីចេញវិក្កយបត្រ។",
   ],
   nc_note: [
     "Nothing is lost. Each record is posted as soon as its issue is fixed. A Refund corrected after payment posts automatically; it appears here only if its Refund method has no ledger account.",

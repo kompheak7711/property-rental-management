@@ -35,6 +35,7 @@ import {
   ledgerApi as defaultLedgerApi,
   type MethodAccount,
   type PostingProblem,
+  type PostingStatus,
   type Report,
   type ReportName,
   type ReportQuery,
@@ -576,6 +577,8 @@ function problemMethod(
 
 interface NeedsData {
   problems: PostingProblem[];
+  /** When the books were last updated; undefined when this API cannot tell. */
+  status: PostingStatus | undefined;
   methods: MethodAccount[];
   chart: Chart;
 }
@@ -602,7 +605,13 @@ function NeedsCheckTab({
         api.needsCheck(propertyId),
         api.methodAccounts(propertyId),
         api.accounts(propertyId),
-      ]).then(([problems, methods, chart]) => ({ problems, methods, chart })),
+        api.postingStatus?.(propertyId),
+      ]).then(([problems, methods, chart, status]) => ({
+        problems,
+        methods,
+        chart,
+        status,
+      })),
     [api, propertyId],
   );
   const { data, failed, reload } = useRead<NeedsData>(active, read);
@@ -642,6 +651,33 @@ function NeedsCheckTab({
           </h2>
         </header>
         <p className="ui-muted pad">{lt(language, "nc_sub")}</p>
+        {data.status !== undefined && (
+          <div
+            className={`ui-notice ${
+              data.status.last === null || data.status.last.stale
+                ? "warn"
+                : "ok"
+            }`}
+            role="status"
+          >
+            <Icon
+              name={
+                data.status.last === null || data.status.last.stale
+                  ? "alert"
+                  : "check"
+              }
+            />
+            <p>
+              {data.status.last === null
+                ? lt(language, "nc_pass_never")
+                : lt(
+                    language,
+                    data.status.last.stale ? "nc_pass_stale" : "nc_pass_ok",
+                    momentText(data.status.last.at),
+                  )}
+            </p>
+          </div>
+        )}
         {data.problems.length === 0 ? (
           <p className="ui-muted pad">{lt(language, "nc_none")}</p>
         ) : (

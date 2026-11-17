@@ -45,6 +45,12 @@ class Settings(BaseSettings):
     short_stay_public_calendar: bool = Field(
         default=False, validation_alias="APP_SHORT_STAY_PUBLIC_CALENDAR"
     )
+    # Full test 17/11/2026 (finding 1): Needs check warns when the books were last updated longer
+    # ago than this. The office server's worker runs about every 5 minutes; a day and two hours
+    # leaves room for a restart. The test app sets 10 minutes.
+    ledger_posting_max_age_minutes: int = Field(
+        default=1560, ge=1, le=10080, validation_alias="APP_LEDGER_POSTING_MAX_AGE_MINUTES"
+    )
     # V1-059 (DL-071): the folder of the operations status files, mounted read-only; a path
     # only. Without it the health page says the records are not set up.
     operations_status_directory: str | None = Field(

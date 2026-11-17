@@ -156,6 +156,16 @@ const TEXT = {
   tip_letter: ["Open Notices", "បើកលិខិត"],
   // UI v81 (design v81 Home): the Owner's money box and Attendance. Owner 12/11/2026: the box
   // is named "Financial summary" and no longer says "Only the Owner sees this".
+  // Full test 17/11/2026 (finding 1): when the books behind these cards were last updated.
+  om_books: ["Books updated {0}", "សៀវភៅបញ្ជីបានធ្វើបច្ចុប្បន្នភាព {0}"],
+  om_books_stale: [
+    "The books were last updated {0}, so these numbers leave out newer money. Ask the office to restart the billing worker.",
+    "សៀវភៅបញ្ជីបានធ្វើបច្ចុប្បន្នភាពចុងក្រោយ {0} ដូច្នេះលេខទាំងនេះមិនរាប់ប្រាក់ថ្មីៗទេ។ សូមសុំការិយាល័យឱ្យចាប់ផ្តើមកម្មវិធីចេញវិក្កយបត្រឡើងវិញ។",
+  ],
+  om_books_never: [
+    "The books have not been updated yet, so these numbers leave out the money received. Ask the office to start the billing worker.",
+    "សៀវភៅបញ្ជីមិនទាន់បានធ្វើបច្ចុប្បន្នភាពនៅឡើយ ដូច្នេះលេខទាំងនេះមិនរាប់ប្រាក់ដែលបានទទួលទេ។ សូមសុំការិយាល័យឱ្យចាប់ផ្តើមកម្មវិធីចេញវិក្កយបត្រ។",
+  ],
   om_t: ["Financial summary", "សង្ខេបហិរញ្ញវត្ថុ"], // new
   om_cash: ["Cash & bank", "សាច់ប្រាក់ និងធនាគារថ្ងៃនេះ"], // new
   om_over: ["30+ days late", "ជំពាក់លើស ៣០ ថ្ងៃ"], // new

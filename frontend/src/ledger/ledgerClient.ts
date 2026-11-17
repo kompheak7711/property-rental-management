@@ -157,11 +157,24 @@ export interface ReportFile {
   file: Blob;
 }
 
+/** Full test 17/11/2026 (finding 1): when the books were last updated. */
+export interface PostingStatus {
+  /** The last posting pass; null when none has run yet. */
+  last: {
+    at: string;
+    posted: number;
+    needsCheck: number;
+    stale: boolean;
+  } | null;
+  maxAgeMinutes: number;
+}
+
 export interface LedgerApi {
   accounts: (propertyId: string, asOf?: string) => Promise<Chart>;
   entries: (propertyId: string, month?: string) => Promise<Journal>;
   entry: (propertyId: string, entryNumber: string) => Promise<Entry>;
   needsCheck: (propertyId: string) => Promise<PostingProblem[]>;
+  postingStatus?: (propertyId: string) => Promise<PostingStatus>;
   methodAccounts: (propertyId: string) => Promise<MethodAccount[]>;
   setMethodAccount: (
     propertyId: string,
@@ -478,6 +491,39 @@ export const ledgerApi: LedgerApi = {
         };
       },
     );
+  },
+  async postingStatus(propertyId) {
+    const response = await fetched(`${base(propertyId)}/needs-check`, {
+      method: "GET",
+    });
+    if (!response.ok) throw await refused(response);
+    let payload: unknown = null;
+    try {
+      payload = await response.json();
+    } catch {
+      throw new LedgerError();
+    }
+    if (!isObject(payload) || !isObject(payload.meta)) throw new LedgerError();
+    const { last_pass: last, max_age_minutes: maxAge } = payload.meta;
+    if (typeof maxAge !== "number") throw new LedgerError();
+    if (last === null) return { last: null, maxAgeMinutes: maxAge };
+    if (
+      !isObject(last) ||
+      typeof last.at !== "string" ||
+      typeof last.posted !== "number" ||
+      typeof last.needs_check !== "number" ||
+      typeof last.stale !== "boolean"
+    )
+      throw new LedgerError();
+    return {
+      last: {
+        at: last.at,
+        posted: last.posted,
+        needsCheck: last.needs_check,
+        stale: last.stale,
+      },
+      maxAgeMinutes: maxAge,
+    };
   },
   async methodAccounts(propertyId) {
     return list(await request(`${base(propertyId)}/method-accounts`)).map(

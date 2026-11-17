@@ -1,0 +1,26 @@
+# Full test of 17/11/2026 (DL-246, owner approval): the office server runs the scheduled billing
+# worker. One pass: the Rent and Utility runs that are due, the automatic late-payment charges,
+# posting the money records to the books, and turning off the app user of a leaver.
+# Started every 5 minutes by prm-billing-worker.timer. A pass never runs twice at once: the worker
+# takes the Property's lock in the database, and systemd does not start a oneshot that is running.
+[Unit]
+Description=CHETANA Residence Management billing worker
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=prm-ops
+Group=prm-ops
+UMask=0077
+# /etc/prm/billing-worker.env (mode 0600, owner prm-ops) holds three lines:
+# APP_FINANCIAL_DATABASE_URL (the money login), PRM_PROPERTY_ID and PRM_BILLING_ACTOR_ID (the
+# Property's billing service principal, app.billing_service_principals).
+EnvironmentFile=/etc/prm/billing-worker.env
+ExecStart=/opt/prm/venv/bin/property-rental-scheduled-billing --property-id ${PRM_PROPERTY_ID} --actor-id ${PRM_BILLING_ACTOR_ID} --once
+StandardOutput=journal
+StandardError=journal
+TimeoutStartSec=240s
+NoNewPrivileges=true
+ProtectSystem=strict
+PrivateTmp=true

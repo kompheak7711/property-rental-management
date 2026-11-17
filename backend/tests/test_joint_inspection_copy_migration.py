@@ -27,11 +27,12 @@ TENANT = 8870101
 LATE = 8870102
 
 
-def test_migration_424_is_the_head_and_is_forward_only() -> None:
+def test_migration_424_follows_the_head_and_is_forward_only() -> None:
     scripts = ScriptDirectory.from_config(Config("alembic.ini"))
     migration = scripts.get_revision(REVISION)
     assert migration is not None and migration.down_revision == "20270805_423"
-    assert scripts.get_heads() == [REVISION]
+    # When the books were last updated (finding 1 of the 17/11/2026 full test) follows it.
+    assert scripts.get_heads() == ["20270808_431"]
     with pytest.raises(RuntimeError, match="forward-only"):
         migration.module.downgrade()
 

@@ -3486,3 +3486,19 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **Open.** A native Khmer check of the new words.
 - **Links:** UI-073, UI-106, BR-PAY-*.
 - **Decision date:** 2026-11-17.
+
+## DL-246 — Needs check and Home say when the books were last updated
+
+- **Type:** `OWNER DECISION` (fix 1 of the full test, approved 17 Nov 2026) and `TECHNICAL DECISION UNDER THE OWNER'S RULE` (the shape).
+- **Source.** The full test of 17 Nov 2026 (`docs/ui-audit/07_FULL_TEST_RESULTS.md`, finding 1): the test app did not run the billing worker, so no Payment or Invoice reached the books, while Books › Needs check said "Nothing to check. Every money record is in the ledger." and Home showed Cash & bank $470.00 against $7,176.14 received. The owner approved the preview and the plan on 17 Nov 2026.
+- **The rule.**
+  - Each posting pass of the billing worker records when it finished, with how many records it posted and how many wait in Needs check: `app.gl_posting_status`, one row per Property, replaced by each pass (`app.gl_record_posting_pass`, money login). Migration `20270808_431`, forward-only; it adds a table and a function and changes no data.
+  - `GET /api/v1/properties/{id}/ledger/needs-check` returns `meta.last_pass` (`at`, `posted`, `needs_check`, `stale`, or null when no pass has run) and `meta.max_age_minutes`.
+  - A pass is stale after `APP_LEDGER_POSTING_MAX_AGE_MINUTES` (default 1560 minutes, a day and two hours; the test app sets 10).
+  - Needs check says "Books updated {time}" or, when stale or never, a warning that newer money is not in the books yet. "Every money record is in the ledger" is no longer said. Home's Financial summary shows "Books updated {time}" and the same warning.
+  - The test app starts the billing worker (`scripts/local/billing-worker.sh`, every 60 seconds).
+- **Not changed.** How records are posted; the Needs check list.
+- **Office server.** `config/deployment/host/prm-billing-worker.service` and `.timer` run the worker every 5 minutes as `prm-ops` with `/etc/prm/billing-worker.env` (owner: add it now, as a separate change). Steps in `docs/V1_059_OPERATIONS_RUNBOOK.md`.
+- **Open.** The worker also reads the booking sites' calendars over HTTPS, which the office server's outbound allowed list (Telegram only) blocks; billing and posting do not depend on it. A native Khmer check of the new words.
+- **Links:** DL-245, UI-073.
+- **Decision date:** 2026-11-17.

@@ -7,7 +7,7 @@ Reading needs `ledger.read` (Owner and Manager, plan L1); setting a method's acc
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from uuid import UUID, uuid4
 
 from fastapi.testclient import TestClient
@@ -18,6 +18,7 @@ from property_rental.ledger_posting_api import (
     LedgerPostingInvalid,
     LedgerPostingNotFound,
     MethodAccount,
+    PostingPass,
     PostingProblem,
 )
 
@@ -36,6 +37,7 @@ class InMemoryPosting:
     accounts: dict[UUID, str] = field(default_factory=dict)
     riel: dict[UUID, str | None] = field(default_factory=dict)
     changes: list[tuple[str, UUID, str, date, str]] = field(default_factory=list)
+    posting_pass: PostingPass | None = None
 
     def _check(self, property_id: UUID) -> None:
         if property_id != self.property_id:
@@ -56,6 +58,10 @@ class InMemoryPosting:
                 AT,
             ),
         )
+
+    def last_pass(self, property_id: UUID) -> PostingPass | None:
+        self._check(property_id)
+        return self.posting_pass
 
     def method_accounts(self, property_id: UUID) -> tuple[MethodAccount, ...]:
         self._check(property_id)
@@ -195,3 +201,19 @@ def test_a_payment_method_takes_a_riel_account() -> None:
     ).status_code == (422)
     cleared = owner.put(url, json={**body, "riel_account_code": None}, headers=HEADERS)
     assert cleared.json()["data"][0]["riel_account_code"] is None
+
+
+def test_needs_check_says_when_the_books_were_last_updated_and_when_that_is_too_long_ago() -> None:
+    # Full test 17/11/2026 (finding 1): no pass yet, a recent pass, an old pass.
+    flow = InMemoryPosting()
+    url = f"/api/v1/properties/{flow.property_id}/ledger/needs-check"
+    reader = client(flow, "ledger.read")
+    meta = reader.get(url).json()["meta"]
+    assert meta["last_pass"] is None
+    assert meta["max_age_minutes"] == 1560
+    recent = datetime.now(UTC) - timedelta(minutes=3)
+    flow.posting_pass = PostingPass(recent, 107, 0)
+    last = reader.get(url).json()["meta"]["last_pass"]
+    assert last == {"at": recent.isoformat(), "posted": 107, "needs_check": 0, "stale": False}
+    flow.posting_pass = PostingPass(datetime.now(UTC) - timedelta(hours=27), 0, 0)
+    assert reader.get(url).json()["meta"]["last_pass"]["stale"] is True
