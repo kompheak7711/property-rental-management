@@ -620,6 +620,15 @@ const TEXT = {
   list_all: ["All {0}.", "ទាំង {0}។"],
   show_all: ["Show all {0}", "បង្ហាញទាំង {0}"],
   show_fewer: ["Show fewer", "បង្ហាញតិចជាងនេះ"],
+  // Owner 17/11/2026: the Sent on Telegram tab. Khmer new, needs the native check.
+  sent_sub: [
+    "Invoices, Receipts and warnings sent to tenants on Telegram, and which need a paper copy.",
+    "វិក្កយបត្រ បង្កាន់ដៃ និងការព្រមាន ដែលបានផ្ញើទៅអ្នកជួលតាមតេឡេក្រាម និងអ្វីដែលត្រូវការច្បាប់ចម្លងក្រដាស។",
+  ],
+  sent_show: ["Show", "បង្ហាញ"],
+  sent_invoices: ["Invoices", "វិក្កយបត្រ"],
+  sent_receipts: ["Receipts", "បង្កាន់ដៃ"],
+  sent_warnings: ["Warnings", "ការព្រមាន"],
   inv_h: ["Invoices on Telegram", "វិក្កយបត្រតាមតេឡេក្រាម"],
   inv_sub: [
     "Each issued Invoice goes to the tenants linked to its Lease. A reminder goes {0} days before the due date while it is not fully paid. Invoices of the last {1} days.",

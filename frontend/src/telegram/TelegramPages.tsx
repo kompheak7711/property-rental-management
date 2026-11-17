@@ -752,24 +752,6 @@ export function LinkedTenantsPage({
           <p>{tt(language, "tries_n", rules.tries, block)}</p>
         </div>
       </section>
-      <InvoicesOnTelegram
-        active={active}
-        api={api}
-        language={language}
-        propertyId={propertyId}
-      />
-      <ReceiptsOnTelegram
-        active={active}
-        api={api}
-        language={language}
-        propertyId={propertyId}
-      />
-      <WarningsOnTelegram
-        active={active}
-        api={api}
-        language={language}
-        propertyId={propertyId}
-      />
       {removing !== null && (
         <RemoveLinkDialog
           api={api}
@@ -800,6 +782,51 @@ export function LinkedTenantsPage({
     </>
   );
 }
+
+// Owner 17/11/2026: Linked tenants was too long to scroll, so what was sent on Telegram
+// (Invoices, Receipts, Warnings) is its own tab.
+export function SentOnTelegramPage({
+  language,
+  propertyId,
+  active,
+  api = defaultTelegramApi,
+}: TelegramPageProps) {
+  // Owner 17/11/2026 11:04: each list grows long, so one shows at a time.
+  const [which, setWhich] = useState<SentList>("invoices");
+  if (propertyId === "") return <NoProperty language={language} />;
+  const shared = { active, api, language, propertyId };
+  return (
+    <>
+      <PageHead>
+        <p>{tt(language, "sent_sub")}</p>
+      </PageHead>
+      <div
+        aria-label={tt(language, "sent_show")}
+        className="ui-seg tg-sent-switch"
+        role="group"
+      >
+        {SENT_LISTS.map((list) => (
+          <button
+            aria-pressed={which === list}
+            key={list}
+            onClick={() => {
+              setWhich(list);
+            }}
+            type="button"
+          >
+            {tt(language, `sent_${list}` as const)}
+          </button>
+        ))}
+      </div>
+      {which === "invoices" && <InvoicesOnTelegram {...shared} />}
+      {which === "receipts" && <ReceiptsOnTelegram {...shared} />}
+      {which === "warnings" && <WarningsOnTelegram {...shared} />}
+    </>
+  );
+}
+
+const SENT_LISTS = ["invoices", "receipts", "warnings"] as const;
+type SentList = (typeof SENT_LISTS)[number];
 
 // Invoices on Telegram (DL-211): who got each issued Invoice, and who needs a paper copy.
 

@@ -43,6 +43,7 @@ export type PageId =
   | "payroll"
   | "attendance"
   | "tglinks"
+  | "tgsent"
   | "tgcontact"
   | "tgfaq"
   | "tgnotices"
@@ -227,7 +228,15 @@ export const MENU: readonly MenuGroup[] = [
         page: "tglinks",
         icon: "send",
         label: ["Telegram", "តេឡេក្រាម"],
-        tabs: ["tglinks", "tgcontact", "tgfaq", "tgnotices", "tghealth"],
+        // Owner 17/11/2026: what was sent sits on its own tab, after Linked tenants.
+        tabs: [
+          "tglinks",
+          "tgsent",
+          "tgcontact",
+          "tgfaq",
+          "tgnotices",
+          "tghealth",
+        ],
       },
       // UI v81 (B4): Users and access is its own menu item, moved out of Settings.
       { page: "access", icon: "customers" },
@@ -284,6 +293,8 @@ const PAGE_NAMES: Record<PageId, readonly [string, string]> = {
   payroll: ["Payroll", "បញ្ជីប្រាក់ខែ"],
   attendance: ["Attendance", "វត្តមាន"],
   tglinks: ["Linked tenants", "អ្នកជួលដែលបានភ្ជាប់"],
+  // Owner 17/11/2026; Khmer new, needs the native check.
+  tgsent: ["Sent on Telegram", "បានផ្ញើតាមតេឡេក្រាម"],
   tgcontact: ["Contact office", "ទាក់ទងការិយាល័យ"],
   tgfaq: ["FAQ", "សំណួរញឹកញាប់"],
   // DL-216; Khmer new.
@@ -358,6 +369,7 @@ const PAGE_NEEDS: Record<PageId, readonly string[] | null> = {
   attendance: ["hr.attendance.read"],
   // Telegram bots step 2c (DL-128): Owner and Manager for now.
   tglinks: ["telegram.read"],
+  tgsent: ["telegram.read"],
   tgcontact: ["telegram.contact"],
   tgfaq: ["telegram.faq", "telegram.contact"],
   tgnotices: ["telegram.read"],

@@ -172,6 +172,7 @@ import {
   ContactOfficePage,
   FaqPageView,
   LinkedTenantsPage,
+  SentOnTelegramPage,
   NoticesPageView,
   TelegramHealthPage,
   VisitRequestsPageView,
@@ -1931,6 +1932,15 @@ export function App({
       >
         <LinkedTenantsPage
           active={shown("tglinks")}
+          api={telegramApi}
+          capabilities={capabilities}
+          language={language}
+          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
+        />
+      </div>
+      <div className="shell-page" data-page="tgsent" hidden={!shown("tgsent")}>
+        <SentOnTelegramPage
+          active={shown("tgsent")}
           api={telegramApi}
           capabilities={capabilities}
           language={language}

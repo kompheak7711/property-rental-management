@@ -12,6 +12,7 @@ import {
   ContactOfficePage,
   FaqPageView,
   LinkedTenantsPage,
+  SentOnTelegramPage,
   NoticesPageView,
   TelegramHealthPage,
   VisitRequestsPageView,
@@ -546,7 +547,7 @@ describe("Office › Telegram", () => {
       Promise.resolve({ ...INVOICES, invoices: many }),
     );
     render(
-      <LinkedTenantsPage
+      <SentOnTelegramPage
         active
         api={api}
         capabilities={READER}
@@ -596,7 +597,7 @@ describe("Office › Telegram", () => {
       }),
     );
     render(
-      <LinkedTenantsPage
+      <SentOnTelegramPage
         active
         api={api}
         capabilities={READER}
@@ -608,6 +609,10 @@ describe("Office › Telegram", () => {
       name: "Invoices on Telegram",
     });
     const paid = await within(invoices).findByRole("row", { name: /INV-PAID/ });
+    // One list at a time: Invoices first, then the switch shows Receipts or Warnings.
+    expect(
+      screen.queryByRole("region", { name: "Receipts on Telegram" }),
+    ).toBeNull();
     expect(within(paid).getByText("Paid")).toBeInTheDocument();
     expect(within(paid).getByText("Not needed")).toBeInTheDocument();
     expect(within(paid).queryByText("Give a paper copy")).toBeNull();
@@ -616,7 +621,22 @@ describe("Office › Telegram", () => {
       within(invoices).getByText(/did not reach anyone on Telegram: 1\./),
     ).toBeInTheDocument();
 
-    const links = screen.getByRole("region", { name: "Links" });
+    cleanup();
+
+    // Linked tenants keeps only the links (owner 17/11/2026: Sent on Telegram is its own tab).
+    render(
+      <LinkedTenantsPage
+        active
+        api={fakeApi()}
+        capabilities={READER}
+        language="en"
+        propertyId="prop-1"
+      />,
+    );
+    const links = await screen.findByRole("region", { name: "Links" });
+    expect(
+      screen.queryByRole("region", { name: "Invoices on Telegram" }),
+    ).toBeNull();
     for (const part of ["Linked now", "Failed link attempts", "Ended links"])
       expect(within(links).getByRole("region", { name: part })).toBeTruthy();
     cleanup();
@@ -639,7 +659,7 @@ describe("Office › Telegram", () => {
   it("TEST-FE-1950 Invoices on Telegram shows who got each issued Invoice and its reminder, and which tenants need a paper copy", async () => {
     const api = fakeApi();
     render(
-      <LinkedTenantsPage
+      <SentOnTelegramPage
         active
         api={api}
         capabilities={READER}
@@ -673,7 +693,7 @@ describe("Office › Telegram", () => {
   it("TEST-FE-1954 Receipts on Telegram shows who got each Receipt, a Receipt that reached nobody, and a reversed one", async () => {
     const api = fakeApi();
     render(
-      <LinkedTenantsPage
+      <SentOnTelegramPage
         active
         api={api}
         capabilities={READER}
@@ -681,6 +701,7 @@ describe("Office › Telegram", () => {
         propertyId="prop-1"
       />,
     );
+    fireEvent.click(await screen.findByRole("button", { name: "Receipts" }));
     const receipts = await screen.findByRole("region", {
       name: "Receipts on Telegram",
     });
@@ -798,7 +819,7 @@ describe("Office › Telegram", () => {
   it("TEST-FE-1957 Warnings on Telegram shows who got each late Rent letter and Lease warning, and which tenants need the letter by hand", async () => {
     const api = fakeApi();
     render(
-      <LinkedTenantsPage
+      <SentOnTelegramPage
         active
         api={api}
         capabilities={READER}
@@ -806,6 +827,7 @@ describe("Office › Telegram", () => {
         propertyId="prop-1"
       />,
     );
+    fireEvent.click(await screen.findByRole("button", { name: "Warnings" }));
     const warnings = await screen.findByRole("region", {
       name: "Warnings on Telegram",
     });

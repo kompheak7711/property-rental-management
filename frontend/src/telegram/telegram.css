@@ -100,3 +100,17 @@
 .shell-view p.tg-tight + p {
   margin-top: 0;
 }
+
+/* Sent on Telegram (owner 17/11/2026): the switch fits its 3 choices; on a phone they share
+   the row equally. */
+.ui-seg.tg-sent-switch {
+  justify-self: start;
+}
+
+@media (max-width: 640px) {
+  .ui-seg.tg-sent-switch {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    justify-self: stretch;
+  }
+}
