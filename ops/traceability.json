@@ -72136,7 +72136,7 @@
       "notes": "Needs check returns the last posting pass and marks it stale after the configured age."
     },
     {
-      "test_id": "test_migration_431_is_the_head_and_is_forward_only",
+      "test_id": "test_migration_431_follows_the_head_and_is_forward_only",
       "upstream_ids": [
         "DL-246"
       ],
@@ -72154,6 +72154,26 @@
       "test_path": "backend/tests/test_gl_posting_status_migration.py",
       "status": "implemented",
       "notes": "One status row per Property is replaced by each pass; runtime reads but cannot record; negative counts are refused."
+    },
+    {
+      "test_id": "test_migration_432_is_the_head_and_is_forward_only",
+      "upstream_ids": [
+        "DL-247"
+      ],
+      "test_level": "migration",
+      "test_path": "backend/tests/test_same_day_move_out_utility_migration.py",
+      "status": "implemented",
+      "notes": "Migration 20270809_432 follows 20270808_431, is the head and is forward-only."
+    },
+    {
+      "test_id": "test_the_preview_and_home_skip_the_final_utility_invoice_for_a_same_day_hand_back",
+      "upstream_ids": [
+        "DL-247"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_same_day_move_out_utility_migration.py",
+      "status": "implemented",
+      "notes": "The Final Settlement preview and Home skip the final Utility Invoice when the hand-back is on or before the Lease Start Date, before the no-Meter rule."
     }
   ]
 }

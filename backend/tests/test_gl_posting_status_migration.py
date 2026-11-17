@@ -20,11 +20,12 @@ RECORD = "SELECT app.gl_record_posting_pass(%s, %s, %s, %s)"
 STATUS = "SELECT posted, needs_check FROM app.gl_posting_status WHERE property_id = %s"
 
 
-def test_migration_431_is_the_head_and_is_forward_only() -> None:
+def test_migration_431_follows_the_head_and_is_forward_only() -> None:
     scripts = ScriptDirectory.from_config(Config("alembic.ini"))
     migration = scripts.get_revision(REVISION)
     assert migration is not None and migration.down_revision == "20270807_424"
-    assert scripts.get_heads() == [REVISION]
+    # The same-day move-out (DL-247) follows it.
+    assert scripts.get_heads() == ["20270809_432"]
     with pytest.raises(RuntimeError, match="forward-only"):
         migration.module.downgrade()
 

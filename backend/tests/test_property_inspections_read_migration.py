@@ -35,7 +35,7 @@ def test_migration_422_follows_430_and_is_forward_only() -> None:
     scripts = ScriptDirectory.from_config(config)
     revision = scripts.get_revision(REVISION)
     assert revision is not None and revision.down_revision == "20270806_430"
-    assert scripts.get_heads() == ["20270808_431"]  # the ledger posting status 431 follows 424
+    assert scripts.get_heads() == ["20270809_432"]  # the same-day move-out 432 follows 431
     with pytest.raises(NotImplementedError, match="forward-only"):
         revision.module.downgrade()
 

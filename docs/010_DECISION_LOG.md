@@ -3502,3 +3502,15 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **Open.** The worker also reads the booking sites' calendars over HTTPS, which the office server's outbound allowed list (Telegram only) blocks; billing and posting do not depend on it. A native Khmer check of the new words.
 - **Links:** DL-245, UI-073.
 - **Decision date:** 2026-11-17.
+
+## DL-247 — Same day, no Utility charge: a hand-back on the Lease's first day needs no final Utility Invoice
+
+- **Type:** `OWNER DECISION` (the rule) and `TECHNICAL DECISION UNDER THE OWNER'S RULE` (the shape).
+- **Source.** The full test of 17 Nov 2026 (`docs/ui-audit/07_FULL_TEST_RESULTS.md`, finding 2): a Lease signed, moved into, terminated and handed back on its Start Date could not finish step 3 of the move-out. The final Utility Invoice command refused with UTILITY_START_READING_MISSING (a Utility period starts the day after its start reading, so there is no day to bill), and the Final Settlement preview kept FINAL_UTILITY_NOT_ISSUED. The owner chose "same day, no Utility charge" (no minimum charge) on 17 Nov 2026.
+- **The rule.** When the hand-back day is on or before the Lease Start Date, there are no final readings and no final Utility Invoice. The Final Settlement does not wait for them, as for a Unit with no Meter (migration 238). Home's "Refund due by" to-do counts such a Lease as billed. Utility periods of the Lease with consumption on no Invoice still block (UTILITY_PERIOD_NOT_BILLED, unchanged).
+- **Built.** Migration `20270809_432` patches `app.final_settlement_preview` and `app.home_page` in place (forward-only, no data changed). The move-out page marks step 3 Done with "Moved in and handed back on {day}: there is no day of electricity or water to bill …" and offers no button.
+- **Not changed.** The final Utility Invoice command; the Rent rules of the hand-back month.
+- **Open.** A native Khmer check of the new words.
+- **Links:** DL-245, DL-246, V1-058 R7b-7 (migration 238).
+- **Decision date:** 2026-11-17.
+
