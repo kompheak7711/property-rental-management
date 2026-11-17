@@ -72174,6 +72174,16 @@
       "test_path": "backend/tests/test_same_day_move_out_utility_migration.py",
       "status": "implemented",
       "notes": "The Final Settlement preview and Home skip the final Utility Invoice when the hand-back is on or before the Lease Start Date, before the no-Meter rule."
+    },
+    {
+      "test_id": "test_a_property_id_that_is_not_a_property_records_no_status",
+      "upstream_ids": [
+        "DL-246"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_ledger_posting_job.py",
+      "status": "implemented",
+      "notes": "A posting pass for an id that is not a Property posts nothing, records no status row and still ends."
     }
   ]
 }

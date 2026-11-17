@@ -33,6 +33,7 @@ class Connection:
         self.years_kept = 0
         self.month_ends = 0
         self.recorded: list[tuple[object, ...]] = []
+        self.rollbacks = 0
 
     def __enter__(self) -> Connection:
         return self
@@ -59,6 +60,9 @@ class Connection:
 
     def commit(self) -> None:
         self.commits += 1
+
+    def rollback(self) -> None:
+        self.rollbacks += 1
 
 
 def job_with(
@@ -134,3 +138,19 @@ def test_each_pass_records_when_the_books_were_last_updated(
     job.run(until=date(2027, 1, 5))
     assert len(connection.recorded) == 1
     assert connection.recorded[0][2:] == (5, 1)
+
+
+def test_a_property_id_that_is_not_a_property_records_no_status(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # The status row refers to the Property; an unknown id posts nothing and the pass still ends.
+    job, connection = job_with(monkeypatch, [(0, 0)], batch=3)
+
+    def refuse(sql: str, parameters: tuple[object, ...]) -> Result:
+        if "app.gl_record_posting_pass" in sql:
+            raise psycopg.errors.ForeignKeyViolation("no such Property")
+        return Connection.execute(connection, sql, parameters)
+
+    monkeypatch.setattr(connection, "execute", refuse)
+    assert job.run(until=date(2027, 1, 5)) == LedgerPostingResult(0, 0, 2)
+    assert connection.rollbacks == 1

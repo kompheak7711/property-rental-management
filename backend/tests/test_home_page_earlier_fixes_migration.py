@@ -107,6 +107,9 @@ def test_the_home_page_at_the_head_holds_every_fix_once(migrated_database_url: s
     # card reads a worked-out status instead of app.units; the for-rent rule stays.
     held = _migration("20270803_417")
     definition = definition.replace(cast(str, held.UNITS_AFTER), cast(str, held.UNITS_BEFORE))
+    # 432 (DL-247, full test 17/11/2026) adds the same-day hand-back to the "Refund due by" to-do.
+    same_day = _migration("20270809_432")
+    definition = definition.replace(cast(str, same_day.HOME_AFTER), cast(str, same_day.HOME_BEFORE))
     for old, new in cast(tuple[tuple[str, str], ...], module.REPLACEMENTS):
         assert definition.count(new) == 1 and old not in definition
     for kept in cast(tuple[str, ...], module.KEPT):
