@@ -274,11 +274,17 @@ export const SCREENS: readonly Screen[] = [
   },
 ];
 
-/** The five sizes of the owner's rule (width × height). */
+/**
+ * The sizes of the owner's rule (width × height): the five of UI v81, then (owner 17/11/2026)
+ * an iPad on its side, a 27-inch monitor and a super-wide monitor.
+ */
 export const SIZES: readonly (readonly [number, number])[] = [
   [390, 844],
   [768, 1024],
+  [1024, 768],
   [1366, 768],
   [1440, 900],
   [1920, 1080],
+  [2560, 1440],
+  [5120, 1440],
 ];
