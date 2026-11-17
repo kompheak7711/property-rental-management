@@ -37,7 +37,7 @@ help:
 		"  make format                Apply backend and frontend formatting" \
 		"  make typecheck             Run backend and frontend strict typing" \
 		"  make build                 Build backend and frontend artifacts" \
-		"  make frontend-audit        Audit locked frontend dependencies" \
+		"  make frontend-audit        Audit frontend dependencies (shipped ones must pass)" \
 		"  make relay-test            Test the Telegram relay (Node.js 22.6 or newer)" \
 		"  make relay-typecheck       Type-check the Telegram relay (after frontend-install)" \
 		"  make automation-test       Test model routing without real model calls"
@@ -129,8 +129,15 @@ frontend-typecheck:
 frontend-build:
 	$(FRONTEND_RUN) build
 
+# DL-248 (owner, 18/11/2026): the packages the app ships (production dependencies) must have no
+# moderate or higher finding. The development tools (Vite, Vitest, typescript-eslint, ...) are
+# audited too, and their findings are printed, but they do not fail the build: they never run in
+# the app people use, and a finding with no fixed release (GHSA-fc5q-39xc-vjpf, picomatch) would
+# otherwise block every merge.
 frontend-audit:
-	cd $(FRONTEND_DIR) && $(NPM) audit --audit-level=moderate
+	cd $(FRONTEND_DIR) && $(NPM) audit --audit-level=moderate --omit=dev
+	cd $(FRONTEND_DIR) && $(NPM) audit --audit-level=moderate || \
+		echo "Development tools have audit findings (printed above). They do not block the build (DL-248)."
 
 # The Telegram relay (Cloudflare Worker) has no packages of its own: node:test runs its tests,
 # with node:sqlite standing in for D1, and the frontend's locked TypeScript checks its types.
