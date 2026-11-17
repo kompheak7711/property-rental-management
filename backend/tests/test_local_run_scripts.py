@@ -41,6 +41,7 @@ def copied_repository(tmp_path: Path) -> Iterator[Path]:
 def test_every_local_script_parses_and_reads_secrets_only_from_files() -> None:
     scripts = sorted(LOCAL_SCRIPTS.glob("*.sh"))
     assert {script.name for script in scripts} == {
+        "billing-worker.sh",
         "bootstrap-owner.sh",
         "common.sh",
         "database.sh",

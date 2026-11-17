@@ -42,9 +42,15 @@ if [ -s "$PRM_LOCAL/telegram/operations.json" ]; then
   sh scripts/local/telegram-jobs.sh >> "$PRM_LOCAL/telegram.log" 2>&1 &
   bots=$!
 fi
+# The billing worker (owner ask 17/11/2026): billing runs, late charges and posting to the books,
+# every 60 seconds (log: .local/billing.log).
+printf '   The billing worker runs too (log: .local/billing.log).\n'
+sh scripts/local/billing-worker.sh >> "$PRM_LOCAL/billing.log" 2>&1 &
+billing=$!
 stop_screens() {
   kill "$screens" 2>/dev/null || true
   [ -z "$bots" ] || kill "$bots" 2>/dev/null || true
+  kill "$billing" 2>/dev/null || true
 }
 trap stop_screens EXIT INT TERM HUP
 

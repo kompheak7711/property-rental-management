@@ -315,9 +315,11 @@ blocklist is `config/password-blocklist.txt` (not a secret; add lines to it, one
 Every day after that (or after the Mac restarts): open Docker Desktop, then steps 3, 7 and 8,
 then step 9. Or, in one window: double-click `Start test app.command` in the repository folder
 in Finder (or run `sh scripts/local/start-test-app.sh`). It opens Docker Desktop if needed,
-starts the database, applies any new migrations, starts the screens and the API (sudo asks for
-the Mac password), and opens the app in the browser. Control-C or closing the window stops the
-screens and the API. Each year: step 6 again, then restart step 8. If the Mac's local network name
+starts the database, applies any new migrations, starts the screens, the billing worker
+(`scripts/local/billing-worker.sh`: billing runs, late charges and posting to the books every 60
+seconds; log `.local/billing.log`) and the API (sudo asks for the Mac password), and opens the
+app in the browser. Control-C or closing the window stops the screens, the billing worker and the
+API. Each year: step 6 again, then restart step 8. If the Mac's local network name
 changes (macOS may add "-2" after a name clash on the Wi-Fi), do step 6 again and restart steps 7
 and 8. Use Safari or Chrome; Firefox does not use the Mac's trusted certificates.
 
