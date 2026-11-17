@@ -411,6 +411,36 @@ const TEXT = {
     "រកមិនឃើញការបង់ប្រាក់នេះទេ។ វាអាចជារបស់អគារផ្សេង។",
   ],
   // new
+  // Owner decision of 17/11/2026 (full test round 1): reverse a payment from its Receipt.
+  rc_reverse: ["Reverse payment", "ត្រឡប់ការបង់ប្រាក់វិញ"],
+  dlg_rv_t: ["Reverse payment {0}?", "ត្រឡប់ការបង់ប្រាក់ {0} វិញ?"],
+  dlg_rv_owed: ["{0}: owed again", "{0}៖ ជំពាក់ម្តងទៀត"],
+  dlg_rv_credit: ["Customer Credit taken back", "ដកឥណទានអតិថិជនវិញ"],
+  dlg_rv_total: ["Payment reversed", "ការបង់ប្រាក់ដែលត្រូវត្រឡប់វិញ"],
+  dlg_rv_after: [
+    "The Receipt keeps its number and is marked REVERSED. Record the right payment after this.",
+    "បង្កាន់ដៃរក្សាលេខរបស់វា ហើយមានសញ្ញា REVERSED។ បន្ទាប់ពីនេះ សូមកត់ត្រាការបង់ប្រាក់ដែលត្រឹមត្រូវ។",
+  ],
+  rv_wrong_method: ["Wrong payment method", "វិធីបង់ប្រាក់ខុស"],
+  rv_wrong_customer: ["Wrong Customer", "អតិថិជនខុស"],
+  rv_wrong_amount: ["Wrong amount", "ចំនួនទឹកប្រាក់ខុស"],
+  rv_not_arrived: ["Money did not arrive", "ប្រាក់មិនបានមកដល់"],
+  rv_blocked: [
+    "This payment also paid a Security Deposit, its Customer Credit was used, or it was refunded. Undo those first, then reverse the payment.",
+    "ការបង់ប្រាក់នេះក៏បានបង់ប្រាក់កក់ធានា ឥណទានអតិថិជនរបស់វាត្រូវបានប្រើ ឬវាត្រូវបានសងវិញ។ សូមលុបចោលការទាំងនោះជាមុនសិន បន្ទាប់មកត្រឡប់ការបង់ប្រាក់វិញ។",
+  ],
+  rv_unknown: [
+    "No answer came back, so the payment may already be reversed. Press Reverse again: it reverses once.",
+    "គ្មានចម្លើយត្រឡប់មកវិញ ដូច្នេះការបង់ប្រាក់ប្រហែលជាត្រូវបានត្រឡប់វិញរួចហើយ។ សូមចុច ត្រឡប់វិញ ម្តងទៀត៖ វាត្រឡប់តែម្តងប៉ុណ្ណោះ។",
+  ],
+  rv_failed: [
+    "The payment was not reversed. Try again.",
+    "ការបង់ប្រាក់មិនត្រូវបានត្រឡប់វិញទេ។ សូមព្យាយាមម្តងទៀត។",
+  ],
+  rv_saved: [
+    "Payment reversed. Its Invoices are owed again.",
+    "ការបង់ប្រាក់ត្រូវបានត្រឡប់វិញ។ វិក្កយបត្ររបស់វាត្រូវជំពាក់ម្តងទៀត។",
+  ],
   rc_reversed: [
     "This payment was reversed. The Receipt stays with its number; the money pays nothing.",
     "ការបង់ប្រាក់នេះត្រូវបានត្រឡប់វិញ។ បង្កាន់ដៃនៅរក្សាលេខ ប្រាក់មិនបង់អ្វីទេ។",

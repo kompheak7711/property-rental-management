@@ -1102,3 +1102,133 @@ describe("Operations screen (owner 13/11/2026)", () => {
     }
   });
 });
+
+// Owner decision of 17/11/2026 (full test round 1, finding 3): reverse a payment from its Receipt.
+describe("Reverse payment on the Receipt page", () => {
+  function reversible(view: ReceiptView = RECEIPT) {
+    return {
+      ...receiptApi(view),
+      reversePayment: vi.fn<NonNullable<PaymentsApi["reversePayment"]>>(() =>
+        Promise.resolve(),
+      ),
+    };
+  }
+
+  function showReversible(
+    paymentsApi: ReturnType<typeof reversible>,
+    mayReverse = true,
+  ) {
+    render(
+      <ReceiptPage
+        api={paymentsApi}
+        data={DATA}
+        language="en"
+        mayReprint
+        mayReverse={mayReverse}
+        namesFailed={false}
+        onRetryNames={() => undefined}
+        paymentId="p-1"
+        propertyId="property-1"
+      />,
+    );
+  }
+
+  it("shows the button only to a person with the reversal rights", async () => {
+    showReversible(reversible(), false);
+    await screen.findByRole("heading", { name: "Receipt RCP260045" });
+    expect(
+      screen.queryByRole("button", { name: "Reverse payment" }),
+    ).toBeNull();
+  });
+
+  it("lists what is undone, asks for a reason and reverses once with the same key", async () => {
+    const paymentsApi = reversible();
+    showReversible(paymentsApi);
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Reverse payment" }),
+    );
+    const dialog = await screen.findByRole("dialog");
+    expect(
+      within(dialog).getByText("INV260009: owed again"),
+    ).toBeInTheDocument();
+    expect(within(dialog).getByText("$490.00")).toBeInTheDocument();
+    const submit = within(dialog).getByRole("button", {
+      name: "Reverse payment",
+    });
+    fireEvent.click(submit);
+    expect(
+      await within(dialog).findByText("Choose a reason."),
+    ).toBeInTheDocument();
+    expect(paymentsApi.reversePayment).not.toHaveBeenCalled();
+
+    fireEvent.change(within(dialog).getByLabelText(/Reason/), {
+      target: { value: "rv_wrong_method" },
+    });
+    fireEvent.click(submit);
+    await waitFor(() => {
+      expect(paymentsApi.reversePayment).toHaveBeenCalledTimes(1);
+    });
+    expect(paymentsApi.reversePayment).toHaveBeenCalledWith(
+      "p-1",
+      "Wrong payment method",
+      expect.any(String),
+    );
+  });
+
+  it("refuses in the window when the payment also paid a Security Deposit", async () => {
+    const paymentsApi = reversible({
+      ...RECEIPT,
+      lines: [
+        ...RECEIPT.lines,
+        {
+          kind: "DEPOSIT",
+          invoiceId: null,
+          invoiceNumber: null,
+          category: null,
+          dueDate: null,
+          depositType: "SECURITY",
+          amount: 45_000,
+        },
+      ],
+    });
+    showReversible(paymentsApi);
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Reverse payment" }),
+    );
+    const dialog = await screen.findByRole("dialog");
+    expect(
+      within(dialog).getByText(/also paid a Security Deposit/),
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).queryByRole("button", { name: "Reverse payment" }),
+    ).toBeNull();
+  });
+
+  it("keeps the same key after no answer, so pressing again reverses once", async () => {
+    const paymentsApi = reversible();
+    paymentsApi.reversePayment
+      .mockRejectedValueOnce(new InvoiceClientError(null, "NETWORK", true))
+      .mockResolvedValueOnce(undefined);
+    showReversible(paymentsApi);
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Reverse payment" }),
+    );
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.change(within(dialog).getByLabelText(/Reason/), {
+      target: { value: "rv_wrong_amount" },
+    });
+    const submit = within(dialog).getByRole("button", {
+      name: "Reverse payment",
+    });
+    fireEvent.click(submit);
+    expect(
+      await within(dialog).findByText(/may already be reversed/),
+    ).toBeInTheDocument();
+    fireEvent.click(submit);
+    await waitFor(() => {
+      expect(paymentsApi.reversePayment).toHaveBeenCalledTimes(2);
+    });
+    const keys = paymentsApi.reversePayment.mock.calls.map((call) => call[2]);
+    expect(keys[1]).toBe(keys[0]);
+  });
+});

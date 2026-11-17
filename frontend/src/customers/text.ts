@@ -157,6 +157,8 @@ const TEXT = {
   ],
   open_invoices: ["Unpaid Invoices", "វិក្កយបត្រមិនទាន់បង់"],
   receipts: ["Latest Receipts", "បង្កាន់ដៃចុងក្រោយ"],
+  // Full test 17/11/2026 (finding 7): a reversed payment's Receipt.
+  receipt_reversed: ["Reversed", "បានត្រឡប់វិញ"],
   // new
   invoices_later: [
     "Each unpaid Invoice and the latest Receipts show here when Invoices and Payments are rebuilt (step R5).",

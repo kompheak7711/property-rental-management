@@ -162,6 +162,11 @@ export function PaymentsPage({
         key={`${propertyId}:${receiptOf}`}
         language={language}
         mayReprint={may("receipts.reprint")}
+        mayReverse={
+          may("payments.reverse") &&
+          may("payments.allocations.reverse") &&
+          may("credits.reverse")
+        }
         namesFailed={failed}
         onRetryNames={load}
         payerCard={payerCard}

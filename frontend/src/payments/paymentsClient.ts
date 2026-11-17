@@ -230,6 +230,15 @@ export interface PaymentsApi {
   ): Promise<PaymentsSummary>;
   receipt(propertyId: string, paymentId: string): Promise<ReceiptView>;
   reprint(receiptId: string, reason: string, key: string): Promise<void>;
+  /**
+   * Owner decision of 17/11/2026: reverse the Payment, its Allocations and its unused Customer
+   * Credit in one server command, all or nothing.
+   */
+  reversePayment?(
+    paymentId: string,
+    reason: string,
+    key: string,
+  ): Promise<void>;
   lateCharge(
     propertyId: string,
     invoiceId: string,
@@ -687,6 +696,13 @@ export function createPaymentsApi(
         "/api/v1/receipts/" + encoded(receiptId) + "/reprints",
         () => undefined,
         { key, body: { reason } },
+        transmission,
+      ),
+    reversePayment: (paymentId, reason, key) =>
+      billingTransport(
+        "/api/v1/payments/" + encoded(paymentId) + "/full-reversal",
+        () => undefined,
+        { key, body: { reason, expected_status: "RECEIVED" } },
         transmission,
       ),
     lateCharge: (propertyId, invoiceId) =>

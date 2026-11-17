@@ -72042,6 +72042,78 @@
       "test_path": "frontend/src/joint/JointInspections.test.tsx",
       "status": "implemented",
       "notes": "The Unit page card lists the Unit's Joint Inspections newest first and leaves out other Units."
+    },
+    {
+      "test_id": "test_full_reversal_needs_all_three_rights",
+      "upstream_ids": [
+        "DL-245",
+        "API-060",
+        "UI-073"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_payment_full_reversal.py",
+      "status": "implemented",
+      "notes": "The one-step payment reversal needs payments.reverse, payments.allocations.reverse and credits.reverse."
+    },
+    {
+      "test_id": "test_full_reversal_reverses_allocations_then_credit_then_payment_in_one_transaction",
+      "upstream_ids": [
+        "DL-245",
+        "API-060",
+        "UI-073"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_payment_full_reversal.py",
+      "status": "implemented",
+      "notes": "Allocations, then unused Credit, then the Payment are reversed on one connection that commits once."
+    },
+    {
+      "test_id": "test_the_same_request_key_gives_the_same_inner_keys",
+      "upstream_ids": [
+        "DL-245",
+        "API-060",
+        "UI-073"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_payment_full_reversal.py",
+      "status": "implemented",
+      "notes": "Each inner command key is derived from the request key, the step and the record, so a replay reverses once."
+    },
+    {
+      "test_id": "test_links_it_does_not_undo_refuse_before_anything_is_written",
+      "upstream_ids": [
+        "DL-245",
+        "API-060",
+        "UI-073"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_payment_full_reversal.py",
+      "status": "implemented",
+      "notes": "A Payment with a Credit application, deposit receipt, deposit disposition or refund is refused before any write."
+    },
+    {
+      "test_id": "test_a_failed_step_commits_nothing",
+      "upstream_ids": [
+        "DL-245",
+        "API-060",
+        "UI-073"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_payment_full_reversal.py",
+      "status": "implemented",
+      "notes": "A failed inner command leaves the transaction uncommitted: nothing is reversed."
+    },
+    {
+      "test_id": "test_a_payment_it_may_not_read_is_not_found",
+      "upstream_ids": [
+        "DL-245",
+        "API-060",
+        "UI-073"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_payment_full_reversal.py",
+      "status": "implemented",
+      "notes": "A Payment the reversal context cannot find answers not found and nothing is written."
     }
   ]
 }

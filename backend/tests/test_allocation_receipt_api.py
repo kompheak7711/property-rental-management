@@ -156,6 +156,21 @@ class Flow:
             "reversal_id": str(self.event),
         }
 
+    def reverse_payment_completely(
+        self,
+        prop: UUID,
+        payment: UUID,
+        command: ReversePaymentCommand,
+        *,
+        actor: AuthenticatedActor,
+    ) -> dict[str, object]:
+        self.result("reverse_payment_completely", (prop, payment, command, actor))
+        return {
+            "payment_reversal": {"payment_id": str(payment), "status": "REVERSED"},
+            "reversed_allocation_ids": [str(self.allocation)],
+            "reversed_credit_ids": [],
+        }
+
     def receipt(
         self, prop: UUID, identity: UUID, *, actor: AuthenticatedActor, by_payment: bool
     ) -> dict[str, object]:
@@ -265,10 +280,17 @@ def routes(flow: Flow) -> list[tuple[str, str, dict[str, object] | None, str, st
             "receipts.reprint",
             "reprint",
         ),
+        (
+            "POST",
+            f"/api/v1/payments/{payment}/full-reversal",
+            {"reason": "Wrong payment method", "expected_status": "RECEIVED"},
+            "payments.reverse",
+            "reverse_payment_completely",
+        ),
     ]
 
 
-@pytest.mark.parametrize("index", range(8))
+@pytest.mark.parametrize("index", range(9))
 def test_allocation_receipt_http_exact_routes_actor_scope_and_private_envelopes(
     index: int,
 ) -> None:
@@ -317,7 +339,7 @@ def test_allocation_receipt_http_exact_routes_actor_scope_and_private_envelopes(
         assert response.json()["data"]["fx"]["system_rate_khr_per_usd"] == "4062.123456"
 
 
-@pytest.mark.parametrize("index", range(8))
+@pytest.mark.parametrize("index", range(9))
 @pytest.mark.parametrize(
     "denial", ["anonymous", "other_capability", "other_property", "different_actor"]
 )

@@ -3470,3 +3470,19 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **Open.** A native Khmer check of the caption and the PDF words.
 - **Links:** DL-201, DL-243.
 - **Decision date:** 2026-11-17.
+
+## DL-245 — Reverse a payment from its Receipt, in one step
+
+- **Type:** `OWNER DECISION` (one step, all or nothing) and `TECHNICAL DECISION UNDER THE OWNER'S RULE` (the shape).
+- **Source.** The full test of 17 Nov 2026 (`docs/ui-audit/07_FULL_TEST_RESULTS.md`, finding 3): a payment could be reversed only in the old forms, with internal reference codes and three separate commands. The owner approved the preview ("Reverse payment" on the Receipt) and chose the recommended single server command on 17 Nov 2026.
+- **The rule.**
+  - The Receipt page shows "Reverse payment" to a person who holds `payments.reverse`, `payments.allocations.reverse` and `credits.reverse` (Managers and the Owner). Staff never see it; the server refuses them too.
+  - The window lists what the reversal undoes (each Invoice owed again, the Customer Credit taken back, the payment) and asks for a reason.
+  - `POST /api/v1/payments/{payment_id}/full-reversal` (body `reason`, `expected_status: "RECEIVED"`, header `Idempotency-Key`) runs, inside one database transaction, the existing commands `app.reverse_payment_allocation_command` for each active Allocation, `app.reverse_customer_credit` for each unused Credit, then `app.reverse_payment_command`. If one fails, nothing is written.
+  - Each inner command gets a key derived from the request's key, so the same request sent again reverses once.
+  - A payment that also paid a deposit, whose Credit was already used, or that was refunded is refused with `PAYMENT_REVERSAL_BLOCKED` before anything is written. Those are undone first on their own screens.
+  - The Customer page marks a reversed payment's Receipt "Reversed".
+- **Not changed.** The three separate commands and the old forms stay. No database migration.
+- **Open.** A native Khmer check of the new words.
+- **Links:** UI-073, UI-106, BR-PAY-*.
+- **Decision date:** 2026-11-17.
