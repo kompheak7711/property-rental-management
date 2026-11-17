@@ -490,8 +490,14 @@ def test_paying_the_rent_in_full_stops_the_notices_and_a_part_payment_does_not(
 ) -> None:
     db = notice_database
     day = run(db.owner_url, "SELECT app.gl_today(%s)", db.property_id)
-    paid, paid_line = rent_invoice(db, linked["lease"], linked["customer"], day - timedelta(110))
-    part, part_line = rent_invoice(db, linked["lease"], linked["customer"], day - timedelta(140))
+    paid_month = day - timedelta(110)
+    part_month = day - timedelta(140)
+    # On some days (18 November) both dates fall in one month, and two Rent Invoices for one
+    # month are refused (ExclusionViolation): the part-paid one then takes the month before.
+    if part_month.replace(day=1) == paid_month.replace(day=1):
+        part_month = part_month.replace(day=1) - timedelta(days=1)
+    paid, paid_line = rent_invoice(db, linked["lease"], linked["customer"], paid_month)
+    part, part_line = rent_invoice(db, linked["lease"], linked["customer"], part_month)
     pay_rent(db, linked["customer"], paid, paid_line, RENT)
     pay_rent(db, linked["customer"], part, part_line, 30_000)
 
