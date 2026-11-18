@@ -3471,6 +3471,49 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **Links:** DL-201, DL-243.
 - **Decision date:** 2026-11-17.
 
+## DL-245 — Reverse a payment from its Receipt, in one step
+
+- **Type:** `OWNER DECISION` (one step, all or nothing) and `TECHNICAL DECISION UNDER THE OWNER'S RULE` (the shape).
+- **Source.** The full test of 17 Nov 2026 (`docs/ui-audit/07_FULL_TEST_RESULTS.md`, finding 3): a payment could be reversed only in the old forms, with internal reference codes and three separate commands. The owner approved the preview ("Reverse payment" on the Receipt) and chose the recommended single server command on 17 Nov 2026.
+- **The rule.**
+  - The Receipt page shows "Reverse payment" to a person who holds `payments.reverse`, `payments.allocations.reverse` and `credits.reverse` (Managers and the Owner). Staff never see it; the server refuses them too.
+  - The window lists what the reversal undoes (each Invoice owed again, the Customer Credit taken back, the payment) and asks for a reason.
+  - `POST /api/v1/payments/{payment_id}/full-reversal` (body `reason`, `expected_status: "RECEIVED"`, header `Idempotency-Key`) runs, inside one database transaction, the existing commands `app.reverse_payment_allocation_command` for each active Allocation, `app.reverse_customer_credit` for each unused Credit, then `app.reverse_payment_command`. If one fails, nothing is written.
+  - Each inner command gets a key derived from the request's key, so the same request sent again reverses once.
+  - A payment that also paid a deposit, whose Credit was already used, or that was refunded is refused with `PAYMENT_REVERSAL_BLOCKED` before anything is written. Those are undone first on their own screens.
+  - The Customer page marks a reversed payment's Receipt "Reversed".
+- **Not changed.** The three separate commands and the old forms stay. No database migration.
+- **Open.** A native Khmer check of the new words.
+- **Links:** UI-073, UI-106, BR-PAY-*.
+- **Decision date:** 2026-11-17.
+
+## DL-246 — Needs check and Home say when the books were last updated
+
+- **Type:** `OWNER DECISION` (fix 1 of the full test, approved 17 Nov 2026) and `TECHNICAL DECISION UNDER THE OWNER'S RULE` (the shape).
+- **Source.** The full test of 17 Nov 2026 (`docs/ui-audit/07_FULL_TEST_RESULTS.md`, finding 1): the test app did not run the billing worker, so no Payment or Invoice reached the books, while Books › Needs check said "Nothing to check. Every money record is in the ledger." and Home showed Cash & bank $470.00 against $7,176.14 received. The owner approved the preview and the plan on 17 Nov 2026.
+- **The rule.**
+  - Each posting pass of the billing worker records when it finished, with how many records it posted and how many wait in Needs check: `app.gl_posting_status`, one row per Property, replaced by each pass (`app.gl_record_posting_pass`, money login). Migration `20270808_431`, forward-only; it adds a table and a function and changes no data.
+  - `GET /api/v1/properties/{id}/ledger/needs-check` returns `meta.last_pass` (`at`, `posted`, `needs_check`, `stale`, or null when no pass has run) and `meta.max_age_minutes`.
+  - A pass is stale after `APP_LEDGER_POSTING_MAX_AGE_MINUTES` (default 1560 minutes, a day and two hours; the test app sets 10).
+  - Needs check says "Books updated {time}" or, when stale or never, a warning that newer money is not in the books yet. "Every money record is in the ledger" is no longer said. Home's Financial summary shows "Books updated {time}" and the same warning.
+  - The test app starts the billing worker (`scripts/local/billing-worker.sh`, every 60 seconds).
+- **Not changed.** How records are posted; the Needs check list.
+- **Office server.** `config/deployment/host/prm-billing-worker.service` and `.timer` run the worker every 5 minutes as `prm-ops` with `/etc/prm/billing-worker.env` (owner: add it now, as a separate change). Steps in `docs/V1_059_OPERATIONS_RUNBOOK.md`.
+- **Open.** The worker also reads the booking sites' calendars over HTTPS, which the office server's outbound allowed list (Telegram only) blocks; billing and posting do not depend on it. A native Khmer check of the new words.
+- **Links:** DL-245, UI-073.
+- **Decision date:** 2026-11-17.
+
+## DL-247 — Same day, no Utility charge: a hand-back on the Lease's first day needs no final Utility Invoice
+
+- **Type:** `OWNER DECISION` (the rule) and `TECHNICAL DECISION UNDER THE OWNER'S RULE` (the shape).
+- **Source.** The full test of 17 Nov 2026 (`docs/ui-audit/07_FULL_TEST_RESULTS.md`, finding 2): a Lease signed, moved into, terminated and handed back on its Start Date could not finish step 3 of the move-out. The final Utility Invoice command refused with UTILITY_START_READING_MISSING (a Utility period starts the day after its start reading, so there is no day to bill), and the Final Settlement preview kept FINAL_UTILITY_NOT_ISSUED. The owner chose "same day, no Utility charge" (no minimum charge) on 17 Nov 2026.
+- **The rule.** When the hand-back day is on or before the Lease Start Date, there are no final readings and no final Utility Invoice. The Final Settlement does not wait for them, as for a Unit with no Meter (migration 238). Home's "Refund due by" to-do counts such a Lease as billed. Utility periods of the Lease with consumption on no Invoice still block (UTILITY_PERIOD_NOT_BILLED, unchanged).
+- **Built.** Migration `20270809_432` patches `app.final_settlement_preview` and `app.home_page` in place (forward-only, no data changed). The move-out page marks step 3 Done with "Moved in and handed back on {day}: there is no day of electricity or water to bill …" and offers no button.
+- **Not changed.** The final Utility Invoice command; the Rent rules of the hand-back month.
+- **Open.** A native Khmer check of the new words.
+- **Links:** DL-245, DL-246, V1-058 R7b-7 (migration 238).
+- **Decision date:** 2026-11-17.
+
 ## DL-248 — The frontend audit blocks on the shipped packages; development tool findings are reported
 
 - **Type:** `OWNER DECISION`.

@@ -6,8 +6,8 @@
 import { useEffect, useState } from "react";
 
 import type { AttendanceDay } from "../hr/hrClient";
-import type { LedgerApi, Report } from "../ledger/ledgerClient";
-import { usdFromCents } from "../shell/format";
+import type { LedgerApi, PostingStatus, Report } from "../ledger/ledgerClient";
+import { momentText, usdFromCents } from "../shell/format";
 import { Icon, type ShellIcon } from "../shell/icons";
 import { CardGrid } from "../shell/layouts";
 import type { PageId } from "../shell/navigation";
@@ -130,10 +130,13 @@ export function OwnerMoney({
   language: Language;
   propertyId: string;
   active: boolean;
-  api: Pick<LedgerApi, "report">;
+  api: Pick<LedgerApi, "report" | "postingStatus">;
   today: string;
 }) {
   const [numbers, setNumbers] = useState<OwnerMoneyNumbers | null>(null);
+  // Full test 17/11/2026 (finding 1): the money cards come from the books, so they say when the
+  // books were last updated, and warn when that was too long ago.
+  const [status, setStatus] = useState<PostingStatus | null>(null);
   useEffect(() => {
     if (!active || propertyId === "") return;
     let current = true;
@@ -144,6 +147,12 @@ export function OwnerMoney({
       pick: (report: Report) => T,
     ): Promise<T | null> =>
       api.report(propertyId, name, query).then(pick, () => null);
+    void api
+      .postingStatus?.(propertyId)
+      .then((found) => {
+        if (current) setStatus(found);
+      })
+      .catch(() => undefined);
     void Promise.all([
       read("balance-sheet", { as_of: today }, cashOf),
       read("customer-aging", {}, owedOf),
@@ -171,7 +180,22 @@ export function OwnerMoney({
     <section aria-labelledby="home-owner-money" className="ui-card">
       <div className="ui-chead">
         <h2 id="home-owner-money">{hmt(language, "om_t")}</h2>
+        {status?.last != null && !status.last.stale && (
+          <small className="ui-muted ui-num">
+            {hmt(language, "om_books", momentText(status.last.at))}
+          </small>
+        )}
       </div>
+      {status !== null && (status.last === null || status.last.stale) && (
+        <div className="ui-notice warn" role="status">
+          <Icon name="alert" />
+          <p>
+            {status.last === null
+              ? hmt(language, "om_books_never")
+              : hmt(language, "om_books_stale", momentText(status.last.at))}
+          </p>
+        </div>
+      )}
       <CardGrid className="ui-home-kpis ui-om" five>
         <MoneyCard
           icon="payments"

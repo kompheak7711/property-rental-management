@@ -50,6 +50,10 @@ from property_rental.payment_api import (
     _cursor,
     _queries,
 )
+from property_rental.payment_full_reversal import (
+    PaymentFullReversalService,
+    PaymentReversalBlockedError,
+)
 from property_rental.receipt import (
     ReceiptAuthorizationError,
     ReceiptIdempotencyKeyReused,
@@ -131,6 +135,14 @@ class AllocationReceiptFlow(Protocol):
         actor: AuthenticatedActor,
     ) -> dict[str, object]: ...
     def reverse_payment(
+        self,
+        prop: UUID,
+        payment: UUID,
+        command: ReversePaymentCommand,
+        *,
+        actor: AuthenticatedActor,
+    ) -> dict[str, object]: ...
+    def reverse_payment_completely(
         self,
         prop: UUID,
         payment: UUID,
@@ -294,6 +306,18 @@ class PostgresAllocationReceiptFlow:
             prop, payment, command, actor=actor
         )
 
+    def reverse_payment_completely(
+        self,
+        prop: UUID,
+        payment: UUID,
+        command: ReversePaymentCommand,
+        *,
+        actor: AuthenticatedActor,
+    ) -> dict[str, object]:
+        return PaymentFullReversalService(self._runtime(), self._financial()).reverse(
+            prop, payment, command, actor=actor
+        )
+
     def receipt(
         self, prop: UUID, identity: UUID, *, actor: AuthenticatedActor, by_payment: bool
     ) -> dict[str, object]:
@@ -329,6 +353,14 @@ class PostgresAllocationReceiptFlow:
             prop, receipt, command, actor=actor
         )
 
+
+# Owner decision of 17/11/2026 (DL-245): links the one-step payment reversal does not undo.
+PAYMENT_REVERSAL_BLOCKED: Final = Refusal(
+    409,
+    "PAYMENT_REVERSAL_BLOCKED",
+    "This payment also paid a deposit, its Customer Credit was used, or it was refunded. "
+    "Undo those first, then reverse the payment.",
+)
 
 # V1-056 slice 11d: the one-call allocation reversal names a moved allocation and a closed Final
 # Settlement (business state, 409) by their database message.
@@ -593,6 +625,30 @@ def create_allocation_receipt_router(
             request,
             _invoke(lambda: flow.reverse_payment(prop, payment_id, command, actor=actor)),
         )
+
+    # Owner decision of 17/11/2026 (full test round 1, finding 3): one command reverses the
+    # Payment's Allocations, its unused Customer Credit and the Payment, together or not at all.
+    @router.post("/payments/{payment_id}/full-reversal", dependencies=[Depends(_strict_json)])
+    def reverse_payment_completely(
+        payment_id: Identity,
+        body: PaymentReversalInput,
+        request: Request,
+        idempotency_key: Annotated[Identity, Header(alias="Idempotency-Key")],
+    ) -> dict[str, object]:
+        _queries(request, set())
+        actor, prop = context(request, "payment", payment_id, "payments.reverse")
+        command = _invoke(
+            lambda: ReversePaymentCommand(idempotency_key, body.reason, body.expected_status)
+        )
+        try:
+            result = _invoke(
+                lambda: _named_reversal(
+                    lambda: flow.reverse_payment_completely(prop, payment_id, command, actor=actor)
+                )
+            )
+        except PaymentReversalBlockedError as exc:
+            raise RefusedRequest(PAYMENT_REVERSAL_BLOCKED) from exc
+        return envelope(request, result)
 
     def read_receipt(
         identity: UUID,

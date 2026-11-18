@@ -43,8 +43,11 @@ chmod 700 "$APP_HR_FILES_DIRECTORY"
 mkdir -p "$APP_INSPECTION_FILES_DIRECTORY"
 chmod 700 "$APP_INSPECTION_FILES_DIRECTORY"
 export APP_DATABASE_URL APP_FINANCIAL_DATABASE_URL APP_ENVIRONMENT APP_TOTP_KEY_FILE
+# Full test 17/11/2026 (finding 1): the test app's billing worker posts every minute, so Needs
+# check and Home warn when the books were last updated more than 10 minutes ago.
+APP_LEDGER_POSTING_MAX_AGE_MINUTES=10
 export APP_PASSWORD_BLOCKLIST_FILE APP_ALLOWED_BROWSER_ORIGIN APP_HR_FILES_DIRECTORY \
-  APP_INSPECTION_FILES_DIRECTORY
+  APP_INSPECTION_FILES_DIRECTORY APP_LEDGER_POSTING_MAX_AGE_MINUTES
 # DL-181: ABA's riel rate from ABA PayWay, once the PayWay keys are saved on this Mac. The test
 # app uses the PayWay sandbox unless the file aba_payway_host names the live host.
 if [ -s "$PRM_SECRETS/aba_merchant_id" ] && [ -s "$PRM_SECRETS/aba_api_key" ]; then

@@ -850,6 +850,7 @@ def test_fastapi_openapi_inventory_has_no_bootstrap_or_unauthenticated_owner_res
         "/api/v1/payments/{payment_id}/allocations": {"get", "post"},
         "/api/v1/payment-allocations/{allocation_id}/reverse": {"post"},
         "/api/v1/payments/{payment_id}/reverse": {"post"},
+        "/api/v1/payments/{payment_id}/full-reversal": {"post"},
         "/api/v1/payments/{payment_id}/receipt": {"get"},
         "/api/v1/receipts/{receipt_id}": {"get"},
         "/api/v1/receipts/{receipt_id}/reprints": {"post"},

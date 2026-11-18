@@ -893,9 +893,15 @@ function MoveoutDetail({
   const invoice = final.state === "shown" ? final.invoice : null;
   const issued = inputs !== null && invoice !== null && invoice !== "unknown";
   const noMeters = final.state === "shown" && final.noMeters;
+  // DL-247 (full test 17/11/2026): handed back on the Lease's first day, no day of electricity
+  // or water to bill, so no final readings and no final Utility Invoice.
+  const sameDay =
+    handedBack &&
+    lease.start_date !== null &&
+    current.actual_move_out_date <= lease.start_date;
   const mark3: Mark = neverIn
     ? "skip"
-    : issued || noMeters
+    : issued || noMeters || sameDay
       ? "done"
       : handedBack
         ? "now"
@@ -912,6 +918,7 @@ function MoveoutDetail({
     final.state === "shown" &&
     !issued &&
     !noMeters &&
+    !sameDay &&
     (inputs === null
       ? mayRead
       : mayIssue && invoice !== "unknown" && inputs.unresolved === 0) ? (
@@ -1328,6 +1335,14 @@ function MoveoutDetail({
                 ) : final.state !== "shown" ? (
                   <p className="ui-muted" role="status">
                     {mt(language, "st3_reading_step")}
+                  </p>
+                ) : sameDay ? (
+                  <p>
+                    {mt(
+                      language,
+                      "st3_same_day",
+                      dayText(current.actual_move_out_date),
+                    )}
                   </p>
                 ) : noMeters ? (
                   <p>

@@ -14,6 +14,7 @@
 
 import {
   type FormEvent,
+  Fragment,
   useCallback,
   useEffect,
   useRef,
@@ -213,6 +214,195 @@ function ReprintDialog({
   );
 }
 
+const REVERSE_REASONS = [
+  "rv_wrong_method",
+  "rv_wrong_customer",
+  "rv_wrong_amount",
+  "rv_not_arrived",
+  "reason_other",
+] as const;
+type ReverseReason = (typeof REVERSE_REASONS)[number];
+
+// Owner decision of 17/11/2026 (full test round 1, finding 3): a Manager or the Owner reverses a
+// payment from its Receipt. The window lists what the reversal undoes; one server command
+// reverses the Allocations, the unused Customer Credit and the payment together, or nothing.
+function ReverseDialog({
+  language,
+  receipt,
+  api,
+  onClose,
+  onSaved,
+}: {
+  language: Language;
+  receipt: ReceiptView;
+  api: Required<Pick<PaymentsApi, "reversePayment">>;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [reason, setReason] = useState<ReverseReason | "">("");
+  const [more, setMore] = useState("");
+  const [problems, setProblems] = useState<("reason" | "more")[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState<"failed" | "unknown" | "blocked" | null>(
+    null,
+  );
+  const keys = useRef(new Map<string, string>());
+  // After a press with no answer the reversal may be recorded, so the reason is locked and the
+  // next press sends the same key (reversed once).
+  const locked = failed === "unknown";
+  // A deposit or a refund paid from this money is undone on its own screen first; the server
+  // refuses too.
+  const blocked =
+    failed === "blocked" ||
+    receipt.lines.some(
+      (line) => line.kind === "DEPOSIT" || line.kind === "REFUND",
+    );
+
+  const save = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (busy || blocked) return;
+    const found: ("reason" | "more")[] = [];
+    if (reason === "") found.push("reason");
+    if (reason === "reason_other" && more.trim() === "") found.push("more");
+    setProblems(found);
+    if (reason === "" || found.length > 0) return;
+    // The record keeps the English words, like every other reason in History.
+    const words =
+      pyt("en", reason) + (more.trim() === "" ? "" : `: ${more.trim()}`);
+    const key = keys.current.get(words) ?? crypto.randomUUID();
+    keys.current.set(words, key);
+    setBusy(true);
+    setFailed(null);
+    void api
+      .reversePayment(receipt.paymentId, words, key)
+      .then(onSaved)
+      .catch((error: unknown) => {
+        setFailed(
+          !(error instanceof InvoiceClientError) || error.outcomeUnknown
+            ? "unknown"
+            : error.code === "PAYMENT_REVERSAL_BLOCKED"
+              ? "blocked"
+              : "failed",
+        );
+      })
+      .finally(() => {
+        setBusy(false);
+      });
+  };
+
+  return (
+    <Dialog
+      busy={busy}
+      closeLabel={pyt(language, "cancel")}
+      onClose={onClose}
+      onSubmit={blocked ? undefined : save}
+      submitLabel={pyt(language, "rc_reverse")}
+      title={pyt(language, "dlg_rv_t", receipt.receiptNumber ?? "")}
+    >
+      <dl className="ui-kv">
+        {receipt.lines.map((line, index) => (
+          <Fragment
+            key={`${line.kind}:${line.invoiceId ?? ""}:${String(index)}`}
+          >
+            <dt>
+              {line.kind === "CREDIT"
+                ? pyt(language, "dlg_rv_credit")
+                : line.kind === "INVOICE" || line.kind === "LATE_PAYMENT_CHARGE"
+                  ? pyt(language, "dlg_rv_owed", line.invoiceNumber ?? "—")
+                  : pyt(language, LINE_NAMES[line.kind])}
+            </dt>
+            <dd className="ui-num">{usdFromCents(line.amount)}</dd>
+          </Fragment>
+        ))}
+        <dt>{pyt(language, "dlg_rv_total")}</dt>
+        <dd className="ui-num">
+          <strong>{usdFromCents(receipt.usdCents)}</strong>
+        </dd>
+      </dl>
+      {blocked ? (
+        <div className="ui-notice warn" role="alert">
+          <Icon name="alert" />
+          <p>{pyt(language, "rv_blocked")}</p>
+        </div>
+      ) : (
+        <>
+          <div className="ui-field">
+            <label htmlFor="rv-reason">
+              {pyt(language, "reason")}
+              <span className="req">{pyt(language, "required")}</span>
+            </label>
+            <select
+              aria-describedby={
+                problems.includes("reason") ? "rv-reason-err" : undefined
+              }
+              aria-invalid={problems.includes("reason")}
+              disabled={locked}
+              id="rv-reason"
+              onChange={(event) => {
+                setReason(event.currentTarget.value as ReverseReason | "");
+              }}
+              value={reason}
+            >
+              <option value="">{pyt(language, "reason_pick")}</option>
+              {REVERSE_REASONS.map((key) => (
+                <option key={key} value={key}>
+                  {pyt(language, key)}
+                </option>
+              ))}
+            </select>
+            {problems.includes("reason") && (
+              <p className="ui-error" id="rv-reason-err">
+                <Icon name="alert" small />
+                <span>{pyt(language, "err_reason")}</span>
+              </p>
+            )}
+          </div>
+          <div className="ui-field">
+            <label htmlFor="rv-more">
+              {pyt(language, "reason_more")}
+              <span className="req">
+                {pyt(
+                  language,
+                  reason === "reason_other" ? "required" : "optional",
+                )}
+              </span>
+            </label>
+            <textarea
+              aria-describedby={
+                problems.includes("more") ? "rv-more-err" : undefined
+              }
+              aria-invalid={problems.includes("more")}
+              disabled={locked}
+              id="rv-more"
+              maxLength={900}
+              onChange={(event) => {
+                setMore(event.currentTarget.value);
+              }}
+              rows={2}
+              value={more}
+            />
+            {problems.includes("more") && (
+              <p className="ui-error" id="rv-more-err">
+                <Icon name="alert" small />
+                <span>{pyt(language, "err_reason_more")}</span>
+              </p>
+            )}
+          </div>
+          <p className="ui-muted">{pyt(language, "dlg_rv_after")}</p>
+        </>
+      )}
+      {(failed === "unknown" || failed === "failed") && (
+        <div className="ui-notice warn" role="alert">
+          <Icon name="alert" />
+          <p>
+            {pyt(language, failed === "unknown" ? "rv_unknown" : "rv_failed")}
+          </p>
+        </div>
+      )}
+    </Dialog>
+  );
+}
+
 export function ReceiptPage({
   language,
   propertyId,
@@ -222,23 +412,28 @@ export function ReceiptPage({
   namesFailed,
   onRetryNames,
   mayReprint,
+  mayReverse = false,
   payerCard,
 }: {
   language: Language;
   propertyId: string;
   paymentId: string;
-  api: Pick<PaymentsApi, "receipt" | "reprint">;
+  api: Pick<PaymentsApi, "receipt" | "reprint" | "reversePayment">;
   data: InvoicesData | null;
   /** The Customer names could not be read; the Receipt does not print without them. */
   namesFailed: boolean;
   onRetryNames: () => void;
   mayReprint: boolean;
+  /** A Manager or the Owner: the rights to reverse a payment, its Allocations and its Credit. */
+  mayReverse?: boolean;
   /** What the Customer card beside the Receipt reads; left out, the card is not shown. */
   payerCard?: PayerCardReads;
 }) {
   const [receipt, setReceipt] = useState<ReceiptView | null>(null);
   const [problem, setProblem] = useState<"missing" | "failed" | null>(null);
   const [reprinting, setReprinting] = useState(false);
+  const [reversing, setReversing] = useState(false);
+  const [reversed, setReversed] = useState(false);
   // Each reprint is a new object, so a second reprint on the same day prints too.
   const [copy, setCopy] = useState<{ day: string } | null>(null);
   const sequence = useRef(0);
@@ -340,6 +535,20 @@ export function ReceiptPage({
                 {pyt(language, "rc_reprint")}
               </button>
             )}
+            {mayReverse &&
+              api.reversePayment !== undefined &&
+              receipt.status === "RECEIVED" && (
+                <button
+                  className="ui-btn"
+                  onClick={() => {
+                    setReversing(true);
+                  }}
+                  type="button"
+                >
+                  <Icon name="alert" />
+                  {pyt(language, "rc_reverse")}
+                </button>
+              )}
           </>
         }
         back={back}
@@ -372,6 +581,12 @@ export function ReceiptPage({
         <div className="ui-notice warn" role="status">
           <Icon name="alert" />
           <p>{pyt(language, "rc_reversed")}</p>
+        </div>
+      )}
+      {reversed && receipt.status === "REVERSED" && (
+        <div className="ui-notice ok" role="status">
+          <Icon name="check" />
+          <p>{pyt(language, "rv_saved")}</p>
         </div>
       )}
       {copy !== null && (
@@ -516,6 +731,21 @@ export function ReceiptPage({
             setReprinting(false);
             load();
             setCopy({ day: momentText(new Date().toISOString()).slice(0, 10) });
+          }}
+          receipt={receipt}
+        />
+      )}
+      {reversing && api.reversePayment !== undefined && (
+        <ReverseDialog
+          api={{ reversePayment: api.reversePayment.bind(api) }}
+          language={language}
+          onClose={() => {
+            setReversing(false);
+          }}
+          onSaved={() => {
+            setReversing(false);
+            setReversed(true);
+            load();
           }}
           receipt={receipt}
         />

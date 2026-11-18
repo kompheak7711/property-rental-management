@@ -85,6 +85,17 @@ class LedgerPostingJob:
                     "SELECT app.gl_month_end_work(%s,%s)", (self._property_id, self._actor_id)
                 ).fetchone()
                 connection.commit()
+                # Full test 17/11/2026 (finding 1): Needs check and Home say when the books were
+                # last updated, and warn when no pass has run for too long.
+                try:
+                    connection.execute(
+                        "SELECT app.gl_record_posting_pass(%s,%s,%s,%s)",
+                        (self._property_id, self._actor_id, posted, needs_check),
+                    )
+                    connection.commit()
+                except psycopg.errors.ForeignKeyViolation:
+                    # A Property id that is not a Property posts nothing and has no status row.
+                    connection.rollback()
         except psycopg.Error as exc:
             raise LedgerPostingError(getattr(exc, "sqlstate", None) or type(exc).__name__) from exc
         month_end_done = int(done[0]) if done is not None and done[0] is not None else 0

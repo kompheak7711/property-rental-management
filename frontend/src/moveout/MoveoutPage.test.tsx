@@ -1283,6 +1283,29 @@ describe("Move-out", () => {
     ).toBeTruthy();
   });
 
+  it("DL-247 a hand-back on the Lease Start Date has no day to bill: step 3 is done with no readings and no Invoice", async () => {
+    window.location.hash = "#/moveout/lease-U105";
+    const { invoiceApi } = setup([{ ...out, start_date: "2026-10-12" }], {
+      page: handedBackPage,
+    });
+    expect(
+      await screen.findByText(
+        /Moved in and handed back on 12\/10\/2026: there is no day of electricity or water to bill/,
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.queryByRole("button", { name: "Record final readings" }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Issue the final Utility Invoice" }),
+    ).toBeNull();
+    expect(
+      invoiceApi.list.mock.calls.some(
+        (call) => call[1]?.category === "UTILITIES",
+      ),
+    ).toBe(false);
+  });
+
   it("TEST-FE-968 a reading already taken on the hand-back day is used as it is; without the right to issue Invoices only the readings are saved and the step says a Manager issues the Invoice", async () => {
     window.location.hash = "#/moveout/lease-U105";
     const { utilityApi, utilityLeaseApi } = setup([out], {

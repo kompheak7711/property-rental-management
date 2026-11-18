@@ -182,6 +182,19 @@ container). The health screen itself is built in the screen rebuild (UI-093, DL-
 5. The office computer's firewall allows outbound HTTPS only to `api.telegram.org`
    (DEPLOY-016). No other outbound host is on the list in V1.
 
+**The billing worker (DL-246).** `prm-billing-worker.timer` runs `prm-billing-worker.service`
+every 5 minutes as `prm-ops`: the Rent and Utility runs that are due (the 25th, the reading day),
+the automatic late-payment charges, posting the money records to the books, and turning off a
+leaver's app user. It reads `/etc/prm/billing-worker.env` (mode 0600, owner `prm-ops`):
+`APP_FINANCIAL_DATABASE_URL` (the money login), `PRM_PROPERTY_ID` and `PRM_BILLING_ACTOR_ID`
+(the Property's billing service principal: `SELECT actor_id FROM app.billing_service_principals`).
+Enable it with `systemctl enable --now prm-billing-worker.timer`. Without it no Invoice is made on
+the 25th and the books stay behind; Needs check and Home then warn (after
+`APP_LEDGER_POSTING_MAX_AGE_MINUTES`). Each pass prints its result to the journal
+(`journalctl -u prm-billing-worker`). Open: the worker also reads the booking sites' calendars
+over HTTPS; the outbound allowed list has the Telegram host only, so that part fails until the
+owner decides about it. Billing and posting do not depend on it.
+
 **The Telegram bots (DL-125; off until the owner sets them up).** `prm-telegram-pull.timer` and
 `prm-telegram-send.timer` run every 10 seconds as `prm-ops` (DL-218); the pull job collects
 the relay's items every 150 seconds (DL-219: the relay answers every message at once). They read
@@ -190,7 +203,9 @@ and do nothing while `telegram_bots.enabled` is false. The Staff bot (DL-174) al
 `PRM_TELEGRAM_SERVICE_ACTOR_ID` (a service actor, for the HR staff functions) and
 `APP_HR_FILES_DIRECTORY=/var/lib/prm/hr-files` (card scan photos, removed after the HR rule's
 90 days); without them the Staff bot answers that it is not ready. The relay setup steps are in
-`relay/README.md`. ABA QR on every Invoice (DL-180) adds an `aba_payway` block to the operations
+`relay/README.md`. The API reads `APP_LEDGER_POSTING_MAX_AGE_MINUTES` (DL-246; default 1560, a
+day and two hours; the test app sets 10): Needs check and Home warn when the billing worker last
+posted to the books longer ago than that. ABA QR on every Invoice (DL-180) adds an `aba_payway` block to the operations
 file (`enabled`, `host`, `merchant_id_file`, `api_key_file`, `payment_method_code`) and
 `APP_FINANCIAL_DATABASE_URL` to the jobs' environment; while it is on and not ready, Invoice
 messages wait. The API reads ABA's riel rate (DL-181) when `APP_ABA_PAYWAY_HOST`,

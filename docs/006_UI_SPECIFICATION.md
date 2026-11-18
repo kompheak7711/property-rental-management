@@ -756,6 +756,15 @@ Deposit Applications/Dispositions, and required verified Refund returns as speci
 Provide the authorized Deposit Receipt reversal action and require reason,
 authorization, and explicit irreversible-action confirmation.
 
+Amended by DL-245 (owner, 2026-11-17): the Receipt page has "Reverse payment" for a person who
+holds `payments.reverse`, `payments.allocations.reverse` and `credits.reverse` (Managers and the
+Owner). Its window lists each Invoice that is owed again and any Customer Credit taken back, with
+the amounts, and asks for a reason ("Wrong payment method", "Wrong Customer", "Wrong amount",
+"Money did not arrive" or "Other" with what happened). One server command reverses the
+Allocations, the unused Customer Credit and the Payment together, or nothing. A Payment that also
+paid a deposit, whose Credit was used, or that was refunded is refused with "Undo those first";
+those are undone on their own screens. The Customer page marks a reversed Receipt "Reversed".
+
 ## UI-074 — Reversal Result
 
 After success, display linked reversal event, Payment `REVERSED`, recomputed Invoice

@@ -72000,7 +72000,7 @@
       "notes": "The Joint Inspection PDF copy: staff print the same copy once the inspection is done."
     },
     {
-      "test_id": "test_migration_424_is_the_head_and_is_forward_only",
+      "test_id": "test_migration_424_follows_the_head_and_is_forward_only",
       "upstream_ids": [
         "DL-244",
         "DL-243"
@@ -72042,6 +72042,148 @@
       "test_path": "frontend/src/joint/JointInspections.test.tsx",
       "status": "implemented",
       "notes": "The Unit page card lists the Unit's Joint Inspections newest first and leaves out other Units."
+    },
+    {
+      "test_id": "test_full_reversal_needs_all_three_rights",
+      "upstream_ids": [
+        "DL-245",
+        "API-060",
+        "UI-073"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_payment_full_reversal.py",
+      "status": "implemented",
+      "notes": "The one-step payment reversal needs payments.reverse, payments.allocations.reverse and credits.reverse."
+    },
+    {
+      "test_id": "test_full_reversal_reverses_allocations_then_credit_then_payment_in_one_transaction",
+      "upstream_ids": [
+        "DL-245",
+        "API-060",
+        "UI-073"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_payment_full_reversal.py",
+      "status": "implemented",
+      "notes": "Allocations, then unused Credit, then the Payment are reversed on one connection that commits once."
+    },
+    {
+      "test_id": "test_the_same_request_key_gives_the_same_inner_keys",
+      "upstream_ids": [
+        "DL-245",
+        "API-060",
+        "UI-073"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_payment_full_reversal.py",
+      "status": "implemented",
+      "notes": "Each inner command key is derived from the request key, the step and the record, so a replay reverses once."
+    },
+    {
+      "test_id": "test_links_it_does_not_undo_refuse_before_anything_is_written",
+      "upstream_ids": [
+        "DL-245",
+        "API-060",
+        "UI-073"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_payment_full_reversal.py",
+      "status": "implemented",
+      "notes": "A Payment with a Credit application, deposit receipt, deposit disposition or refund is refused before any write."
+    },
+    {
+      "test_id": "test_a_failed_step_commits_nothing",
+      "upstream_ids": [
+        "DL-245",
+        "API-060",
+        "UI-073"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_payment_full_reversal.py",
+      "status": "implemented",
+      "notes": "A failed inner command leaves the transaction uncommitted: nothing is reversed."
+    },
+    {
+      "test_id": "test_a_payment_it_may_not_read_is_not_found",
+      "upstream_ids": [
+        "DL-245",
+        "API-060",
+        "UI-073"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_payment_full_reversal.py",
+      "status": "implemented",
+      "notes": "A Payment the reversal context cannot find answers not found and nothing is written."
+    },
+    {
+      "test_id": "test_each_pass_records_when_the_books_were_last_updated",
+      "upstream_ids": [
+        "DL-246"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_ledger_posting_job.py",
+      "status": "implemented",
+      "notes": "Each posting pass records when it finished, with its posted and Needs check counts."
+    },
+    {
+      "test_id": "test_needs_check_says_when_the_books_were_last_updated_and_when_that_is_too_long_ago",
+      "upstream_ids": [
+        "DL-246"
+      ],
+      "test_level": "API",
+      "test_path": "backend/tests/test_ledger_posting_api.py",
+      "status": "implemented",
+      "notes": "Needs check returns the last posting pass and marks it stale after the configured age."
+    },
+    {
+      "test_id": "test_migration_431_follows_the_head_and_is_forward_only",
+      "upstream_ids": [
+        "DL-246"
+      ],
+      "test_level": "migration",
+      "test_path": "backend/tests/test_gl_posting_status_migration.py",
+      "status": "implemented",
+      "notes": "Migration 20270808_431 follows 20270807_424, is the head and is forward-only."
+    },
+    {
+      "test_id": "test_each_pass_replaces_the_one_status_row_and_only_the_money_login_records_it",
+      "upstream_ids": [
+        "DL-246"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_gl_posting_status_migration.py",
+      "status": "implemented",
+      "notes": "One status row per Property is replaced by each pass; runtime reads but cannot record; negative counts are refused."
+    },
+    {
+      "test_id": "test_migration_432_is_the_head_and_is_forward_only",
+      "upstream_ids": [
+        "DL-247"
+      ],
+      "test_level": "migration",
+      "test_path": "backend/tests/test_same_day_move_out_utility_migration.py",
+      "status": "implemented",
+      "notes": "Migration 20270809_432 follows 20270808_431, is the head and is forward-only."
+    },
+    {
+      "test_id": "test_the_preview_and_home_skip_the_final_utility_invoice_for_a_same_day_hand_back",
+      "upstream_ids": [
+        "DL-247"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_same_day_move_out_utility_migration.py",
+      "status": "implemented",
+      "notes": "The Final Settlement preview and Home skip the final Utility Invoice when the hand-back is on or before the Lease Start Date, before the no-Meter rule."
+    },
+    {
+      "test_id": "test_a_property_id_that_is_not_a_property_records_no_status",
+      "upstream_ids": [
+        "DL-246"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_ledger_posting_job.py",
+      "status": "implemented",
+      "notes": "A posting pass for an id that is not a Property posts nothing, records no status row and still ends."
     }
   ]
 }

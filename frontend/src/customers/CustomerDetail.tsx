@@ -125,6 +125,9 @@ export function CustomerDetail({
   const [receipts, setReceipts] = useState<
     readonly LedgerHistory[] | null | undefined
   >(undefined);
+  const [reversedPayments, setReversedPayments] = useState<ReadonlySet<string>>(
+    new Set(),
+  );
   const view = useHashView();
   const [dialog, setDialog] = useState<"edit" | "deactivate" | null>(null);
   const [notice, setNotice] = useState<string | null>(firstNotice);
@@ -163,27 +166,44 @@ export function CustomerDetail({
     // The ledger reads oldest first: read the Receipt lines page by page (at most 1,000).
     void (async () => {
       const scope = { actorId, propertyId, signal: controller.signal };
-      const found: LedgerHistory[] = [];
-      let cursor: LedgerCursor | null = null;
-      let snapshot: LedgerSnapshot | undefined;
-      for (let page = 0; page < 10; page += 1) {
-        const reply = await ledgerApi.read(
-          {
-            section: "history",
-            customerId,
-            limit: 100,
-            filters: { kind: "PAYMENT_RECEIVED" },
-            ...(cursor === null ? {} : { cursor, snapshot }),
-          },
-          scope,
-        );
-        if (reply.section !== "history") return null;
-        found.push(...reply.items);
-        snapshot = reply.snapshot;
-        cursor = reply.nextCursor;
-        if (cursor === null) break;
-      }
-      return found.reverse();
+      const lines = async (
+        kind: "PAYMENT_RECEIVED" | "PAYMENT_REVERSED",
+      ): Promise<LedgerHistory[] | null> => {
+        const found: LedgerHistory[] = [];
+        let cursor: LedgerCursor | null = null;
+        let snapshot: LedgerSnapshot | undefined;
+        for (let page = 0; page < 10; page += 1) {
+          const reply = await ledgerApi.read(
+            {
+              section: "history",
+              customerId,
+              limit: 100,
+              filters: { kind },
+              ...(cursor === null ? {} : { cursor, snapshot }),
+            },
+            scope,
+          );
+          if (reply.section !== "history") return null;
+          found.push(...reply.items);
+          snapshot = reply.snapshot;
+          cursor = reply.nextCursor;
+          if (cursor === null) break;
+        }
+        return found;
+      };
+      const received = await lines("PAYMENT_RECEIVED");
+      // Full test 17/11/2026 (finding 7): a reversed payment is marked, never shown as plain.
+      const reversed = await lines("PAYMENT_REVERSED");
+      if (received === null || reversed === null) return null;
+      if (operation !== sequence.current) return received.reverse();
+      setReversedPayments(
+        new Set(
+          reversed.flatMap((row) =>
+            row.payment_id === null ? [] : [row.payment_id],
+          ),
+        ),
+      );
+      return received.reverse();
     })()
       .then((rows) => {
         if (operation === sequence.current) setReceipts(rows);
@@ -282,7 +302,11 @@ export function CustomerDetail({
           ) : receipts.length === 0 ? (
             <p className="ui-small ui-muted">{ct(language, "receipts_none")}</p>
           ) : (
-            <ReceiptList rows={receipts} />
+            <ReceiptList
+              language={language}
+              reversed={reversedPayments}
+              rows={receipts}
+            />
           )
         ) : historyRows.length === 0 ? (
           <p className="ui-small ui-muted">{ct(language, "history_none")}</p>
@@ -593,7 +617,11 @@ export function CustomerDetail({
               </p>
             ) : (
               <>
-                <ReceiptList rows={latestOf(receipts)} />
+                <ReceiptList
+                  language={language}
+                  reversed={reversedPayments}
+                  rows={latestOf(receipts)}
+                />
                 {receipts.length > 5 && (
                   <ViewAllButton
                     icon="payments"
@@ -691,7 +719,16 @@ export function CustomerDetail({
 }
 
 /** UI v81: Receipt lines from the Customer's ledger, newest first; each opens its Receipt. */
-function ReceiptList({ rows }: { rows: readonly LedgerHistory[] }) {
+function ReceiptList({
+  language,
+  rows,
+  reversed,
+}: {
+  language: Language;
+  rows: readonly LedgerHistory[];
+  /** Payments that were reversed later: their Receipts are marked, never shown as plain. */
+  reversed: ReadonlySet<string>;
+}) {
   return (
     <ul className="ui-apps">
       {rows.map((row) => (
@@ -708,6 +745,9 @@ function ReceiptList({ rows }: { rows: readonly LedgerHistory[] }) {
               <span className="ui-num">{row.source_reference ?? "—"}</span>
             )}
             <small className="ui-num">{dayText(row.business_date)}</small>
+            {row.payment_id !== null && reversed.has(row.payment_id) && (
+              <Chip tone="warn">{ct(language, "receipt_reversed")}</Chip>
+            )}
           </span>
           <b className="ui-num">
             {ledgerMoney(row.recorded_amount_usd_cents ?? "0")}

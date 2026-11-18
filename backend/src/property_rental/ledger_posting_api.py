@@ -19,7 +19,7 @@ Manager); setting the ledger account of a Payment Method or Refund method needs
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import UTC, date, datetime, timedelta
 from typing import Final, Literal, Protocol
 from uuid import UUID, uuid4
 
@@ -95,8 +95,19 @@ class MethodAccount:
     riel_account_name: str | None = None
 
 
+@dataclass(frozen=True, slots=True)
+class PostingPass:
+    """When the last posting pass finished (full test 17/11/2026, finding 1)."""
+
+    at: datetime
+    posted: int
+    needs_check: int
+
+
 class LedgerPostingFlow(Protocol):
     def needs_check(self, property_id: UUID) -> tuple[PostingProblem, ...]: ...
+
+    def last_pass(self, property_id: UUID) -> PostingPass | None: ...
 
     def method_accounts(self, property_id: UUID) -> tuple[MethodAccount, ...]: ...
 
@@ -115,6 +126,10 @@ class LedgerPostingFlow(Protocol):
 
 class UnavailableLedgerPostingFlow:
     def needs_check(self, property_id: UUID) -> tuple[PostingProblem, ...]:
+        del property_id
+        raise LedgerPostingUnavailable
+
+    def last_pass(self, property_id: UUID) -> PostingPass | None:
         del property_id
         raise LedgerPostingUnavailable
 
@@ -162,6 +177,25 @@ class PostgresLedgerPostingFlow:
             )
             for key, kind, source, day, problem, first, last, number, target in rows
         )
+
+    def last_pass(self, property_id: UUID) -> PostingPass | None:
+        try:
+            with psycopg.connect(self._database_url) as connection:
+                row = connection.execute(
+                    "SELECT last_pass_at, posted, needs_check FROM app.gl_posting_status "
+                    "WHERE property_id = %s",
+                    (property_id,),
+                ).fetchone()
+        except psycopg.Error as exc:
+            raise LedgerPostingUnavailable from exc
+        if row is None:
+            return None
+        at, posted, waiting = row
+        if not isinstance(at, datetime) or not isinstance(posted, int):
+            raise LedgerPostingUnavailable
+        if not isinstance(waiting, int):
+            raise LedgerPostingUnavailable
+        return PostingPass(at, posted, waiting)
 
     def method_accounts(self, property_id: UUID) -> tuple[MethodAccount, ...]:
         try:
@@ -302,8 +336,20 @@ def create_ledger_posting_router(
         response.headers["Cache-Control"] = "private, no-store"
         try:
             rows = flow.needs_check(property_id)
+            last = flow.last_pass(property_id)
         except (LedgerPostingNotFound, LedgerPostingUnavailable) as exc:
             raise _http(exc) from exc
+        max_age = settings.ledger_posting_max_age_minutes
+        last_pass = (
+            None
+            if last is None
+            else {
+                "at": last.at.isoformat(),
+                "posted": last.posted,
+                "needs_check": last.needs_check,
+                "stale": datetime.now(UTC) - last.at > timedelta(minutes=max_age),
+            }
+        )
         return {
             "data": [
                 {
@@ -319,7 +365,13 @@ def create_ledger_posting_router(
                 }
                 for row in rows
             ],
-            "meta": {"request_id": request.state.request_id, "count": len(rows)},
+            "meta": {
+                "request_id": request.state.request_id,
+                "count": len(rows),
+                # Full test 17/11/2026 (finding 1): when the books were last updated.
+                "last_pass": last_pass,
+                "max_age_minutes": max_age,
+            },
         }
 
     @router.get("/properties/{property_id}/ledger/method-accounts")

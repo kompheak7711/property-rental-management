@@ -230,6 +230,11 @@ const TEXT = {
   cond_UNDER_MAINTENANCE: ["Under maintenance", "កំពុងជួសជុល"],
   cond_OUT_OF_SERVICE: ["Out of service", "ឈប់ប្រើ"],
   st3_t: ["Final meter readings", "អំណាននាឡិកាស្ទង់ចុងក្រោយ"],
+  // DL-247 (full test 17/11/2026): same day, no Utility charge.
+  st3_same_day: [
+    "Moved in and handed back on {0}: there is no day of electricity or water to bill, so no final readings and no final Utility Invoice are needed.",
+    "បានចូលស្នាក់នៅ និងប្រគល់បន្ទប់វិញនៅ {0}៖ គ្មានថ្ងៃប្រើអគ្គិសនី ឬទឹកដែលត្រូវគិតប្រាក់ទេ ដូច្នេះមិនចាំបាច់អំណានចុងក្រោយ ឬវិក្កយបត្រទឹកភ្លើងចុងក្រោយទេ។",
+  ],
   st3_todo: [
     "Read both meters on the hand-back day. The app issues the final Utility Invoice at once (off-cycle).",
     "អាននាឡិកាស្ទង់ទាំងពីរនៅថ្ងៃប្រគល់។ កម្មវិធីចេញវិក្កយបត្រទឹកភ្លើងចុងក្រោយភ្លាម។",

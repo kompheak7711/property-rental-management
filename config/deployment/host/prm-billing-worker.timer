@@ -1,0 +1,10 @@
+[Unit]
+Description=CHETANA Residence Management billing worker timer
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+AccuracySec=30s
+
+[Install]
+WantedBy=timers.target
