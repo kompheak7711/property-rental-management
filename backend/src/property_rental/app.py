@@ -58,6 +58,12 @@ from property_rental.billing_run_api import (
     create_billing_run_router,
 )
 from property_rental.browser_security import signed_in_browser_request
+from property_rental.buildings_api import (
+    BuildingFlow,
+    PostgresBuildingFlow,
+    UnavailableBuildingFlow,
+    create_buildings_router,
+)
 from property_rental.business_rules_api import (
     BusinessRuleFlow,
     PostgresBusinessRuleFlow,
@@ -636,6 +642,7 @@ def create_app(
     property_resource_flow: PropertyResourceFlow | None = None,
     unit_resource_flow: UnitResourceFlow | None = None,
     unit_inventory_flow: UnitInventoryFlow | None = None,
+    building_flow: BuildingFlow | None = None,
     customer_resource_flow: CustomerResourceFlow | None = None,
     configuration_flow: ConfigurationFlow | None = None,
     business_rule_flow: BusinessRuleFlow | None = None,
@@ -1568,6 +1575,18 @@ def create_app(
                 PostgresUnitResourceFlow(resolved_settings.database_url.get_secret_value())
                 if resolved_settings.database_url is not None
                 else UnavailableUnitResourceFlow()
+            ),
+            resolved_settings,
+        )
+    )
+    include_signed_in(
+        create_buildings_router(
+            actor_resolver,
+            building_flow
+            or (
+                PostgresBuildingFlow(resolved_settings.database_url.get_secret_value())
+                if resolved_settings.database_url is not None
+                else UnavailableBuildingFlow()
             ),
             resolved_settings,
         )
