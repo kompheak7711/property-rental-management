@@ -112,7 +112,9 @@ def source(url: str) -> tuple[UUID, UUID, UUID, RecordLeaseNotice]:
 UNIT_SETUP_COLUMNS = (
     "ARRAY['floor_item_id','size_square_metres','bedrooms','bathrooms',"
     "'view_item_id','kitchen_item_id','notes',"
-    "'default_monthly_rent_usd_cents','for_rent']"
+    "'default_monthly_rent_usd_cents','for_rent',"
+    # DL-250 (migration 433): every Unit goes into building 1.
+    "'building_id']"
 )
 
 

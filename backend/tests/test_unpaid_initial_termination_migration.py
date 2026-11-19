@@ -73,7 +73,9 @@ UNIT_SETUP_COLUMNS = (
     "'view_item_id','kitchen_item_id','notes',"
     "'default_monthly_rent_usd_cents','for_rent',"
     # C2 (DL-241): a stored holder word becomes the condition VACANT, one version later.
-    "'status','version','updated_at']"
+    "'status','version','updated_at',"
+    # DL-250 (migration 433): every Unit goes into building 1.
+    "'building_id']"
 )
 
 
