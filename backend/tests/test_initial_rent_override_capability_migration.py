@@ -113,16 +113,18 @@ def test_upgrade_keeps_every_earlier_record(migrated_database_url: str) -> None:
         # default Rent (NULL); V1.1 rework migration 258 adds For rent; General Ledger migration 262
         # starts the ledger for the Property and audits that start; C2 migration 421 (DL-241)
         # stores only the condition, so the stored Reserved becomes Vacant with a new version while
-        # the Unit still shows Reserved; nothing earlier changes.
+        # the Unit still shows Reserved; buildings migration 433 (DL-250) puts every Unit into
+        # building 1 and audits making building 1; nothing earlier changes.
         units_row = (
             "to_jsonb(t)-ARRAY['floor_item_id','size_square_metres','bedrooms','bathrooms',"
             "'view_item_id','kitchen_item_id','notes',"
-            "'default_monthly_rent_usd_cents','for_rent','status','version','updated_at']"
+            "'default_monthly_rent_usd_cents','for_rent','status','version','updated_at',"
+            "'building_id']"
         )
         tables = {
             "audit_events": (
                 "to_jsonb(t)",
-                "WHERE t.entity_type NOT IN ('unit_setup_item', 'gl_fiscal_year')",
+                "WHERE t.entity_type NOT IN ('unit_setup_item', 'gl_fiscal_year', 'building')",
             ),
             "reservations": ("to_jsonb(t)", ""),
             "deposits": ("to_jsonb(t)", ""),

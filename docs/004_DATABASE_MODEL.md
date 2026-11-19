@@ -177,6 +177,28 @@ Amended by DL-078 (owner, 2026-10-20): new Unit columns: size in m², bedrooms, 
 
 Amended by DL-110 (V1-061, owner 2026-10-29; migration `20270401_251`): new column `units.default_monthly_rent_usd_cents bigint NULL` (above zero) and new table `unit_required_services(unit_id, property_service_id, added_at, added_by)` (primary key on both ids; the Service is of the Unit's Property; at most 20 per Unit). The runtime role reads them and changes them only through `app.set_unit_rent_terms`, which moves the Unit version on; `app.create_lease_draft_with_terms` refuses a new draft that leaves out a required Service.
 
+Amended by DL-250 (owner, 2026-11-18/19; migration `20270810_433`): new column `units.building_id uuid NOT NULL`, FK `(building_id, property_id)` to `buildings(id, property_id)`. Every Unit that existed went into building 1 without a new Unit version. A new Unit with no building goes into the first building that is not removed (trigger `units_default_building`); a removed building takes no new Unit. `UNIQUE (property_id, unit_number)` is unchanged, so a Unit number is unique in all buildings. A Unit moves only through `app.move_unit_to_building` (Settings access, a reason, the current version, audit `unit.building_changed`), and only while it has no Lease, Reservation or short-stay booking (55000 otherwise), so reports of past months never change building.
+
+## DB-PROP-002 — `buildings`
+
+Added by DL-250 (migration `20270810_433`). The one Property may hold more than one building; the Property singleton lock stays.
+
+| Column | Type | Null | Rule |
+|---|---|---:|---|
+| `id` | `uuid` | no | PK; `UNIQUE (id, property_id)` |
+| `property_id` | `uuid` | no | FK `properties(id)` |
+| `name_en` | `text` | no | 1 to 100 characters, trimmed; unique (any case) among the Property's buildings that are not removed |
+| `name_km` | `text` | yes | at most 100 characters |
+| `address_text` | `text` | yes | at most 2000 characters; papers print the address of the Unit's building |
+| `description` | `text` | yes | at most 2000 characters |
+| `takes_short_stays` | `boolean` | no | default false; building 1 starts true |
+| `sort_order` | `integer` | no | 0 to 9999 |
+| `removed_at`, `removed_by` | | yes | set once by `app.remove_building`; never cleared |
+| `version` | `integer` | no | moves on by one with each change |
+| provenance columns | as DB-TYPE-007 | | `created_by` may be null for building 1 of a Property made without a person |
+
+Building 1 is made from the Property name and address when a Property is inserted (trigger `properties_make_first_building`) and by the migration for the Property that existed. The runtime role only reads the table and changes it through `app.create_building`, `app.update_building` and `app.remove_building` (SECURITY DEFINER; audit `building.created`, `building.updated`, `building.removed`; a stale version returns no row). A building with Units cannot be removed. No delete, no truncate, no change of id, Property or creation. The books (General Ledger) are not split by building.
+
 ## DB-CUST-001 — `customers`
 
 | Column | Type | Null | Rule |

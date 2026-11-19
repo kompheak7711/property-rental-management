@@ -72184,6 +72184,171 @@
       "test_path": "backend/tests/test_ledger_posting_job.py",
       "status": "implemented",
       "notes": "A posting pass for an id that is not a Property posts nothing, records no status row and still ends."
+    },
+    {
+      "test_id": "test_migration_is_the_single_head",
+      "upstream_ids": [
+        "DL-250",
+        "DB-PROP-002",
+        "DB-UNIT-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_buildings_migration.py",
+      "status": "implemented",
+      "notes": "DL-250 buildings step 1: Buildings migration 433 is the single head."
+    },
+    {
+      "test_id": "test_downgrade_is_refused",
+      "upstream_ids": [
+        "DL-250",
+        "DB-PROP-002",
+        "DB-UNIT-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_buildings_migration.py",
+      "status": "implemented",
+      "notes": "DL-250 buildings step 1: Buildings migration 433 is forward-only."
+    },
+    {
+      "test_id": "test_existing_units_go_into_building_one_without_a_new_version",
+      "upstream_ids": [
+        "DL-250",
+        "DB-PROP-002",
+        "DB-UNIT-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_buildings_migration.py",
+      "status": "implemented",
+      "notes": "DL-250 buildings step 1: Upgrade makes building 1 from the Business name and address (short stays on) and puts every Unit in it without a new version."
+    },
+    {
+      "test_id": "test_a_new_property_gets_building_one_and_new_units_go_into_it",
+      "upstream_ids": [
+        "DL-250",
+        "DB-PROP-002",
+        "DB-UNIT-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_buildings_migration.py",
+      "status": "implemented",
+      "notes": "DL-250 buildings step 1: A new Property gets building 1; a new Unit with no building goes into it."
+    },
+    {
+      "test_id": "test_building_name_is_unique_and_trimmed",
+      "upstream_ids": [
+        "DL-250",
+        "DB-PROP-002",
+        "DB-UNIT-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_buildings_migration.py",
+      "status": "implemented",
+      "notes": "DL-250 buildings step 1: A building name is trimmed and unique among the Property's buildings, with History."
+    },
+    {
+      "test_id": "test_update_needs_the_current_version_and_writes_audit",
+      "upstream_ids": [
+        "DL-250",
+        "DB-PROP-002",
+        "DB-UNIT-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_buildings_migration.py",
+      "status": "implemented",
+      "notes": "DL-250 buildings step 1: Changing a building needs the current version and writes History."
+    },
+    {
+      "test_id": "test_a_building_with_units_cannot_be_removed",
+      "upstream_ids": [
+        "DL-250",
+        "DB-PROP-002",
+        "DB-UNIT-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_buildings_migration.py",
+      "status": "implemented",
+      "notes": "DL-250 buildings step 1: A building with Units cannot be removed; moving a new Unit writes History."
+    },
+    {
+      "test_id": "test_an_empty_building_is_removed_and_takes_no_new_units",
+      "upstream_ids": [
+        "DL-250",
+        "DB-PROP-002",
+        "DB-UNIT-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_buildings_migration.py",
+      "status": "implemented",
+      "notes": "DL-250 buildings step 1: An empty building is removed once and takes no new or moved Unit."
+    },
+    {
+      "test_id": "test_move_needs_a_reason_and_the_current_version",
+      "upstream_ids": [
+        "DL-250",
+        "DB-PROP-002",
+        "DB-UNIT-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_buildings_migration.py",
+      "status": "implemented",
+      "notes": "DL-250 buildings step 1: Moving a Unit needs a reason, the current version and another building."
+    },
+    {
+      "test_id": "test_unit_number_stays_unique_across_buildings",
+      "upstream_ids": [
+        "DL-250",
+        "DB-PROP-002",
+        "DB-UNIT-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_buildings_migration.py",
+      "status": "implemented",
+      "notes": "DL-250 buildings step 1: A Unit number is unique in all buildings."
+    },
+    {
+      "test_id": "test_runtime_role_reads_buildings_and_writes_only_through_functions",
+      "upstream_ids": [
+        "DL-250",
+        "DB-PROP-002",
+        "DB-UNIT-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_buildings_migration.py",
+      "status": "implemented",
+      "notes": "DL-250 buildings step 1: The runtime role reads buildings and changes them only through the functions."
+    },
+    {
+      "test_id": "test_buildings_are_read_with_units_read_and_changed_only_with_settings_access",
+      "upstream_ids": [
+        "DL-250",
+        "API-029a"
+      ],
+      "test_level": "API",
+      "test_path": "backend/tests/test_buildings_api.py",
+      "status": "implemented",
+      "notes": "DL-250 buildings step 1: Buildings are read with units.read and changed only with settings.manage, browser checks and If-Match; name taken 409, building with Units 409."
+    },
+    {
+      "test_id": "test_only_a_unit_without_history_moves_and_it_needs_a_reason",
+      "upstream_ids": [
+        "DL-250",
+        "API-029a"
+      ],
+      "test_level": "API",
+      "test_path": "backend/tests/test_buildings_api.py",
+      "status": "implemented",
+      "notes": "DL-250 buildings step 1: Only a Unit without a Lease, Reservation or booking moves (409 otherwise); a reason and the Unit version are needed."
+    },
+    {
+      "test_id": "test_without_a_database_buildings_are_unavailable",
+      "upstream_ids": [
+        "DL-250",
+        "API-029a"
+      ],
+      "test_level": "API",
+      "test_path": "backend/tests/test_buildings_api.py",
+      "status": "implemented",
+      "notes": "DL-250 buildings step 1: Without a database the buildings list answers 503."
     }
   ]
 }

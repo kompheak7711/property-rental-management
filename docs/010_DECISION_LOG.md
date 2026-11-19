@@ -3522,3 +3522,19 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **Follow-up.** When `picomatch` publishes a fixed release, update the lock file (owner's rule of DL-067: only if it changes `package-lock.json` alone) and consider making the full audit blocking again.
 - **Decision date:** 2026-11-18.
 
+## DL-250 — Buildings: the one business can hold more than one building
+
+- **Type:** `OWNER DECISION` (the rules) and `TECHNICAL DECISION UNDER THE OWNER'S RULE` (the shape).
+- **Source.** Thread "Add more properties and parking rental", 18 and 19 Nov 2026. The owner has no second building yet but wants the app able to add one later in Settings, with no new code. A new building is the same business as CHETANA, with its own address. Parking stays its own app (`kompheak7711/parking-management`). The owner agreed the PRD, the users and steps, the mock-up and the technical plan, and all three recommendations: the books are not split by building; every building uses the same Lease text with the address of the Unit's building (the lawyer checks the address line); no building name is needed now.
+- **The rules.**
+  - Buildings sit under the one Property; the Property singleton lock stays. Building 1 is made from the Business name and address and takes short stays.
+  - Every Unit is in one building. A Unit number is unique in all buildings.
+  - Reports show each building and all buildings together (step 4). Building names and the Building switch show only when there are two or more buildings (steps 2 and 3).
+  - Each building has a "Takes short stays" switch; a new building starts with it off (step 5 adds the guard).
+  - A building with Units cannot be removed.
+- **Claude's decision (stricter than the PRD).** A Unit can move to another building only while it has had no Lease, Reservation or short-stay booking. Money is counted by the building of each Unit, so moving a Unit with history would move past months' money in reports. A Unit added in the wrong building by mistake can still be moved at once.
+- **Built (step 1).** Migration `20270810_433` (forward-only): table `app.buildings`, `units.building_id` (NOT NULL), building 1 for the Property, the create, update, remove and move functions with audit rows. Routes `GET`/`POST /properties/{id}/buildings`, `PATCH /buildings/{id}`, `POST /buildings/{id}/remove`, `POST /units/{id}/building` (API-029a). No screen yet.
+- **Next steps.** 2: Settings › Unit setup › Buildings tab and the Building box on New Unit. 3: one Building switch at the top of the side menu, lists filtered by it. 4: Home and Reports by building. 5: the short-stay guard and the building's name and address on Telegram and papers.
+- **Links:** DB-PROP-002, DB-UNIT-001, API-029a.
+- **Decision date:** 2026-11-19.
+
