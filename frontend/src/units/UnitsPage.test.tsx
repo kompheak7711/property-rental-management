@@ -8,6 +8,11 @@ import {
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import {
+  type Building,
+  type BuildingApi,
+  BuildingRefusedError,
+} from "../buildingClient";
 import type { InvoiceApi, InvoiceResource } from "../invoiceClient";
 import type { LeaseApi, LeaseResource } from "../leaseClient";
 import type { ReservationApi, ReservationResource } from "../reservationClient";
@@ -376,11 +381,13 @@ function show(
     utilities?: UtilityPricesApi;
     services?: RentTermsServicesApi;
     invoices?: Pick<InvoiceApi, "list">;
+    buildings?: Pick<BuildingApi, "list" | "moveUnit">;
   } = {},
 ) {
   return render(
     <UnitsPage
       active
+      buildingApi={options.buildings ?? buildingApi([ONE])}
       capabilities={options.capabilities ?? null}
       invoiceApi={options.invoices ?? invoiceApi([])}
       language="en"
@@ -392,6 +399,42 @@ function show(
       utilityApi={options.utilities ?? utilityApi()}
     />,
   );
+}
+
+function place(id: string, name: string, units = 0): Building {
+  return {
+    building_id: id,
+    property_id: "property-1",
+    name_en: name,
+    name_km: null,
+    address_text: null,
+    description: null,
+    takes_short_stays: id === "building-1",
+    sort_order: id === "building-1" ? 0 : 1,
+    removed: false,
+    unit_count: units,
+    version: 1,
+  };
+}
+
+const ONE = place("building-1", "CHETANA Residence", 3);
+const TWO = place("building-2", "Building Two");
+
+function buildingApi(
+  items: Building[],
+  moveUnit = vi.fn(
+    (moved: { unit_id: string; version: number }, buildingId: string) =>
+      Promise.resolve({
+        unit_id: moved.unit_id,
+        building_id: buildingId,
+        version: moved.version + 1,
+      }),
+  ),
+) {
+  return {
+    list: vi.fn(() => Promise.resolve({ items, can_manage: true })),
+    moveUnit,
+  };
 }
 
 function invoice(
@@ -1527,5 +1570,170 @@ describe("For rent (V1.1 rework part 1)", () => {
       expect(screen.queryByRole("dialog")).toBeNull();
     });
     expect(setForRent).not.toHaveBeenCalled();
+  });
+
+  it("TEST-FE-2311 New Unit shows a Building box only with two or more buildings; a building other than the first is set right after the Unit is saved, before Not for rent (DL-250)", async () => {
+    const created = { ...unit("W01"), building_id: "building-1" };
+    const setForRent = vi.fn((current: UnitResource, forRent: boolean) =>
+      Promise.resolve({ ...current, for_rent: forRent, version: 9 }),
+    );
+    const buildings = buildingApi([ONE, TWO]);
+    show(unitApi({ create: vi.fn().mockResolvedValue(created), setForRent }), {
+      buildings,
+    });
+    fireEvent.click(await screen.findByRole("button", { name: "New Unit" }));
+    const dialog = screen.getByRole("dialog");
+    const box = await within(dialog).findByLabelText("Building");
+    expect(
+      within(box)
+        .getAllByRole("option")
+        .map((option) => option.textContent),
+    ).toEqual(["CHETANA Residence", "Building Two"]);
+    expect(box).toHaveValue("building-1");
+    fireEvent.change(within(dialog).getByLabelText(/^Unit number/), {
+      target: { value: "W01" },
+    });
+    fireEvent.change(within(dialog).getByLabelText(/^Floor/), {
+      target: { value: "FLOOR-F001" },
+    });
+    fireEvent.change(box, { target: { value: "building-2" } });
+    fireEvent.click(within(dialog).getByLabelText("Not for rent"));
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    await waitFor(() => {
+      expect(window.location.hash).toBe("#/units/unit-W01");
+    });
+    expect(buildings.moveUnit).toHaveBeenCalledWith(
+      created,
+      "building-2",
+      "Building chosen on New Unit",
+    );
+    // Not for rent is saved with the version the move gave back.
+    expect(setForRent).toHaveBeenCalledWith(
+      { ...created, building_id: "building-2", version: created.version + 1 },
+      false,
+    );
+  });
+
+  it("TEST-FE-2312 with one building New Unit shows no Building box and moves nothing; a Unit left in the first building is not moved; a refused move says where the Unit was saved (DL-250)", async () => {
+    const created = { ...unit("W02"), building_id: "building-1" };
+    const single = buildingApi([ONE]);
+    show(unitApi({ create: vi.fn().mockResolvedValue(created) }), {
+      buildings: single,
+    });
+    fireEvent.click(await screen.findByRole("button", { name: "New Unit" }));
+    let dialog = screen.getByRole("dialog");
+    expect(within(dialog).queryByLabelText("Building")).toBeNull();
+    cleanup();
+
+    const two = buildingApi([ONE, TWO]);
+    show(unitApi({ create: vi.fn().mockResolvedValue(created) }), {
+      buildings: two,
+    });
+    fireEvent.click(await screen.findByRole("button", { name: "New Unit" }));
+    dialog = screen.getByRole("dialog");
+    await within(dialog).findByLabelText("Building");
+    fireEvent.change(within(dialog).getByLabelText(/^Unit number/), {
+      target: { value: "W02" },
+    });
+    fireEvent.change(within(dialog).getByLabelText(/^Floor/), {
+      target: { value: "FLOOR-F001" },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    await waitFor(() => {
+      expect(window.location.hash).toBe("#/units/unit-W02");
+    });
+    expect(two.moveUnit).not.toHaveBeenCalled();
+    cleanup();
+    window.location.hash = "#/units";
+
+    const refused = buildingApi(
+      [ONE, TWO],
+      vi.fn(() => Promise.reject(new Error("down"))),
+    );
+    show(unitApi({ create: vi.fn().mockResolvedValue(created) }), {
+      buildings: refused,
+    });
+    fireEvent.click(await screen.findByRole("button", { name: "New Unit" }));
+    dialog = screen.getByRole("dialog");
+    fireEvent.change(await within(dialog).findByLabelText("Building"), {
+      target: { value: "building-2" },
+    });
+    fireEvent.change(within(dialog).getByLabelText(/^Unit number/), {
+      target: { value: "W02" },
+    });
+    fireEvent.change(within(dialog).getByLabelText(/^Floor/), {
+      target: { value: "FLOOR-F001" },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    expect(
+      await within(dialog).findByText(
+        "Unit W02 was saved in CHETANA Residence, not in the building you chose. Use Change building on the Unit page.",
+      ),
+    ).toBeInTheDocument();
+    expect(within(dialog).getByRole("button", { name: "OK" })).toBeVisible();
+  });
+
+  it("TEST-FE-2313 the Unit page shows the building only with two or more buildings; Change building asks a reason and moves the Unit; a Unit with renting history is refused and says so (DL-250)", async () => {
+    window.location.hash = "#/units/unit-U201";
+    const before = { ...unit("U201"), building_id: "building-1" };
+    show(unitApi({ get: vi.fn().mockResolvedValue(before) }), {
+      buildings: buildingApi([ONE]),
+    });
+    let details = (
+      await screen.findByRole("heading", { name: "Unit details" })
+    ).closest("section");
+    if (details === null) throw new Error("no details card");
+    expect(details).not.toHaveTextContent("Building");
+    cleanup();
+
+    window.location.hash = "#/units/unit-U201";
+    const moveUnit = vi
+      .fn()
+      .mockRejectedValueOnce(new BuildingRefusedError())
+      .mockResolvedValueOnce({
+        unit_id: "unit-U201",
+        building_id: "building-2",
+        version: before.version + 1,
+      });
+    show(unitApi({ get: vi.fn().mockResolvedValue(before) }), {
+      buildings: buildingApi([ONE, TWO], moveUnit),
+    });
+    details = (
+      await screen.findByRole("heading", { name: "Unit details" })
+    ).closest("section");
+    if (details === null) throw new Error("no details card");
+    await waitFor(() => {
+      expect(details).toHaveTextContent("BuildingCHETANA Residence");
+    });
+    fireEvent.click(
+      within(details).getByRole("button", { name: "Change building" }),
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Change building · U201",
+    });
+    expect(within(dialog).getByLabelText("Building")).toHaveValue("building-2");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    expect(
+      within(dialog).getByText("Give the reason for the change."),
+    ).toBeInTheDocument();
+    expect(moveUnit).not.toHaveBeenCalled();
+    fireEvent.change(within(dialog).getByLabelText(/^Reason/), {
+      target: { value: "Unit is in the new building" },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    expect(
+      await within(dialog).findByText(
+        "This Unit has had a Lease, Reservation or short stay, so it stays in its building.",
+      ),
+    ).toBeInTheDocument();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    expect(
+      await screen.findByText("Unit U201 is now in Building Two."),
+    ).toBeInTheDocument();
+    expect(moveUnit).toHaveBeenLastCalledWith(
+      before,
+      "building-2",
+      "Unit is in the new building",
+    );
   });
 });

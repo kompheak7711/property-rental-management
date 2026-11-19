@@ -16,6 +16,11 @@ import {
 } from "../shell/recordViews";
 import { BackLink } from "../shell/backNav";
 
+import {
+  type Building,
+  type BuildingApi,
+  buildingName,
+} from "../buildingClient";
 import type { InvoiceApi, InvoiceResource } from "../invoiceClient";
 import { cents } from "../invoices/invoicesData";
 import type { LeaseApi, LeaseResource } from "../leaseClient";
@@ -42,7 +47,11 @@ import {
 } from "../unitClient";
 import { ForRentDialog, isForRent, isInUse } from "./ForRent";
 import { type RentTermsServicesApi, RentTermsCard } from "./RentTerms";
-import { ChangeStatusDialog, UpdateUnitDialog } from "./UnitDialogs";
+import {
+  ChangeBuildingDialog,
+  ChangeStatusDialog,
+  UpdateUnitDialog,
+} from "./UnitDialogs";
 import { UnitFeaturesPanel } from "./UnitFeatures";
 import { UnitChip, floorText } from "./UnitsList";
 import { ut } from "./text";
@@ -234,6 +243,9 @@ export interface UnitDetailProps {
   invoiceApi?: Pick<InvoiceApi, "list">;
   /** DL-244: the Unit's Joint Inspections. */
   jointApi?: Pick<JointApi, "list">;
+  /** DL-250: the buildings not removed; the building shows only with two or more. */
+  buildings?: Building[] | null;
+  buildingApi?: Pick<BuildingApi, "moveUnit">;
 }
 
 export function UnitDetail({
@@ -253,6 +265,8 @@ export function UnitDetail({
   productsApi,
   invoiceApi,
   jointApi,
+  buildings = null,
+  buildingApi,
 }: UnitDetailProps) {
   const khmer = language === "km";
   const view = useHashView();
@@ -260,9 +274,9 @@ export function UnitDetail({
   const [missing, setMissing] = useState(false);
   const [events, setEvents] = useState<UnitTimelineEvent[]>([]);
   const [leases, setLeases] = useState<LeaseResource[] | null>(null);
-  const [dialog, setDialog] = useState<"update" | "status" | "for_rent" | null>(
-    null,
-  );
+  const [dialog, setDialog] = useState<
+    "update" | "status" | "for_rent" | "building" | null
+  >(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
   const sequence = useRef(0);
@@ -346,6 +360,12 @@ export function UnitDetail({
     </div>
   );
   const notRecorded = ut(language, "not_recorded");
+  // DL-250: the building shows only when there are two or more.
+  const shownBuildings =
+    buildings !== null && buildings.length >= 2 ? buildings : null;
+  const unitBuilding = shownBuildings?.find(
+    (item) => item.building_id === unit.building_id,
+  );
 
   let now: ReactNode;
   if (current !== null) {
@@ -645,6 +665,33 @@ export function UnitDetail({
                   )}
                 </>,
               )}
+              {shownBuildings !== null &&
+                fact(
+                  ut(language, "building"),
+                  <>
+                    {unitBuilding === undefined
+                      ? notRecorded
+                      : buildingName(language, unitBuilding)}
+                    {manage &&
+                      may("settings.manage") &&
+                      buildingApi !== undefined &&
+                      !isInUse(unit) &&
+                      reservation === null &&
+                      (leases === null || leases.length === 0) && (
+                        <button
+                          className="ui-btn link"
+                          onClick={() => {
+                            setNotice(null);
+                            setWarning(null);
+                            setDialog("building");
+                          }}
+                          type="button"
+                        >
+                          {ut(language, "bl_change")}
+                        </button>
+                      )}
+                  </>,
+                )}
               {fact(ut(language, "floor"), floorText(language, unit.floor))}
               {fact(ut(language, "type"), type)}
               {fact(
@@ -830,6 +877,35 @@ export function UnitDetail({
           unit={unit}
         />
       )}
+      {dialog === "building" &&
+        shownBuildings !== null &&
+        buildingApi !== undefined && (
+          <ChangeBuildingDialog
+            buildingApi={buildingApi}
+            buildings={shownBuildings}
+            language={language}
+            onClose={() => {
+              setDialog(null);
+            }}
+            onConflict={() => {
+              load();
+            }}
+            onMoved={(moved, building) => {
+              setDialog(null);
+              setNotice(
+                ut(
+                  language,
+                  "bl_moved",
+                  moved.unit_number,
+                  buildingName(language, building),
+                ),
+              );
+              onChanged(moved);
+              load();
+            }}
+            unit={unit}
+          />
+        )}
       {dialog === "for_rent" && (
         <ForRentDialog
           api={unitApi}

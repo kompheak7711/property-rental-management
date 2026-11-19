@@ -113,6 +113,8 @@ export type UnitStatus =
 export interface UnitResource extends UnitDetails {
   unit_id: string;
   property_id: string;
+  /** DL-250: the building the Unit is in; absent from servers before step 2. */
+  building_id?: string | null;
   unit_number: string;
   floor: string;
   floor_item_id: string | null;
@@ -435,6 +437,8 @@ function unit(value: unknown): UnitResource {
   return {
     unit_id: value.unit_id,
     property_id: value.property_id,
+    building_id:
+      typeof value.building_id === "string" ? value.building_id : null,
     unit_number: value.unit_number,
     floor: value.floor,
     floor_item_id: value.floor_item_id ?? null,

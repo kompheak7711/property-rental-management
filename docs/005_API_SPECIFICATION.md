@@ -293,6 +293,7 @@ Added by DL-250 (migration `20270810_433`).
 - `GET /properties/{property_id}/buildings` (`units.read` or `settings.manage`; `include_removed=true` only with `settings.manage`) answers `items` (each with `building_id`, `name_en`, `name_km`, `address_text`, `description`, `takes_short_stays`, `sort_order`, `removed`, `unit_count`, `version`) and `can_manage`.
 - `POST /properties/{property_id}/buildings` (201), `PATCH /buildings/{building_id}` and `POST /buildings/{building_id}/remove` need `settings.manage`, the configured Origin and the CSRF pair. Changes need `If-Match` with the current version (412 with `current_version` otherwise). A name used by another building gives 409; removing a building that has Units gives 409.
 - `POST /units/{unit_id}/building` (`settings.manage`, Origin and CSRF, `If-Match` with the Unit version) takes `building_id` and `reason` (1 to 500 characters) and answers `unit_id`, `building_id` and the new Unit `version`. A Unit that has had a Lease, Reservation or short-stay booking gives 409.
+- Every Unit answer (list, `GET /units/{unit_id}` and the Unit commands) carries `building_id` (step 2).
 
 # 10. Customer Endpoints
 

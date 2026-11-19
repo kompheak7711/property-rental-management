@@ -18,6 +18,8 @@ from alembic.config import Config
 from alembic.script import ScriptDirectory
 from psycopg import Connection, Error
 
+from property_rental.unit import unit_from_row
+from property_rental.unit_api import UNIT_SELECT, _body
 from test_migrations import _temporary_migration_database
 from test_unit_migration import insert_actor, insert_property, insert_unit
 
@@ -311,3 +313,26 @@ def test_runtime_role_reads_buildings_and_writes_only_through_functions(
         ).fetchone()
         assert privileges == (True, False, False, False, True, False)
         runtime.rollback()
+
+
+def test_unit_answer_names_its_building(
+    connection: Connection[tuple[object, ...]],
+) -> None:
+    """Step 2: the Unit answer carries building_id, so New Unit and the Unit page can show it."""
+    actor_id = insert_actor(connection)
+    property_id = property_for(connection, actor_id)
+    home = first_building(connection, property_id)
+    building_id = UUID(str(add_building(connection, property_id, actor_id)[0]))
+    unit_id = insert_unit(
+        connection, actor_id=actor_id, property_id=property_id, unit_number=unit_number()
+    )
+    row = connection.execute(UNIT_SELECT, (unit_id,)).fetchone()
+    assert row is not None
+    assert unit_from_row(row).building_id == home
+    connection.execute(MOVE, (unit_id, building_id, 1, "Chosen on New Unit", actor_id))
+    moved = connection.execute(UNIT_SELECT, (unit_id,)).fetchone()
+    assert moved is not None
+    unit = unit_from_row(moved)
+    assert unit.building_id == building_id
+    assert unit.version == 2
+    assert _body(unit)["building_id"] == str(building_id)

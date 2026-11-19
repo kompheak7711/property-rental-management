@@ -3,6 +3,13 @@
 
 import { FormEvent, useState } from "react";
 
+import {
+  type Building,
+  type BuildingApi,
+  BuildingChangedError,
+  BuildingRefusedError,
+  buildingName,
+} from "../buildingClient";
 import type { Language } from "../signInText";
 import { Icon } from "../shell/icons";
 import { Dialog } from "../shell/ui";
@@ -190,6 +197,8 @@ export function NewUnitDialog({
   propertyId,
   onClose,
   onCreated,
+  buildings = null,
+  buildingApi,
 }: {
   api: UnitApi;
   servicesApi: RentTermsServicesApi;
@@ -198,7 +207,14 @@ export function NewUnitDialog({
   propertyId: string;
   onClose: () => void;
   onCreated: (unit: UnitResource) => void;
+  /** DL-250: the buildings not removed; the Building box shows only with two or more. */
+  buildings?: Building[] | null;
+  buildingApi?: Pick<BuildingApi, "moveUnit">;
 }) {
+  const choosable =
+    buildings !== null && buildings.length >= 2 && buildingApi !== undefined
+      ? buildings
+      : null;
   // V1-061 (owner 29/10/2026): the default Rent and the required Services are set here too, saved
   // right after the Unit with the same Change command the Unit page uses.
   const read = useServices(servicesApi, propertyId);
@@ -258,17 +274,60 @@ export function NewUnitDialog({
       })
       .then(
         (created) => {
+          // DL-250: a new Unit goes into the first building; another chosen building is set
+          // right after it is saved, while the Unit has no renting history yet.
+          const chosenBuilding = text(data, "building");
+          const first = choosable?.[0];
+          const placed: Promise<UnitResource | null> =
+            choosable === null ||
+            buildingApi === undefined ||
+            first === undefined ||
+            chosenBuilding === "" ||
+            chosenBuilding === (created.building_id ?? first.building_id)
+              ? Promise.resolve(created)
+              : buildingApi
+                  .moveUnit(
+                    created,
+                    chosenBuilding,
+                    "Building chosen on New Unit",
+                  )
+                  .then(
+                    (place): UnitResource => ({
+                      ...created,
+                      building_id: place.building_id,
+                      version: place.version,
+                    }),
+                  )
+                  .catch(() => {
+                    const home =
+                      choosable.find(
+                        (item) => item.building_id === created.building_id,
+                      ) ?? first;
+                    setSaved(created);
+                    setProblem(
+                      ut(
+                        language,
+                        "bl_new_not_moved",
+                        created.unit_number,
+                        buildingName(language, home),
+                      ),
+                    );
+                    setBusy(false);
+                    return null;
+                  });
           // A Unit not for rent is set so right after it is saved, before its Rent terms.
-          const marked = forRent
-            ? Promise.resolve(created)
-            : api.setForRent(created, false).catch(() => {
-                setSaved(created);
-                setProblem(
-                  ut(language, "fr_new_not_saved", created.unit_number),
-                );
-                setBusy(false);
-                return null;
-              });
+          const marked = placed.then((current) =>
+            current === null || forRent
+              ? current
+              : api.setForRent(current, false).catch(() => {
+                  setSaved(current);
+                  setProblem(
+                    ut(language, "fr_new_not_saved", current.unit_number),
+                  );
+                  setBusy(false);
+                  return null;
+                }),
+          );
           void marked.then((unit) => {
             if (unit === null) return;
             if (cents === null && chosen.size === 0) {
@@ -328,6 +387,22 @@ export function NewUnitDialog({
           missing={missing.floor}
         />
       </div>
+      {choosable !== null && (
+        <div className="ui-field">
+          <label htmlFor="unit-building">{ut(language, "building")}</label>
+          <select
+            defaultValue={choosable[0]?.building_id}
+            id="unit-building"
+            name="building"
+          >
+            {choosable.map((item) => (
+              <option key={item.building_id} value={item.building_id}>
+                {buildingName(language, item)}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
       <DetailFields language={language} lists={lists} unit={null} />
       <ForRentField language={language} onChange={setForRent} value={forRent} />
       <RentTermsFields
@@ -553,6 +628,111 @@ export function ChangeStatusDialog({
         {reasonMissing && <Problem message={ut(language, "reason_req")} />}
       </div>
       <p className="ui-small ui-muted">{ut(language, "status_note")}</p>
+      <Problem message={problem} />
+    </Dialog>
+  );
+}
+
+/** DL-250: Change building, for a Unit that has never had a Lease, Reservation or short stay. */
+export function ChangeBuildingDialog({
+  language,
+  unit,
+  buildings,
+  buildingApi,
+  onClose,
+  onMoved,
+  onConflict,
+}: {
+  language: Language;
+  unit: UnitResource;
+  buildings: Building[];
+  buildingApi: Pick<BuildingApi, "moveUnit">;
+  onClose: () => void;
+  onMoved: (unit: UnitResource, building: Building) => void;
+  onConflict: () => void;
+}) {
+  const others = buildings.filter(
+    (item) => item.building_id !== unit.building_id,
+  );
+  const [busy, setBusy] = useState(false);
+  const [missingReason, setMissingReason] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const data = new FormData(form);
+    const chosen = others.find(
+      (item) => item.building_id === text(data, "building"),
+    );
+    const reason = text(data, "reason");
+    setMissingReason(reason === "");
+    if (reason === "") {
+      form.querySelector<HTMLElement>("#unit-building-reason")?.focus();
+      return;
+    }
+    if (chosen === undefined) return;
+    setBusy(true);
+    setProblem(null);
+    buildingApi
+      .moveUnit(unit, chosen.building_id, reason)
+      .then((place) => {
+        onMoved(
+          { ...unit, building_id: place.building_id, version: place.version },
+          chosen,
+        );
+      })
+      .catch((error: unknown) => {
+        setBusy(false);
+        if (error instanceof BuildingRefusedError) {
+          setProblem(ut(language, "bl_history"));
+        } else if (error instanceof BuildingChangedError) {
+          setProblem(ut(language, "conflict"));
+          onConflict();
+        } else {
+          setProblem(ut(language, "bl_failed"));
+        }
+      });
+  }
+
+  return (
+    <Dialog
+      busy={busy}
+      closeLabel={ut(language, "cancel")}
+      onClose={onClose}
+      onSubmit={submit}
+      submitLabel={ut(language, "save")}
+      title={`${ut(language, "bl_change")} · ${unit.unit_number}`}
+    >
+      <div className="ui-field">
+        <label htmlFor="unit-building-to">{ut(language, "building")}</label>
+        <select
+          defaultValue={others[0]?.building_id}
+          id="unit-building-to"
+          name="building"
+        >
+          {others.map((item) => (
+            <option key={item.building_id} value={item.building_id}>
+              {buildingName(language, item)}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="ui-field">
+        <label htmlFor="unit-building-reason">
+          {ut(language, "reason")}
+          <span className="req">{ut(language, "required")}</span>
+        </label>
+        <input
+          aria-invalid={missingReason}
+          autoComplete="off"
+          id="unit-building-reason"
+          maxLength={500}
+          name="reason"
+        />
+        {missingReason && <Problem message={ut(language, "reason_req")} />}
+      </div>
+      <p className="ui-small ui-muted">{ut(language, "bl_move_note")}</p>
       <Problem message={problem} />
     </Dialog>
   );
