@@ -4,6 +4,7 @@
 // come next. The list cannot yet tell a closed Final
 // Settlement apart (the server has no read of it), so "To confirm" and "Closed" come later.
 
+import { useBuildingChoice } from "../shell/buildingChoice";
 import "../shell/screens.css";
 import { BackLink } from "../shell/backNav";
 
@@ -204,6 +205,8 @@ function MoveoutList({
   const [failed, setFailed] = useState(false);
   const [settleFailed, setSettleFailed] = useState(false);
   const [card, setCard] = useState<MoveOutStage | "all">("all");
+  // DL-250 step 3: the list shows the building chosen in the side menu.
+  const choice = useBuildingChoice();
   const sequence = useRef(0);
   const mayDeposits =
     capabilities === null || capabilities.has("deposits.read");
@@ -306,7 +309,8 @@ function MoveoutList({
     closed: 3,
   };
   const order = (row: Row) => ORDER[stageOf(row.step)];
-  const shown = rows
+  const here = rows.filter((row) => choice.showsUnit(row.lease.unit_id));
+  const shown = here
     .filter((row) => card === "all" || stageOf(row.step) === card)
     .sort(
       (left, right) =>
@@ -351,7 +355,7 @@ function MoveoutList({
             }}
             pressed={card === value}
             tone={tone}
-            value={rows.filter((row) => stageOf(row.step) === value).length}
+            value={here.filter((row) => stageOf(row.step) === value).length}
           />
         ))}
       </div>

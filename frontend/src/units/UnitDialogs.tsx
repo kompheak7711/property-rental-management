@@ -199,6 +199,7 @@ export function NewUnitDialog({
   onCreated,
   buildings = null,
   buildingApi,
+  preferredBuildingId = null,
 }: {
   api: UnitApi;
   servicesApi: RentTermsServicesApi;
@@ -210,6 +211,8 @@ export function NewUnitDialog({
   /** DL-250: the buildings not removed; the Building box shows only with two or more. */
   buildings?: Building[] | null;
   buildingApi?: Pick<BuildingApi, "moveUnit">;
+  /** DL-250 step 3: the building chosen in the side menu starts in the Building box. */
+  preferredBuildingId?: string | null;
 }) {
   const choosable =
     buildings !== null && buildings.length >= 2 && buildingApi !== undefined
@@ -391,7 +394,10 @@ export function NewUnitDialog({
         <div className="ui-field">
           <label htmlFor="unit-building">{ut(language, "building")}</label>
           <select
-            defaultValue={choosable[0]?.building_id}
+            defaultValue={
+              choosable.find((item) => item.building_id === preferredBuildingId)
+                ?.building_id ?? choosable[0]?.building_id
+            }
             id="unit-building"
             name="building"
           >

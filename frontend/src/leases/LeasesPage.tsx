@@ -21,6 +21,7 @@ import type { LettersApi } from "../letters/lettersClient";
 import { LeaseDetail } from "./LeaseDetail";
 import type { ServiceSettingsApi } from "../settings/serviceSettingsClient";
 import { LeaseForm, formModeOf } from "./LeaseForm";
+import { useBuildingChoice } from "../shell/buildingChoice";
 import { LeasesList } from "./LeasesList";
 import {
   DepositCell,
@@ -90,6 +91,8 @@ export function LeasesPage({
   reports,
 }: LeasesPageProps) {
   const detail = useHashDetail("leases");
+  // DL-250 step 3: the list shows the building chosen in the side menu.
+  const choice = useBuildingChoice();
   const [data, setData] = useState<LeasesData | null>(null);
   const [deposits, setDeposits] = useState<Map<string, DepositCell> | null>(
     null,
@@ -227,7 +230,16 @@ export function LeasesPage({
           data.canCreate &&
           (capabilities === null || capabilities.has("leases.draft"))
         }
-        data={data}
+        data={
+          choice.chosen === null
+            ? data
+            : {
+                ...data,
+                leases: data.leases.filter((lease) =>
+                  choice.showsUnit(lease.unit_id),
+                ),
+              }
+        }
         deposits={deposits}
         language={language}
         today={todayInPhnomPenh()}

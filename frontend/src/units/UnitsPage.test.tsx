@@ -30,6 +30,10 @@ import {
 } from "../unitClient";
 import type { UtilityMeter, UtilityRate } from "../utilityClient";
 import type { RentTermsServicesApi } from "./RentTerms";
+import {
+  BuildingChoiceProvider,
+  BuildingSwitch,
+} from "../shell/buildingChoice";
 import { UnitsPage } from "./UnitsPage";
 import type { UtilityPricesApi } from "./UtilityPrices";
 
@@ -382,9 +386,11 @@ function show(
     services?: RentTermsServicesApi;
     invoices?: Pick<InvoiceApi, "list">;
     buildings?: Pick<BuildingApi, "list" | "moveUnit">;
+    /** DL-250 step 3: the side-menu Building switch, with these buildings. */
+    menuBuildings?: Building[];
   } = {},
 ) {
-  return render(
+  const page = (
     <UnitsPage
       active
       buildingApi={options.buildings ?? buildingApi([ONE])}
@@ -397,7 +403,25 @@ function show(
       servicesApi={options.services ?? servicesApi()}
       unitApi={client}
       utilityApi={options.utilities ?? utilityApi()}
-    />,
+    />
+  );
+  const menu = options.menuBuildings;
+  return render(
+    menu === undefined ? (
+      page
+    ) : (
+      <BuildingChoiceProvider
+        buildingApi={{
+          list: () => Promise.resolve({ items: menu, can_manage: true }),
+        }}
+        propertyId="property-1"
+        refreshKey="units"
+        unitApi={client}
+      >
+        <BuildingSwitch language="en" />
+        {page}
+      </BuildingChoiceProvider>
+    ),
   );
 }
 
@@ -1734,6 +1758,46 @@ describe("For rent (V1.1 rework part 1)", () => {
       before,
       "building-2",
       "Unit is in the new building",
+    );
+  });
+
+  it("TEST-FE-2317 with two buildings and All buildings the Units list has a Building column; a building chosen in the side menu shows only its Units and starts the New Unit Building box (DL-250 step 3)", async () => {
+    const mine = [
+      { ...unit("U101"), building_id: "building-1" },
+      { ...unit("B101"), building_id: "building-2" },
+    ];
+    const client = unitApi({
+      list: vi.fn().mockResolvedValue({
+        items: mine,
+        next_cursor: null,
+        can_manage: true,
+      }),
+    });
+    show(client, {
+      buildings: buildingApi([ONE, TWO]),
+      menuBuildings: [ONE, TWO],
+    });
+    await screen.findByRole("link", { name: "B101" });
+    await waitFor(() => {
+      expect(
+        screen.getAllByRole("columnheader").map((cell) => cell.textContent),
+      ).toContain("Building");
+    });
+    expect(rowOf("B101")).toHaveTextContent("Building Two");
+    expect(rowOf("U101")).toHaveTextContent("CHETANA Residence");
+
+    fireEvent.change(screen.getByLabelText("Building"), {
+      target: { value: "building-2" },
+    });
+    expect(screen.queryByRole("link", { name: "U101" })).toBeNull();
+    expect(screen.getByRole("link", { name: "B101" })).toBeInTheDocument();
+    expect(
+      screen.getAllByRole("columnheader").map((cell) => cell.textContent),
+    ).not.toContain("Building");
+    fireEvent.click(screen.getByRole("button", { name: "New Unit" }));
+    const dialog = screen.getByRole("dialog");
+    expect(await within(dialog).findByLabelText("Building")).toHaveValue(
+      "building-2",
     );
   });
 });

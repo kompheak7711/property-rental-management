@@ -217,6 +217,24 @@ html[lang="km"] body {
   font-size: 0.8rem;
 }
 
+/* DL-250: the Building switch, shown only with two or more buildings. */
+.shell-building {
+  display: block;
+  margin-top: 8px;
+}
+
+.shell-building select {
+  width: 100%;
+  min-height: 36px;
+  padding: 4px 8px;
+  border: 1px solid var(--nav-muted);
+  border-radius: 6px;
+  background-color: var(--nav-hover);
+  color: var(--nav-text);
+  font: inherit;
+  font-size: 0.85rem;
+}
+
 .shell-env {
   padding: 1px 6px;
   border-radius: 4px;
@@ -1009,6 +1027,7 @@ html[lang="km"] .shell-head h1 {
   }
 
   html.shell-rail .shell-appname span,
+  html.shell-rail .shell-building,
   html.shell-rail .shell-property {
     display: none;
   }

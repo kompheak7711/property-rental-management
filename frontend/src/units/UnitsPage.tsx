@@ -25,6 +25,7 @@ import { Icon } from "../shell/icons";
 import { openPageInAddress, useHashDetail } from "../shell/useHashPage";
 import type { Language } from "../signInText";
 import type { UnitApi, UnitResource } from "../unitClient";
+import { useBuildingChoice } from "../shell/buildingChoice";
 import { NewUnitDialog } from "./UnitDialogs";
 import { UnitDetail } from "./UnitDetail";
 import { NotForRentCard, UnitsList } from "./UnitsList";
@@ -72,6 +73,7 @@ export function UnitsPage({
   buildingApi = defaultBuildingApi,
 }: UnitsPageProps) {
   const detail = useHashDetail("units");
+  const choice = useBuildingChoice();
   const [data, setData] = useState<UnitsData | null>(null);
   const [failed, setFailed] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -172,6 +174,20 @@ export function UnitsPage({
   }
 
   const lists = data.lists;
+  // DL-250 step 3: the list shows the building chosen in the side menu.
+  const chosenBuilding = choice.chosen;
+  const inChosen = (unit: UnitResource) =>
+    chosenBuilding === null ||
+    unit.building_id == null ||
+    unit.building_id === chosenBuilding.building_id;
+  const shownData =
+    chosenBuilding === null
+      ? data
+      : {
+          ...data,
+          units: data.units.filter(inChosen),
+          notForRent: data.notForRent.filter(inChosen),
+        };
   return (
     <>
       {notice !== null && (
@@ -194,7 +210,7 @@ export function UnitsPage({
         today={todayInPhnomPenh()}
       />
       <UnitsList
-        data={data}
+        data={shownData}
         language={language}
         onNewUnit={
           data.canManage && lists !== null
@@ -205,7 +221,7 @@ export function UnitsPage({
             : null
         }
       />
-      <NotForRentCard data={data} language={language} />
+      <NotForRentCard data={shownData} language={language} />
       {adding && lists !== null && (
         <NewUnitDialog
           api={unitApi}
@@ -216,6 +232,7 @@ export function UnitsPage({
               : undefined
           }
           buildings={buildings}
+          preferredBuildingId={choice.chosen?.building_id ?? null}
           servicesApi={servicesApi}
           language={language}
           lists={lists}

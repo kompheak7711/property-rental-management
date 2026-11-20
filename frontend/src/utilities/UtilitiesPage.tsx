@@ -3,6 +3,7 @@
 // until the month ends, This month shows the list to type the readings; other periods show
 // the saved readings as a list or a grid. A reading is saved for one meter at a time.
 
+import { useBuildingChoice } from "../shell/buildingChoice";
 import "../shell/screens.css";
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -99,6 +100,8 @@ export function UtilitiesPage({
   const today = fixedToday ?? todayInPhnomPenh();
 
   const [data, setData] = useState<UtilitiesData | null>(null);
+  // DL-250 step 3: the readings and meters lists show the building chosen in the side menu.
+  const choice = useBuildingChoice();
   const [failed, setFailed] = useState(false);
   const [loading, setLoading] = useState(false);
   const sequence = useRef(0);
@@ -139,6 +142,24 @@ export function UtilitiesPage({
       </div>
     );
   }
+
+  const chosenBuilding = choice.chosen;
+  const shown: UtilitiesData | null =
+    data === null || chosenBuilding === null
+      ? data
+      : (() => {
+          const units = data.units.filter(
+            (unit) =>
+              unit.building_id == null ||
+              unit.building_id === chosenBuilding.building_id,
+          );
+          const ids = new Set(units.map((unit) => unit.unit_id));
+          return {
+            ...data,
+            units,
+            meters: data.meters.filter((meter) => ids.has(meter.unit_id)),
+          };
+        })();
 
   const content = (
     <>
@@ -181,7 +202,7 @@ export function UtilitiesPage({
             api={utilityApi}
             propertyId={propertyId}
             canSave={may("utility_readings.record")}
-            data={data}
+            data={shown ?? data}
             language={language}
             onChange={(update) => {
               setData((previous) =>
@@ -198,7 +219,7 @@ export function UtilitiesPage({
         <MetersTab
           api={utilityApi}
           canManage={may("utility_meters.manage")}
-          data={data}
+          data={shown ?? data}
           language={language}
           onReload={load}
           today={today}
