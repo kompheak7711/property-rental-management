@@ -36,6 +36,8 @@ import { DeactivateDialog, EditContactDialog } from "./CustomerDialogs";
 import { KindChip } from "./CustomersList";
 import type { CustomerCommandGate } from "./commands";
 import { ct } from "./text";
+import { VehiclesCard } from "./VehiclesCard";
+import type { VehicleApi } from "../vehiclesClient";
 import {
   CustomersData,
   isCurrentLease,
@@ -99,6 +101,8 @@ export interface CustomerDetailProps {
   onChanged: () => void;
   /** A line to show first, such as "Sok Dara was added." */
   firstNotice?: string | null;
+  /** DL-253: the Customer's vehicles (tests pass their own). */
+  vehicleApi?: VehicleApi;
 }
 
 export function CustomerDetail({
@@ -114,6 +118,7 @@ export function CustomerDetail({
   gate,
   onChanged,
   firstNotice = null,
+  vehicleApi,
 }: CustomerDetailProps) {
   const [customer, setCustomer] = useState<CustomerRecord | null>(null);
   const [missing, setMissing] = useState(false);
@@ -507,6 +512,12 @@ export function CustomerDetail({
             )}
             <p className="ui-small ui-muted">{ct(language, "rels_note")}</p>
           </section>
+          <VehiclesCard
+            active={customer.active}
+            api={vehicleApi}
+            customerId={customerId}
+            language={language}
+          />
           <section aria-labelledby="customer-ledger" className="ui-card">
             <div className="ui-chead">
               <h2 id="customer-ledger">{ct(language, "ledger")}</h2>

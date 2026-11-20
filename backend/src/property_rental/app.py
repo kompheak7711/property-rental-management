@@ -424,6 +424,12 @@ from property_rental.utility_lease_api import (
     UtilityLeaseFlow,
     create_utility_lease_router,
 )
+from property_rental.vehicles_api import (
+    PostgresVehicleFlow,
+    UnavailableVehicleFlow,
+    VehicleFlow,
+    create_vehicle_router,
+)
 
 REQUEST_ID_HEADER: Final = "X-Request-ID"
 REQUEST_ID_PATTERN: Final = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
@@ -650,6 +656,7 @@ def create_app(
     unit_inventory_flow: UnitInventoryFlow | None = None,
     building_flow: BuildingFlow | None = None,
     parking_flow: ParkingFlow | None = None,
+    vehicle_flow: VehicleFlow | None = None,
     customer_resource_flow: CustomerResourceFlow | None = None,
     configuration_flow: ConfigurationFlow | None = None,
     business_rule_flow: BusinessRuleFlow | None = None,
@@ -1606,6 +1613,18 @@ def create_app(
                 PostgresParkingFlow(resolved_settings.database_url.get_secret_value())
                 if resolved_settings.database_url is not None
                 else UnavailableParkingFlow()
+            ),
+            resolved_settings,
+        )
+    )
+    include_signed_in(
+        create_vehicle_router(
+            actor_resolver,
+            vehicle_flow
+            or (
+                PostgresVehicleFlow(resolved_settings.database_url.get_secret_value())
+                if resolved_settings.database_url is not None
+                else UnavailableVehicleFlow()
             ),
             resolved_settings,
         )
