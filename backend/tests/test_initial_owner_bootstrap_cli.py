@@ -977,6 +977,8 @@ def test_fastapi_openapi_inventory_has_no_bootstrap_or_unauthenticated_owner_res
         "/properties/{property_id}/parking-spaces": {"get", "post"},
         "/parking-spaces/{unit_id}": {"put"},
         "/unit-setup/items/{item_id}/price": {"put"},
+        "/customers/{customer_id}/vehicles": {"get", "post"},
+        "/vehicles/{vehicle_id}": {"put"},
         "/units/{unit_id}/inventory": {"get", "put"},
         "/properties/{property_id}/unit-inventory-items": {"get"},
         "/api/v1/properties/{property_id}/customers": {"get", "post"},

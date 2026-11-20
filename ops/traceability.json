@@ -72975,6 +72975,94 @@
       "test_path": "frontend/src/parkingClient.test.ts",
       "status": "implemented",
       "notes": "The parking client keeps refusal codes; a stale version is Changed; no browser proof sends nothing."
+    },
+    {
+      "test_id": "test_vehicles_are_read_with_customers_read_and_added_with_customers_manage",
+      "upstream_ids": [
+        "DL-253",
+        "API-029c"
+      ],
+      "test_level": "API",
+      "test_path": "backend/tests/test_vehicles_api.py",
+      "status": "implemented",
+      "notes": "DL-253 parking step 3a: vehicles are read with Customers read and added with Customers manage."
+    },
+    {
+      "test_id": "test_a_vehicle_is_corrected_whole_with_its_version",
+      "upstream_ids": [
+        "DL-253",
+        "API-029c"
+      ],
+      "test_level": "API",
+      "test_path": "backend/tests/test_vehicles_api.py",
+      "status": "implemented",
+      "notes": "DL-253 parking step 3a: a vehicle is corrected whole with its version; a type that no longer fits its space is refused."
+    },
+    {
+      "test_id": "test_a_vehicle_is_read_with_the_spaces_it_holds_today",
+      "upstream_ids": [
+        "DL-253",
+        "DB-PARK-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_vehicles_query.py",
+      "status": "implemented",
+      "notes": "DL-253 parking step 3a: a vehicle is read with the spaces it holds today."
+    },
+    {
+      "test_id": "test_the_app_reads_vehicles_through_the_function",
+      "upstream_ids": [
+        "DL-253",
+        "DB-PARK-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_vehicles_query.py",
+      "status": "implemented",
+      "notes": "DL-253 parking step 3a: the app reads vehicles through app.customer_vehicles only."
+    },
+    {
+      "test_id": "TEST-FE-2339",
+      "upstream_ids": [
+        "DL-253",
+        "DB-PARK-001"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/customers/VehiclesCard.test.tsx",
+      "status": "implemented",
+      "notes": "The Customer page lists each vehicle with the space it holds today and adds one with only the type and plate needed."
+    },
+    {
+      "test_id": "TEST-FE-2340",
+      "upstream_ids": [
+        "DL-253",
+        "DB-PARK-001"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/customers/VehiclesCard.test.tsx",
+      "status": "implemented",
+      "notes": "Edit vehicle keeps the form open with the reason when refused; a reader and a deactivated Customer get no Add."
+    },
+    {
+      "test_id": "TEST-FE-2341",
+      "upstream_ids": [
+        "DL-253",
+        "DB-PARK-001"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/vehiclesClient.test.ts",
+      "status": "implemented",
+      "notes": "The vehicles client reads a Customer's vehicles with their spaces and sends changes with the browser proof and version."
+    },
+    {
+      "test_id": "TEST-FE-2342",
+      "upstream_ids": [
+        "DL-253",
+        "DB-PARK-001"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/vehiclesClient.test.ts",
+      "status": "implemented",
+      "notes": "The vehicles client keeps the VEHICLE_TYPE code, maps a stale version to Changed and sends nothing without the browser proof."
     }
   ]
 }

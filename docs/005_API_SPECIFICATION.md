@@ -306,6 +306,14 @@ Added by DL-253 (parking step 2, migration `20270813_438`).
 - `PUT /unit-setup/items/{item_id}/price` (`settings.manage`, Origin, CSRF, `If-Match`) takes `default_monthly_rent_usd_cents` (or null) for a Unit Type or Parking Type. The Units that use the type price take the new price; clearing it leaves them on their last price. An existing Lease never changes.
 - `GET /properties/{property_id}/unit-setup` lists `PARKING_TYPE` too; each item carries `default_monthly_rent_usd_cents`. `PUT /units/{unit_id}/rent-terms` takes `uses_type_price` (default false). Every Unit answer carries `unit_kind`, `parking_capacity`, `kept_for_short_stay_guests` and `rent_from_type`. `GET /properties/{property_id}/units` lists rooms only.
 
+## API-029c — Vehicles of a Customer
+
+Added by DL-253 (parking step 3a, migration `20270814_439`).
+
+- `GET /customers/{customer_id}/vehicles` (`customers.read` or `customers.manage`; 404 when neither) answers `items` (each with `vehicle_id`, `customer_id`, `customer_name`, `vehicle_type` CAR, MOTORBIKE, TUK_TUK or FOOD_CART, `plate_text`, `plate_match_key`, `colour`, `brand_model`, `sticker_number`, `version`, and `holds` today: `hold_id`, `hold_kind`, `space_unit_id`, `space_number`, `lease_id`, `lease_number`, `held_from`, `held_until`) and `can_manage`. Answers are `Cache-Control: private, no-store`.
+- `POST /customers/{customer_id}/vehicles` (201; `customers.manage`, Origin and CSRF) takes `vehicle_type`, `plate_text` (1 to 32, as typed), and optional `colour` (to 50), `brand_model` (to 100) and `sticker_number` (to 32). Empty optional text is stored as none.
+- `PUT /vehicles/{vehicle_id}` (`customers.manage`, Origin, CSRF, `If-Match`) takes the same fields. A vehicle that holds a space today keeps a type that fits it: `VEHICLE_TYPE` (409). A vehicle is never deleted.
+
 # 10. Customer Endpoints
 
 ## API-030 — Customers

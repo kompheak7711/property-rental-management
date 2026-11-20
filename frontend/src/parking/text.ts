@@ -129,6 +129,59 @@ const TEXT = {
     "A tenant gets parking on the Lease of a room, or on a Parking agreement.",
     "អ្នកជួលទទួលបានការចំណតលើកិច្ចសន្យាជួលបន្ទប់ ឬលើកិច្ចព្រមព្រៀងចំណត។",
   ],
+  // Step 3a: the Vehicles card on the Customer page.
+  v_title: ["Vehicles", "យានយន្ត"],
+  v_loading: ["Loading the vehicles…", "កំពុងផ្ទុកយានយន្ត…"],
+  v_failed: ["The vehicles could not be loaded.", "មិនអាចអានយានយន្តបានទេ។"],
+  v_none: ["No vehicles yet.", "មិនទាន់មានយានយន្តទេ។"],
+  v_add: ["Add vehicle", "បន្ថែមយានយន្ត"],
+  v_edit: ["Edit vehicle", "កែយានយន្ត"],
+  v_edit_plate: ["Edit {0}", "កែ {0}"],
+  v_CAR: ["Car", "ឡាន"],
+  v_MOTORBIKE: ["Motorbike", "ម៉ូតូ"],
+  v_TUK_TUK: ["Tuk-tuk", "តុកតុក"],
+  v_FOOD_CART: ["Food cart", "រទេះលក់ម្ហូប"],
+  v_type: ["Vehicle type", "ប្រភេទយានយន្ត"],
+  v_plate: ["Plate number", "ស្លាកលេខ"],
+  v_plate_help: [
+    "As it is written on the plate, such as 2A-1234.",
+    "ដូចដែលសរសេរលើស្លាក ដូចជា 2A-1234។",
+  ],
+  v_colour: ["Colour", "ពណ៌"],
+  v_brand: ["Brand and model", "ម៉ាក និងម៉ូដែល"],
+  v_sticker: ["Sticker number", "លេខស្ទីគ័រ"],
+  v_optional: ["Optional", "មិនចាំបាច់"],
+  v_e_plate: ["Enter the plate number.", "បញ្ចូលស្លាកលេខ។"],
+  v_parks: ["Parks in {0}", "ចតនៅ {0}"],
+  v_parks_lease: ["Parks in {0} · {1}", "ចតនៅ {0} · {1}"],
+  v_no_space: ["No space today", "គ្មានកន្លែងថ្ងៃនេះ"],
+  v_sticker_line: ["Sticker {0}", "ស្ទីគ័រ {0}"],
+  v_note: [
+    "A vehicle is corrected, never deleted. A space is given on the Lease.",
+    "យានយន្តត្រូវបានកែ មិនដែលលុបទេ។ កន្លែងចតត្រូវបានផ្តល់លើកិច្ចសន្យា។",
+  ],
+  v_saved_new: ["Vehicle {0} was added.", "បានបន្ថែមយានយន្ត {0}។"],
+  v_saved: ["Vehicle {0} was saved.", "បានរក្សាយានយន្ត {0}។"],
+  v_r_VEHICLE_TYPE: [
+    "This vehicle holds a space of another Parking Type today, so its type cannot change now.",
+    "យានយន្តនេះកំពុងកាន់កាប់កន្លែងនៃប្រភេទចំណតផ្សេងនៅថ្ងៃនេះ ដូច្នេះមិនអាចប្តូរប្រភេទឥឡូវនេះបានទេ។",
+  ],
+  v_r_CHANGED: [
+    "Someone changed this vehicle meanwhile. The list was read again; please try again.",
+    "មាននរណាម្នាក់បានកែយានយន្តនេះ។ បញ្ជីត្រូវបានអានម្តងទៀត សូមព្យាយាមម្តងទៀត។",
+  ],
+  v_r_INVALID: [
+    "The vehicle was not saved. Check the boxes and try again.",
+    "យានយន្តមិនត្រូវបានរក្សាទេ។ សូមពិនិត្យប្រអប់ ហើយព្យាយាមម្តងទៀត។",
+  ],
+  v_r_UNAVAILABLE: [
+    "Your account cannot change vehicles.",
+    "គណនីរបស់អ្នកមិនអាចកែយានយន្តបានទេ។",
+  ],
+  v_r_FAILED: [
+    "The vehicle was not saved. Check your connection and try again.",
+    "យានយន្តមិនត្រូវបានរក្សាទេ។ សូមពិនិត្យការតភ្ជាប់ ហើយព្យាយាមម្តងទៀត។",
+  ],
 } as const;
 
 export type ParkingTextKey = keyof typeof TEXT;
