@@ -15,6 +15,9 @@ import {
   ReportsUnavailableError,
   type TotalsPage,
 } from "../reportsClient";
+import type { UnitListPage } from "../unitClient";
+import type { Building } from "../buildingClient";
+import { BUILDING_KEY, BuildingChoiceProvider } from "../shell/buildingChoice";
 import { openPageInAddress } from "../shell/useHashPage";
 import type { ReportApi } from "./ReportsPage";
 import {
@@ -648,5 +651,107 @@ describe("Language and parameters", () => {
     cleanup();
     openReports({ capabilities: new Set(["reports.read"]) });
     expect(screen.queryByRole("region", { name: "Short stays" })).toBeNull();
+  });
+});
+
+describe("Reports by building (DL-250 step 4)", () => {
+  const building = (id: string, name: string, order: number): Building => ({
+    building_id: id,
+    property_id: PROPERTY,
+    name_en: name,
+    name_km: null,
+    address_text: null,
+    description: null,
+    takes_short_stays: order === 0,
+    sort_order: order,
+    removed: false,
+    unit_count: 1,
+    version: 1,
+  });
+
+  it("TEST-FE-2319 with one building chosen in the side menu every report and Export ask for that building; the Unit and floor choices and the scope are that building's", async () => {
+    window.localStorage.setItem(BUILDING_KEY, "b-2");
+    const buildingApi = {
+      list: vi.fn(() =>
+        Promise.resolve({
+          items: [
+            building("b-1", "CHETANA Residence", 0),
+            building("b-2", "Building Two", 1),
+          ],
+          can_manage: true,
+        }),
+      ),
+    };
+    const unitApi = {
+      list: vi.fn(
+        (): Promise<UnitListPage> =>
+          Promise.resolve({
+            items: [
+              { unit_id: "unit-203", building_id: "b-1" },
+              { unit_id: "unit-101", building_id: "b-2" },
+              { unit_id: "unit-204", building_id: "b-1" },
+            ],
+            next_cursor: null,
+          } as UnitListPage),
+      ),
+    };
+    const page = openReports({
+      hash: "#/reports/total_income",
+      capabilities: MANAGER,
+      wrapper: (inner) => (
+        <BuildingChoiceProvider
+          buildingApi={buildingApi}
+          propertyId={PROPERTY}
+          refreshKey="reports"
+          unitApi={unitApi}
+        >
+          {inner}
+        </BuildingChoiceProvider>
+      ),
+    });
+    await waitFor(() => {
+      expect(page.totals).toHaveBeenLastCalledWith(PROPERTY, "total_income", {
+        buildingId: "b-2",
+      });
+    });
+    const unit = screen.getByRole("combobox", { name: "Unit" });
+    await waitFor(() => {
+      expect(
+        within(unit)
+          .getAllByRole("option")
+          .map((option) => option.textContent),
+      ).toEqual(["All Units", "U101"]);
+    });
+
+    act(() => {
+      openPageInAddress("reports", false, "invoice_register");
+    });
+    await screen.findByRole("table", { name: "Invoice register and balances" });
+    expect(page.register).toHaveBeenLastCalledWith(
+      PROPERTY,
+      "invoice_register",
+      { buildingId: "b-2", limit: 200 },
+    );
+    const scope = screen.getByRole("combobox", { name: "Scope" });
+    expect(
+      within(scope)
+        .getAllByRole<HTMLOptionElement>("option")
+        .map((option) => option.value),
+    ).toEqual(["", "1"]);
+    fireEvent.click(screen.getByRole("button", { name: "Export" }));
+    const dialog = screen.getByRole("dialog", {
+      name: "Export · Invoice register and balances",
+    });
+    expect(facts(dialog)[1]).toEqual(["Scope", "Building Two"]);
+    stubSave();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Export" }));
+    await waitFor(() => {
+      expect(page.exportFile).toHaveBeenCalledWith(PROPERTY, {
+        report: "invoice_register",
+        fileType: "xlsx",
+        buildingId: "b-2",
+      });
+    });
+    window.localStorage.clear();
   });
 });

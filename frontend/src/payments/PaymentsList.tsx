@@ -16,6 +16,7 @@ import {
 } from "react";
 
 import type { InvoicesData } from "../invoices/invoicesData";
+import { AllBuildingsNote } from "../shell/buildingChoice";
 import { dayText, momentText, usdFromCents } from "../shell/format";
 import { Icon, type ShellIcon } from "../shell/icons";
 import { hashForPage } from "../shell/navigation";
@@ -376,6 +377,7 @@ export function PaymentsList({
   return (
     <>
       {head}
+      <AllBuildingsNote language={language} />
       {filters}
       <div className="ui-kpis ui-kpis-pay">
         <CountCard

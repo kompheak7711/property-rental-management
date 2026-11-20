@@ -59,6 +59,9 @@ class TotalsFilter:
     floor: str | None = None
     from_date: date | None = None
     to_date: date | None = None
+    # DL-250 step 4: only the Units of one building (records with no Unit are left out, as with
+    # a floor); None is All buildings.
+    building_id: UUID | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -122,13 +125,40 @@ def utility_facts(rows: Iterable[Mapping[str, object]], utility_type: str) -> li
     ]
 
 
+def building_filter(
+    units: Sequence[Mapping[str, object]], building_id: UUID | None
+) -> dict[str, object]:
+    """The chosen building and its name (from any of its Units), only when one is chosen, so an
+    All buildings answer is the same as before DL-250."""
+    if building_id is None:
+        return {}
+    name = next(
+        (
+            str(unit["building_name"])
+            for unit in units
+            if str(unit.get("building_id")) == str(building_id) and unit.get("building_name")
+        ),
+        None,
+    )
+    return {"building_id": str(building_id), "building_name": name}
+
+
 def _quantity_text(value: Decimal) -> str:
     text = format(value.normalize(), "f")
     return "0" if text in {"-0", ""} else text
 
 
-def _in_scope(fact: MonthFact, chosen: TotalsFilter, floors: Mapping[UUID, str | None]) -> bool:
+def _in_scope(
+    fact: MonthFact,
+    chosen: TotalsFilter,
+    floors: Mapping[UUID, str | None],
+    buildings: Mapping[UUID, str | None],
+) -> bool:
     if chosen.unit_id is not None and fact.unit_id != chosen.unit_id:
+        return False
+    if chosen.building_id is not None and (
+        fact.unit_id is None or buildings.get(fact.unit_id) != str(chosen.building_id)
+    ):
         return False
     if chosen.floor is not None and (
         fact.unit_id is None or floors.get(fact.unit_id) != chosen.floor
@@ -151,7 +181,13 @@ def build_totals(
         cast(UUID, _uuid(unit["id"])): (None if unit["floor"] is None else str(unit["floor"]))
         for unit in units
     }
-    kept = [fact for fact in facts if _in_scope(fact, chosen, floors)]
+    buildings = {
+        cast(UUID, _uuid(unit["id"])): (
+            None if unit.get("building_id") is None else str(unit.get("building_id"))
+        )
+        for unit in units
+    }
+    kept = [fact for fact in facts if _in_scope(fact, chosen, floors, buildings)]
     quantities = report in UTILITY_TYPES
     by_month: dict[date, int] = defaultdict(int)
     by_month_quantity: dict[date, Decimal] = defaultdict(Decimal)
@@ -230,6 +266,7 @@ def build_totals(
             "unit_id": None if chosen.unit_id is None else str(chosen.unit_id),
             "unit_number": None if chosen.unit_id is None else numbers.get(chosen.unit_id),
             "floor": chosen.floor,
+            **building_filter(units, chosen.building_id),
             "from": None if chosen.from_date is None else chosen.from_date.isoformat(),
             "to": None if chosen.to_date is None else chosen.to_date.isoformat(),
         },

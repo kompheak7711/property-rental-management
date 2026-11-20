@@ -3,6 +3,7 @@
 // and small readers for the tables, headline numbers and bar lists on screen.
 
 import { render } from "@testing-library/react";
+import type { ReactElement } from "react";
 import { vi } from "vitest";
 
 import type {
@@ -1084,9 +1085,9 @@ export function emptyPage(name: RegisterName): RegisterPage<RegisterName> {
 // ---------- the Units and the page ----------
 
 const UNITS = [
-  { unit_id: "unit-203", unit_number: "U203", floor: "2" },
-  { unit_id: "unit-101", unit_number: "U101", floor: "1" },
-  { unit_id: "unit-204", unit_number: "U204", floor: "2" },
+  { unit_id: "unit-203", unit_number: "U203", floor: "2", building_id: "b-1" },
+  { unit_id: "unit-101", unit_number: "U101", floor: "1", building_id: "b-2" },
+  { unit_id: "unit-204", unit_number: "U204", floor: "2", building_id: "b-1" },
 ];
 
 const LISTS = {
@@ -1145,6 +1146,8 @@ export interface OpenOptions {
   download?: ReportApi["download"];
   /** The Short stays weekly report's reads (Leasing thread, owner 13/11/2026). */
   stayApi?: ReportsPageProps["stayApi"];
+  /** Draws the page inside this (the Building switch of the side menu, DL-250 step 4). */
+  wrapper?: (page: ReactElement) => ReactElement;
 }
 
 /** Opens the Reports page on an address, with the fixture pages unless a test gives others. */
@@ -1187,7 +1190,8 @@ export function openReports(options: OpenOptions = {}) {
     units,
     ...(options.stayApi === undefined ? {} : { stayApi: options.stayApi }),
   };
-  const view = render(<ReportsPage {...props} />);
+  const wrap = options.wrapper ?? ((page: ReactElement) => page);
+  const view = render(wrap(<ReportsPage {...props} />));
   return {
     totals,
     register,
@@ -1197,7 +1201,7 @@ export function openReports(options: OpenOptions = {}) {
     /** Draws the page again with some props changed; the API and clock stay the same. */
     rerender(changes: Partial<ReportsPageProps>) {
       props = { ...props, ...changes };
-      view.rerender(<ReportsPage {...props} />);
+      view.rerender(wrap(<ReportsPage {...props} />));
     },
   };
 }

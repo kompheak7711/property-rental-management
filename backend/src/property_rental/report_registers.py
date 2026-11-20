@@ -16,6 +16,9 @@ from dataclasses import dataclass
 from datetime import date, timedelta
 from decimal import Decimal
 from typing import Final, Literal, cast
+from uuid import UUID
+
+from property_rental.report_totals import building_filter
 
 RegisterName = Literal[
     "invoice_register",
@@ -66,6 +69,8 @@ class RegisterFilter:
     to_date: date | None = None
     offset: int = 0
     limit: int = DEFAULT_LIMIT
+    # DL-250 step 4: only the rows of one building's Units; None is All buildings.
+    building_id: UUID | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -479,6 +484,14 @@ def build_register(
         named.append(row)
     if chosen.floor is not None and name != "audit_activity":
         named = [row for row in named if row.get("floor") == chosen.floor]
+    if chosen.building_id is not None and name != "audit_activity":
+        wanted = str(chosen.building_id)
+        named = [
+            row
+            for row in named
+            if row.get("unit_id") is not None
+            and str(unit_info.get(str(row["unit_id"]), {}).get("building_id")) == wanted
+        ]
     period = name not in NO_PERIOD
     if name == "lease_dates":
         for row in named:
@@ -499,6 +512,7 @@ def build_register(
         "currency": "USD",
         "filter": {
             "floor": chosen.floor,
+            **building_filter(units, chosen.building_id),
             "from": None if chosen.from_date is None else chosen.from_date.isoformat(),
             "to": None if chosen.to_date is None else chosen.to_date.isoformat(),
             "period_applies": period,

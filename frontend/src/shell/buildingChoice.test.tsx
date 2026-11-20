@@ -18,6 +18,7 @@ import type { LeaseResource } from "../leaseClient";
 import type { UnitListPage, UnitResource } from "../unitClient";
 import { AppShell } from "./AppShell";
 import {
+  AllBuildingsNote,
   BUILDING_KEY,
   BuildingChoiceProvider,
   useBuildingChoice,
@@ -209,5 +210,46 @@ describe("Building switch (DL-250 step 3)", () => {
     expect(
       invoicesInBuilding(data, inTwo).invoices.map((item) => item.id),
     ).toEqual(["inv-b", "inv-c", "inv-guest"]);
+  });
+
+  it("TEST-FE-2320 Home and Payments count all buildings: with one building chosen they say so, with All buildings or one building they say nothing (DL-250 step 4)", async () => {
+    const note = (items: Building[], language: "en" | "km" = "en") => {
+      const fakes = apis(items);
+      render(
+        <BuildingChoiceProvider
+          buildingApi={fakes.buildingApi}
+          propertyId="property-1"
+          refreshKey="home"
+          unitApi={fakes.unitApi}
+        >
+          <AllBuildingsNote language={language} />
+        </BuildingChoiceProvider>,
+      );
+      return fakes;
+    };
+    const one = note([ONE]);
+    await waitFor(() => {
+      expect(one.buildingApi.list).toHaveBeenCalled();
+    });
+    expect(screen.queryByRole("note")).toBeNull();
+    cleanup();
+
+    const all = note([ONE, TWO]);
+    await waitFor(() => {
+      expect(all.buildingApi.list).toHaveBeenCalled();
+    });
+    expect(screen.queryByRole("note")).toBeNull();
+    cleanup();
+
+    window.localStorage.setItem(BUILDING_KEY, "building-2");
+    note([ONE, TWO]);
+    expect(await screen.findByRole("note")).toHaveTextContent(
+      "These figures are for all buildings. Reports show one building.",
+    );
+    cleanup();
+    note([ONE, TWO], "km");
+    expect(await screen.findByRole("note")).toHaveTextContent(
+      "តួលេខទាំងនេះសម្រាប់អគារទាំងអស់។",
+    );
   });
 });

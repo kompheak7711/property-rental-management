@@ -1696,6 +1696,8 @@ source/as-of metadata.
 
 Amended by DL-072 (owner, 2026-10-04; answer 10 changed 2026-10-20 and 2026-10-21): all 9 reports of UI-088 are supported, with the overdue groups and the monthly money-collected summary of DL-072. Staff may read only reports 1, 2 and 7, without money totals. Ordinary report views write no audit event. Not built yet (V1-057).
 
+Amended by DL-250 step 4 (2026-11-20): the Totals reports, the registers and `POST /properties/{property_id}/exports` take an optional `building_id`. It keeps only the rows of that building's Units, the same way a floor does (money with no Unit counts only when no building is given), and the answer's `filter` then names `building_id` and `building_name`. With no `building_id` every answer is the same as before.
+
 ## API-078 — Export Jobs
 
 Large authorized exports may use:

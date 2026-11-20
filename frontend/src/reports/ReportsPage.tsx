@@ -34,6 +34,8 @@ import {
   type TotalsPage,
   type TotalsReport,
 } from "../reportsClient";
+import { buildingName } from "../buildingClient";
+import { useBuildingChoice } from "../shell/buildingChoice";
 import { DateInput, parseDay } from "../shell/DateInput";
 import { dayText } from "../shell/format";
 import { Icon } from "../shell/icons";
@@ -115,6 +117,8 @@ interface UnitChoice {
   id: string;
   number: string;
   floor: string;
+  /** DL-250 step 4: the Unit's building, for the Building switch of the side menu. */
+  buildingId: string | null;
 }
 
 // A register reads 200 rows at a time; Show more reads the next 200.
@@ -142,6 +146,7 @@ export function ReportsPage({
   stayApi = shortStaysApi,
 }: ReportsPageProps) {
   const detail = useHashDetail("reports");
+  const { chosen } = useBuildingChoice();
   const [params, setParams] = useState<Params>(START_PARAMS);
   const [unitList, setUnitList] = useState<UnitChoice[]>([]);
   const [lists, setLists] = useState<UnitSetupLists | null>(null);
@@ -178,6 +183,7 @@ export function ReportsPage({
               id: unit.unit_id,
               number: unit.unit_number,
               floor: unit.floor,
+              buildingId: unit.building_id ?? null,
             }))
             .sort((left, right) =>
               left.number.localeCompare(right.number, undefined, {
@@ -238,9 +244,15 @@ export function ReportsPage({
     );
   }
 
+  // DL-250 step 4: with one building chosen in the side menu, the Unit and floor choices are
+  // that building's.
+  const shownUnits =
+    chosen === null
+      ? unitList
+      : unitList.filter((unit) => unit.buildingId === chosen.building_id);
   // Floors in the Settings order, then any other floor a Unit uses (as on the Units list).
   const floorOrder = (lists?.lists.FLOOR ?? []).map((item) => item.name_en);
-  const floors = [...new Set(unitList.map((unit) => unit.floor))]
+  const floors = [...new Set(shownUnits.map((unit) => unit.floor))]
     .filter((floor) => floor !== "")
     .sort((left, right) => {
       const a = floorOrder.indexOf(left);
@@ -263,7 +275,7 @@ export function ReportsPage({
       propertyId={propertyId}
       today={today}
       typeName={(code) => typeName(lists, code, language === "km")}
-      unitList={unitList}
+      unitList={shownUnits}
     />
   );
 }
@@ -412,9 +424,19 @@ function ReportView({
       : picked;
   const from = range?.[0];
   const to = range?.[1];
+  const { chosen } = useBuildingChoice();
+  const buildingId = chosen?.building_id ?? "";
+  const inBuilding = (wanted: string) =>
+    buildingId === "" || unitList.some((unit) => unit.id === wanted);
   const floor =
-    def.kind === "register" && floorApplies(def.key) ? params.floor : "";
-  const unitId = def.kind === "totals" ? params.unitId : "";
+    def.kind === "register" &&
+    floorApplies(def.key) &&
+    (buildingId === "" || floors.includes(params.floor))
+      ? params.floor
+      : "";
+  // A Unit or floor of another building is not asked for under the chosen building.
+  const unitId =
+    def.kind === "totals" && inBuilding(params.unitId) ? params.unitId : "";
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [failure, setFailure] = useState<"failed" | "not_allowed" | null>(
     allowed ? null : "not_allowed",
@@ -437,17 +459,20 @@ function ReportView({
     }
     setFailure(null);
     const dates = from === undefined ? {} : { from, to };
+    const where = buildingId === "" ? {} : { buildingId };
     const request: Promise<Loaded> =
       def.kind === "totals"
         ? api
             .totals(propertyId, def.key, {
               ...(unitId === "" ? {} : { unitId }),
+              ...where,
               ...dates,
             })
             .then((page) => ({ kind: "totals", page, at: now() }))
         : api
             .register(propertyId, def.key, {
               ...(floor === "" ? {} : { floor }),
+              ...where,
               ...dates,
               limit: PAGE_ROWS,
             })
@@ -467,7 +492,7 @@ function ReportView({
           error instanceof ReportsNotAllowedError ? "not_allowed" : "failed",
         );
       });
-  }, [allowed, api, def, floor, from, now, propertyId, to, unitId]);
+  }, [allowed, api, buildingId, def, floor, from, now, propertyId, to, unitId]);
 
   useEffect(load, [load]);
 
@@ -479,6 +504,7 @@ function ReportView({
     api
       .register(propertyId, def.key, {
         ...(floor === "" ? {} : { floor }),
+        ...(buildingId === "" ? {} : { buildingId }),
         ...(from === undefined ? {} : { from, to }),
         offset: loaded.rows.length,
         limit: PAGE_ROWS,
@@ -501,6 +527,7 @@ function ReportView({
       fileType,
       ...(floor === "" ? {} : { floor }),
       ...(unitId === "" ? {} : { unitId }),
+      ...(buildingId === "" ? {} : { buildingId }),
       ...(range === null ? {} : { from: range[0], to: range[1] }),
     };
     const answer = await api.exportFile(propertyId, request);
@@ -515,7 +542,7 @@ function ReportView({
   }
 
   const name = rpt(language, `r_${def.key}`);
-  const scope =
+  const unitScope =
     def.kind === "totals"
       ? unitId === ""
         ? rpt(language, "all_units")
@@ -523,6 +550,13 @@ function ReportView({
       : floor === ""
         ? rpt(language, "whole")
         : floorName(language, floor);
+  // DL-250 step 4: a report of one building names it first (a single Unit names itself).
+  const scope =
+    chosen === null || unitId !== ""
+      ? unitScope
+      : unitScope === rpt(language, "whole")
+        ? buildingName(language, chosen)
+        : `${buildingName(language, chosen)} · ${unitScope}`;
   const period = periodApplies(def.key)
     ? rangeText(language, range)
     : rpt(language, "as_of", dayText(today));

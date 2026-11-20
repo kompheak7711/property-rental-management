@@ -136,6 +136,8 @@ export interface TotalsFilter {
   // dd/mm/yyyy on screen; ISO yyyy-mm-dd here. Only the month of each date counts.
   from?: string;
   to?: string;
+  // DL-250 step 4: the building chosen in the side menu; left out for All buildings.
+  buildingId?: string;
 }
 
 // One year of a Totals table: twelve months, January first; null is a month with no record
@@ -202,6 +204,7 @@ export interface RegisterFilter {
   to?: string;
   offset?: number;
   limit?: number;
+  buildingId?: string;
 }
 
 // Every row with a Unit carries unit_id, unit_number and floor.
@@ -406,6 +409,7 @@ export interface ExportRequest {
   unitId?: string;
   from?: string;
   to?: string;
+  buildingId?: string;
 }
 
 export interface AuditExportRequest {
@@ -730,6 +734,7 @@ export const reportsApi = {
             floor: filter.floor,
             from: filter.from,
             to: filter.to,
+            building_id: filter.buildingId,
           }),
       ),
     ),
@@ -747,6 +752,7 @@ export const reportsApi = {
             to: filter.to,
             offset: filter.offset?.toString(),
             limit: filter.limit?.toString(),
+            building_id: filter.buildingId,
           }),
       ),
     ),
@@ -759,6 +765,7 @@ export const reportsApi = {
       unit_id: request.unitId,
       from: request.from,
       to: request.to,
+      building_id: request.buildingId,
     }),
   exportAudit: (propertyId: string, request: AuditExportRequest) =>
     postExport(
