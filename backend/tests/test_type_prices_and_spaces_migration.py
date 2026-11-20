@@ -294,7 +294,7 @@ def test_the_parking_list_shows_who_holds_each_space_and_the_units_list_leaves_s
     before = connection.execute(
         "SELECT app.parking_spaces(%s, %s)", (property_id, date(2026, 10, 31))
     ).fetchone()
-    assert before is not None
+    assert before is not None and isinstance(before[0], list)
     assert {item["unit_id"]: item for item in before[0]}[str(held)]["holds"] == []
     # The Units list reads rooms only (its query runs on its own connection).
     source = inspect.getsource(PostgresUnitResourceFlow.list)
