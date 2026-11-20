@@ -3,6 +3,9 @@
 A room Lease that holds a parking Service picks a parking space (and a vehicle of someone on the
 Lease). The owner's rule of 20 Nov 2026: the tenant pays the price of the space picked, on the same
 Rent Invoice; the price is copied when the space is picked and never changes after.
+
+A Parking agreement (DL-254, parking step 4b) is a Lease on the parking space itself; on its
+draft staff pick the vehicle that parks there.
 """
 
 from __future__ import annotations
@@ -36,6 +39,7 @@ _MESSAGES: Final = {
     "PARKING_KEPT_FOR_GUESTS": "This space is kept for short-stay guests.",
     "TYPE_HAS_NO_PRICE": "This space has no price. Set the Parking Type price first.",
     "LEASE_CLOSED": "Only a drafted or signed Lease takes a parking space.",
+    "AGREEMENT_DATES_MISSING": "Add the start date first (Edit draft).",
 }
 
 
@@ -70,6 +74,10 @@ class LeaseParkingFlow(Protocol):
         actor_id: str,
     ) -> dict[str, object]: ...
 
+    def pick_vehicle(
+        self, lease_id: UUID, *, vehicle_id: UUID, actor_id: str
+    ) -> dict[str, object]: ...
+
 
 class UnavailableLeaseParkingFlow:
     """Used when the app has no database."""
@@ -86,9 +94,14 @@ class UnavailableLeaseParkingFlow:
         del lease_id
         raise LeaseParkingUnavailable("Parking persistence is not configured")
 
+    def pick_vehicle(self, lease_id: UUID, **_: object) -> dict[str, object]:
+        del lease_id
+        raise LeaseParkingUnavailable("Parking persistence is not configured")
+
 
 class PostgresLeaseParkingFlow:
-    """Runs `app.lease_parking` and `app.hold_room_parking_space` of migration 440."""
+    """Runs `app.lease_parking`, `app.hold_room_parking_space` (migration 440) and
+    `app.hold_parking_agreement_space` (migration 441)."""
 
     def __init__(self, database_url: str) -> None:
         self._database_url = database_url
@@ -143,6 +156,24 @@ class PostgresLeaseParkingFlow:
             raise LeaseParkingUnavailable("Parking is unavailable")
         return row[0]
 
+    def pick_vehicle(self, lease_id: UUID, *, vehicle_id: UUID, actor_id: str) -> dict[str, object]:
+        try:
+            with psycopg.connect(self._database_url) as connection:
+                row = connection.execute(
+                    "SELECT app.hold_parking_agreement_space(%s, %s, %s, %s)",
+                    (uuid4(), lease_id, vehicle_id, UUID(actor_id)),
+                ).fetchone()
+        except psycopg.errors.NoDataFound as exc:
+            raise LeaseParkingNotFound("Parking agreement was not found") from exc
+        except psycopg.Error as exc:
+            hint = exc.diag.message_hint
+            if hint:
+                raise LeaseParkingConflict("The vehicle cannot be picked", str(hint)) from exc
+            raise LeaseParkingUnavailable("Parking is unavailable") from exc
+        if row is None or not isinstance(row[0], dict):
+            raise LeaseParkingUnavailable("Parking is unavailable")
+        return row[0]
+
 
 class HoldBody(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -150,6 +181,12 @@ class HoldBody(BaseModel):
     lease_service_term_id: UUID
     space_unit_id: UUID
     vehicle_id: UUID | None = None
+
+
+class VehicleBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    vehicle_id: UUID
 
 
 def _allowed(actor: AuthenticatedActor, capability: str, property_id: UUID) -> bool:
@@ -228,6 +265,23 @@ def create_lease_parking_router(
                 vehicle_id=body.vehicle_id,
                 actor_id=actor.actor_id,
             )
+        )
+        response.headers["Cache-Control"] = "private, no-store"
+        return {"data": hold, "meta": {"request_id": request.state.request_id}}
+
+    @router.post("/leases/{lease_id}/agreement-vehicle", status_code=status.HTTP_201_CREATED)
+    def pick_vehicle(
+        lease_id: UUID, body: VehicleBody, request: Request, response: Response
+    ) -> dict[str, object]:
+        """DL-254: pick the vehicle that parks in the space of a drafted Parking agreement.
+        Picking again replaces the earlier pick."""
+        actor = actor_of(request)
+        property_id = readable(actor, lease_id)
+        if not can_pick(actor, property_id):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+        require_browser_mutation(request, settings)
+        hold = run(
+            lambda: flow.pick_vehicle(lease_id, vehicle_id=body.vehicle_id, actor_id=actor.actor_id)
         )
         response.headers["Cache-Control"] = "private, no-store"
         return {"data": hold, "meta": {"request_id": request.state.request_id}}

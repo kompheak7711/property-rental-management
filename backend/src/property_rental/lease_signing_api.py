@@ -153,6 +153,14 @@ SIGN_REFUSALS: Final[dict[str, Refusal]] = {
         "Every Signer must sign, and the Signers changed meanwhile. Nothing was saved. "
         "Close, open Sign Lease again and tick every Signer.",
     ),
+    # DL-254: a Parking agreement needs its vehicle picked for its dates first.
+    "Pick the vehicle for these dates before signing": Refusal(
+        409,
+        "SIGNING_AGREEMENT_VEHICLE_MISSING",
+        "Pick the vehicle first, on the Vehicle card of this Parking agreement. If you changed "
+        "the dates, pick it again. Nothing was saved.",
+        ("DL-254",),
+    ),
     # DL-253 (owner 20 Nov 2026): parking on a room Lease needs its space picked first.
     "Pick a parking space before signing": Refusal(
         409,

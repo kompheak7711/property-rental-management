@@ -1,4 +1,4 @@
-"""PostgreSQL tests for Parking agreements (migration 20270816_441, DL-254, parking step 4a).
+"""PostgreSQL tests for Parking agreements (migrations 20270816_441 and 20270817_442, DL-254).
 
 A Parking agreement is a Lease on the parking space. It holds the space with a vehicle for its
 dates; the space holds, not the Lease dates, decide how many agreements a space takes at once.
@@ -88,7 +88,9 @@ def _try(connection: Db, values: tuple[object, ...]) -> tuple[str, ...]:
 
 def test_migration_is_the_single_head_and_forward_only() -> None:
     scripts = ScriptDirectory.from_config(Config(str(Path(__file__).parents[1] / "alembic.ini")))
-    assert scripts.get_heads() == [REVISION]
+    assert scripts.get_heads() == ["20270817_442"]  # step 4b follows 441
+    page = scripts.get_revision("20270817_442")
+    assert page is not None and page.down_revision == REVISION
     revision = scripts.get_revision(REVISION)
     assert revision is not None and revision.down_revision == "20270815_440"
     with pytest.raises(RuntimeError, match="forward-only"):
@@ -173,3 +175,32 @@ def test_the_app_picks_the_vehicle_only_through_the_function(connection: Db) -> 
         "has_table_privilege('prm_runtime', 'app.parking_space_holds', 'INSERT')"
     ).fetchone()
     assert row == (True, False)
+
+
+def test_a_month_to_month_agreement_reads_its_space_and_vehicle(connection: Db) -> None:
+    actor_id, property_id = setup(connection)
+    space_id = insert_space(connection, actor_id, property_id)
+    customer_id = insert_customer(connection, actor_id, legal_name="Parker monthly")
+    car = add_vehicle(connection, actor_id, property_id, customer_id, "CAR", "2A-4201")
+    lease_id = create_draft(
+        connection,
+        actor_id=actor_id,
+        unit_id=space_id,
+        primary_tenant_id=customer_id,
+        start_date=date(2027, 1, 1),
+        end_date=date(2099, 12, 31),
+    )
+    connection.execute(PICK, (uuid4(), lease_id, car, actor_id))
+    row = connection.execute("SELECT app.lease_parking(%s)", (lease_id,)).fetchone()
+    assert row is not None
+    parking = cast(dict[str, Any], row[0])
+    assert (parking["on_parking_space"], parking["month_to_month"]) == (True, True)
+    assert parking["space"]["unit_id"] == str(space_id)
+    assert parking["agreement_hold"]["vehicle_id"] == str(car)
+    assert parking["terms"] == []
+    assert [vehicle["vehicle_id"] for vehicle in parking["vehicles"]] == [str(car)]
+    # A room Lease to the same day is not month to month.
+    room = connection.execute(
+        "SELECT month_to_month, on_parking_space FROM app.leases WHERE NOT on_parking_space LIMIT 1"
+    ).fetchone()
+    assert room is None or room[0] is False

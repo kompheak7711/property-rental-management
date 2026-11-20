@@ -1716,6 +1716,7 @@ export function App({
           <ParkingPage
             active={shown("parking")}
             api={parkingApi}
+            canDraftLeases={capabilities?.has("leases.draft") === true}
             language={language}
             propertyId={
               propertyId || (propertyConfiguration?.property_id ?? "")

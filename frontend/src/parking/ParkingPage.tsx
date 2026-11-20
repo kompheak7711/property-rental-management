@@ -20,6 +20,7 @@ import {
   parkingApi as defaultParkingApi,
 } from "../parkingClient";
 import { useBuildingChoice } from "../shell/buildingChoice";
+import { hashForPage } from "../shell/navigation";
 import { usdFromCents } from "../shell/format";
 import { Icon, type ShellIcon } from "../shell/icons";
 import { PageHead } from "../shell/pageHead";
@@ -82,6 +83,8 @@ export interface ParkingPageProps {
   unitApi: Pick<UnitApi, "setupLists">;
   /** The real server when not given. */
   api?: ParkingApi;
+  /** DL-254: the person may draft Leases, so a space offers New Parking agreement. */
+  canDraftLeases?: boolean;
 }
 
 export function ParkingPage({
@@ -90,6 +93,7 @@ export function ParkingPage({
   active,
   unitApi,
   api = defaultParkingApi,
+  canDraftLeases = false,
 }: ParkingPageProps) {
   const choice = useBuildingChoice();
   const [spaces, setSpaces] = useState<ParkingSpace[] | null>(null);
@@ -175,6 +179,7 @@ export function ParkingPage({
   );
   const dash = <span className="ui-muted">—</span>;
   const canEdit = canManage && types !== null;
+  const actions = canEdit || canDraftLeases;
 
   return (
     <>
@@ -285,10 +290,10 @@ export function ParkingPage({
                     {pt(language, "col_price")}
                   </th>
                   <th scope="col">{pt(language, "col_held")}</th>
-                  {canEdit && (
+                  {actions && (
                     <th scope="col">
                       <span className="ui-sr">
-                        {pt(language, "edit_space")}
+                        {pt(language, "col_actions")}
                       </span>
                     </th>
                   )}
@@ -328,19 +333,34 @@ export function ParkingPage({
                           held.map((line) => <div key={line}>{line}</div>)
                         )}
                       </td>
-                      {canEdit && (
+                      {actions && (
                         <td>
-                          <button
-                            aria-label={`${pt(language, "edit_space")}: ${space.unit_number}`}
-                            className="ui-btn link"
-                            onClick={() => {
-                              setNotice(null);
-                              setEditing(space);
-                            }}
-                            type="button"
-                          >
-                            {pt(language, "edit_space")}
-                          </button>
+                          {canDraftLeases &&
+                            !space.kept_for_short_stay_guests && (
+                              <a
+                                aria-label={`${pt(language, "pa_new")}: ${space.unit_number}`}
+                                className="ui-btn link"
+                                href={hashForPage(
+                                  "leases",
+                                  `space:${space.unit_id}`,
+                                )}
+                              >
+                                {pt(language, "pa_new")}
+                              </a>
+                            )}
+                          {canEdit && (
+                            <button
+                              aria-label={`${pt(language, "edit_space")}: ${space.unit_number}`}
+                              className="ui-btn link"
+                              onClick={() => {
+                                setNotice(null);
+                                setEditing(space);
+                              }}
+                              type="button"
+                            >
+                              {pt(language, "edit_space")}
+                            </button>
+                          )}
                         </td>
                       )}
                     </tr>

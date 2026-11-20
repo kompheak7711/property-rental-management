@@ -1,4 +1,5 @@
 // DL-253 (parking step 2): the Parking page. TEST-FE-2331 to TEST-FE-2334.
+// DL-254 (parking step 4b): New Parking agreement from a space. TEST-FE-2348.
 
 import {
   cleanup,
@@ -371,5 +372,29 @@ describe("Parking page (DL-253)", () => {
     show(apiOf({ list }));
     fireEvent.click(await screen.findByRole("button", { name: "Retry" }));
     expect(await screen.findByText("4 parking spaces")).toBeInTheDocument();
+  });
+
+  it("TEST-FE-2348 a person who may draft Leases gets New Parking agreement on each space not kept for guests; it opens the form for that space (DL-254)", async () => {
+    render(
+      <ParkingPage
+        active
+        api={apiOf({}, false)}
+        canDraftLeases
+        language="en"
+        propertyId="property-1"
+        unitApi={{ setupLists: vi.fn(() => Promise.resolve(lists())) }}
+      />,
+    );
+    expect(await screen.findByText("4 parking spaces")).toBeInTheDocument();
+    const links = screen.getAllByRole("link", {
+      name: /^New Parking agreement: /,
+    });
+    expect(links.map((link) => link.getAttribute("aria-label"))).toEqual([
+      "New Parking agreement: P01",
+      "New Parking agreement: P02",
+      "New Parking agreement: MOTO",
+    ]);
+    expect(links[0]).toHaveAttribute("href", "#/leases/space%3Aspace-P01");
+    expect(screen.queryByRole("button", { name: /^Edit space/ })).toBeNull();
   });
 });

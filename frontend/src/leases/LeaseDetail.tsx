@@ -8,6 +8,7 @@
 
 import type { LeaseParkingApi } from "../leaseParkingClient";
 import { LeaseParkingCard } from "./LeaseParkingCard";
+import { endDayText } from "./monthToMonth";
 import { LeaseJointCard } from "../joint/LeaseJointCard";
 import {
   type JointApi,
@@ -789,7 +790,8 @@ export function LeaseDetail({
           <>
             {lease.primary_tenant_name} ·{" "}
             <span className="ui-num">
-              {dayText(lease.start_date)} – {dayText(lease.end_date)}
+              {dayText(lease.start_date)} –{" "}
+              {endDayText(language, lease.end_date)}
             </span>
             {rent !== null && (
               <>
@@ -890,7 +892,7 @@ export function LeaseDetail({
                     label: lt(language, "end"),
                     value: (
                       <span className="ui-num ui-nowrap">
-                        {dayText(lease.end_date)}
+                        {endDayText(language, lease.end_date)}
                       </span>
                     ),
                     note:

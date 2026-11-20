@@ -1,4 +1,5 @@
 // DL-253 (parking step 3b): the Lease parking client. TEST-FE-2345.
+// DL-254 (parking step 4b): a Parking agreement and its vehicle. TEST-FE-2349.
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -96,5 +97,66 @@ describe("Lease parking client (DL-253)", () => {
     });
     expect(await code(leaseParkingApi.pick("lease 1", pick))).toBe("FAILED");
     expect(fetchMock).toHaveBeenCalledTimes(4);
+  });
+
+  it("TEST-FE-2349 reads a Parking agreement's space and vehicle, and picks the vehicle with the browser proof", async () => {
+    Object.defineProperty(document, "cookie", {
+      configurable: true,
+      value: "__Host-prm_csrf=token-2",
+    });
+    const picked = {
+      hold_id: "hold-9",
+      hold_kind: "PARKING_AGREEMENT",
+      vehicle_id: "car-1",
+      plate_text: "2A-1234",
+      held_from: "2027-01-01",
+      held_until: "2099-12-31",
+    };
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        answer(200, {
+          data: {
+            lease_status: "DRAFTED",
+            can_pick: true,
+            terms: [],
+            vehicles: [],
+            on_parking_space: true,
+            month_to_month: true,
+            space: {
+              unit_id: "space-1",
+              unit_number: "P01",
+              parking_type: "COVERED",
+              area: "Ground floor",
+              parking_capacity: 1,
+            },
+            agreement_hold: picked,
+          },
+        }),
+      )
+      .mockResolvedValueOnce(answer(201, { data: picked }))
+      .mockResolvedValueOnce(
+        answer(409, { error: { code: "AGREEMENT_DATES_MISSING" } }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const parking = await leaseParkingApi.read("lease-9");
+    expect(parking).toMatchObject({
+      on_parking_space: true,
+      month_to_month: true,
+      space: { unit_number: "P01", parking_type: "COVERED" },
+      agreement_hold: { vehicle_id: "car-1", plate_text: "2A-1234" },
+    });
+    expect(
+      (await leaseParkingApi.pickVehicle("lease-9", "car-1")).hold_id,
+    ).toBe("hold-9");
+    const [path, init] = fetchMock.mock.calls[1] ?? [];
+    expect(path).toBe("/leases/lease-9/agreement-vehicle");
+    expect(init?.method).toBe("POST");
+    expect(new Headers(init?.headers).get("X-CSRF-Token")).toBe("token-2");
+    expect(init?.body).toBe(JSON.stringify({ vehicle_id: "car-1" }));
+    await expect(
+      leaseParkingApi.pickVehicle("lease-9", "car-1"),
+    ).rejects.toMatchObject({ code: "AGREEMENT_DATES_MISSING" });
   });
 });
