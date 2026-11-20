@@ -154,7 +154,11 @@ export function RentTermsCard({
       <dl className="ui-kv">
         <dt>{ut(language, "rt_rent")}</dt>
         <dd className="ui-num" data-testid="unit-default-rent">
-          {rent === null ? ut(language, "rt_none") : usdFromCents(rent)}
+          {rent === null
+            ? ut(language, "rt_none")
+            : unit.rent_from_type === true
+              ? ut(language, "rt_from_type", usdFromCents(rent))
+              : usdFromCents(rent)}
         </dd>
         <dt>{ut(language, "rt_services")}</dt>
         <dd data-testid="unit-required-services">
@@ -221,6 +225,8 @@ function RentTermsDialog({
   const [chosen, setChosen] = useState<Set<string>>(
     new Set(unit.required_service_ids ?? []),
   );
+  // DL-253: the Unit uses its Unit Type price; the Rent box is then not used.
+  const [fromType, setFromType] = useState(unit.rent_from_type === true);
   const [rentProblem, setRentProblem] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -229,7 +235,7 @@ function RentTermsDialog({
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy || !ready) return;
-    const cents = rentCents(rent);
+    const cents = fromType ? first : rentCents(rent);
     if (cents === "wrong") {
       setRentProblem(ut(language, "rt_err_rent"));
       return;
@@ -245,6 +251,7 @@ function RentTermsDialog({
       .setRentTerms(unit, {
         default_monthly_rent_usd_cents: cents,
         required_service_ids: [...chosen],
+        ...(fromType ? { uses_type_price: true } : {}),
       })
       .then(onSaved)
       .catch((error: unknown) => {
@@ -271,7 +278,20 @@ function RentTermsDialog({
       submitLabel={ut(language, "save")}
       title={`${ut(language, "rt_title")} · ${unit.unit_number}`}
     >
+      <label className="ui-chk">
+        <input
+          checked={fromType}
+          onChange={(event) => {
+            setFromType(event.currentTarget.checked);
+            setRentProblem(null);
+          }}
+          type="checkbox"
+        />
+        <span>{ut(language, "rt_use_type")}</span>
+      </label>
+      <p className="ui-small ui-muted">{ut(language, "rt_use_type_help")}</p>
       <RentTermsFields
+        rentLocked={fromType}
         chosen={chosen}
         language={language}
         onChosen={setChosen}
@@ -300,8 +320,11 @@ export function RentTermsFields({
   onChosen,
   services,
   rentProblem,
+  rentLocked = false,
 }: {
   language: Language;
+  /** DL-253: the Unit uses its Unit Type price, so the Rent box cannot be typed in. */
+  rentLocked?: boolean;
   rent: string;
   onRent: (rent: string) => void;
   chosen: ReadonlySet<string>;
@@ -316,6 +339,7 @@ export function RentTermsFields({
         <label htmlFor="unit-rent-default">{ut(language, "rt_rent")}</label>
         <input
           aria-invalid={rentProblem !== null}
+          disabled={rentLocked}
           id="unit-rent-default"
           inputMode="decimal"
           onChange={(event) => {

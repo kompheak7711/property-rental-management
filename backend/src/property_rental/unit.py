@@ -226,6 +226,12 @@ class Unit:
     lease_starts_on: date | None = None
     # DL-250: the building the Unit is in (None only where the query did not read it).
     building_id: UUID | None = None
+    # DL-253: HOME (a room) or PARKING (a parking space), the places of a space, Kept for
+    # short-stay guests, and whether the price follows the Unit Type or Parking Type.
+    unit_kind: str = "HOME"
+    parking_capacity: int | None = None
+    kept_for_short_stay_guests: bool = False
+    rent_from_type: bool = False
 
     @property
     def shown_status(self) -> UnitStatus:
@@ -392,7 +398,7 @@ def unit_from_row(row: tuple[object, ...]) -> Unit:
     the Rent terms of `app.unit_rent_terms` when the query joined them (V1-061), then the Unit
     features of `app.unit_feature_counts` (V1.1), then For rent (V1.1 rework part 1), then who
     holds the Unit today and the start of a later Signed Lease (C2, DL-241), then the building
-    (DL-250)."""
+    (DL-250), then the parking facts and Use the type price (DL-253)."""
     details = row[7:15] if len(row) >= 15 else (None,) * 7 + ((),)
     features = details[7]
     rent = row[15] if len(row) >= 17 else None
@@ -402,6 +408,8 @@ def unit_from_row(row: tuple[object, ...]) -> Unit:
     held_by = row[19] if len(row) >= 21 else None
     lease_starts_on = row[20] if len(row) >= 21 else None
     building_id = row[21] if len(row) >= 22 else None
+    parking = row[22] if len(row) >= 23 and isinstance(row[22], dict) else {}
+    capacity = parking.get("parking_capacity")
     return Unit(
         unit_id=UUID(str(row[0])),
         property_id=UUID(str(row[1])),
@@ -433,6 +441,10 @@ def unit_from_row(row: tuple[object, ...]) -> Unit:
         held_by=None if held_by is None else UnitStatus(str(held_by)),
         lease_starts_on=lease_starts_on if isinstance(lease_starts_on, date) else None,
         building_id=_optional_uuid(building_id),
+        unit_kind=str(parking.get("unit_kind") or "HOME"),
+        parking_capacity=None if capacity is None else int(str(capacity)),
+        kept_for_short_stay_guests=parking.get("kept_for_short_stay_guests") is True,
+        rent_from_type=parking.get("rent_from_type") is True,
     )
 
 

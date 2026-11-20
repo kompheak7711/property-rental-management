@@ -288,6 +288,12 @@ from property_rental.move_out_api import (
 )
 from property_rental.move_out_inspection import PostgresMoveOutInspectionService
 from property_rental.operations_status_api import create_operations_status_router
+from property_rental.parking_api import (
+    ParkingFlow,
+    PostgresParkingFlow,
+    UnavailableParkingFlow,
+    create_parking_router,
+)
 from property_rental.payment_allocation import AllocationIdempotencyKeyReused
 from property_rental.payment_api import (
     PaymentFlow,
@@ -643,6 +649,7 @@ def create_app(
     unit_resource_flow: UnitResourceFlow | None = None,
     unit_inventory_flow: UnitInventoryFlow | None = None,
     building_flow: BuildingFlow | None = None,
+    parking_flow: ParkingFlow | None = None,
     customer_resource_flow: CustomerResourceFlow | None = None,
     configuration_flow: ConfigurationFlow | None = None,
     business_rule_flow: BusinessRuleFlow | None = None,
@@ -1587,6 +1594,18 @@ def create_app(
                 PostgresBuildingFlow(resolved_settings.database_url.get_secret_value())
                 if resolved_settings.database_url is not None
                 else UnavailableBuildingFlow()
+            ),
+            resolved_settings,
+        )
+    )
+    include_signed_in(
+        create_parking_router(
+            actor_resolver,
+            parking_flow
+            or (
+                PostgresParkingFlow(resolved_settings.database_url.get_secret_value())
+                if resolved_settings.database_url is not None
+                else UnavailableParkingFlow()
             ),
             resolved_settings,
         )

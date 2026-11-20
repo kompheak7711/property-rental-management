@@ -69,6 +69,8 @@ describe("V1-058 R1 app shell", () => {
       "Notices",
       "Customers",
       "Units",
+      // DL-253 (parking step 2): Parking after Units.
+      "Parking",
       // UI v81 round 2 (owner 07/11/2026): Inspections after Units; the menu order of design v81.
       "Inspections",
       "Problem reports",
@@ -90,7 +92,7 @@ describe("V1-058 R1 app shell", () => {
     ]) {
       expect(within(menu).getByText(group)).toBeInTheDocument();
     }
-    expect(MENU.flatMap((group) => group.items)).toHaveLength(21);
+    expect(MENU.flatMap((group) => group.items)).toHaveLength(22);
   });
 
   it("TEST-FE-802 marks only the open page in the menu and names the work area after it", () => {
@@ -192,6 +194,7 @@ describe("V1-058 R1 app shell", () => {
       ["Home", "#/home"],
       ["Long stays", "#/moveout"],
       ["Units", "#/units"],
+      ["Parking", "#/parking"],
       // UI v81 round 2: Inspections opens with units.read.
       ["Inspections", "#/inspections"],
       // audit.view reads the Audit activity report (V1-060 B6).

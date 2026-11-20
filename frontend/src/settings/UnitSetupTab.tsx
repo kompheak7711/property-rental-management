@@ -5,6 +5,7 @@
 // V1.1 (DL-115 (I)): Feature types, Unit features (each with its Feature type) and Item types;
 // the old Kitchens and Room features are folded into Unit features and no longer shown.
 // DL-250 (More buildings step 2): Buildings is the first list of the tab.
+// DL-253 (parking step 2): Parking Types, and a monthly price for each Unit Type and Parking Type.
 
 import {
   type FormEvent,
@@ -15,6 +16,13 @@ import {
 } from "react";
 
 import { buildingApi } from "../buildingClient";
+import { centsOf } from "../payments/depositMoney";
+import {
+  type ParkingApi,
+  ParkingError,
+  parkingApi as defaultParkingApi,
+} from "../parkingClient";
+import { usdFromCents } from "../shell/format";
 import { Icon } from "../shell/icons";
 import { Chip, Dialog } from "../shell/ui";
 import type { Language } from "../signInText";
@@ -47,13 +55,18 @@ export type SetupApi = Pick<
 const NOTES: Partial<Record<UnitSetupListKind, SettingsTextKey>> = {
   UNIT_TYPE: "cf_type_note",
   UNIT_FEATURE: "uf20_note",
+  PARKING_TYPE: "pk_type_note",
 };
+
+/** DL-253: the lists whose items have a monthly price. */
+const PRICED: readonly UnitSetupListKind[] = ["UNIT_TYPE", "PARKING_TYPE"];
 
 /** The lists this tab shows, one at a time, in this order. V1.1 rework part 1 (mock-up v53):
  * Feature types and Item types are gone, and every Unit feature is a place. */
 const SHOWN: UnitSetupListKind[] = [
   "FLOOR",
   "UNIT_TYPE",
+  "PARKING_TYPE",
   "UNIT_FEATURE",
   "VIEW",
 ];
@@ -63,7 +76,8 @@ function unitCount(
   units: UnitResource[] | null,
   item: UnitSetupItem,
 ): number | null {
-  if (units === null) return null;
+  // DL-253: the Units list holds no parking spaces, so a Parking Type says only "In use".
+  if (units === null || item.list_kind === "PARKING_TYPE") return null;
   return units.filter((unit) => {
     switch (item.list_kind) {
       case "FLOOR":
@@ -252,6 +266,86 @@ function ItemDialog({
   );
 }
 
+/** DL-253: the monthly price of a Unit Type or Parking Type; an empty box clears it. */
+function PriceDialog({
+  language,
+  item,
+  busy,
+  problem,
+  onClose,
+  onSave,
+}: {
+  language: Language;
+  item: UnitSetupItem;
+  busy: boolean;
+  problem: string | null;
+  onClose: () => void;
+  onSave: (cents: number | null) => void;
+}) {
+  const first = item.default_monthly_rent_usd_cents ?? null;
+  const [price, setPrice] = useState(
+    first === null ? "" : (first / 100).toFixed(2),
+  );
+  const [error, setError] = useState<string | null>(null);
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (price.trim() === "") {
+      onSave(null);
+      return;
+    }
+    const cents = centsOf(price);
+    if (cents === null) {
+      setError(sst(language, "pr_e_amount"));
+      return;
+    }
+    onSave(cents);
+  }
+
+  return (
+    <Dialog
+      busy={busy}
+      closeLabel={sst(language, "cancel")}
+      onClose={onClose}
+      onSubmit={submit}
+      submitLabel={sst(language, "save")}
+      title={`${sst(language, "pr_title")} · ${itemName(language, item)}`}
+    >
+      <div className="ui-field">
+        <label htmlFor="setup-price">{sst(language, "pr_box")}</label>
+        <input
+          aria-invalid={error !== null}
+          autoComplete="off"
+          className="ui-num"
+          id="setup-price"
+          inputMode="decimal"
+          onChange={(event) => {
+            setPrice(event.currentTarget.value);
+            setError(null);
+          }}
+          value={price}
+        />
+        <p className="help">{sst(language, "pr_help")}</p>
+      </div>
+      {error !== null && (
+        <p className="ui-error" role="alert">
+          <Icon name="alert" small />
+          <span>{error}</span>
+        </p>
+      )}
+      {first !== null && (
+        <p className="ui-small ui-muted">{sst(language, "pr_clear_note")}</p>
+      )}
+      {problem !== null && (
+        <div className="ui-notice warn" role="alert">
+          <Icon name="alert" />
+          <p>{problem}</p>
+        </div>
+      )}
+    </Dialog>
+  );
+}
+
 export function UnitSetupTab({
   language,
   propertyId,
@@ -259,6 +353,7 @@ export function UnitSetupTab({
   api,
   cleaning = cleaningSettingsApi,
   buildings = buildingApi,
+  prices = defaultParkingApi,
 }: {
   language: Language;
   propertyId: string;
@@ -268,6 +363,8 @@ export function UnitSetupTab({
   cleaning?: CleaningSettingsApi;
   /** DL-250: the buildings; the real server when not given. */
   buildings?: BuildingsSetupApi;
+  /** DL-253: the type prices; the real server when not given. */
+  prices?: Pick<ParkingApi, "setTypePrice">;
 }) {
   const [lists, setLists] = useState<UnitSetupLists | null>(null);
   // The Unit Types with no cleaning rate; null when the rates could not be read.
@@ -277,6 +374,7 @@ export function UnitSetupTab({
   const [editing, setEditing] = useState<Editing | null>(null);
   const [tab, setTab] = useState<UnitSetupListKind | "BUILDING">("BUILDING");
   const [removing, setRemoving] = useState<UnitSetupItem | null>(null);
+  const [pricing, setPricing] = useState<UnitSetupItem | null>(null);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const [toast, setToast] = useState<{ ok: boolean; text: string } | null>(
@@ -331,6 +429,7 @@ export function UnitSetupTab({
     setNoRate(null);
     setEditing(null);
     setRemoving(null);
+    setPricing(null);
     setToast(null);
   }, [propertyId]);
 
@@ -347,18 +446,26 @@ export function UnitSetupTab({
         if (shownProperty.current !== asked) return;
         setEditing(null);
         setRemoving(null);
+        setPricing(null);
         setToast({ ok: true, text: done });
         load();
       })
       .catch((error: unknown) => {
         if (shownProperty.current !== asked) return;
-        if (error instanceof UnitConflictError) {
+        if (
+          error instanceof UnitConflictError ||
+          (error instanceof ParkingError && error.code === "CHANGED")
+        ) {
           // The open form holds the old version, so it closes; the lists are read again.
           setEditing(null);
           setRemoving(null);
+          setPricing(null);
           setToast({ ok: false, text: sst(language, "changed") });
           load();
-        } else if (error instanceof UnitInvalidError) {
+        } else if (
+          error instanceof UnitInvalidError ||
+          (error instanceof ParkingError && error.code === "INVALID")
+        ) {
           setProblem(sst(language, "refused"));
         } else {
           setProblem(sst(language, "unknown"));
@@ -437,9 +544,34 @@ export function UnitSetupTab({
                       {sst(language, "cl_chip")}
                     </Chip>
                   )}
+                  {PRICED.includes(kind) && (
+                    <small className="ui-num" data-testid="type-price">
+                      {item.default_monthly_rent_usd_cents == null
+                        ? sst(language, "pr_none")
+                        : sst(
+                            language,
+                            "pr_a_month",
+                            usdFromCents(item.default_monthly_rent_usd_cents),
+                          )}
+                    </small>
+                  )}
                 </span>
                 {manage && (
                   <span className="ui-actions">
+                    {PRICED.includes(kind) && (
+                      <button
+                        aria-label={`${sst(language, "pr_price")}: ${name}`}
+                        className="ui-btn link"
+                        onClick={() => {
+                          setProblem(null);
+                          setToast(null);
+                          setPricing(item);
+                        }}
+                        type="button"
+                      >
+                        {sst(language, "pr_price")}
+                      </button>
+                    )}
                     {kind !== "FLOOR" && (
                       <button
                         aria-label={`${sst(language, "cf_edit")}: ${name}`}
@@ -674,6 +806,23 @@ export function UnitSetupTab({
                       name_km: source.name_km,
                     }),
               sst(language, "cf_saved"),
+            );
+          }}
+          problem={problem}
+        />
+      )}
+      {pricing !== null && (
+        <PriceDialog
+          busy={busy}
+          item={pricing}
+          language={language}
+          onClose={() => {
+            if (!busy) setPricing(null);
+          }}
+          onSave={(cents) => {
+            run(
+              () => prices.setTypePrice(pricing, cents),
+              sst(language, "pr_saved", itemName(language, pricing)),
             );
           }}
           problem={problem}

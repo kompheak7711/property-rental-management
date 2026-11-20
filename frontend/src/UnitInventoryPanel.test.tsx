@@ -59,6 +59,7 @@ const lists: UnitSetupLists = {
       item("ITEM_TYPE", "FURNITURE", "Furniture"),
       item("ITEM_TYPE", "APPLIANCE", "Appliance"),
     ],
+    PARKING_TYPE: [],
   },
   can_manage: true,
 };

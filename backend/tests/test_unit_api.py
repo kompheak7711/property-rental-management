@@ -132,6 +132,7 @@ class InMemoryUnitFlow:
         required_service_ids: tuple[UUID, ...],
         expected_version: int,
         actor_id: str,
+        rent_from_type: bool = False,
     ) -> Unit:
         del actor_id
         current = self.get(unit_id)
@@ -140,6 +141,7 @@ class InMemoryUnitFlow:
         updated = replace(
             current,
             version=current.version + 1,
+            rent_from_type=rent_from_type,
             default_monthly_rent_usd_cents=default_monthly_rent_usd_cents,
             required_service_ids=required_service_ids,
         )
@@ -721,6 +723,7 @@ def test_unit_setup_lists_are_read_with_units_read_and_changed_only_with_setting
         "FEATURE_TYPE",
         "UNIT_FEATURE",
         "ITEM_TYPE",
+        "PARKING_TYPE",
     }
     assert stranger.get(f"/properties/{property_id}/unit-setup").status_code == 403
     item_url = f"/unit-setup/items/{item['item_id']}"

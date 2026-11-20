@@ -48,6 +48,7 @@ UnitSetupListKind = Literal[
     "FEATURE_TYPE",
     "UNIT_FEATURE",
     "ITEM_TYPE",
+    "PARKING_TYPE",
 ]
 UNIT_SETUP_LIST_KINDS: Final[tuple[UnitSetupListKind, ...]] = (
     "FLOOR",
@@ -59,6 +60,8 @@ UNIT_SETUP_LIST_KINDS: Final[tuple[UnitSetupListKind, ...]] = (
     "FEATURE_TYPE",
     "UNIT_FEATURE",
     "ITEM_TYPE",
+    # DL-253: the Parking Types of parking spaces.
+    "PARKING_TYPE",
 )
 MAX_ROOM_FEATURES: Final = 50
 DEFAULT_PAGE_SIZE: Final = 50
@@ -150,6 +153,8 @@ class UnitSetupItem:
     in_use: bool = False
     # V1.1 (DL-115 (I)): the Feature type of a Unit feature; no other item has one.
     feature_type_item_id: UUID | None = None
+    # DL-253: the default monthly price of a Unit Type or Parking Type (None: no type price).
+    default_monthly_rent_usd_cents: int | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -222,6 +227,7 @@ class UnitResourceFlow(Protocol):
         required_service_ids: tuple[UUID, ...],
         expected_version: int,
         actor_id: str,
+        rent_from_type: bool = False,
     ) -> Unit: ...
 
     def set_features(
@@ -348,9 +354,10 @@ class UnavailableUnitResourceFlow:
         required_service_ids: tuple[UUID, ...],
         expected_version: int,
         actor_id: str,
+        rent_from_type: bool = False,
     ) -> Unit:
         del unit_id, default_monthly_rent_usd_cents, required_service_ids, expected_version
-        del actor_id
+        del actor_id, rent_from_type
         self._unavailable()
         raise AssertionError
 
@@ -473,6 +480,9 @@ def _setup_item(row: tuple[object, ...]) -> UnitSetupItem:
         version=int(str(row[8])),
         feature_type_item_id=None if len(row) <= 9 or row[9] is None else UUID(str(row[9])),
         in_use=bool(row[10]) if len(row) > 10 else False,
+        default_monthly_rent_usd_cents=(
+            None if len(row) <= 11 or row[11] is None else int(str(row[11]))
+        ),
     )
 
 
@@ -497,7 +507,13 @@ UNIT_COLUMNS: Final = (
     "app.unit_lease_from(detail.id, app.unit_today(detail.id)) AS lease_starts_on, "
     # DL-250: the building the Unit is in.
     "(SELECT in_building.building_id FROM app.units AS in_building "
-    "WHERE in_building.id = detail.id) AS building_id"
+    "WHERE in_building.id = detail.id) AS building_id, "
+    # DL-253: room or parking space, its places and Kept for guests, and Use the type price.
+    "(SELECT jsonb_build_object('unit_kind', kind.unit_kind, "
+    "'parking_capacity', kind.parking_capacity, "
+    "'kept_for_short_stay_guests', kind.kept_for_short_stay_guests, "
+    "'rent_from_type', kind.rent_from_type) FROM app.units AS kind "
+    "WHERE kind.id = detail.id) AS parking"
 )
 UNIT_SELECT: Final = (
     f"SELECT {UNIT_COLUMNS} FROM app.unit_with_details(%s) AS detail "
@@ -527,7 +543,8 @@ class PostgresUnitResourceFlow:
         for_rent: bool | None = None,
     ) -> UnitPage:
         decoded = _decode_cursor(cursor)
-        clauses = ["unit.property_id = %s"]
+        # DL-253: the Units list holds rooms; parking spaces are on the Parking page.
+        clauses = ["unit.property_id = %s", "unit.unit_kind = 'HOME'"]
         parameters: list[object] = [property_id]
         if unit_status is not None:
             # C2 (DL-241): the word people see, worked out for today.
@@ -710,6 +727,7 @@ class PostgresUnitResourceFlow:
         required_service_ids: tuple[UUID, ...],
         expected_version: int,
         actor_id: str,
+        rent_from_type: bool = False,
     ) -> Unit:
         """V1-061 (DL-110): set the Unit's default Rent and required Services, kept in History."""
         try:
@@ -721,12 +739,14 @@ class PostgresUnitResourceFlow:
                 if current.version != expected_version:
                     raise UnitVersionConflict(current.version)
                 version = connection.execute(
-                    "SELECT app.set_unit_rent_terms(%s, %s, %s, %s::uuid[], %s)",
+                    # DL-253: with Use the type price, the Unit takes its type's price.
+                    "SELECT app.set_unit_rent_terms_with_type(%s, %s, %s, %s::uuid[], %s, %s)",
                     (
                         unit_id,
                         expected_version,
                         default_monthly_rent_usd_cents,
                         list(required_service_ids),
+                        rent_from_type,
                         UUID(actor_id),
                     ),
                 ).fetchone()
@@ -946,7 +966,8 @@ class PostgresUnitResourceFlow:
         try:
             with psycopg.connect(self._database_url) as connection:
                 rows = connection.execute(
-                    f"SELECT {self._setup_columns}, app.unit_setup_item_in_use(item) "
+                    f"SELECT {self._setup_columns}, app.unit_setup_item_in_use(item), "
+                    "item.default_monthly_rent_usd_cents "
                     "FROM app.unit_setup_items AS item WHERE item.property_id = %s "
                     + ("" if include_removed else "AND item.removed_at IS NULL ")
                     + "ORDER BY item.list_kind, item.sort_order, item.name_en, item.id",
@@ -960,7 +981,8 @@ class PostgresUnitResourceFlow:
         try:
             with psycopg.connect(self._database_url) as connection:
                 row = connection.execute(
-                    f"SELECT {self._setup_columns}, app.unit_setup_item_in_use(item) "
+                    f"SELECT {self._setup_columns}, app.unit_setup_item_in_use(item), "
+                    "item.default_monthly_rent_usd_cents "
                     "FROM app.unit_setup_items AS item WHERE item.id = %s",
                     (item_id,),
                 ).fetchone()
@@ -1197,6 +1219,8 @@ class UnitRentTermsSource(BaseModel):
 
     default_monthly_rent_usd_cents: int | None = Field(ge=1, le=100_000_000)
     required_service_ids: list[UUID] = Field(max_length=20)
+    # DL-253: the Unit uses the price of its Unit Type or Parking Type and moves with it.
+    uses_type_price: bool = False
 
     @field_validator("required_service_ids", mode="before")
     @classmethod
@@ -1401,6 +1425,7 @@ def _setup_body(item: UnitSetupItem) -> dict[str, object]:
         "feature_type_item_id": (
             None if item.feature_type_item_id is None else str(item.feature_type_item_id)
         ),
+        "default_monthly_rent_usd_cents": item.default_monthly_rent_usd_cents,
     }
 
 
@@ -1441,6 +1466,10 @@ def _body(unit: Unit) -> dict[str, object]:
         "required_service_ids": [str(item) for item in unit.required_service_ids],
         "features": _features_json(unit),
         "for_rent": unit.for_rent,
+        "unit_kind": unit.unit_kind,
+        "parking_capacity": unit.parking_capacity,
+        "kept_for_short_stay_guests": unit.kept_for_short_stay_guests,
+        "rent_from_type": unit.rent_from_type,
         "current_reservation": None,
         "current_lease": None,
         "current_occupancy": None,
@@ -1630,6 +1659,7 @@ def create_unit_router(
                 required_service_ids=tuple(source.required_service_ids),
                 expected_version=expected,
                 actor_id=actor.actor_id,
+                rent_from_type=source.uses_type_price,
             )
         except UnitResourceNotFound as exc:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from exc

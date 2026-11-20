@@ -1992,7 +1992,7 @@ describe("local sign-in", () => {
         within(menu)
           .getAllByRole("link")
           .map((link) => link.textContent),
-      ).toEqual(["Home", "Customers", "Units", "Inspections"]);
+      ).toEqual(["Home", "Customers", "Units", "Parking", "Inspections"]);
     });
     // On Home, the Units page is mounted but neither shown nor in the accessibility tree.
     const unitsPage = document.querySelector('[data-page="units"]');

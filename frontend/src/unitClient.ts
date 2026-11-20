@@ -9,7 +9,9 @@ export type UnitSetupListKind =
   | "ROOM_FEATURE"
   | "FEATURE_TYPE"
   | "UNIT_FEATURE"
-  | "ITEM_TYPE";
+  | "ITEM_TYPE"
+  // DL-253 (parking step 2): the kinds of parking space (Covered car, Motorbike area …).
+  | "PARKING_TYPE";
 
 export const unitSetupListKinds: UnitSetupListKind[] = [
   "FLOOR",
@@ -21,6 +23,7 @@ export const unitSetupListKinds: UnitSetupListKind[] = [
   "FEATURE_TYPE",
   "UNIT_FEATURE",
   "ITEM_TYPE",
+  "PARKING_TYPE",
 ];
 
 export interface UnitSetupItem {
@@ -35,6 +38,8 @@ export interface UnitSetupItem {
   version: number;
   /** V1.1 (DL-115 (I)): the Feature type of a Unit feature; null for every other item. */
   feature_type_item_id: string | null;
+  /** DL-253: the monthly price of a Unit Type or Parking Type, in cents; null when not set. */
+  default_monthly_rent_usd_cents?: number | null;
 }
 
 /** V1.1 (DL-115 (I)): how many of one Unit feature a Unit has (1 to 9). */
@@ -140,11 +145,15 @@ export interface UnitResource extends UnitDetails {
   features?: UnitFeatureCount[];
   /** V1.1 rework part 1: false for a Unit that is never rented, such as the warehouse W01. */
   for_rent?: boolean;
+  /** DL-253: the Unit uses the price of its Unit Type and moves with it. */
+  rent_from_type?: boolean;
 }
 
 export interface UnitRentTermsSource {
   default_monthly_rent_usd_cents: number | null;
   required_service_ids: string[];
+  /** DL-253: use the Unit Type price (the Rent sent is then ignored). */
+  uses_type_price?: boolean;
 }
 
 export interface UnitListPage {
@@ -379,6 +388,10 @@ function setupItem(value: unknown): UnitSetupItem {
     in_use: value.in_use,
     version: value.version,
     feature_type_item_id: value.feature_type_item_id ?? null,
+    default_monthly_rent_usd_cents:
+      typeof value.default_monthly_rent_usd_cents === "number"
+        ? value.default_monthly_rent_usd_cents
+        : null,
   };
 }
 
@@ -469,6 +482,9 @@ function unit(value: unknown): UnitResource {
     required_service_ids: stringArray(value.required_service_ids ?? []),
     features: featureCounts(value.features),
     for_rent: value.for_rent !== false,
+    ...(typeof value.rent_from_type === "boolean"
+      ? { rent_from_type: value.rent_from_type }
+      : {}),
   };
 }
 
@@ -607,7 +623,9 @@ async function setupLists(
   const source = data.lists;
   const lists = Object.fromEntries(
     unitSetupListKinds.map((kind) => {
-      const entries = source[kind];
+      // DL-253: a server before parking step 2 sends no Parking Types.
+      const entries =
+        kind === "PARKING_TYPE" ? (source[kind] ?? []) : source[kind];
       if (!Array.isArray(entries)) throw new UnitRequestError();
       const items = entries.map(setupItem);
       if (items.some((item) => item.list_kind !== kind)) {

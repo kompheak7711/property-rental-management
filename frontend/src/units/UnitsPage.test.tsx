@@ -88,6 +88,7 @@ const lists: UnitSetupLists = {
       setupItem("UNIT_FEATURE", "MAIN_ROOM", "Main room"),
     ],
     ITEM_TYPE: [],
+    PARKING_TYPE: [],
   },
   can_manage: false,
 };
@@ -927,6 +928,54 @@ describe("Unit page", () => {
     await waitFor(() => {
       expect(screen.getByTestId("unit-required-services")).toHaveTextContent(
         "Car parking $10.00 per month, Wi-Fi $8.00 per month from 01/11/2099",
+      );
+    });
+  });
+
+  it("TEST-FE-2336 Use the Unit Type price locks the Rent box and saves the type price; the card says the Rent is the type price (DL-253)", async () => {
+    window.location.hash = "#/units/unit-U103";
+    const terms = unit("U103", { default_monthly_rent_usd_cents: 45_000 });
+    const saved = {
+      ...terms,
+      version: 3,
+      default_monthly_rent_usd_cents: 40_000,
+      rent_from_type: true,
+    };
+    const setRentTerms = vi.fn().mockResolvedValue(saved);
+    const client = unitApi({
+      get: vi
+        .fn()
+        .mockImplementation(() =>
+          Promise.resolve(setRentTerms.mock.calls.length === 0 ? terms : saved),
+        ),
+      setRentTerms,
+    });
+    show(client);
+
+    expect(await screen.findByTestId("unit-default-rent")).toHaveTextContent(
+      /^\$450\.00$/,
+    );
+    const card = screen
+      .getByRole("heading", { name: "Rent and Services" })
+      .closest("section");
+    if (card === null) throw new Error("no Rent and Services card");
+    fireEvent.click(within(card).getByRole("button", { name: "Change" }));
+    const dialog = await screen.findByRole("dialog");
+    const rent = within(dialog).getByLabelText("Default Rent per month");
+    expect(rent).toBeEnabled();
+    fireEvent.click(within(dialog).getByLabelText("Use the Unit Type price"));
+    expect(rent).toBeDisabled();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    await waitFor(() => {
+      expect(setRentTerms).toHaveBeenCalledWith(terms, {
+        default_monthly_rent_usd_cents: 45_000,
+        required_service_ids: [],
+        uses_type_price: true,
+      });
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId("unit-default-rent")).toHaveTextContent(
+        "$400.00 (Unit Type price)",
       );
     });
   });
