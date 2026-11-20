@@ -18,6 +18,7 @@ from alembic.config import Config
 from alembic.script import ScriptDirectory
 from psycopg import Connection, Error
 
+from property_rental.reports import REPORT_UNITS_SELECT
 from property_rental.unit import unit_from_row
 from property_rental.unit_api import UNIT_SELECT, _body
 from test_migrations import _temporary_migration_database
@@ -336,3 +337,21 @@ def test_unit_answer_names_its_building(
     assert unit.building_id == building_id
     assert unit.version == 2
     assert _body(unit)["building_id"] == str(building_id)
+
+
+def test_report_units_name_their_building(
+    connection: Connection[tuple[object, ...]],
+) -> None:
+    """Step 4: the reports read each Unit's building and its name, for the Building filter."""
+    actor_id = insert_actor(connection)
+    property_id = property_for(connection, actor_id)
+    home = first_building(connection, property_id)
+    unit_id = insert_unit(
+        connection, actor_id=actor_id, property_id=property_id, unit_number=unit_number()
+    )
+    cursor = connection.execute(REPORT_UNITS_SELECT, (property_id,))
+    names = [column.name for column in cursor.description or ()]
+    rows = [dict(zip(names, row, strict=True)) for row in cursor.fetchall()]
+    mine = next(row for row in rows if row["id"] == unit_id)
+    assert mine["building_id"] == home
+    assert isinstance(mine["building_name"], str) and mine["building_name"] != ""

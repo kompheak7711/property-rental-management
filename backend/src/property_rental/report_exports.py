@@ -88,6 +88,7 @@ class ExportRequest:
     unit_id: UUID | None = None
     from_date: date | None = None
     to_date: date | None = None
+    building_id: UUID | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -113,11 +114,15 @@ def heading_lines(
     to_date: date | None = None,
     period_applies: bool = True,
     money: bool = True,
+    building: str | None = None,
 ) -> list[str]:
     """The lines every report shows: scope, period, when it was made and the currency."""
     scope = (
         f"Unit {unit_number}" if unit_number else (f"Floor {floor}" if floor else "Whole Property")
     )
+    if building and not unit_number:
+        # DL-250 step 4: a report of one building names it before the floor.
+        scope = f"{building} · {scope}" if floor else building
     if not period_applies:
         period = f"As of {_day(generated_at.date())}"
     elif from_date and to_date:
@@ -526,11 +531,16 @@ class ExportService:
             "unit_id": request.unit_id,
             "from_date": request.from_date,
             "to_date": request.to_date,
+            "building_id": request.building_id,
         }
         if request.report in TOTALS_REPORTS:
             report = request.report
             chosen = TotalsFilter(
-                request.unit_id, request.floor, request.from_date, request.to_date
+                request.unit_id,
+                request.floor,
+                request.from_date,
+                request.to_date,
+                request.building_id,
             )
             page = self.reports.totals(actor, property_id, report, chosen)
             quantities = report in UTILITY_TYPES
@@ -543,13 +553,19 @@ class ExportService:
                 unit_number=cast(str | None, filter_text.get("unit_number")),
                 from_date=request.from_date,
                 to_date=request.to_date,
+                building=cast(str | None, filter_text.get("building_name")),
             )
         elif request.report in REGISTER_NAMES:
             if request.unit_id is not None:
                 raise ReportInvalidError("A register is filtered by floor, not by Unit")
             name = request.report
             register = RegisterFilter(
-                request.floor, request.from_date, request.to_date, 0, MAX_EXPORT_ROWS
+                request.floor,
+                request.from_date,
+                request.to_date,
+                0,
+                MAX_EXPORT_ROWS,
+                request.building_id,
             )
             page = self.reports.register(actor, property_id, name, register)
             if cast(int, page["row_count"]) > MAX_EXPORT_ROWS:
@@ -562,9 +578,11 @@ class ExportService:
             columns = [
                 column for column in REGISTER_COLUMNS[name] if money or column.kind != "money"
             ]
-            period = cast(Mapping[str, object], page["filter"])["period_applies"]
+            register_filter = cast(Mapping[str, object], page["filter"])
+            period = register_filter["period_applies"]
             lines = heading_lines(
                 generated_at=generated,
+                building=cast(str | None, register_filter.get("building_name")),
                 floor=request.floor,
                 from_date=request.from_date,
                 to_date=request.to_date,

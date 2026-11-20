@@ -40,6 +40,13 @@ from property_rental.report_totals import (
 )
 
 REPORTS_READ_CAPABILITY: Final = "reports.read"
+# The Units the reports name, with each Unit's building for the Building filter (DL-250 step 4).
+REPORT_UNITS_SELECT: Final = (
+    "SELECT u.id,u.unit_number,u.floor,u.unit_type,u.status,u.building_id,"
+    "b.name_en AS building_name FROM app.units AS u "
+    "LEFT JOIN app.buildings AS b ON b.id=u.building_id "
+    "WHERE u.property_id=%s ORDER BY u.unit_number,u.id"
+)
 AUDIT_EXPORT_CAPABILITY: Final = "audit.export"
 DATA_EXPORT_CAPABILITY: Final = "data.export"
 
@@ -252,11 +259,7 @@ class PostgresReportStore:
 
     def units(self, property_id: UUID) -> list[dict[str, object]]:
         with self._read() as connection:
-            cursor = connection.execute(
-                "SELECT id,unit_number,floor,unit_type,status FROM app.units "
-                "WHERE property_id=%s ORDER BY unit_number,id",
-                (property_id,),
-            )
+            cursor = connection.execute(REPORT_UNITS_SELECT, (property_id,))
             names = [column.name for column in cursor.description or ()]
             return [dict(zip(names, row, strict=True)) for row in cursor.fetchall()]
 

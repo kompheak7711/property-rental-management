@@ -22,6 +22,7 @@ import {
 } from "../buildingClient";
 import type { Language } from "../signInText";
 import type { UnitApi } from "../unitClient";
+import { Icon } from "./icons";
 
 /** The device key of the chosen building (the same style as the menu keys). */
 export const BUILDING_KEY = "prm.building";
@@ -168,6 +169,10 @@ export function BuildingChoiceProvider({
 const TEXT = {
   label: ["Building", "អគារ"],
   all: ["All buildings", "អគារទាំងអស់"],
+  whole: [
+    "These figures are for all buildings. Reports show one building.",
+    "តួលេខទាំងនេះសម្រាប់អគារទាំងអស់។ របាយការណ៍បង្ហាញអគារមួយ។",
+  ],
 } as const;
 
 /** The switch at the top of the side menu; nothing with one building. */
@@ -200,4 +205,17 @@ export function BuildingSwitch({ language }: { language: Language }) {
 /** The words of the Building column, shown on lists only when All buildings is chosen. */
 export function buildingColumnName(language: Language): string {
   return TEXT.label[language === "km" ? 1 : 0];
+}
+
+/** DL-250 step 4: on Home and Payments, whose figures are for the whole business (the books are
+ * not split by building), a note while one building is chosen in the side menu. */
+export function AllBuildingsNote({ language }: { language: Language }) {
+  const { chosen } = useBuildingChoice();
+  if (chosen === null) return null;
+  return (
+    <div className="ui-notice info" role="note">
+      <Icon name="info" />
+      <p>{TEXT.whole[language === "km" ? 1 : 0]}</p>
+    </div>
+  );
 }

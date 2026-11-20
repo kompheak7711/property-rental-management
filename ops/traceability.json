@@ -72506,6 +72506,76 @@
       "test_path": "frontend/src/leases/LeasesPage.test.tsx",
       "status": "implemented",
       "notes": "DL-250 buildings step 3: The Leases list shows only the Leases of the building chosen in the side menu."
+    },
+    {
+      "test_id": "test_a_building_keeps_the_totals_of_its_units_and_all_buildings_keeps_everything",
+      "upstream_ids": [
+        "DL-250",
+        "DL-079",
+        "DB-UNIT-001"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_report_buildings.py",
+      "status": "implemented",
+      "notes": "DL-250 buildings step 4: a Totals report of one building counts only its Units; money with no Unit counts only under All buildings."
+    },
+    {
+      "test_id": "test_a_building_keeps_the_register_rows_of_its_units",
+      "upstream_ids": [
+        "DL-250",
+        "DL-079",
+        "DB-UNIT-001"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_report_buildings.py",
+      "status": "implemented",
+      "notes": "DL-250 buildings step 4: a register of one building keeps only its Units' rows and names the building."
+    },
+    {
+      "test_id": "test_a_report_file_of_one_building_names_it_in_the_heading",
+      "upstream_ids": [
+        "DL-250",
+        "DL-079",
+        "DB-UNIT-001"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_report_buildings.py",
+      "status": "implemented",
+      "notes": "DL-250 buildings step 4: a report file of one building names it in the Scope line."
+    },
+    {
+      "test_id": "test_report_units_name_their_building",
+      "upstream_ids": [
+        "DL-250",
+        "DB-PROP-002",
+        "DB-UNIT-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_buildings_migration.py",
+      "status": "implemented",
+      "notes": "DL-250 buildings step 4: the reports read each Unit's building and its name."
+    },
+    {
+      "test_id": "TEST-FE-2319",
+      "upstream_ids": [
+        "DL-250",
+        "DL-079",
+        "DB-UNIT-001"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/reports/ReportsPage.test.tsx",
+      "status": "implemented",
+      "notes": "DL-250 buildings step 4: with one building chosen in the side menu, every report and Export ask for that building, and the Unit and floor choices and the scope are that building's."
+    },
+    {
+      "test_id": "TEST-FE-2320",
+      "upstream_ids": [
+        "DL-250"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shell/buildingChoice.test.tsx",
+      "status": "implemented",
+      "notes": "DL-250 buildings step 4: Home and Payments count all buildings and say so while one building is chosen."
     }
   ]
 }

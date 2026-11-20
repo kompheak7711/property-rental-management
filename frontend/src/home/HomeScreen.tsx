@@ -34,6 +34,7 @@ import {
   pageName,
   queryFromHash,
 } from "../shell/navigation";
+import { AllBuildingsNote } from "../shell/buildingChoice";
 import { CardGrid, PageHeader } from "../shell/layouts";
 import { hashForShow } from "../shell/useHashPage";
 import type { Language } from "../signInText";
@@ -1154,6 +1155,7 @@ export function HomeScreen({
   return (
     <>
       {head}
+      <AllBuildingsNote language={language} />
       <JobsLine language={language} page={page} place="top" />
       {seesOwnerMoney && (
         <OwnerMoney

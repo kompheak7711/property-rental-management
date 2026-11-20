@@ -78,6 +78,8 @@ class ExportBody(BaseModel):
     unit_id: UUID | None = None
     from_date: date | None = Field(default=None, alias="from")
     to_date: date | None = Field(default=None, alias="to")
+    # DL-250 step 4: the building chosen in the side menu; None is All buildings.
+    building_id: UUID | None = None
 
 
 class AuditExportBody(BaseModel):
@@ -178,10 +180,11 @@ def create_reports_router(
         floor: Annotated[str | None, Query(min_length=1, max_length=40)] = None,
         from_date: Annotated[date | None, Query(alias="from")] = None,
         to_date: Annotated[date | None, Query(alias="to")] = None,
+        building_id: UUID | None = None,
     ) -> dict[str, object]:
-        _no_query(request, frozenset({"unit_id", "floor", "from", "to"}))
+        _no_query(request, frozenset({"unit_id", "floor", "from", "to", "building_id"}))
         actor = _actor(request, resolver)
-        chosen = TotalsFilter(unit_id, floor, from_date, to_date)
+        chosen = TotalsFilter(unit_id, floor, from_date, to_date, building_id)
         page = _call(lambda: service.totals(actor, property_id, report, chosen))
         response.headers["Cache-Control"] = "private, no-store"
         return {"data": page, "meta": {"request_id": request.state.request_id}}
@@ -200,10 +203,11 @@ def create_reports_router(
         to_date: Annotated[date | None, Query(alias="to")] = None,
         offset: Annotated[int, Query(ge=0, le=1_000_000)] = 0,
         limit: Annotated[int, Query(ge=1, le=MAX_LIMIT)] = DEFAULT_LIMIT,
+        building_id: UUID | None = None,
     ) -> dict[str, object]:
-        _no_query(request, frozenset({"floor", "from", "to", "offset", "limit"}))
+        _no_query(request, frozenset({"floor", "from", "to", "offset", "limit", "building_id"}))
         actor = _actor(request, resolver)
-        chosen = RegisterFilter(floor, from_date, to_date, offset, limit)
+        chosen = RegisterFilter(floor, from_date, to_date, offset, limit, building_id)
         page = _call(lambda: service.register(actor, property_id, name, chosen))
         response.headers["Cache-Control"] = "private, no-store"
         return {"data": page, "meta": {"request_id": request.state.request_id}}
@@ -212,7 +216,13 @@ def create_reports_router(
     def export_report(property_id: UUID, body: ExportBody, request: Request) -> Response:
         actor = _actor(request, resolver)
         chosen = ExportRequest(
-            body.report, body.file_type, body.floor, body.unit_id, body.from_date, body.to_date
+            body.report,
+            body.file_type,
+            body.floor,
+            body.unit_id,
+            body.from_date,
+            body.to_date,
+            body.building_id,
         )
         result = _call(lambda: exports.export(actor, property_id, chosen))
         return _file_answer(result, request.state.request_id)
