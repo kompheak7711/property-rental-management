@@ -73063,6 +73063,83 @@
       "test_path": "frontend/src/vehiclesClient.test.ts",
       "status": "implemented",
       "notes": "The vehicles client keeps the VEHICLE_TYPE code, maps a stale version to Changed and sends nothing without the browser proof."
+    },
+    {
+      "test_id": "test_a_picked_space_is_billed_at_its_price_on_the_rent_invoice",
+      "upstream_ids": [
+        "DL-253",
+        "DB-PARK-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_room_lease_parking_migration.py",
+      "status": "implemented",
+      "notes": "DL-253 parking step 3b: a picked space is billed at its price on the Rent Invoice; the price never changes."
+    },
+    {
+      "test_id": "test_a_lease_with_parking_is_signed_only_after_its_space_is_picked",
+      "upstream_ids": [
+        "DL-253",
+        "DB-PARK-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_room_lease_parking_migration.py",
+      "status": "implemented",
+      "notes": "DL-253 parking step 3b (owner 20 Nov 2026): a room Lease with parking is signed only after its space is picked."
+    },
+    {
+      "test_id": "test_a_space_is_picked_only_for_an_open_room_lease_with_a_priced_space",
+      "upstream_ids": [
+        "DL-253",
+        "DB-PARK-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_room_lease_parking_migration.py",
+      "status": "implemented",
+      "notes": "DL-253 parking step 3b: a space is picked only with a price and a fitting vehicle."
+    },
+    {
+      "test_id": "test_a_drafter_picks_the_space_of_a_lease_parking_service_once",
+      "upstream_ids": [
+        "DL-253",
+        "API-029d"
+      ],
+      "test_level": "API",
+      "test_path": "backend/tests/test_lease_parking_api.py",
+      "status": "implemented",
+      "notes": "DL-253 parking step 3b: a drafter picks the space of a Lease parking Service once."
+    },
+    {
+      "test_id": "TEST-FE-2343",
+      "upstream_ids": [
+        "DL-253",
+        "DB-PARK-001"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/leases/LeaseParkingCard.test.tsx",
+      "status": "implemented",
+      "notes": "The Lease Parking card picks a free space and a vehicle, then shows the space at its fixed price."
+    },
+    {
+      "test_id": "TEST-FE-2344",
+      "upstream_ids": [
+        "DL-253",
+        "DB-PARK-001"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/leases/LeaseParkingCard.test.tsx",
+      "status": "implemented",
+      "notes": "A taken space keeps the form open with the reason; a Lease without parking shows no card; a reader cannot pick."
+    },
+    {
+      "test_id": "TEST-FE-2345",
+      "upstream_ids": [
+        "DL-253",
+        "DB-PARK-001"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/leaseParkingClient.test.ts",
+      "status": "implemented",
+      "notes": "The Lease parking client reads, picks with the browser proof and keeps refusal codes."
     }
   ]
 }

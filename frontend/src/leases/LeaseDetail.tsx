@@ -6,6 +6,8 @@
 // Lease) and DetailLayout (about 60 / 40); the Lease facts in columns; the Customer card under
 // Deposits (design v81).
 
+import type { LeaseParkingApi } from "../leaseParkingClient";
+import { LeaseParkingCard } from "./LeaseParkingCard";
 import { LeaseJointCard } from "../joint/LeaseJointCard";
 import {
   type JointApi,
@@ -191,6 +193,8 @@ export interface LeaseDetailProps {
   reports?: Pick<typeof reportsApi, "customerPaidOnTime">;
   /** DL-243: the Lease's move-in and move-out Joint Inspections. */
   jointApi?: JointApi;
+  /** DL-253: the parking spaces of the Lease's parking Services. */
+  parkingApi?: LeaseParkingApi;
 }
 
 export function LeaseDetail({
@@ -213,6 +217,7 @@ export function LeaseDetail({
   actorId,
   reports,
   jointApi = defaultJointApi,
+  parkingApi,
 }: LeaseDetailProps) {
   const view = useHashView();
   const [lease, setLease] = useState<LeaseResource | null>(null);
@@ -1229,6 +1234,11 @@ export function LeaseDetail({
                 ]}
               />
             </section>
+            <LeaseParkingCard
+              api={parkingApi}
+              language={language}
+              leaseId={leaseId}
+            />
           </>
         }
         side={

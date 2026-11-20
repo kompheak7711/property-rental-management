@@ -153,6 +153,13 @@ SIGN_REFUSALS: Final[dict[str, Refusal]] = {
         "Every Signer must sign, and the Signers changed meanwhile. Nothing was saved. "
         "Close, open Sign Lease again and tick every Signer.",
     ),
+    # DL-253 (owner 20 Nov 2026): parking on a room Lease needs its space picked first.
+    "Pick a parking space before signing": Refusal(
+        409,
+        "SIGNING_PARKING_SPACE_MISSING",
+        "Pick the parking space first, on the Parking card of this Lease. Nothing was saved.",
+        ("DL-253",),
+    ),
     "Lease terms are incomplete": Refusal(
         409,
         "SIGNING_TERMS_INCOMPLETE",

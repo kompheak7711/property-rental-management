@@ -21,7 +21,7 @@ def test_migration_432_is_the_head_and_is_forward_only() -> None:
     scripts = ScriptDirectory.from_config(Config("alembic.ini"))
     migration = scripts.get_revision(REVISION)
     assert migration is not None and migration.down_revision == "20270808_431"
-    assert scripts.get_heads() == ["20270814_439"]  # parking step 3a 439 follows 438
+    assert scripts.get_heads() == ["20270815_440"]  # parking step 3b 440 follows 439
     with pytest.raises(RuntimeError, match="forward-only"):
         migration.module.downgrade()
 
