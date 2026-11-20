@@ -73140,6 +73140,39 @@
       "test_path": "frontend/src/leaseParkingClient.test.ts",
       "status": "implemented",
       "notes": "The Lease parking client reads, picks with the browser proof and keeps refusal codes."
+    },
+    {
+      "test_id": "test_a_parking_agreement_is_signed_once_its_vehicle_is_picked",
+      "upstream_ids": [
+        "DL-254",
+        "DB-PARK-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_parking_agreement_migration.py",
+      "status": "implemented",
+      "notes": "DL-254 parking step 4a: a Parking agreement is signed only once its vehicle is picked for its dates; people never move into a parking space."
+    },
+    {
+      "test_id": "test_the_motorbike_area_takes_as_many_agreements_as_its_places",
+      "upstream_ids": [
+        "DL-254",
+        "DB-PARK-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_parking_agreement_migration.py",
+      "status": "implemented",
+      "notes": "DL-254 parking step 4a: the shared Motorbike area takes as many agreements as its places; a numbered space takes one."
+    },
+    {
+      "test_id": "test_the_app_picks_the_vehicle_only_through_the_function",
+      "upstream_ids": [
+        "DL-254",
+        "DB-PARK-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_parking_agreement_migration.py",
+      "status": "implemented",
+      "notes": "DL-254 parking step 4a: the app picks the vehicle only through app.hold_parking_agreement_space."
     }
   ]
 }

@@ -32,7 +32,7 @@ def test_migration_424_follows_the_head_and_is_forward_only() -> None:
     migration = scripts.get_revision(REVISION)
     assert migration is not None and migration.down_revision == "20270805_423"
     # When the books were last updated (finding 1 of the 17/11/2026 full test) follows it.
-    assert scripts.get_heads() == ["20270815_440"]
+    assert scripts.get_heads() == ["20270816_441"]
     with pytest.raises(RuntimeError, match="forward-only"):
         migration.module.downgrade()
 

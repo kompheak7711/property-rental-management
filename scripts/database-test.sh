@@ -374,6 +374,7 @@ database_test_suites='
   tests/test_building_short_stay_guard_migration.py
   tests/test_parking_spaces_migration.py
   tests/test_room_lease_parking_migration.py
+  tests/test_parking_agreement_migration.py
   tests/test_type_prices_and_spaces_migration.py
   tests/test_hr_employees_migration.py
   tests/test_hr_payroll_migration.py

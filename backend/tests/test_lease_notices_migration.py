@@ -128,7 +128,9 @@ def business_snapshot(url: str, lease: UUID) -> list[tuple[object, ...]]:
     # adds the Unit setup columns the same way (the Floor item is linked from the Floor text).
     with psycopg.connect(url) as connection:
         return connection.execute(
-            f"SELECT to_jsonb(l),to_jsonb(u)-{UNIT_SETUP_COLUMNS},to_jsonb(o),to_jsonb(i)-ARRAY["
+            # DL-254: the parking columns of leases (migrations 441, 442) come in on upgrade.
+            "SELECT to_jsonb(l)-ARRAY['on_parking_space','month_to_month'],"
+            f"to_jsonb(u)-{UNIT_SETUP_COLUMNS},to_jsonb(o),to_jsonb(i)-ARRAY["
             "'due_date_override_reason','due_date_set_by','due_date_set_at','draft_reference',"
             "'invoice_type','missed_on_invoice_line_id','late_payment_decision_id'],"
             "to_jsonb(il) "

@@ -279,10 +279,12 @@ def snapshot(url: str) -> dict[str, Any]:
                 # V1-059 part B adds invoices.draft_reference and customers.id_document_number
                 # (NULL on earlier rows), DL-231 adds invoices.invoice_type (filled from the
                 # category), DL-232 adds invoices.missed_on_invoice_line_id (empty) and DL-233 adds
-                # invoices.late_payment_decision_id (empty); every other value must stay as it
+                # invoices.late_payment_decision_id (empty) and DL-254 adds
+                # leases.on_parking_space (false on a room); every other value must stay as it
                 # was.
                 "SELECT COALESCE(jsonb_agg(to_jsonb(t)-'draft_reference'-'id_document_number'"
                 "-'invoice_type'-'missed_on_invoice_line_id'-'late_payment_decision_id'"
+                "-'on_parking_space'"
                 f"{'-' + UNIT_SETUP_COLUMNS if table == 'units' else ''} "
                 "ORDER BY t.id),'[]'::jsonb) "
                 f"FROM app.{table} t"

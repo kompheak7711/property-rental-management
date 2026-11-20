@@ -3564,6 +3564,17 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **Owner decision (20 Nov 2026, decision card).** A room tenant pays the price of the space picked (its Parking Type price or its own price) on the Rent Invoice, kept from the day the space is picked; until a space is picked, the parking Service is billed at its Settings rate.
 - **Built (step 3b).** Migration `20270815_440` (forward-only): the hold keeps the space's price; the Rent Invoice, its issue checks and the signing preview use it. The Lease page has a Parking card: each parking Service with its space, vehicle and fixed price, or Pick space (Leases draft access; drafted or signed Lease). Routes in API-029d.
 - **Owner decision (20 Nov 2026, decision card "Pick a space before signing").** A room Lease with parking cannot be signed until each parking Service on it has a space picked. Sign Lease refuses with SIGNING_PARKING_SPACE_MISSING and saves nothing.
-- **Still to build.** Step 4: the Parking agreement, Change vehicle, move-out and the agreement paper. Step 5: Home tile, Reports, the Parking ledger account and the bots.
+- **Still to build.** Step 4: the Parking agreement (DL-254), Change vehicle, move-out and the agreement paper. Step 5: Home tile, Reports, the Parking ledger account and the bots.
 - **Links:** DB-UNIT-001, DB-PARK-001.
+- **Decision date:** 2026-11-20.
+
+## DL-254 — Parking agreements hold their space with a vehicle (parking step 4a)
+
+- **Type:** `TECHNICAL DECISION UNDER THE OWNER'S RULE` (owner 2026-10-23 22:30: non-money questions are Claude's).
+- **Source.** Thread "Move parking into the rental app", 20 Nov 2026, building the owner's DL-253 rules.
+- **Decision.** A Parking agreement is a Lease on the parking space. It moves in a vehicle, not people: no Occupancy is made on a parking space. The space holds (`app.parking_space_holds`) decide how many agreements a space takes on a day, so the Lease rule "one signed Lease per Unit at a time" leaves out Leases on a parking space (`leases.on_parking_space`). The shared Motorbike area then takes as many agreements as it has places, and a numbered space still takes one.
+- **How staff use it.** On a drafted Parking agreement staff pick the vehicle that parks there; picking again replaces the earlier pick. Sign Lease refuses the agreement until a vehicle is picked for its dates.
+- **Built (step 4a).** Migration `20270816_441` (forward-only): `leases.on_parking_space`, the changed `leases_signed_period_exclusive`, `app.unit_lease_held`, the Occupancy refusal, `app.hold_parking_agreement_space` and the `app.sign_lease` check (HINT `AGREEMENT_VEHICLE_NOT_PICKED`).
+- **Still to build.** Step 4b: the New Parking agreement form and page (month to month, the deposit rule of DL-253). Step 4c: Change vehicle and ending an agreement. Step 4d: the agreement paper.
+- **Links:** DL-253, DB-PARK-001.
 - **Decision date:** 2026-11-20.
