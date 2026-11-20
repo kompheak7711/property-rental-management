@@ -371,6 +371,7 @@ database_test_suites='
   tests/test_gl_posting_status_migration.py
   tests/test_same_day_move_out_utility_migration.py
   tests/test_buildings_migration.py
+  tests/test_building_short_stay_guard_migration.py
   tests/test_hr_employees_migration.py
   tests/test_hr_payroll_migration.py
   tests/test_hr_attendance_migration.py
