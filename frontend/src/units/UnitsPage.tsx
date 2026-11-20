@@ -1,6 +1,12 @@
 // V1-058 R2: the Units page of the rebuilt app. "#/units" shows the list; "#/units/<Unit id>"
 // shows the Unit page.
 
+import {
+  type Building,
+  type BuildingApi,
+  activeBuildings,
+  buildingApi as defaultBuildingApi,
+} from "../buildingClient";
 import type { InvoiceApi } from "../invoiceClient";
 import type { JointApi } from "../joint/jointClient";
 import {
@@ -46,6 +52,8 @@ export interface UnitsPageProps {
   invoiceApi?: Pick<InvoiceApi, "list">;
   /** DL-244: the Unit page lists the Unit's Joint Inspections. */
   jointApi?: Pick<JointApi, "list">;
+  /** DL-250: the buildings; the real server when not given. */
+  buildingApi?: Pick<BuildingApi, "list" | "moveUnit">;
 }
 
 export function UnitsPage({
@@ -61,12 +69,15 @@ export function UnitsPage({
   productsApi = defaultProductsApi,
   invoiceApi,
   jointApi,
+  buildingApi = defaultBuildingApi,
 }: UnitsPageProps) {
   const detail = useHashDetail("units");
   const [data, setData] = useState<UnitsData | null>(null);
   const [failed, setFailed] = useState(false);
   const [adding, setAdding] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  // DL-250: null when the buildings could not be read; then no building shows.
+  const [buildings, setBuildings] = useState<Building[] | null>(null);
   const sequence = useRef(0);
 
   const load = useCallback(() => {
@@ -80,7 +91,14 @@ export function UnitsPage({
       .catch(() => {
         if (operation === sequence.current) setFailed(true);
       });
-  }, [leaseApi, propertyId, reservationApi, unitApi]);
+    void buildingApi
+      .list(propertyId)
+      .then((found) => activeBuildings(found.items))
+      .catch(() => null)
+      .then((found) => {
+        if (operation === sequence.current) setBuildings(found);
+      });
+  }, [buildingApi, leaseApi, propertyId, reservationApi, unitApi]);
 
   // Read again each time the page is opened, so it shows what others changed meanwhile.
   useEffect(() => {
@@ -145,6 +163,8 @@ export function UnitsPage({
         productsApi={productsApi}
         invoiceApi={invoiceApi}
         jointApi={jointApi}
+        buildings={buildings}
+        buildingApi={buildingApi}
         unitId={detail}
         utilityApi={utilityApi}
       />
@@ -189,6 +209,13 @@ export function UnitsPage({
       {adding && lists !== null && (
         <NewUnitDialog
           api={unitApi}
+          // DL-250: choosing a building moves the new Unit, which needs Settings access.
+          buildingApi={
+            capabilities === null || capabilities.has("settings.manage")
+              ? buildingApi
+              : undefined
+          }
+          buildings={buildings}
           servicesApi={servicesApi}
           language={language}
           lists={lists}

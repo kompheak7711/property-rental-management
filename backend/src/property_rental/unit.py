@@ -224,6 +224,8 @@ class Unit:
     # start date of a Signed Lease that starts later.
     held_by: UnitStatus | None = None
     lease_starts_on: date | None = None
+    # DL-250: the building the Unit is in (None only where the query did not read it).
+    building_id: UUID | None = None
 
     @property
     def shown_status(self) -> UnitStatus:
@@ -389,7 +391,8 @@ def unit_from_row(row: tuple[object, ...]) -> Unit:
     """Map a Unit row: the seven base columns, then the details of `app.unit_with_details`, then
     the Rent terms of `app.unit_rent_terms` when the query joined them (V1-061), then the Unit
     features of `app.unit_feature_counts` (V1.1), then For rent (V1.1 rework part 1), then who
-    holds the Unit today and the start of a later Signed Lease (C2, DL-241)."""
+    holds the Unit today and the start of a later Signed Lease (C2, DL-241), then the building
+    (DL-250)."""
     details = row[7:15] if len(row) >= 15 else (None,) * 7 + ((),)
     features = details[7]
     rent = row[15] if len(row) >= 17 else None
@@ -398,6 +401,7 @@ def unit_from_row(row: tuple[object, ...]) -> Unit:
     for_rent = row[18] if len(row) >= 19 else True
     held_by = row[19] if len(row) >= 21 else None
     lease_starts_on = row[20] if len(row) >= 21 else None
+    building_id = row[21] if len(row) >= 22 else None
     return Unit(
         unit_id=UUID(str(row[0])),
         property_id=UUID(str(row[1])),
@@ -428,6 +432,7 @@ def unit_from_row(row: tuple[object, ...]) -> Unit:
         for_rent=for_rent is not False,
         held_by=None if held_by is None else UnitStatus(str(held_by)),
         lease_starts_on=lease_starts_on if isinstance(lease_starts_on, date) else None,
+        building_id=_optional_uuid(building_id),
     )
 
 

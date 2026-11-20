@@ -14,6 +14,11 @@ import {
   type UnitSetupListKind,
   type UnitSetupLists,
 } from "../unitClient";
+import {
+  type Building,
+  BuildingChangedError,
+  BuildingRefusedError,
+} from "../buildingClient";
 import { UnitSetupTab } from "./UnitSetupTab";
 
 afterEach(() => {
@@ -146,15 +151,60 @@ function cleaningOf(noRate: string[] = []) {
   };
 }
 
+function building(
+  id: string,
+  name: string,
+  extra: Partial<Building> = {},
+): Building {
+  return {
+    building_id: id,
+    property_id: "property-1",
+    name_en: name,
+    name_km: null,
+    address_text: null,
+    description: null,
+    takes_short_stays: false,
+    sort_order: 0,
+    removed: false,
+    unit_count: 0,
+    version: 1,
+    ...extra,
+  };
+}
+
+const CHETANA = building("building-1", "CHETANA Residence", {
+  address_text: "Street 1, Phnom Penh",
+  takes_short_stays: true,
+  unit_count: 2,
+});
+
+function buildingsOf(items: Building[] = [CHETANA], canManage = true) {
+  return {
+    list: vi.fn(() => Promise.resolve({ items, can_manage: canManage })),
+    create: vi.fn((_propertyId: string, source: Partial<Building>) =>
+      Promise.resolve(building("building-2", source.name_en ?? "", source)),
+    ),
+    update: vi.fn((current: Building, source: Partial<Building>) =>
+      Promise.resolve({ ...current, ...source, version: current.version + 1 }),
+    ),
+    remove: vi.fn((current: Building) =>
+      Promise.resolve({ ...current, removed: true }),
+    ),
+    moveUnit: vi.fn(),
+  };
+}
+
 function show(
   api = apiOf(),
   language: "en" | "km" = "en",
   cleaning = cleaningOf(),
+  buildings = buildingsOf(),
 ) {
   render(
     <UnitSetupTab
       active
       api={api}
+      buildings={buildings}
       cleaning={cleaning}
       language={language}
       propertyId="property-1"
@@ -174,18 +224,22 @@ async function openTab(name: string) {
 describe("Settings: Unit setup", () => {
   it("TEST-FE-940 shows the lists as tabs Floors, Unit Types, Unit features and Views with how many Units use each item; an item in use offers no Remove; Floors have no Edit (V1.1 rework part 1: no Feature types or Item types)", async () => {
     const api = show();
-    const floors = await screen.findByRole("region", { name: "Floors" });
-    expect(api.setupLists).toHaveBeenCalledWith("property-1");
+    // DL-250: Buildings is the first list and shows first.
+    await screen.findByRole("region", { name: "Buildings" });
     const tabs = within(
       screen.getByRole("group", { name: "Unit setup lists" }),
     ).getAllByRole("button");
+    expect(tabs[0]?.getAttribute("aria-pressed")).toBe("true");
+    const floors = await openTab("Floors");
+    expect(api.setupLists).toHaveBeenCalledWith("property-1");
     expect(tabs.map((tab) => tab.textContent)).toEqual([
+      "Buildings",
       "Floors",
       "Unit Types",
       "Unit features",
       "Views",
     ]);
-    expect(tabs[0]?.getAttribute("aria-pressed")).toBe("true");
+    expect(tabs[1]?.getAttribute("aria-pressed")).toBe("true");
     expect(screen.getAllByRole("region")).toHaveLength(1);
     for (const gone of [
       "Kitchens",
@@ -361,6 +415,7 @@ describe("Settings: Unit setup", () => {
     const api = apiOf();
     api.removeSetupItem.mockRejectedValueOnce(new UnitConflictError());
     show(api);
+    await openTab("Floors");
     fireEvent.click(
       await screen.findByRole("button", { name: "Remove: Floor 2" }),
     );
@@ -395,6 +450,7 @@ describe("Settings: Unit setup", () => {
       }),
     );
     show(moved);
+    await openTab("Floors");
     fireEvent.click(await screen.findByRole("button", { name: "Add: Floor" }));
     fireEvent.change(screen.getByLabelText("Floor number"), {
       target: { value: "3" },
@@ -405,11 +461,11 @@ describe("Settings: Unit setup", () => {
     cleanup();
 
     show(apiOf(() => Promise.resolve({ ...LISTS, can_manage: false })));
-    await screen.findByRole("region", { name: "Floors" });
-    // Only the four list tabs are buttons.
-    expect(screen.queryAllByRole("button")).toHaveLength(4);
+    await openTab("Floors");
+    // Only the five list tabs are buttons.
+    expect(screen.queryAllByRole("button")).toHaveLength(5);
     await openTab("Unit features");
-    expect(screen.queryAllByRole("button")).toHaveLength(4);
+    expect(screen.queryAllByRole("button")).toHaveLength(5);
     expect(
       screen.getByText(
         "You can read these lists. Only the Owner or a user the Owner allows can change them.",
@@ -425,14 +481,14 @@ describe("Settings: Unit setup", () => {
     const retry = await screen.findByRole("button", { name: "Retry" });
     fail = false;
     fireEvent.click(retry);
-    expect(await screen.findByRole("region", { name: "Floors" })).toBeTruthy();
+    expect(await openTab("Floors")).toBeTruthy();
   });
 
   it("TEST-FE-943 Khmer shows the Khmer list names and the mock-up words; without the Units list an item shows only that a Unit uses it", async () => {
     const api = apiOf();
     api.list.mockRejectedValue(new Error("no units.read"));
     show(api, "km");
-    const floors = await screen.findByRole("region", { name: "ជាន់" });
+    const floors = await openTab("ជាន់");
     expect(floors.textContent).toContain("ជាន់ទី 1");
     expect(floors.textContent).toContain("បន្ទប់កំពុងប្រើ");
     expect(floors.textContent).toContain("មិនទាន់មានបន្ទប់");
@@ -451,5 +507,198 @@ describe("Settings: Unit setup", () => {
     show(apiOf(), "en", failing);
     const again = await openTab("Unit Types");
     expect(within(again).queryByText("No cleaning rate")).toBeNull();
+  });
+
+  it("TEST-FE-2307 Buildings lists each building with its Khmer name, address, Short stays and Units; only an empty building, when there are two or more, offers Remove (DL-250)", async () => {
+    const empty = building("building-2", "Building Two", { name_km: "អគារ ២" });
+    show(apiOf(), "en", cleaningOf(), buildingsOf([CHETANA, empty]));
+    const region = await screen.findByRole("region", { name: "Buildings" });
+    const [header, first, second] = within(region).getAllByRole("row");
+    expect(
+      within(header ?? region)
+        .getAllByRole("columnheader")
+        .map((cell) => cell.textContent),
+    ).toEqual(["Name", "Khmer", "Address", "Short stays", "Units", "Edit"]);
+    expect(
+      within(first ?? region)
+        .getAllByRole("cell")
+        .slice(0, 5)
+        .map((cell) => cell.textContent),
+    ).toEqual(["CHETANA Residence", "", "Street 1, Phnom Penh", "Yes", "2"]);
+    expect(
+      within(second ?? region)
+        .getAllByRole("cell")
+        .slice(0, 5)
+        .map((cell) => cell.textContent),
+    ).toEqual(["Building Two", "អគារ ២", "Not set", "No", "0"]);
+    expect(
+      screen.queryByRole("button", { name: "Remove: CHETANA Residence" }),
+    ).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Remove: Building Two" }),
+    ).toBeTruthy();
+    expect(region.textContent).toContain(
+      "Building names show in the app only when there are two or more buildings.",
+    );
+    cleanup();
+
+    // The only building always stays, even with no Units.
+    show(
+      apiOf(),
+      "en",
+      cleaningOf(),
+      buildingsOf([{ ...CHETANA, unit_count: 0 }]),
+    );
+    await screen.findByRole("region", { name: "Buildings" });
+    expect(
+      screen.queryByRole("button", { name: "Remove: CHETANA Residence" }),
+    ).toBeNull();
+  });
+
+  it("TEST-FE-2308 Add building asks a name, refuses a name another building has, and saves the address, description and Short stays; Edit saves the changes; the buildings are read again (DL-250)", async () => {
+    const buildings = buildingsOf();
+    show(apiOf(), "en", cleaningOf(), buildings);
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Add: Building" }),
+    );
+    let dialog = screen.getByRole("dialog", { name: "Add · Building" });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    expect(within(dialog).getByText("Enter a name.")).toBeTruthy();
+    fireEvent.change(within(dialog).getByLabelText(/Name in English/), {
+      target: { value: " chetana residence " },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    expect(
+      within(dialog).getByText("Another building already has this name."),
+    ).toBeTruthy();
+    expect(buildings.create).not.toHaveBeenCalled();
+    fireEvent.change(within(dialog).getByLabelText(/Name in English/), {
+      target: { value: "  Building Two " },
+    });
+    fireEvent.change(within(dialog).getByLabelText("Name in Khmer"), {
+      target: { value: "អគារ ២" },
+    });
+    fireEvent.change(within(dialog).getByLabelText("Address"), {
+      target: { value: " Street 2 " },
+    });
+    fireEvent.click(
+      within(dialog).getByLabelText(
+        "Takes short stays (daily and weekly guests)",
+      ),
+    );
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    expect(await screen.findByText("Saved.")).toBeTruthy();
+    expect(buildings.create).toHaveBeenCalledWith("property-1", {
+      name_en: "Building Two",
+      name_km: "អគារ ២",
+      address_text: "Street 2",
+      description: null,
+      takes_short_stays: true,
+    });
+    expect(buildings.list).toHaveBeenCalledTimes(2);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Edit: CHETANA Residence" }),
+    );
+    dialog = screen.getByRole("dialog", {
+      name: "Edit · CHETANA Residence",
+    });
+    expect(
+      within(dialog).getByLabelText<HTMLTextAreaElement>("Address").value,
+    ).toBe("Street 1, Phnom Penh");
+    expect(
+      within(dialog).getByLabelText<HTMLInputElement>(
+        "Takes short stays (daily and weekly guests)",
+      ).checked,
+    ).toBe(true);
+    fireEvent.change(within(dialog).getByLabelText("Description"), {
+      target: { value: "The first building" },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    await screen.findByText("Saved.");
+    expect(buildings.update).toHaveBeenCalledWith(CHETANA, {
+      name_en: "CHETANA Residence",
+      name_km: null,
+      address_text: "Street 1, Phnom Penh",
+      description: "The first building",
+      takes_short_stays: true,
+    });
+  });
+
+  it("TEST-FE-2309 Remove building asks first; a building that got Units meanwhile is refused and says so; a building someone changed first closes the form and reads again (DL-250)", async () => {
+    const empty = building("building-2", "Building Two");
+    const buildings = buildingsOf([CHETANA, empty]);
+    buildings.remove.mockRejectedValueOnce(new BuildingRefusedError());
+    show(apiOf(), "en", cleaningOf(), buildings);
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Remove: Building Two" }),
+    );
+    const dialog = screen.getByRole("dialog", {
+      name: "Remove · Building Two",
+    });
+    expect(dialog.textContent).toContain("This cannot be undone.");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Remove" }));
+    expect(
+      await within(dialog).findByText(
+        "This building still has Units, so it cannot be removed.",
+      ),
+    ).toBeTruthy();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Remove" }));
+    expect(await screen.findByText("Building Two removed.")).toBeTruthy();
+    expect(buildings.remove).toHaveBeenCalledTimes(2);
+    cleanup();
+
+    const changed = buildingsOf();
+    changed.update.mockRejectedValueOnce(new BuildingChangedError());
+    show(apiOf(), "en", cleaningOf(), changed);
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Edit: CHETANA Residence" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(
+      await screen.findByText(
+        "Someone changed this building first. The buildings were read again; check and try again.",
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(changed.list).toHaveBeenCalledTimes(2);
+  });
+
+  it("TEST-FE-2310 without the right to change, Buildings shows with no buttons and says so; a failed read offers Retry; Khmer shows the Khmer words (DL-250)", async () => {
+    show(apiOf(), "en", cleaningOf(), buildingsOf([CHETANA], false));
+    const region = await screen.findByRole("region", { name: "Buildings" });
+    expect(within(region).queryAllByRole("button")).toHaveLength(0);
+    expect(
+      screen.getByText(
+        "You can read the buildings. Only the Owner or a user the Owner allows can change them.",
+      ),
+    ).toBeTruthy();
+    cleanup();
+
+    let fail = true;
+    const flaky = buildingsOf();
+    flaky.list.mockImplementation(() =>
+      fail
+        ? Promise.reject(new Error("down"))
+        : Promise.resolve({ items: [CHETANA], can_manage: true }),
+    );
+    show(apiOf(), "en", cleaningOf(), flaky);
+    const retry = await screen.findByRole("button", { name: "Retry" });
+    expect(
+      screen.getByText(
+        "The buildings could not be loaded. Check the connection and try again.",
+      ),
+    ).toBeTruthy();
+    fail = false;
+    fireEvent.click(retry);
+    expect(
+      await screen.findByRole("region", { name: "Buildings" }),
+    ).toBeTruthy();
+    cleanup();
+
+    show(apiOf(), "km");
+    const khmer = await screen.findByRole("region", { name: "អគារ" });
+    expect(khmer.textContent).toContain("ស្នាក់នៅរយៈពេលខ្លី");
+    expect(khmer.textContent).toContain("បាទ/ចាស");
   });
 });

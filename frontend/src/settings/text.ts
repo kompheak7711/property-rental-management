@@ -1129,6 +1129,48 @@ const TEXT = {
   nr_PAYSLIP: ["Payslip", "បង្កាន់ដៃប្រាក់ខែ"], // new
   nr_SALARY_LOAN: ["Salary loan", "ប្រាក់កម្ចីប្រាក់ខែ"], // new
   nr_OVERTIME: ["Overtime", "ម៉ោងបន្ថែម"], // new
+
+  // DL-250 (More buildings step 2): Settings › Unit setup › Buildings.
+  bl_tab: ["Buildings", "អគារ"],
+  bl_one: ["Building", "អគារ"],
+  bl_sub: [
+    "Every Unit is in a building. Building names show in the app only when there are two or more buildings.",
+    "បន្ទប់នីមួយៗស្ថិតនៅក្នុងអគារមួយ។ ឈ្មោះអគារបង្ហាញក្នុងកម្មវិធី តែពេលមានអគារពីរ ឬច្រើនជាងនេះ។",
+  ],
+  bl_short: ["Short stays", "ស្នាក់នៅរយៈពេលខ្លី"],
+  bl_short_on: [
+    "Takes short stays (daily and weekly guests)",
+    "ទទួលការស្នាក់នៅរយៈពេលខ្លី (ភ្ញៀវប្រចាំថ្ងៃ និងប្រចាំសប្តាហ៍)",
+  ],
+  bl_note: [
+    "A building with Units cannot be removed, and the only building always stays. Unit numbers stay different across all buildings.",
+    "អគារដែលមានបន្ទប់ មិនអាចដកចេញបានទេ ហើយអគារតែមួយគត់នៅជានិច្ច។ លេខបន្ទប់មិនដូចគ្នាទេ ទោះនៅអគារផ្សេងក៏ដោយ។",
+  ],
+  bl_loading: ["Reading the buildings…", "កំពុងអានអគារ…"],
+  bl_failed: [
+    "The buildings could not be loaded. Check the connection and try again.",
+    "មិនអាចអានអគារបានទេ។ សូមពិនិត្យការតភ្ជាប់ ហើយព្យាយាមម្តងទៀត។",
+  ],
+  bl_taken: [
+    "Another building already has this name.",
+    "អគារផ្សេងមានឈ្មោះនេះរួចហើយ។",
+  ],
+  bl_has_units: [
+    "This building still has Units, so it cannot be removed.",
+    "អគារនេះនៅមានបន្ទប់ ដូច្នេះមិនអាចដកចេញបានទេ។",
+  ],
+  bl_invalid: [
+    "Check the building details and try again.",
+    "សូមពិនិត្យព័ត៌មានអគារ ហើយព្យាយាមម្តងទៀត។",
+  ],
+  bl_changed: [
+    "Someone changed this building first. The buildings were read again; check and try again.",
+    "មាននរណាម្នាក់បានប្តូរអគារនេះមុន។ អគារត្រូវបានអានម្តងទៀត សូមពិនិត្យ ហើយព្យាយាមម្តងទៀត។",
+  ],
+  bl_read_only: [
+    "You can read the buildings. Only the Owner or a user the Owner allows can change them.",
+    "អ្នកអាចអានអគារ។ មានតែម្ចាស់ ឬអ្នកប្រើដែលម្ចាស់អនុញ្ញាតទេ ដែលអាចប្តូរបាន។",
+  ],
 } as const satisfies Record<string, readonly [string, string]>;
 
 export type SettingsTextKey = keyof typeof TEXT;

@@ -72349,6 +72349,103 @@
       "test_path": "backend/tests/test_buildings_api.py",
       "status": "implemented",
       "notes": "DL-250 buildings step 1: Without a database the buildings list answers 503."
+    },
+    {
+      "test_id": "TEST-FE-2307",
+      "upstream_ids": [
+        "DL-250",
+        "DB-PROP-002",
+        "DB-UNIT-001"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/settings/UnitSetupTab.test.tsx",
+      "status": "implemented",
+      "notes": "DL-250 buildings step 2: Settings Unit setup: Buildings is the first list; each building shows its Khmer name, address, Short stays and Units; only an empty building, when there are two or more, offers Remove."
+    },
+    {
+      "test_id": "TEST-FE-2308",
+      "upstream_ids": [
+        "DL-250",
+        "DB-PROP-002",
+        "DB-UNIT-001"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/settings/UnitSetupTab.test.tsx",
+      "status": "implemented",
+      "notes": "DL-250 buildings step 2: Add building asks a name and refuses one another building has; it saves the address, description and Short stays; Edit saves changes; the buildings are read again."
+    },
+    {
+      "test_id": "TEST-FE-2309",
+      "upstream_ids": [
+        "DL-250",
+        "DB-PROP-002",
+        "DB-UNIT-001"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/settings/UnitSetupTab.test.tsx",
+      "status": "implemented",
+      "notes": "DL-250 buildings step 2: Remove building asks first; a building with Units is refused and says so; a building someone changed first closes the form and reads again."
+    },
+    {
+      "test_id": "TEST-FE-2310",
+      "upstream_ids": [
+        "DL-250",
+        "DB-PROP-002",
+        "DB-UNIT-001"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/settings/UnitSetupTab.test.tsx",
+      "status": "implemented",
+      "notes": "DL-250 buildings step 2: Without the right to change, Buildings has no buttons and says so; a failed read offers Retry; Khmer words show."
+    },
+    {
+      "test_id": "TEST-FE-2311",
+      "upstream_ids": [
+        "DL-250",
+        "DB-PROP-002",
+        "DB-UNIT-001"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/units/UnitsPage.test.tsx",
+      "status": "implemented",
+      "notes": "DL-250 buildings step 2: New Unit shows a Building box only with two or more buildings; another building is set right after the Unit is saved, before Not for rent."
+    },
+    {
+      "test_id": "TEST-FE-2312",
+      "upstream_ids": [
+        "DL-250",
+        "DB-PROP-002",
+        "DB-UNIT-001"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/units/UnitsPage.test.tsx",
+      "status": "implemented",
+      "notes": "DL-250 buildings step 2: With one building New Unit has no Building box; a Unit left in the first building is not moved; a failed move says where the Unit was saved."
+    },
+    {
+      "test_id": "TEST-FE-2313",
+      "upstream_ids": [
+        "DL-250",
+        "DB-PROP-002",
+        "DB-UNIT-001"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/units/UnitsPage.test.tsx",
+      "status": "implemented",
+      "notes": "DL-250 buildings step 2: The Unit page shows the building only with two or more; Change building asks a reason and moves the Unit; a Unit with renting history is refused and says so."
+    },
+    {
+      "test_id": "test_unit_answer_names_its_building",
+      "upstream_ids": [
+        "DL-250",
+        "DB-PROP-002",
+        "DB-UNIT-001",
+        "API-029a"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_buildings_migration.py",
+      "status": "implemented",
+      "notes": "DL-250 buildings step 2: the Unit answer carries building_id, before and after a move."
     }
   ]
 }

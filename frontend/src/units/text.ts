@@ -397,6 +397,26 @@ const TEXT = {
   h_for_rent_yes: ["Set to For rent", "បានប្តូរទៅ សម្រាប់ជួល"],
   // new
   h_for_rent_no: ["Set to Not for rent", "បានប្តូរទៅ មិនសម្រាប់ជួល"],
+  // DL-250 (More buildings step 2): the building shows only with two or more buildings.
+  building: ["Building", "អគារ"],
+  bl_change: ["Change building", "ប្តូរអគារ"],
+  bl_move_note: [
+    "Only a Unit that has never had a Lease, Reservation or short stay can change building.",
+    "មានតែបន្ទប់ដែលមិនធ្លាប់មានកិច្ចសន្យាជួល ការកក់ ឬការស្នាក់នៅរយៈពេលខ្លី ទេ ដែលអាចប្តូរអគារបាន។",
+  ],
+  bl_history: [
+    "This Unit has had a Lease, Reservation or short stay, so it stays in its building.",
+    "បន្ទប់នេះធ្លាប់មានកិច្ចសន្យាជួល ការកក់ ឬការស្នាក់នៅរយៈពេលខ្លី ដូច្នេះវានៅក្នុងអគារដដែល។",
+  ],
+  bl_failed: [
+    "The building was not changed. Check the connection and try again.",
+    "អគារមិនត្រូវបានប្តូរទេ។ សូមពិនិត្យការតភ្ជាប់ ហើយព្យាយាមម្តងទៀត។",
+  ],
+  bl_moved: ["Unit {0} is now in {1}.", "បន្ទប់ {0} ឥឡូវនៅក្នុង {1}។"],
+  bl_new_not_moved: [
+    "Unit {0} was saved in {1}, not in the building you chose. Use Change building on the Unit page.",
+    "បន្ទប់ {0} ត្រូវបានរក្សាទុកនៅ {1} មិនមែនអគារដែលអ្នកជ្រើសទេ។ សូមប្រើ ប្តូរអគារ នៅទំព័របន្ទប់។",
+  ],
 } as const;
 
 export type UnitTextKey = keyof typeof TEXT;

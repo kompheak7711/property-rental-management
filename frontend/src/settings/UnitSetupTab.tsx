@@ -4,6 +4,7 @@
 // uses cannot be removed. R7b-6d: a Unit Type with no move-out cleaning rate shows a chip.
 // V1.1 (DL-115 (I)): Feature types, Unit features (each with its Feature type) and Item types;
 // the old Kitchens and Room features are folded into Unit features and no longer shown.
+// DL-250 (More buildings step 2): Buildings is the first list of the tab.
 
 import {
   type FormEvent,
@@ -13,6 +14,7 @@ import {
   useState,
 } from "react";
 
+import { buildingApi } from "../buildingClient";
 import { Icon } from "../shell/icons";
 import { Chip, Dialog } from "../shell/ui";
 import type { Language } from "../signInText";
@@ -30,6 +32,7 @@ import {
   type CleaningSettingsApi,
   cleaningSettingsApi,
 } from "./serviceSettingsClient";
+import { type BuildingsSetupApi, BuildingsCard } from "./BuildingsCard";
 import { type SettingsTextKey, sst } from "./text";
 
 export type SetupApi = Pick<
@@ -255,6 +258,7 @@ export function UnitSetupTab({
   active,
   api,
   cleaning = cleaningSettingsApi,
+  buildings = buildingApi,
 }: {
   language: Language;
   propertyId: string;
@@ -262,6 +266,8 @@ export function UnitSetupTab({
   api: SetupApi;
   /** The move-out cleaning rates; the real server when not given. */
   cleaning?: CleaningSettingsApi;
+  /** DL-250: the buildings; the real server when not given. */
+  buildings?: BuildingsSetupApi;
 }) {
   const [lists, setLists] = useState<UnitSetupLists | null>(null);
   // The Unit Types with no cleaning rate; null when the rates could not be read.
@@ -269,7 +275,7 @@ export function UnitSetupTab({
   const [units, setUnits] = useState<UnitResource[] | null>(null);
   const [failed, setFailed] = useState(false);
   const [editing, setEditing] = useState<Editing | null>(null);
-  const [tab, setTab] = useState<UnitSetupListKind>("FLOOR");
+  const [tab, setTab] = useState<UnitSetupListKind | "BUILDING">("BUILDING");
   const [removing, setRemoving] = useState<UnitSetupItem | null>(null);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
@@ -611,6 +617,15 @@ export function UnitSetupTab({
         className="ui-seg"
         role="group"
       >
+        <button
+          aria-pressed={tab === "BUILDING"}
+          onClick={() => {
+            setTab("BUILDING");
+          }}
+          type="button"
+        >
+          {sst(language, "bl_tab")}
+        </button>
         {SHOWN.map((kind) => (
           <button
             aria-pressed={tab === kind}
@@ -624,7 +639,17 @@ export function UnitSetupTab({
           </button>
         ))}
       </div>
-      {tab === "UNIT_FEATURE" ? featureCard() : card(tab)}
+      {tab === "BUILDING" ? (
+        <BuildingsCard
+          api={buildings}
+          language={language}
+          propertyId={propertyId}
+        />
+      ) : tab === "UNIT_FEATURE" ? (
+        featureCard()
+      ) : (
+        card(tab)
+      )}
 
       {editing !== null && (
         <ItemDialog

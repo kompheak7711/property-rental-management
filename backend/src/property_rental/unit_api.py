@@ -494,7 +494,10 @@ UNIT_COLUMNS: Final = (
     "AS for_rent, "
     # C2 (DL-241): who holds the Unit today, and the start of a later Signed Lease.
     "app.unit_held_by(detail.id, app.unit_today(detail.id)) AS held_by, "
-    "app.unit_lease_from(detail.id, app.unit_today(detail.id)) AS lease_starts_on"
+    "app.unit_lease_from(detail.id, app.unit_today(detail.id)) AS lease_starts_on, "
+    # DL-250: the building the Unit is in.
+    "(SELECT in_building.building_id FROM app.units AS in_building "
+    "WHERE in_building.id = detail.id) AS building_id"
 )
 UNIT_SELECT: Final = (
     f"SELECT {UNIT_COLUMNS} FROM app.unit_with_details(%s) AS detail "
@@ -1414,6 +1417,7 @@ def _body(unit: Unit) -> dict[str, object]:
     return {
         "unit_id": str(unit.unit_id),
         "property_id": str(unit.property_id),
+        "building_id": None if unit.building_id is None else str(unit.building_id),
         "unit_number": unit.unit_number,
         "floor": unit.floor,
         "unit_type": unit.unit_type,
