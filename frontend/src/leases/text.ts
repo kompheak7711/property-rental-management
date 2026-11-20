@@ -481,6 +481,18 @@ const TEXT = {
   renew: ["Renew", "បន្ត"],
   open_moveout: ["Open move-out", "បើកការចាកចេញ"],
   new_title: ["New Lease", "កិច្ចសន្យាថ្មី"],
+  pa_new_title: ["New Parking agreement", "កិច្ចសន្យាចំណតថ្មី"],
+  pa_new_sub: [
+    "A Lease on the parking space. Pick the vehicle on the draft page.",
+    "កិច្ចសន្យាលើកន្លែងចំណត។ ជ្រើសយានយន្តនៅទំព័រសេចក្តីព្រាង។",
+  ],
+  pa_space: ["Parking space", "កន្លែងចំណត"],
+  pa_mtm: ["Month to month", "ប្រចាំខែ"],
+  pa_mtm_help: [
+    "No end date. It runs until the customer or the owner ends it.",
+    "គ្មានថ្ងៃបញ្ចប់។ វាបន្តរហូតដល់អតិថិជន ឬម្ចាស់បញ្ចប់វា។",
+  ],
+  pa_month_to_month: ["Month to month", "ប្រចាំខែ"],
   // new
   renew_title: ["Renew Lease", "បន្តកិច្ចសន្យា"],
   // new

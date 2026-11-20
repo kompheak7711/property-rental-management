@@ -1,4 +1,4 @@
-"""HTTP tests for parking on a room Lease (DL-253 step 3b), in-memory flow."""
+"""HTTP tests for parking on a Lease (DL-253 step 3b, DL-254 step 4b), in-memory flow."""
 
 from __future__ import annotations
 
@@ -62,6 +62,15 @@ class InMemoryLeaseParkingFlow:
         }
         return self.hold_record
 
+    def pick_vehicle(self, lease_id: UUID, *, vehicle_id: UUID, actor_id: str) -> dict[str, object]:
+        del actor_id
+        if lease_id != self.lease_id:
+            raise LeaseParkingNotFound(str(lease_id))
+        if vehicle_id == self.space_id:  # stands for a vehicle that does not fit the space
+            raise LeaseParkingConflict("type", "VEHICLE_TYPE")
+        self.hold_record = {"hold_kind": "PARKING_AGREEMENT", "vehicle_id": str(vehicle_id)}
+        return self.hold_record
+
 
 def clients(property_id: UUID, flow: InMemoryLeaseParkingFlow) -> tuple[TestClient, ...]:
     def client(*capabilities: str, other: bool = False) -> TestClient:
@@ -105,3 +114,20 @@ def test_a_drafter_picks_the_space_of_a_lease_parking_service_once() -> None:
         holds, headers=BROWSER, json={**body, "lease_service_term_id": str(uuid4())}
     )
     assert missing.status_code == 404
+
+
+def test_a_drafter_picks_the_vehicle_of_a_parking_agreement() -> None:
+    property_id, lease_id = uuid4(), uuid4()
+    flow = InMemoryLeaseParkingFlow(property_id, lease_id)
+    drafter, reader, stranger = clients(property_id, flow)
+    url = f"/leases/{lease_id}/agreement-vehicle"
+    car = str(uuid4())
+
+    assert reader.post(url, headers=BROWSER, json={"vehicle_id": car}).status_code == 403
+    assert stranger.post(url, headers=BROWSER, json={"vehicle_id": car}).status_code == 404
+    assert drafter.post(url, json={"vehicle_id": car}).status_code == 403  # no browser proof
+    assert drafter.post(url, headers=BROWSER, json={}).status_code == 422
+    unfit = drafter.post(url, headers=BROWSER, json={"vehicle_id": str(flow.space_id)})
+    assert unfit.status_code == 409 and unfit.json()["error"]["code"] == "VEHICLE_TYPE"
+    picked = drafter.post(url, headers=BROWSER, json={"vehicle_id": car})
+    assert picked.status_code == 201 and picked.json()["data"]["vehicle_id"] == car

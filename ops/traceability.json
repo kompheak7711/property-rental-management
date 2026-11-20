@@ -73173,6 +73173,71 @@
       "test_path": "backend/tests/test_parking_agreement_migration.py",
       "status": "implemented",
       "notes": "DL-254 parking step 4a: the app picks the vehicle only through app.hold_parking_agreement_space."
+    },
+    {
+      "test_id": "test_a_drafter_picks_the_vehicle_of_a_parking_agreement",
+      "upstream_ids": [
+        "DL-254",
+        "API-029d"
+      ],
+      "test_level": "API",
+      "test_path": "backend/tests/test_lease_parking_api.py",
+      "status": "implemented",
+      "notes": "DL-254 parking step 4b: a drafter picks the vehicle of a Parking agreement; readers, strangers and requests without browser proof are refused."
+    },
+    {
+      "test_id": "test_a_month_to_month_agreement_reads_its_space_and_vehicle",
+      "upstream_ids": [
+        "DL-254",
+        "DB-PARK-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_parking_agreement_migration.py",
+      "status": "implemented",
+      "notes": "DL-254 parking step 4b: a month-to-month Parking agreement reads its space and picked vehicle from app.lease_parking."
+    },
+    {
+      "test_id": "TEST-FE-2346",
+      "upstream_ids": [
+        "DL-254",
+        "API-029d"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/leases/LeaseParkingCard.test.tsx",
+      "status": "implemented",
+      "notes": "The Parking agreement card shows the space and Month to month, picks the vehicle on the draft, and a signed one shows the plate only."
+    },
+    {
+      "test_id": "TEST-FE-2347",
+      "upstream_ids": [
+        "DL-254",
+        "API-029d"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/leases/LeasesPage.test.tsx",
+      "status": "implemented",
+      "notes": "New Parking agreement drafts a Lease on the space, month to month by default, with no occupants, pets or Services."
+    },
+    {
+      "test_id": "TEST-FE-2348",
+      "upstream_ids": [
+        "DL-254"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/parking/ParkingPage.test.tsx",
+      "status": "implemented",
+      "notes": "The Parking page offers New Parking agreement on spaces not kept for guests to people who may draft Leases."
+    },
+    {
+      "test_id": "TEST-FE-2349",
+      "upstream_ids": [
+        "DL-254",
+        "API-029d"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/leaseParkingClient.test.ts",
+      "status": "implemented",
+      "notes": "The Lease parking client reads a Parking agreement and picks its vehicle with the browser proof."
     }
   ]
 }

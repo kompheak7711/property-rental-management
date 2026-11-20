@@ -62,6 +62,7 @@ import {
   serviceGroups,
   withRequired,
 } from "./leaseServices";
+import { MONTH_TO_MONTH_END } from "./monthToMonth";
 import { lt } from "./text";
 import { FieldGrid, FormLayout, FullRow, PageHeader } from "../shell/layouts";
 import { goBack } from "../shell/backNav";
@@ -69,11 +70,14 @@ import { goBack } from "../shell/backNav";
 export type LeaseFormMode =
   | { kind: "new" }
   | { kind: "unit"; unitId: string }
+  /** DL-254: a Parking agreement, a Lease on the parking space itself. */
+  | { kind: "space"; unitId: string }
   | { kind: "reservation"; reservationId: string }
   | { kind: "renew"; leaseId: string };
 
 /**
- * "new", "unit:<Unit id>" (a walk-in draft for the Unit whose page it came from), "new:<Booking
+ * "new", "unit:<Unit id>" (a walk-in draft for the Unit whose page it came from), "space:<parking
+ * space id>" (a Parking agreement, DL-254), "new:<Booking
  * id>" or "renew:<Lease id>" from the page address; null otherwise.
  */
 export function formModeOf(detail: string): LeaseFormMode | null {
@@ -84,6 +88,7 @@ export function formModeOf(detail: string): LeaseFormMode | null {
   if (id === "") return null;
   if (head === "new") return { kind: "reservation", reservationId: id };
   if (head === "unit") return { kind: "unit", unitId: id };
+  if (head === "space") return { kind: "space", unitId: id };
   if (head === "renew") return { kind: "renew", leaseId: id };
   return null;
 }
@@ -144,7 +149,7 @@ export interface LeaseFormProps {
   propertyId: string;
   mode: LeaseFormMode;
   api: LeaseApi;
-  unitApi: Pick<UnitApi, "list">;
+  unitApi: Pick<UnitApi, "list"> & Partial<Pick<UnitApi, "get">>;
   customerApi: Pick<CustomerApi, "list">;
   reservationApi: Pick<ReservationApi, "get">;
   /** The Services from Settings; the real server when not given. */
@@ -176,6 +181,10 @@ export function LeaseForm({
   mayLowerRent = null,
 }: LeaseFormProps) {
   const today = todayInPhnomPenh();
+  // DL-254: a Parking agreement holds a vehicle, not people: no occupants, pets, meters or
+  // Services. It runs month to month unless an End Date is given.
+  const parkingSpace = mode.kind === "space";
+  const [monthToMonth, setMonthToMonth] = useState(parkingSpace);
   const [sources, setSources] = useState<Sources | null>(null);
   const [failed, setFailed] = useState(false);
   const [unitId, setUnitId] = useState("");
@@ -183,7 +192,9 @@ export function LeaseForm({
   const [signers, setSigners] = useState<string[]>([]);
   const [occupants, setOccupants] = useState<string[]>([]);
   const [start, setStart] = useState(today);
-  const [end, setEnd] = useState(oneYearEnd(today));
+  const [end, setEnd] = useState(
+    parkingSpace ? MONTH_TO_MONTH_END : oneYearEnd(today),
+  );
   const [rent, setRent] = useState("");
   // A walk-in draft follows the chosen Unit's default Rent until the Rent is typed (DL-110).
   const [rentTyped, setRentTyped] = useState(false);
@@ -339,12 +350,17 @@ export function LeaseForm({
     const fromUnit = mode.kind === "unit" ? mode.unitId : null;
     void (async () => {
       const [units, customers, reservation, previous] = await Promise.all([
-        allPages((cursor) =>
-          unitApi.list(
-            propertyId,
-            cursor === undefined ? undefined : { cursor },
-          ),
-        ),
+        mode.kind === "space"
+          ? (unitApi.get === undefined
+              ? Promise.reject(new Error("No Unit reader"))
+              : unitApi.get(mode.unitId)
+            ).then((space) => [space])
+          : allPages((cursor) =>
+              unitApi.list(
+                propertyId,
+                cursor === undefined ? undefined : { cursor },
+              ),
+            ),
         allPages((cursor) =>
           customerApi.list(
             propertyId,
@@ -370,6 +386,8 @@ export function LeaseForm({
         (unit) => unit.unit_id === fromUnit && OPEN_UNITS.has(unit.status),
       );
       if (chosen !== undefined) setUnitId(chosen.unit_id);
+      if (mode.kind === "space" && units[0] !== undefined)
+        setUnitId(units[0].unit_id);
       if (reservation !== null) {
         setUnitId(reservation.unit_id);
         setTenantId(reservation.customer_id);
@@ -436,7 +454,9 @@ export function LeaseForm({
   const title =
     mode.kind === "renew"
       ? lt(language, "renew_title")
-      : lt(language, "new_title");
+      : parkingSpace
+        ? lt(language, "pa_new_title")
+        : lt(language, "new_title");
 
   if (sources === null) {
     return (
@@ -472,6 +492,7 @@ export function LeaseForm({
     );
   }
   const fixedParty = reservation !== null || previous !== null;
+  const fixedUnit = fixedParty || parkingSpace;
   const nameOf = (id: string) =>
     sources.customers.find((customer) => customer.customer_id === id)
       ?.legal_name ??
@@ -505,7 +526,11 @@ export function LeaseForm({
   const preview = startOk && cents !== null ? initialRent(start, cents) : null;
   const endOk = isDay(end) && end > start;
   const groups =
-    services !== null && services !== "failed" && startOk && endOk
+    !parkingSpace &&
+    services !== null &&
+    services !== "failed" &&
+    startOk &&
+    endOk
       ? serviceGroups(services, start, end)
       : [];
   const ticked = withRequired(chosen, groups, required);
@@ -637,7 +662,9 @@ export function LeaseForm({
     const petCents = takesDeposit && pet ? centsOf(petDeposit) : null;
     if (takesDeposit && pet && petCents === null)
       found.petDeposit = lt(language, "err_pet_deposit");
-    if (services === null || services === "failed")
+    if (parkingSpace) {
+      // A Parking agreement takes no Services.
+    } else if (services === null || services === "failed")
       found.services = lt(language, "err_svc_wait");
     else if (picked.some((choice) => choice.approvalPeriodId === null))
       found.services = lt(language, "err_svc_greyed");
@@ -706,7 +733,9 @@ export function LeaseForm({
           ? "Renewal drafted from the New Lease form"
           : reservation !== null
             ? "Lease drafted from the Booking"
-            : "Lease drafted from the New Lease form"
+            : parkingSpace
+              ? "Parking agreement drafted from the New Lease form"
+              : "Lease drafted from the New Lease form"
       }${belowDefault ? `. Rent below the Unit default: ${rentReason.trim()}` : ""}`.slice(
         0,
         500,
@@ -854,7 +883,9 @@ export function LeaseForm({
             ? lt(language, "renew_sub", previous.unit_number)
             : reservation !== null
               ? lt(language, "from_booking", reservation.customer_name)
-              : lt(language, "new_sub")
+              : parkingSpace
+                ? lt(language, "pa_new_sub")
+                : lt(language, "new_sub")
         }
         title={title}
       />
@@ -872,8 +903,8 @@ export function LeaseForm({
             <FieldGrid>
               {field(
                 "lease-form-unit",
-                lt(language, "unit"),
-                fixedParty ? (
+                lt(language, parkingSpace ? "pa_space" : "unit"),
+                fixedUnit ? (
                   <input id="lease-form-unit" readOnly value={unitNumber} />
                 ) : (
                   <select
@@ -893,10 +924,11 @@ export function LeaseForm({
                   </select>
                 ),
                 problems.unit,
-                fixedParty ? undefined : lt(language, "unit_help"),
+                fixedUnit ? undefined : lt(language, "unit_help"),
                 "req",
               )}
-              {noMeter !== null &&
+              {!parkingSpace &&
+                noMeter !== null &&
                 noMeter.unitId === unitId &&
                 noMeter.kinds.length > 0 && (
                   <p className="ui-small ui-muted ui-span2" role="status">
@@ -973,13 +1005,14 @@ export function LeaseForm({
                 19,
               )}
               {/* At most 20 occupants with the Primary Tenant, and 19 other Signers. */}
-              {pick(
-                occupants,
-                setOccupants,
-                "other_occupants",
-                [tenantId, ...occupants],
-                19,
-              )}
+              {!parkingSpace &&
+                pick(
+                  occupants,
+                  setOccupants,
+                  "other_occupants",
+                  [tenantId, ...occupants],
+                  19,
+                )}
               {field(
                 "lease-form-start",
                 lt(language, "start"),
@@ -989,7 +1022,8 @@ export function LeaseForm({
                   id="lease-form-start"
                   onChange={(value) => {
                     setStart(value);
-                    if (isDay(value)) setEnd(oneYearEnd(value));
+                    if (isDay(value) && !monthToMonth)
+                      setEnd(oneYearEnd(value));
                   }}
                   value={start}
                 />,
@@ -997,22 +1031,50 @@ export function LeaseForm({
                 undefined,
                 "req",
               )}
-              {field(
-                "lease-form-end",
-                lt(language, "end"),
-                <DateInput
-                  language={language}
-                  invalid={problems.end !== undefined}
-                  id="lease-form-end"
-                  onChange={(value) => {
-                    setEnd(value);
-                  }}
-                  value={end}
-                />,
-                problems.end,
-                lt(language, "end_help"),
-                "req",
+              {parkingSpace && (
+                <label className="ui-chk ui-span2">
+                  <input
+                    aria-describedby="lease-form-mtm-help"
+                    aria-labelledby="lease-form-mtm"
+                    checked={monthToMonth}
+                    onChange={(event) => {
+                      const on = event.currentTarget.checked;
+                      setMonthToMonth(on);
+                      setEnd(
+                        on
+                          ? MONTH_TO_MONTH_END
+                          : isDay(start)
+                            ? oneYearEnd(start)
+                            : end,
+                      );
+                    }}
+                    type="checkbox"
+                  />
+                  <span>
+                    <span id="lease-form-mtm">{lt(language, "pa_mtm")}</span>
+                    <span className="ui-sub2" id="lease-form-mtm-help">
+                      {lt(language, "pa_mtm_help")}
+                    </span>
+                  </span>
+                </label>
               )}
+              {!monthToMonth &&
+                field(
+                  "lease-form-end",
+                  lt(language, "end"),
+                  <DateInput
+                    language={language}
+                    invalid={problems.end !== undefined}
+                    id="lease-form-end"
+                    onChange={(value) => {
+                      setEnd(value);
+                    }}
+                    value={end}
+                  />,
+                  problems.end,
+                  lt(language, "end_help"),
+                  "req",
+                )}
               {field(
                 "lease-form-rent",
                 lt(language, "rent"),
@@ -1105,23 +1167,27 @@ export function LeaseForm({
                     />,
                     problems.depositReason,
                   )}
-                <label className="ui-chk">
-                  <input
-                    aria-describedby="lease-form-pet-help"
-                    aria-labelledby="lease-form-pet-ok"
-                    checked={pet}
-                    onChange={(event) => {
-                      setPet(event.currentTarget.checked);
-                    }}
-                    type="checkbox"
-                  />
-                  <span>
-                    <span id="lease-form-pet-ok">{lt(language, "pet_ok")}</span>
-                    <span className="ui-sub2" id="lease-form-pet-help">
-                      {lt(language, "pet_help2")}
+                {!parkingSpace && (
+                  <label className="ui-chk">
+                    <input
+                      aria-describedby="lease-form-pet-help"
+                      aria-labelledby="lease-form-pet-ok"
+                      checked={pet}
+                      onChange={(event) => {
+                        setPet(event.currentTarget.checked);
+                      }}
+                      type="checkbox"
+                    />
+                    <span>
+                      <span id="lease-form-pet-ok">
+                        {lt(language, "pet_ok")}
+                      </span>
+                      <span className="ui-sub2" id="lease-form-pet-help">
+                        {lt(language, "pet_help2")}
+                      </span>
                     </span>
-                  </span>
-                </label>
+                  </label>
+                )}
                 {pet &&
                   field(
                     "lease-form-pet",
@@ -1155,40 +1221,42 @@ export function LeaseForm({
                     problems.petDeposit,
                     lt(language, "pet_deposit_help"),
                   )}
-                <ServicesField
-                  added={addDone}
-                  addNote={addNote}
-                  chosen={ticked}
-                  groups={groups}
-                  language={language}
-                  locked={required}
-                  onAdd={
-                    services !== null &&
-                    services !== "failed" &&
-                    services.can_manage
-                      ? () => {
-                          setAddProblem(null);
-                          setAddDone(null);
-                          setAddNote(null);
-                          setAdding(true);
-                        }
-                      : undefined
-                  }
-                  onChange={setChosen}
-                  onRetry={() => {
-                    loadServices(previous, start, end);
-                  }}
-                  problem={problems.services}
-                  state={
-                    services === null
-                      ? "loading"
-                      : services === "failed"
-                        ? "failed"
-                        : startOk && endOk
-                          ? "ready"
-                          : "dates"
-                  }
-                />
+                {!parkingSpace && (
+                  <ServicesField
+                    added={addDone}
+                    addNote={addNote}
+                    chosen={ticked}
+                    groups={groups}
+                    language={language}
+                    locked={required}
+                    onAdd={
+                      services !== null &&
+                      services !== "failed" &&
+                      services.can_manage
+                        ? () => {
+                            setAddProblem(null);
+                            setAddDone(null);
+                            setAddNote(null);
+                            setAdding(true);
+                          }
+                        : undefined
+                    }
+                    onChange={setChosen}
+                    onRetry={() => {
+                      loadServices(previous, start, end);
+                    }}
+                    problem={problems.services}
+                    state={
+                      services === null
+                        ? "loading"
+                        : services === "failed"
+                          ? "failed"
+                          : startOk && endOk
+                            ? "ready"
+                            : "dates"
+                    }
+                  />
+                )}
                 <div className="ui-actions">
                   <button className="ui-btn primary" type="submit">
                     <Icon name="check" />

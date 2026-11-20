@@ -2,6 +2,10 @@
 // shows the space it holds, or Pick space. The owner's rule of 20 Nov 2026: the tenant pays the
 // price of the space picked, kept from the day it is picked. The card is left out when the Lease
 // has no parking Service.
+//
+// DL-254 (parking step 4b): on a Parking agreement (a Lease on the space itself) the card shows
+// the space, its dates (or Month to month) and the vehicle that parks there, with Pick vehicle
+// while the agreement is a draft.
 
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 
@@ -157,6 +161,189 @@ function PickDialog({
   );
 }
 
+function VehicleDialog({
+  api,
+  language,
+  leaseId,
+  parking,
+  spaceNumber,
+  onClose,
+  onPicked,
+}: {
+  api: LeaseParkingApi;
+  language: Language;
+  leaseId: string;
+  parking: LeaseParking;
+  spaceNumber: string;
+  onClose: () => void;
+  onPicked: (plate: string) => void;
+}) {
+  const [vehicle, setVehicle] = useState(
+    parking.agreement_hold?.vehicle_id ?? parking.vehicles[0]?.vehicle_id ?? "",
+  );
+  const [problem, setProblem] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (busy || vehicle === "") return;
+    setBusy(true);
+    setProblem(null);
+    void api
+      .pickVehicle(leaseId, vehicle)
+      .then((hold) => {
+        onPicked(hold.plate_text ?? "");
+      })
+      .catch((error: unknown) => {
+        setBusy(false);
+        const code = error instanceof LeaseParkingError ? error.code : "FAILED";
+        setProblem(pt(language, `lp_r_${code}`));
+      });
+  }
+
+  return (
+    <Dialog
+      busy={busy}
+      closeLabel={pt(language, "cancel")}
+      onClose={onClose}
+      onSubmit={parking.vehicles.length === 0 ? undefined : submit}
+      submitLabel={pt(language, "save")}
+      title={pt(language, "pa_vehicle_title", spaceNumber)}
+    >
+      {parking.vehicles.length === 0 ? (
+        <p className="ui-muted">{pt(language, "pa_no_vehicles")}</p>
+      ) : (
+        <div className="ui-field">
+          <label htmlFor="agreement-vehicle">
+            {pt(language, "lp_vehicle_field")}
+            <span className="req">{pt(language, "required")}</span>
+          </label>
+          <select
+            id="agreement-vehicle"
+            onChange={(event) => {
+              setVehicle(event.currentTarget.value);
+            }}
+            value={vehicle}
+          >
+            {parking.vehicles.map((item) => (
+              <option key={item.vehicle_id} value={item.vehicle_id}>
+                {item.plate_text} · {pt(language, `v_${item.vehicle_type}`)}
+              </option>
+            ))}
+          </select>
+          <p className="help">{pt(language, "pa_vehicle_help")}</p>
+        </div>
+      )}
+      {problem !== null && (
+        <p className="ui-error" role="alert">
+          <Icon name="alert" small />
+          <span>{problem}</span>
+        </p>
+      )}
+    </Dialog>
+  );
+}
+
+function AgreementCard({
+  api,
+  language,
+  leaseId,
+  parking,
+  reload,
+}: {
+  api: LeaseParkingApi;
+  language: Language;
+  leaseId: string;
+  parking: LeaseParking;
+  reload: () => void;
+}) {
+  const [picking, setPicking] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const space = parking.space;
+  const hold = parking.agreement_hold;
+  const spaceNumber = space?.unit_number ?? "";
+  const open = parking.can_pick && parking.lease_status === "DRAFTED";
+  const plate = (hold?.vehicle_id ?? null) === null ? null : hold?.plate_text;
+
+  return (
+    <section aria-labelledby="lease-parking" className="ui-card">
+      <h2 id="lease-parking">{pt(language, "pa_title")}</h2>
+      {notice !== null && (
+        <div className="ui-notice ok" role="status">
+          <Icon name="check" />
+          <p>{notice}</p>
+        </div>
+      )}
+      <ul className="ui-apps" aria-label={pt(language, "pa_title")}>
+        <li>
+          <span>
+            <b>
+              {pt(
+                language,
+                "pa_space",
+                spaceNumber,
+                typeName(language, space?.parking_type ?? null),
+              )}
+            </b>
+            {hold !== null && (
+              <small className="ui-num">
+                {parking.month_to_month || hold.held_until === null
+                  ? pt(language, "pa_month_to_month", dayText(hold.held_from))
+                  : pt(
+                      language,
+                      "lp_period",
+                      dayText(hold.held_from),
+                      dayText(hold.held_until),
+                    )}
+              </small>
+            )}
+            <small>{plate ?? pt(language, "pa_vehicle_none")}</small>
+          </span>
+          {open ? (
+            <button
+              className="ui-btn"
+              onClick={() => {
+                setNotice(null);
+                setPicking(true);
+              }}
+              type="button"
+            >
+              <Icon name="car" />
+              {pt(
+                language,
+                plate === null ? "pa_vehicle_pick" : "pa_vehicle_change",
+              )}
+            </button>
+          ) : plate !== null ? (
+            <Chip icon="car" tone="ok">
+              {plate}
+            </Chip>
+          ) : (
+            <Chip tone="warn">{pt(language, "pa_vehicle_pick")}</Chip>
+          )}
+        </li>
+      </ul>
+      {picking && (
+        <VehicleDialog
+          api={api}
+          language={language}
+          leaseId={leaseId}
+          onClose={() => {
+            setPicking(false);
+          }}
+          onPicked={(picked) => {
+            setPicking(false);
+            setNotice(pt(language, "pa_vehicle_saved", picked));
+            reload();
+          }}
+          parking={parking}
+          spaceNumber={spaceNumber}
+        />
+      )}
+    </section>
+  );
+}
+
 export function LeaseParkingCard({
   leaseId,
   language,
@@ -192,6 +379,17 @@ export function LeaseParkingCard({
 
   // Most Leases have no parking Service: nothing to show while it loads or when there is none.
   if (parking === undefined) return null;
+  if (parking?.on_parking_space === true) {
+    return (
+      <AgreementCard
+        api={api}
+        language={language}
+        leaseId={leaseId}
+        parking={parking}
+        reload={load}
+      />
+    );
+  }
   if (parking !== null && parking.terms.length === 0) return null;
   const open =
     parking !== null &&

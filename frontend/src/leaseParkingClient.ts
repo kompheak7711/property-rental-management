@@ -39,11 +39,31 @@ export interface LeaseParkingVehicle {
   customer_name: string | null;
 }
 
+// DL-254 (parking step 4b): a Parking agreement is a Lease on the space itself.
+export interface AgreementSpace {
+  unit_id: string;
+  unit_number: string;
+  parking_type: string | null;
+  area: string | null;
+}
+
+export interface AgreementHold {
+  hold_id: string;
+  vehicle_id: string | null;
+  plate_text: string | null;
+  held_from: string;
+  held_until: string | null;
+}
+
 export interface LeaseParking {
   lease_status: string;
   terms: LeaseParkingTerm[];
   vehicles: LeaseParkingVehicle[];
   can_pick: boolean;
+  on_parking_space: boolean;
+  month_to_month: boolean;
+  space: AgreementSpace | null;
+  agreement_hold: AgreementHold | null;
 }
 
 export interface LeaseParkingPick {
@@ -55,6 +75,7 @@ export interface LeaseParkingPick {
 export interface LeaseParkingApi {
   read: (leaseId: string) => Promise<LeaseParking>;
   pick: (leaseId: string, pick: LeaseParkingPick) => Promise<LeaseParkingHold>;
+  pickVehicle: (leaseId: string, vehicleId: string) => Promise<AgreementHold>;
 }
 
 export type LeaseParkingRefusal =
@@ -65,6 +86,7 @@ export type LeaseParkingRefusal =
   | "PARKING_KEPT_FOR_GUESTS"
   | "TYPE_HAS_NO_PRICE"
   | "LEASE_CLOSED"
+  | "AGREEMENT_DATES_MISSING"
   | "UNAVAILABLE"
   | "FAILED";
 
@@ -76,6 +98,7 @@ const KNOWN: readonly LeaseParkingRefusal[] = [
   "PARKING_KEPT_FOR_GUESTS",
   "TYPE_HAS_NO_PRICE",
   "LEASE_CLOSED",
+  "AGREEMENT_DATES_MISSING",
 ];
 
 export class LeaseParkingError extends Error {
@@ -230,6 +253,39 @@ function vehicle(value: unknown): LeaseParkingVehicle {
   };
 }
 
+function agreementSpace(value: unknown): AgreementSpace | null {
+  if (!isObject(value)) return null;
+  if (
+    typeof value.unit_id !== "string" ||
+    typeof value.unit_number !== "string"
+  ) {
+    throw new LeaseParkingError("FAILED");
+  }
+  return {
+    unit_id: value.unit_id,
+    unit_number: value.unit_number,
+    parking_type: text(value.parking_type),
+    area: text(value.area),
+  };
+}
+
+function agreementHold(value: unknown): AgreementHold {
+  if (
+    !isObject(value) ||
+    typeof value.hold_id !== "string" ||
+    typeof value.held_from !== "string"
+  ) {
+    throw new LeaseParkingError("FAILED");
+  }
+  return {
+    hold_id: value.hold_id,
+    vehicle_id: text(value.vehicle_id),
+    plate_text: text(value.plate_text),
+    held_from: value.held_from,
+    held_until: text(value.held_until),
+  };
+}
+
 async function read(leaseId: string): Promise<LeaseParking> {
   const data = await request(`/leases/${encodeURIComponent(leaseId)}/parking`, {
     method: "GET",
@@ -246,6 +302,12 @@ async function read(leaseId: string): Promise<LeaseParking> {
     terms: data.terms.map(term),
     vehicles: Array.isArray(data.vehicles) ? data.vehicles.map(vehicle) : [],
     can_pick: data.can_pick,
+    on_parking_space: data.on_parking_space === true,
+    month_to_month: data.month_to_month === true,
+    space: agreementSpace(data.space),
+    agreement_hold: isObject(data.agreement_hold)
+      ? agreementHold(data.agreement_hold)
+      : null,
   };
 }
 
@@ -266,4 +328,21 @@ async function pick(
   );
 }
 
-export const leaseParkingApi: LeaseParkingApi = { read, pick };
+async function pickVehicle(
+  leaseId: string,
+  vehicleId: string,
+): Promise<AgreementHold> {
+  const token = csrfToken();
+  if (token === null || token.length === 0) {
+    throw new LeaseParkingError("FAILED");
+  }
+  return agreementHold(
+    await request(`/leases/${encodeURIComponent(leaseId)}/agreement-vehicle`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-CSRF-Token": token },
+      body: JSON.stringify({ vehicle_id: vehicleId }),
+    }),
+  );
+}
+
+export const leaseParkingApi: LeaseParkingApi = { read, pick, pickVehicle };

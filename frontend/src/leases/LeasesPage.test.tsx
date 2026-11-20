@@ -2191,6 +2191,92 @@ describe("New Lease and Renew", () => {
     fireEvent.change(screen.getByLabelText(label), { target: { value } });
   };
 
+  it("TEST-FE-2347 New Parking agreement drafts a Lease on the space, month to month by default, with no occupants, pets or Services (DL-254)", async () => {
+    const create = vi
+      .fn<LeaseApi["create"]>()
+      .mockImplementation((_property, source) =>
+        Promise.resolve(
+          lease("P01", { lease_id: source.lease_id, status: "DRAFTED" }),
+        ),
+      );
+    const money = signing();
+    window.location.hash = "#/leases/space:space-P01";
+    show(
+      api({ create }),
+      deposits(),
+      null,
+      undefined,
+      people(),
+      {
+        get: vi.fn<UnitApi["get"]>().mockResolvedValue({
+          unit_id: "space-P01",
+          unit_number: "P01",
+          status: "VACANT",
+          default_monthly_rent_usd_cents: 3500,
+        } as UnitResource),
+      },
+      {},
+      {},
+      undefined,
+      money,
+    );
+    expect(
+      await screen.findByRole("heading", { name: "New Parking agreement" }),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Parking space")).toHaveValue("P01");
+    expect(screen.queryByLabelText("Other occupants")).toBeNull();
+    expect(
+      screen.queryByRole("checkbox", { name: "A pet is approved" }),
+    ).toBeNull();
+    const monthly = screen.getByRole("checkbox", { name: "Month to month" });
+    expect(monthly).toBeChecked();
+    expect(screen.queryByLabelText("End Date")).toBeNull();
+    await waitFor(() => {
+      expect(screen.getByLabelText("Monthly Rent")).toHaveValue("35.00");
+    });
+    pickIn("Primary Tenant", "customer-a");
+    fireEvent.change(screen.getByLabelText("Start Date"), {
+      target: { value: "2027-01-01" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save as draft" }));
+    fireEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", {
+        name: "Save as draft",
+      }),
+    );
+    await waitFor(() => {
+      expect(create).toHaveBeenCalledTimes(1);
+    });
+    expect(create.mock.calls[0]?.[1]).toMatchObject({
+      unit_id: "space-P01",
+      primary_tenant_id: "customer-a",
+      start_date: "2027-01-01",
+      end_date: "2099-12-31",
+      monthly_rent_usd_cents: 3500,
+      planned_occupant_customer_ids: ["customer-a"],
+      service_terms: [],
+      pet_term: null,
+    });
+    expect(money.planSecurityDeposit.mock.calls[0]?.[1]).toMatchObject({
+      required_usd_cents: 3500,
+    });
+    cleanup();
+
+    // Untick Month to month: the End Date comes back, one year on.
+    window.location.hash = "#/leases/space:space-P01";
+    show(api(), deposits(), null, undefined, people(), {
+      get: vi.fn<UnitApi["get"]>().mockResolvedValue({
+        unit_id: "space-P01",
+        unit_number: "P01",
+        status: "VACANT",
+      } as UnitResource),
+    });
+    fireEvent.click(
+      await screen.findByRole("checkbox", { name: "Month to month" }),
+    );
+    expect(screen.getByLabelText("End Date")).toBeInTheDocument();
+  });
+
   it("TEST-FE-857 New Lease offers open Units, fills a one-year End Date, previews the bill, asks before saving and keeps the Lease id on Try again", async () => {
     const create = vi
       .fn<LeaseApi["create"]>()

@@ -1,4 +1,5 @@
 // DL-253 (parking step 3b): the Parking card of a room Lease. TEST-FE-2343 and TEST-FE-2344.
+// DL-254 (parking step 4b): the Parking agreement card. TEST-FE-2346.
 
 import {
   cleanup,
@@ -70,6 +71,10 @@ const OPEN: LeaseParking = {
       customer_name: "Sok Dara",
     },
   ],
+  on_parking_space: false,
+  month_to_month: false,
+  space: null,
+  agreement_hold: null,
 };
 
 const HELD: LeaseParking = { ...OPEN, terms: [{ ...TERM, hold: HOLD }] };
@@ -81,6 +86,15 @@ function apiOf(overrides: Partial<LeaseParkingApi> = {}): LeaseParkingApi {
       .mockResolvedValueOnce(OPEN)
       .mockResolvedValue(HELD),
     pick: vi.fn<LeaseParkingApi["pick"]>(() => Promise.resolve(HOLD)),
+    pickVehicle: vi.fn<LeaseParkingApi["pickVehicle"]>(() =>
+      Promise.resolve({
+        hold_id: "hold-9",
+        vehicle_id: "car-1",
+        plate_text: "2A-1234",
+        held_from: "2027-01-01",
+        held_until: "2099-12-31",
+      }),
+    ),
     ...overrides,
   };
 }
@@ -166,6 +180,79 @@ describe("Lease Parking card (DL-253)", () => {
       />,
     );
     expect(await screen.findByText("ចំណតឡាន")).toBeInTheDocument();
+    expect(screen.queryByRole("button")).toBeNull();
+  });
+
+  it("TEST-FE-2346 a Parking agreement shows its space and Month to month, picks the customer's vehicle on the draft, and a signed one shows the plate only", async () => {
+    const draft: LeaseParking = {
+      ...OPEN,
+      lease_status: "DRAFTED",
+      terms: [],
+      on_parking_space: true,
+      month_to_month: true,
+      space: {
+        unit_id: "space-1",
+        unit_number: "P01",
+        parking_type: "COVERED",
+        area: "Ground floor",
+      },
+      agreement_hold: null,
+    };
+    const picked: LeaseParking = {
+      ...draft,
+      agreement_hold: {
+        hold_id: "hold-9",
+        vehicle_id: "car-1",
+        plate_text: "2A-1234",
+        held_from: "2027-01-01",
+        held_until: "2099-12-31",
+      },
+    };
+    const api = apiOf({
+      read: vi
+        .fn<LeaseParkingApi["read"]>()
+        .mockResolvedValueOnce(draft)
+        .mockResolvedValue(picked),
+    });
+    render(<LeaseParkingCard api={api} language="en" leaseId="lease-9" />);
+    expect(
+      await screen.findByRole("heading", { name: "Parking agreement" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Space P01 · Covered")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "No vehicle picked yet. Pick the vehicle before you sign.",
+      ),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Pick vehicle" }));
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    await waitFor(() => {
+      expect(api.pickVehicle).toHaveBeenCalledWith("lease-9", "car-1");
+    });
+    expect(
+      await screen.findByText("Vehicle 2A-1234 was picked."),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByText("Month to month, from 01/01/2027"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Change vehicle" }),
+    ).toBeInTheDocument();
+    cleanup();
+
+    render(
+      <LeaseParkingCard
+        api={apiOf({
+          read: vi.fn(() =>
+            Promise.resolve({ ...picked, lease_status: "SIGNED" }),
+          ),
+        })}
+        language="en"
+        leaseId="lease-9"
+      />,
+    );
+    expect(await screen.findAllByText("2A-1234")).toHaveLength(2);
     expect(screen.queryByRole("button")).toBeNull();
   });
 });

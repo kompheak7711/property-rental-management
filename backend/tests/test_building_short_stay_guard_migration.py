@@ -68,7 +68,7 @@ def numbers(db: BookingDatabase, sql: str) -> set[str]:
 
 def test_migration_is_the_single_head_and_forward_only() -> None:
     scripts = ScriptDirectory.from_config(_config())
-    assert scripts.get_heads() == ["20270816_441"]  # parking step 3b 440 follows 439
+    assert scripts.get_heads() == ["20270817_442"]  # parking step 3b 440 follows 439
     assert scripts.get_revision("20270812_437").down_revision == REVISION
     revision = scripts.get_revision(REVISION)
     assert revision is not None
