@@ -70,6 +70,10 @@
   color: var(--ink);
   font-weight: 600;
 }
+/* DL-250 step 5: the Unit's building under the business name (two or more buildings). */
+.doc .biz .bld {
+  display: block;
+}
 .doc .title {
   text-align: right;
 }

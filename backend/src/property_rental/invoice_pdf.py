@@ -167,6 +167,7 @@ def invoice_html(
     customer_phone: str | None,
     unit: str | None,
     qr: InvoiceQr,
+    building: Mapping[str, Any] | None = None,
 ) -> str:
     """The page as HTML: the approved template filled with this Invoice."""
     status = invoice.get("status")
@@ -220,13 +221,14 @@ def invoice_html(
     unit_name = unit.strip().removeprefix("Unit ").strip() if unit else ""
     unit_html = f"Unit {e(unit_name)}" if unit_name else ""
     style = STYLE.replace("FONT_DIR", ASSETS.as_uri())
+    building_html = building_lines(building)
     return (
         '<!doctype html><html lang="en"><head><meta charset="utf-8">'
         f"<title>{number}</title><style>{style}</style></head><body>"
         '<article class="doc a4" lang="en">'
         '<div class="top"><div><img class="logo" src="'
         f'{(ASSETS / "CHETANA_Logo_Horizontal_FullColor.svg").as_uri()}" alt="CHETANA">'
-        '<div class="biz"><b>CHETANA Residence</b></div></div>'
+        f'<div class="biz"><b>CHETANA Residence</b>{building_html}</div></div>'
         '<div class="title"><span class="kh">វិក្កយបត្រ</span><span class="en">Invoice</span>'
         '<table class="meta">'
         f'<tr><td>{_label("លេខវិក្កយបត្រ", "Invoice No.")}</td><td class="dd">{number}</td></tr>'
@@ -263,6 +265,18 @@ def invoice_html(
     )
 
 
+def building_lines(building: Mapping[str, Any] | None) -> str:
+    """DL-250 step 5: under the business name, the name and address of the Unit's building (only
+    sent when the business has two or more buildings)."""
+    if not building:
+        return ""
+    name = _text(building.get("name"))
+    address = _text(building.get("address"))
+    return "".join(
+        f'<span class="bld">{html.escape(part)}</span>' for part in (name, address) if part
+    )
+
+
 def invoice_pdf(
     invoice: Mapping[str, Any],
     *,
@@ -270,13 +284,19 @@ def invoice_pdf(
     customer_phone: str | None,
     unit: str | None,
     qr: InvoiceQr,
+    building: Mapping[str, Any] | None = None,
 ) -> bytes:
     """The A4 PDF of the Invoice (one page)."""
     # Imported here: it loads Pango, which only the sender needs.
     from weasyprint import HTML  # type: ignore[import-untyped]
 
     page = invoice_html(
-        invoice, customer_name=customer_name, customer_phone=customer_phone, unit=unit, qr=qr
+        invoice,
+        customer_name=customer_name,
+        customer_phone=customer_phone,
+        unit=unit,
+        qr=qr,
+        building=building,
     )
     document = HTML(string=page, base_url=ASSETS.as_uri()).write_pdf()
     if not isinstance(document, bytes):  # pragma: no cover - write_pdf without a target

@@ -12,6 +12,7 @@
 // card between "Paid for" and "Reprints". The date under an Invoice says it is the Due Date.
 // Layout and display only.
 
+import { useBuildingChoice } from "../shell/buildingChoice";
 import {
   type FormEvent,
   Fragment,
@@ -429,6 +430,7 @@ export function ReceiptPage({
   /** What the Customer card beside the Receipt reads; left out, the card is not shown. */
   payerCard?: PayerCardReads;
 }) {
+  const { buildingOfUnitNumber } = useBuildingChoice();
   const [receipt, setReceipt] = useState<ReceiptView | null>(null);
   const [problem, setProblem] = useState<"missing" | "failed" | null>(null);
   const [reprinting, setReprinting] = useState(false);
@@ -600,6 +602,7 @@ export function ReceiptPage({
           <SheetFrame>
             <ReceiptDocument
               name={name}
+              building={buildingOfUnitNumber(unit)}
               receipt={receipt}
               reprint={reprintDay}
               unit={unit}

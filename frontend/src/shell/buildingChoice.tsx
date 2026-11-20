@@ -37,6 +37,10 @@ export interface BuildingChoice {
   showsUnit: (unitId: string | null | undefined) => boolean;
   /** The building of a Unit, when two or more buildings exist and it is known. */
   buildingOfUnit: (unitId: string | null | undefined) => Building | null;
+  /** The same by Unit number (the papers know the number), DL-250 step 5. */
+  buildingOfUnitNumber: (
+    unitNumber: string | null | undefined,
+  ) => Building | null;
 }
 
 const ALL: BuildingChoice = {
@@ -45,6 +49,7 @@ const ALL: BuildingChoice = {
   choose: () => undefined,
   showsUnit: () => true,
   buildingOfUnit: () => null,
+  buildingOfUnitNumber: () => null,
 };
 
 const Context = createContext<BuildingChoice>(ALL);
@@ -90,6 +95,10 @@ export function BuildingChoiceProvider({
     string,
     string
   > | null>(null);
+  const [numberBuilding, setNumberBuilding] = useState<ReadonlyMap<
+    string,
+    string
+  > | null>(null);
   const [chosenId, setChosenId] = useState<string | null>(readSaved);
   const sequence = useRef(0);
 
@@ -108,10 +117,12 @@ export function BuildingChoiceProvider({
       setBuildings(found);
       if (found.length < 2) {
         setUnitBuilding(null);
+        setNumberBuilding(null);
         return;
       }
       try {
         const map = new Map<string, string>();
+        const byNumber = new Map<string, string>();
         let cursor: string | undefined;
         for (let page = 0; page < 100; page++) {
           const read = await unitApi.list(
@@ -119,15 +130,24 @@ export function BuildingChoiceProvider({
             cursor === undefined ? {} : { cursor },
           );
           for (const unit of read.items) {
-            if (unit.building_id != null)
+            if (unit.building_id != null) {
               map.set(unit.unit_id, unit.building_id);
+              if (unit.unit_number)
+                byNumber.set(unit.unit_number, unit.building_id);
+            }
           }
           if (read.next_cursor === null) break;
           cursor = read.next_cursor;
         }
-        if (operation === sequence.current) setUnitBuilding(map);
+        if (operation === sequence.current) {
+          setUnitBuilding(map);
+          setNumberBuilding(byNumber);
+        }
       } catch {
-        if (operation === sequence.current) setUnitBuilding(null);
+        if (operation === sequence.current) {
+          setUnitBuilding(null);
+          setNumberBuilding(null);
+        }
       }
     })();
   }, [buildingApi, propertyId, refreshKey, unitApi]);
@@ -148,11 +168,17 @@ export function BuildingChoiceProvider({
       const id = unitBuilding.get(unitId);
       return id === undefined ? null : (byId.get(id) ?? null);
     };
+    const buildingOfUnitNumber = (unitNumber: string | null | undefined) => {
+      if (unitNumber == null || numberBuilding === null) return null;
+      const id = numberBuilding.get(unitNumber.replace(/^Unit\s+/, "").trim());
+      return id === undefined ? null : (byId.get(id) ?? null);
+    };
     return {
       buildings,
       chosen,
       choose,
       buildingOfUnit,
+      buildingOfUnitNumber,
       showsUnit: (unitId) => {
         if (chosen === null) return true;
         // Until the Units are read, or for a record with no Unit, nothing is hidden.
@@ -161,7 +187,7 @@ export function BuildingChoiceProvider({
         return id === undefined || id === chosen.building_id;
       },
     };
-  }, [buildings, chosenId, choose, unitBuilding]);
+  }, [buildings, chosenId, choose, numberBuilding, unitBuilding]);
 
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }
@@ -217,5 +243,24 @@ export function AllBuildingsNote({ language }: { language: Language }) {
       <Icon name="info" />
       <p>{TEXT.whole[language === "km" ? 1 : 0]}</p>
     </div>
+  );
+}
+
+/** DL-250 step 5: on a paper, under the business name, the name and address of the Unit's
+ * building; nothing with one building. Khmer papers show the Khmer name when there is one. */
+export function BuildingLines({ building }: { building: Building | null }) {
+  if (building === null) return null;
+  return (
+    <>
+      <span className="bld">{building.name_en}</span>
+      {building.name_km !== null && building.name_km !== "" && (
+        <span className="bld kh" lang="km">
+          {building.name_km}
+        </span>
+      )}
+      {building.address_text !== null && building.address_text !== "" && (
+        <span className="bld">{building.address_text}</span>
+      )}
+    </>
   );
 }

@@ -89,6 +89,8 @@ export function bookingRefusal(language: Language, error: unknown): string {
     if (error.status === 409) {
       const detail = error.detail ?? "";
       if (detail.includes("cannot be booked")) return st(language, "e_free");
+      if (detail.includes("does not take short stays"))
+        return st(language, "e_building");
       if (detail.includes("no monthly Rent")) return st(language, "p_no_rent");
       // Only a clash on the nights (with a booking or a Lease) is "just booked"; any other
       // refusal shows the server's own reason, so the desk knows what to fix.

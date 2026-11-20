@@ -5,6 +5,8 @@
 // money not used yet (owner, 17/10/2026). There is no Payer note on the paper: the "Paid for"
 // lines already say what the money paid (owner, 28/10/2026); the note stays with the Payment.
 
+import type { Building } from "../buildingClient";
+import { BuildingLines } from "../shell/buildingChoice";
 import "../invoices/invoiceDocument.css";
 import "./receiptDocument.css";
 
@@ -70,12 +72,15 @@ export function ReceiptDocument({
   name,
   unit,
   reprint,
+  building,
 }: {
   receipt: ReceiptView;
   name: string | null;
   unit: string;
   /** The day of the reprint this copy is for, or null for the first print. */
   reprint: string | null;
+  /** DL-250 step 5: the Unit's building, only with two or more buildings. */
+  building?: Building | null;
 }) {
   const number = receipt.receiptNumber ?? "—";
   const lines: [string, string, string, number][] = receipt.lines.map(
@@ -106,6 +111,7 @@ export function ReceiptDocument({
           <img alt="CHETANA" className="logo" src={logoUrl} />
           <div className="biz">
             <b>CHETANA Residence</b>
+            <BuildingLines building={building ?? null} />
           </div>
         </div>
         <div className="title">
