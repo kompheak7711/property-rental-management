@@ -72674,6 +72674,126 @@
       "test_path": "frontend/src/shell/buildingPapers.test.tsx",
       "status": "implemented",
       "notes": "DL-250 buildings step 5: a booking refused for a building without short stays says how to fix it."
+    },
+    {
+      "test_id": "test_every_property_has_the_four_parking_types_in_english_and_khmer",
+      "upstream_ids": [
+        "DL-253",
+        "DB-PARK-001",
+        "DB-UNIT-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_parking_spaces_migration.py",
+      "status": "implemented",
+      "notes": "DL-253 parking step 1: every Property has the four Parking Types in English and Khmer."
+    },
+    {
+      "test_id": "test_a_space_takes_a_parking_type_and_places_and_never_becomes_a_room",
+      "upstream_ids": [
+        "DL-253",
+        "DB-PARK-001",
+        "DB-UNIT-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_parking_spaces_migration.py",
+      "status": "implemented",
+      "notes": "DL-253 parking step 1: a parking space takes a Parking Type and places, and never becomes a room."
+    },
+    {
+      "test_id": "test_a_parking_type_in_use_counts_spaces_and_a_unit_type_counts_rooms",
+      "upstream_ids": [
+        "DL-253",
+        "DB-PARK-001",
+        "DB-UNIT-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_parking_spaces_migration.py",
+      "status": "implemented",
+      "notes": "DL-253 parking step 1: a Parking Type in use counts parking spaces only."
+    },
+    {
+      "test_id": "test_a_parking_space_takes_no_short_stay_meter_cleaning_pet_or_reservation",
+      "upstream_ids": [
+        "DL-253",
+        "DB-PARK-001",
+        "DB-UNIT-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_parking_spaces_migration.py",
+      "status": "implemented",
+      "notes": "DL-253 parking step 1: a parking space takes no short stay, meter, cleaning, pet or Reservation."
+    },
+    {
+      "test_id": "test_vehicles_are_added_corrected_audited_and_never_deleted",
+      "upstream_ids": [
+        "DL-253",
+        "DB-PARK-001",
+        "DB-UNIT-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_parking_spaces_migration.py",
+      "status": "implemented",
+      "notes": "DL-253 parking step 1: vehicles are added, corrected, audited for the Customer and never deleted."
+    },
+    {
+      "test_id": "test_a_numbered_space_is_held_by_one_vehicle_a_day",
+      "upstream_ids": [
+        "DL-253",
+        "DB-PARK-001",
+        "DB-UNIT-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_parking_spaces_migration.py",
+      "status": "implemented",
+      "notes": "DL-253 parking step 1: a numbered space is held by one vehicle a day."
+    },
+    {
+      "test_id": "test_the_shared_motorbike_area_takes_as_many_as_its_places",
+      "upstream_ids": [
+        "DL-253",
+        "DB-PARK-001",
+        "DB-UNIT-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_parking_spaces_migration.py",
+      "status": "implemented",
+      "notes": "DL-253 parking step 1: the shared Motorbike area takes as many vehicles as its places."
+    },
+    {
+      "test_id": "test_a_hold_needs_a_fitting_vehicle_of_the_lease_and_a_space_not_kept_for_guests",
+      "upstream_ids": [
+        "DL-253",
+        "DB-PARK-001",
+        "DB-UNIT-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_parking_spaces_migration.py",
+      "status": "implemented",
+      "notes": "DL-253 parking step 1: a hold needs a fitting vehicle of the Lease and a space not kept for guests."
+    },
+    {
+      "test_id": "test_a_room_lease_holds_a_space_only_through_a_service_that_needs_one",
+      "upstream_ids": [
+        "DL-253",
+        "DB-PARK-001",
+        "DB-UNIT-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_parking_spaces_migration.py",
+      "status": "implemented",
+      "notes": "DL-253 parking step 1: a room Lease holds a space only through a Service that needs one; the vehicle changes only by Change vehicle."
+    },
+    {
+      "test_id": "test_the_app_reads_parking_but_writes_vehicles_only_through_functions",
+      "upstream_ids": [
+        "DL-253",
+        "DB-PARK-001",
+        "DB-UNIT-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_parking_spaces_migration.py",
+      "status": "implemented",
+      "notes": "DL-253 parking step 1: the app reads parking tables and writes vehicles only through functions."
     }
   ]
 }

@@ -3543,3 +3543,22 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **Links:** DB-PROP-002, DB-UNIT-001, API-029a.
 - **Decision date:** 2026-11-19.
 
+
+## DL-253 — Parking: parking spaces are Units of this app, rented two ways
+
+- **Type:** `OWNER DECISION` (the rules) and `TECHNICAL DECISION UNDER THE OWNER'S RULE` (the shape).
+- **Source.** Thread "Move parking into the rental app", 19 and 20 Nov 2026. The owner moved parking into this app (the old parking app `kompheak7711/parking-management` was never used and is now only a source to copy from). The owner agreed the plan (idea, PRD, users and steps, mock-up, technical plan) on 20 Nov 2026 and answered questions Q1 to Q17.
+- **The owner's rules.**
+  - 95 car spaces (P01 to P95) and one shared Motorbike area with at least 20 places (no spot numbers). 7 tuk-tuk and food cart spaces are rented today.
+  - Room tenants pay for every kind of parking; short-stay guests park free in a few spaces kept for them.
+  - A room tenant's parking is billed on the same Rent Invoice (DL-097). A customer with no room signs a Parking agreement: a Lease on the space, month to month.
+  - Each Parking Type has a default price in Settings and each space may have its own price; the same is wanted for Unit Types (built in step 2).
+  - One month's Security Deposit for new customers; a customer from before the app may start with none, only by a Manager or the Owner, with the reason "Customer from before the app".
+  - The room rules on late payment stay (notices on day 10, 20 and 25, letter on day 30, the 10% late-payment Invoice). No pets, no cleaning, no meters on parking.
+  - A customer who tells the front desk before the 25th stops at the end of that month; the owner may end an agreement with a 30-day letter.
+  - Parking money gets its own General Ledger income account "Parking". The Parking agreement paper is checked by the owner's lawyer. No access cards or stickers yet (an optional sticker number is kept).
+- **Claude's technical choices.** A parking space is a row of `units` with `unit_kind = 'PARKING'`, under a building, with a Parking Type from a new Settings list and a number of places (`parking_capacity`). Both ways of renting write one table, `parking_space_holds`, so a space is never held by more vehicles on one day than its places. Vehicles (`vehicles`) are copied from the old parking app: plate as typed, matched without spaces, dashes, dots and case, never deleted. Each vehicle type fits fixed Parking Types (Car: Covered or Uncovered; Motorbike: Motorbike; Tuk-tuk and food cart: Tuk-Tuk/Food Cart).
+- **Built (step 1).** Migration `20270812_437` (forward-only): `units.unit_kind`, `units.parking_capacity`, `units.kept_for_short_stay_guests`, the Parking Types list with its four types in English and Khmer, `vehicles` with `app.create_vehicle` and `app.update_vehicle` (audited for the Customer's History), `parking_space_holds` with its checks, the append-only `parking_vehicle_changes`, `service_types.needs_parking_space`, and the guards that refuse a parking space for a short stay, Reservation, Joint Inspection, meter, cleaning rate, cleaning task, booking-site calendar, pet or short-stay Lease offer. No screen yet.
+- **Still to build.** Step 2: Settings default prices per Parking Type and Unit Type, New space, the Parking list. Step 3: vehicles on the Customer page and parking on a room Lease. Step 4: the Parking agreement, Change vehicle, move-out and the agreement paper. Step 5: Home tile, Reports, the Parking ledger account and the bots.
+- **Links:** DB-UNIT-001, DB-PARK-001.
+- **Decision date:** 2026-11-20.
