@@ -1,7 +1,8 @@
-"""HTTP tests for parking on a Lease (DL-253 step 3b, DL-254 step 4b), in-memory flow."""
+"""HTTP tests for parking on a Lease (DL-253 3b, DL-254 4b, DL-255 4c), in-memory flow."""
 
 from __future__ import annotations
 
+from datetime import date
 from uuid import UUID, uuid4
 
 from fastapi.testclient import TestClient
@@ -71,6 +72,24 @@ class InMemoryLeaseParkingFlow:
         self.hold_record = {"hold_kind": "PARKING_AGREEMENT", "vehicle_id": str(vehicle_id)}
         return self.hold_record
 
+    def change_vehicle(
+        self,
+        lease_id: UUID,
+        *,
+        hold_id: UUID,
+        vehicle_id: UUID,
+        change_date: date,
+        reason: str,
+        actor_id: str,
+    ) -> dict[str, object]:
+        del lease_id, actor_id
+        if hold_id != self.space_id:  # the space id stands for the one hold here
+            raise LeaseParkingNotFound(str(hold_id))
+        if change_date < date(2027, 1, 1):
+            raise LeaseParkingConflict("day", "CHANGE_DATE")
+        self.hold_record = {"vehicle_id": str(vehicle_id), "reason": reason}
+        return self.hold_record
+
 
 def clients(property_id: UUID, flow: InMemoryLeaseParkingFlow) -> tuple[TestClient, ...]:
     def client(*capabilities: str, other: bool = False) -> TestClient:
@@ -131,3 +150,24 @@ def test_a_drafter_picks_the_vehicle_of_a_parking_agreement() -> None:
     assert unfit.status_code == 409 and unfit.json()["error"]["code"] == "VEHICLE_TYPE"
     picked = drafter.post(url, headers=BROWSER, json={"vehicle_id": car})
     assert picked.status_code == 201 and picked.json()["data"]["vehicle_id"] == car
+
+
+def test_a_drafter_changes_the_vehicle_of_a_held_space_from_a_day() -> None:
+    property_id, lease_id = uuid4(), uuid4()
+    flow = InMemoryLeaseParkingFlow(property_id, lease_id)
+    drafter, reader, stranger = clients(property_id, flow)
+    url = f"/leases/{lease_id}/parking-holds/{flow.space_id}/vehicle-changes"
+    car = str(uuid4())
+    body = {"vehicle_id": car, "change_date": "2027-03-01", "reason": " Sold the old car "}
+
+    assert reader.post(url, headers=BROWSER, json=body).status_code == 403
+    assert stranger.post(url, headers=BROWSER, json=body).status_code == 404
+    assert drafter.post(url, json=body).status_code == 403  # no browser proof
+    assert drafter.post(url, headers=BROWSER, json={**body, "reason": ""}).status_code == 422
+    early = drafter.post(url, headers=BROWSER, json={**body, "change_date": "2026-12-31"})
+    assert early.status_code == 409 and early.json()["error"]["code"] == "CHANGE_DATE"
+    other_hold = f"/leases/{lease_id}/parking-holds/{uuid4()}/vehicle-changes"
+    assert drafter.post(other_hold, headers=BROWSER, json=body).status_code == 404
+    changed = drafter.post(url, headers=BROWSER, json=body)
+    assert changed.status_code == 201
+    assert changed.json()["data"] == {"vehicle_id": car, "reason": "Sold the old car"}

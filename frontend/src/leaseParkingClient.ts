@@ -76,6 +76,18 @@ export interface LeaseParkingApi {
   read: (leaseId: string) => Promise<LeaseParking>;
   pick: (leaseId: string, pick: LeaseParkingPick) => Promise<LeaseParkingHold>;
   pickVehicle: (leaseId: string, vehicleId: string) => Promise<AgreementHold>;
+  /** DL-255: on a signed Lease, the vehicle of a held space changes from a day. */
+  changeVehicle: (
+    leaseId: string,
+    holdId: string,
+    change: VehicleChange,
+  ) => Promise<AgreementHold>;
+}
+
+export interface VehicleChange {
+  vehicle_id: string;
+  change_date: string;
+  reason: string;
 }
 
 export type LeaseParkingRefusal =
@@ -87,6 +99,9 @@ export type LeaseParkingRefusal =
   | "TYPE_HAS_NO_PRICE"
   | "LEASE_CLOSED"
   | "AGREEMENT_DATES_MISSING"
+  | "VEHICLE_SAME"
+  | "CHANGE_DATE"
+  | "CHANGE_REASON"
   | "UNAVAILABLE"
   | "FAILED";
 
@@ -99,6 +114,9 @@ const KNOWN: readonly LeaseParkingRefusal[] = [
   "TYPE_HAS_NO_PRICE",
   "LEASE_CLOSED",
   "AGREEMENT_DATES_MISSING",
+  "VEHICLE_SAME",
+  "CHANGE_DATE",
+  "CHANGE_REASON",
 ];
 
 export class LeaseParkingError extends Error {
@@ -345,4 +363,30 @@ async function pickVehicle(
   );
 }
 
-export const leaseParkingApi: LeaseParkingApi = { read, pick, pickVehicle };
+async function changeVehicle(
+  leaseId: string,
+  holdId: string,
+  change: VehicleChange,
+): Promise<AgreementHold> {
+  const token = csrfToken();
+  if (token === null || token.length === 0) {
+    throw new LeaseParkingError("FAILED");
+  }
+  return agreementHold(
+    await request(
+      `/leases/${encodeURIComponent(leaseId)}/parking-holds/${encodeURIComponent(holdId)}/vehicle-changes`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": token },
+        body: JSON.stringify(change),
+      },
+    ),
+  );
+}
+
+export const leaseParkingApi: LeaseParkingApi = {
+  read,
+  pick,
+  pickVehicle,
+  changeVehicle,
+};

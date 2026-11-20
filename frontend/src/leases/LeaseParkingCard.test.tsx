@@ -1,5 +1,6 @@
 // DL-253 (parking step 3b): the Parking card of a room Lease. TEST-FE-2343 and TEST-FE-2344.
 // DL-254 (parking step 4b): the Parking agreement card. TEST-FE-2346.
+// DL-255 (parking step 4c): Change vehicle on a signed agreement. TEST-FE-2350.
 
 import {
   cleanup,
@@ -91,6 +92,15 @@ function apiOf(overrides: Partial<LeaseParkingApi> = {}): LeaseParkingApi {
         hold_id: "hold-9",
         vehicle_id: "car-1",
         plate_text: "2A-1234",
+        held_from: "2027-01-01",
+        held_until: "2099-12-31",
+      }),
+    ),
+    changeVehicle: vi.fn<LeaseParkingApi["changeVehicle"]>(() =>
+      Promise.resolve({
+        hold_id: "hold-9",
+        vehicle_id: "car-2",
+        plate_text: "2A-5678",
         held_from: "2027-01-01",
         held_until: "2099-12-31",
       }),
@@ -245,7 +255,11 @@ describe("Lease Parking card (DL-253)", () => {
       <LeaseParkingCard
         api={apiOf({
           read: vi.fn(() =>
-            Promise.resolve({ ...picked, lease_status: "SIGNED" }),
+            Promise.resolve({
+              ...picked,
+              lease_status: "SIGNED",
+              can_pick: false,
+            }),
           ),
         })}
         language="en"
@@ -254,5 +268,70 @@ describe("Lease Parking card (DL-253)", () => {
     );
     expect(await screen.findAllByText("2A-1234")).toHaveLength(2);
     expect(screen.queryByRole("button")).toBeNull();
+  });
+
+  it("TEST-FE-2350 a signed agreement changes its vehicle from a day with a reason, and a missing reason is refused on the form", async () => {
+    const signed: LeaseParking = {
+      ...OPEN,
+      lease_status: "SIGNED",
+      terms: [],
+      on_parking_space: true,
+      month_to_month: true,
+      vehicles: [
+        ...OPEN.vehicles,
+        {
+          vehicle_id: "car-2",
+          vehicle_type: "CAR",
+          plate_text: "2A-5678",
+          customer_name: "Sok Dara",
+        },
+      ],
+      space: {
+        unit_id: "space-1",
+        unit_number: "P01",
+        parking_type: "COVERED",
+        area: "Ground floor",
+      },
+      agreement_hold: {
+        hold_id: "hold-9",
+        vehicle_id: "car-1",
+        plate_text: "2A-1234",
+        held_from: "2027-01-01",
+        held_until: "2099-12-31",
+      },
+    };
+    const api = apiOf({ read: vi.fn(() => Promise.resolve(signed)) });
+    render(<LeaseParkingCard api={api} language="en" leaseId="lease-9" />);
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Change vehicle" }),
+    );
+    const dialog = await screen.findByRole("dialog");
+    expect(
+      within(within(dialog).getByLabelText(/^New vehicle/))
+        .getAllByRole("option")
+        .map((option) => option.textContent),
+    ).toEqual(["2A-5678 · Car"]);
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    expect(await within(dialog).findByRole("alert")).toHaveTextContent(
+      "Give a short reason for the change.",
+    );
+    expect(api.changeVehicle).not.toHaveBeenCalled();
+    fireEvent.change(within(dialog).getByLabelText(/^Reason/), {
+      target: { value: "  Sold the old car " },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    await waitFor(() => {
+      expect(api.changeVehicle).toHaveBeenCalledWith(
+        "lease-9",
+        "hold-9",
+        expect.objectContaining({
+          vehicle_id: "car-2",
+          reason: "Sold the old car",
+        }),
+      );
+    });
+    expect(
+      await screen.findByText("The vehicle is now 2A-5678."),
+    ).toBeInTheDocument();
   });
 });

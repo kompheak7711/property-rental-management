@@ -3577,6 +3577,17 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **Built (step 4a).** Migration `20270816_441` (forward-only): `leases.on_parking_space`, the changed `leases_signed_period_exclusive`, `app.unit_lease_held`, the Occupancy refusal, `app.hold_parking_agreement_space` and the `app.sign_lease` check (HINT `AGREEMENT_VEHICLE_NOT_PICKED`).
 - **Month to month (owner answer Q6).** A Parking agreement may have no end date. The Lease keeps the End Date 31 Dec 2099 so every Lease rule still has a date; `leases.month_to_month` says so and the screens show "Month to month".
 - **Built (step 4b).** Migration `20270817_442` (forward-only): `leases.month_to_month` and the agreement fields of `app.lease_parking`. The Parking page offers New Parking agreement on each space not kept for guests (Leases draft access); the New Lease form for a space has Month to month (ticked first) and leaves out occupants, pets, meters and Services. The Lease page shows the Parking agreement card with the space, its dates and Pick vehicle / Change vehicle on the draft. Routes in API-029d.
-- **Still to build.** Step 4c: Change vehicle on a signed agreement, ending an agreement (DL-253 Q15, Q16) and the no-deposit rule for customers from before the app (Q17). Step 4d: the agreement paper.
+- **Still to build.** Step 4c (DL-255): Change vehicle on a signed agreement, ending an agreement (DL-253 Q15, Q16) and the no-deposit rule for customers from before the app (Q17). Step 4d: the agreement paper.
 - **Links:** DL-253, DB-PARK-001.
+- **Decision date:** 2026-11-20.
+
+## DL-255 — Change vehicle, and a space hold ends with its Lease (parking step 4c)
+
+- **Type:** `TECHNICAL DECISION UNDER THE OWNER'S RULE` (owner 2026-10-23 22:30: non-money questions are Claude's).
+- **Source.** Thread "Move parking into the rental app", 20 Nov 2026, building the owner's DL-253 rules.
+- **Decision.** On a signed Lease staff may change the vehicle that parks in a held space, from a day and with a reason. The space and its price stay the same. Each change is kept (`app.parking_vehicle_changes`, append-only) and audited as `parking.vehicle_changed`. On a draft staff simply pick again.
+- **A space hold ends with its Lease.** When a Lease is terminated, its space holds end on its last day (a hold that would only start after that day is voided). When a Lease draft is cancelled, its holds are voided. The space is then free for the next vehicle. This covers both a room Lease with a parking Service and a Parking agreement. Holds left open by Leases ended before this step are ended the same way.
+- **Built.** Migration `20270818_443` (forward-only): trigger `leases_end_parking_holds` with `app.end_lease_parking_holds()`, and `app.change_parking_vehicle` (HINTs `LEASE_CLOSED`, `CHANGE_DATE`, `CHANGE_REASON`, `VEHICLE_SAME`). Route `POST /leases/{lease_id}/parking-holds/{hold_id}/vehicle-changes` (API-029d). The Parking agreement card on a signed Lease shows Change vehicle.
+- **Still to build.** Ending a month-to-month agreement by notice (DL-253 Q15, Q16) waits for the owner's answer on the Deposit; then the no-deposit rule for customers from before the app (Q17) and the agreement paper (step 4d).
+- **Links:** DL-253, DL-254, DB-PARK-001.
 - **Decision date:** 2026-11-20.
