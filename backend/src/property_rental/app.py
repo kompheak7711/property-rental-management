@@ -206,6 +206,12 @@ from property_rental.lease_notice_api import (
     create_lease_notice_router,
 )
 from property_rental.lease_notices import PostgresLeaseNoticeService
+from property_rental.lease_parking_api import (
+    LeaseParkingFlow,
+    PostgresLeaseParkingFlow,
+    UnavailableLeaseParkingFlow,
+    create_lease_parking_router,
+)
 from property_rental.lease_signing_api import (
     LeaseSigningFlow,
     PostgresLeaseSigningFlow,
@@ -657,6 +663,7 @@ def create_app(
     building_flow: BuildingFlow | None = None,
     parking_flow: ParkingFlow | None = None,
     vehicle_flow: VehicleFlow | None = None,
+    lease_parking_flow: LeaseParkingFlow | None = None,
     customer_resource_flow: CustomerResourceFlow | None = None,
     configuration_flow: ConfigurationFlow | None = None,
     business_rule_flow: BusinessRuleFlow | None = None,
@@ -1625,6 +1632,18 @@ def create_app(
                 PostgresVehicleFlow(resolved_settings.database_url.get_secret_value())
                 if resolved_settings.database_url is not None
                 else UnavailableVehicleFlow()
+            ),
+            resolved_settings,
+        )
+    )
+    include_signed_in(
+        create_lease_parking_router(
+            actor_resolver,
+            lease_parking_flow
+            or (
+                PostgresLeaseParkingFlow(resolved_settings.database_url.get_secret_value())
+                if resolved_settings.database_url is not None
+                else UnavailableLeaseParkingFlow()
             ),
             resolved_settings,
         )

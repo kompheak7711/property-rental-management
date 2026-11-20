@@ -318,6 +318,8 @@ def test_traceability_manifest_covers_executable_tests() -> None:
         "parkingClient.test.ts",
         # DL-253 (parking step 3a).
         "vehiclesClient.test.ts",
+        # DL-253 (parking step 3b).
+        "leaseParkingClient.test.ts",
         "adminClient.test.ts",
         "invoiceClient.test.ts",
         "history/historyClient.test.ts",

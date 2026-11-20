@@ -182,6 +182,79 @@ const TEXT = {
     "The vehicle was not saved. Check your connection and try again.",
     "យានយន្តមិនត្រូវបានរក្សាទេ។ សូមពិនិត្យការតភ្ជាប់ ហើយព្យាយាមម្តងទៀត។",
   ],
+  // Step 3b: the Parking card of a room Lease.
+  lp_title: ["Parking", "ចំណត"],
+  lp_failed: [
+    "The parking of this Lease could not be loaded.",
+    "មិនអាចអានការចំណតនៃកិច្ចសន្យានេះបានទេ។",
+  ],
+  lp_period: ["From {0} to {1}", "ពី {0} ដល់ {1}"],
+  lp_period_open: ["From {0}", "ពី {0}"],
+  lp_space: ["Space {0}", "កន្លែង {0}"],
+  lp_price: ["{0} a month, fixed", "{0} ក្នុងមួយខែ ថេរ"],
+  lp_no_vehicle: ["No vehicle yet", "មិនទាន់មានយានយន្ត"],
+  lp_none: [
+    "No space picked yet. Until a space is picked, the parking is billed at the Service rate in Settings.",
+    "មិនទាន់ជ្រើសកន្លែងទេ។ រហូតដល់ជ្រើសកន្លែង ការចំណតត្រូវគិតតាមតម្លៃសេវាក្នុងការកំណត់។",
+  ],
+  lp_pick: ["Pick space", "ជ្រើសកន្លែង"],
+  lp_pick_title: ["Pick a space · {0}", "ជ្រើសកន្លែង · {0}"],
+  lp_space_field: ["Parking space", "កន្លែងចំណត"],
+  lp_space_option: ["{0} · {1} · {2} a month", "{0} · {1} · {2} ក្នុងមួយខែ"],
+  lp_no_free: [
+    "No space of a fitting type is free on these days.",
+    "គ្មានកន្លែងប្រភេទសមរម្យទំនេរនៅថ្ងៃទាំងនេះទេ។",
+  ],
+  lp_vehicle_field: ["Vehicle", "យានយន្ត"],
+  lp_vehicle_help: [
+    "A vehicle of someone on the Lease. Add vehicles on the Customer page.",
+    "យានយន្តរបស់អ្នកនៅលើកិច្ចសន្យា។ បន្ថែមយានយន្តនៅទំព័រអតិថិជន។",
+  ],
+  lp_fixed_note: [
+    "The tenant pays this space's price on the Rent Invoice. The price is kept from today and does not change later.",
+    "អ្នកជួលបង់តម្លៃកន្លែងនេះលើវិក្កយបត្រជួល។ តម្លៃត្រូវរក្សាពីថ្ងៃនេះ ហើយមិនផ្លាស់ប្តូរពេលក្រោយទេ។",
+  ],
+  lp_saved: ["Space {0} was picked.", "បានជ្រើសកន្លែង {0}។"],
+  lp_r_PARKING_ALREADY_HELD: [
+    "This parking already has a space. The card was read again.",
+    "ការចំណតនេះមានកន្លែងរួចហើយ។ កាតត្រូវបានអានម្តងទៀត។",
+  ],
+  lp_r_PARKING_SPACE_TAKEN: [
+    "Another vehicle holds this space on these days. Pick another space.",
+    "យានយន្តផ្សេងកាន់កាប់កន្លែងនេះនៅថ្ងៃទាំងនេះ។ សូមជ្រើសកន្លែងផ្សេង។",
+  ],
+  lp_r_VEHICLE_TYPE: [
+    "This vehicle cannot park in this Parking Type.",
+    "យានយន្តនេះមិនអាចចតក្នុងប្រភេទចំណតនេះបានទេ។",
+  ],
+  lp_r_VEHICLE_NOT_OF_LEASE: [
+    "The vehicle belongs to nobody on this Lease.",
+    "យានយន្តនេះមិនមែនរបស់អ្នកណាម្នាក់នៅលើកិច្ចសន្យានេះទេ។",
+  ],
+  lp_r_PARKING_KEPT_FOR_GUESTS: [
+    "This space is kept for short-stay guests.",
+    "កន្លែងនេះទុកសម្រាប់ភ្ញៀវស្នាក់ខ្លី។",
+  ],
+  lp_r_TYPE_HAS_NO_PRICE: [
+    "This space has no price. Set the Parking Type price in Settings first.",
+    "កន្លែងនេះគ្មានតម្លៃ។ សូមកំណត់តម្លៃប្រភេទចំណតក្នុងការកំណត់ជាមុនសិន។",
+  ],
+  lp_r_LEASE_CLOSED: [
+    "Only a drafted or signed Lease takes a parking space.",
+    "មានតែកិច្ចសន្យាព្រាង ឬបានចុះហត្ថលេខាទេ ដែលអាចមានកន្លែងចំណត។",
+  ],
+  lp_r_UNAVAILABLE: [
+    "Your account cannot pick parking spaces.",
+    "គណនីរបស់អ្នកមិនអាចជ្រើសកន្លែងចំណតបានទេ។",
+  ],
+  lp_r_FAILED: [
+    "The space was not picked. Check your connection and try again.",
+    "កន្លែងមិនត្រូវបានជ្រើសទេ។ សូមពិនិត្យការតភ្ជាប់ ហើយព្យាយាមម្តងទៀត។",
+  ],
+  ptype_COVERED: ["Covered", "ចំណតមានដំបូល"],
+  ptype_UNCOVERED: ["Uncovered", "ចំណតគ្មានដំបូល"],
+  ptype_MOTORBIKE: ["Motorbike", "ម៉ូតូ"],
+  ptype_TUK_TUK_FOOD_CART: ["Tuk-Tuk/Food Cart", "តុកតុក/រទេះលក់ម្ហូប"],
 } as const;
 
 export type ParkingTextKey = keyof typeof TEXT;

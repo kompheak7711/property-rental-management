@@ -30,8 +30,8 @@ CREATE_VEHICLE = "SELECT app.create_vehicle(%s, %s, %s, %s, %s, %s, %s, %s, %s)"
 UPDATE_VEHICLE = "SELECT app.update_vehicle(%s, %s, %s, %s, %s, %s, %s, %s)"
 HOLD = (
     "INSERT INTO app.parking_space_holds(id, property_id, space_unit_id, hold_kind, lease_id, "
-    "lease_service_term_id, vehicle_id, held_from, held_until, created_by, updated_by) "
-    "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+    "lease_service_term_id, vehicle_id, held_from, held_until, created_by, updated_by, "
+    "monthly_price_usd_cents) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
 )
 
 Db = Connection[tuple[object, ...]]
@@ -153,12 +153,14 @@ def hold(
         held_until,
         actor_id,
         actor_id,
+        # Migration 440: a room Lease's hold keeps the space's price.
+        3500 if kind == "ROOM_LEASE" else None,
     )
 
 
 def test_migration_is_the_single_head_and_forward_only() -> None:
     scripts = ScriptDirectory.from_config(_config())
-    assert scripts.get_heads() == ["20270814_439"]  # parking step 3a 439 follows 438
+    assert scripts.get_heads() == ["20270815_440"]  # parking step 3b 440 follows 439
     revision = scripts.get_revision(REVISION)
     assert revision is not None and revision.down_revision == "20270811_434"
     with pytest.raises(RuntimeError, match="forward-only"):
