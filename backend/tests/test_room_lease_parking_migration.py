@@ -167,7 +167,7 @@ def _parking_lines(url: str, invoice: UUID) -> list[tuple[Any, ...]]:
 
 def test_migration_is_the_single_head_and_forward_only() -> None:
     scripts = ScriptDirectory.from_config(Config(str(Path(__file__).parents[1] / "alembic.ini")))
-    assert scripts.get_heads() == [REVISION]
+    assert scripts.get_heads() == ["20270816_441"]  # parking step 4a follows 440
     revision = scripts.get_revision(REVISION)
     assert revision is not None and revision.down_revision == "20270814_439"
     with pytest.raises(RuntimeError, match="forward-only"):

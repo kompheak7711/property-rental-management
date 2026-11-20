@@ -25,7 +25,7 @@ def test_migration_431_follows_the_head_and_is_forward_only() -> None:
     migration = scripts.get_revision(REVISION)
     assert migration is not None and migration.down_revision == "20270807_424"
     # The same-day move-out (DL-247) follows it.
-    assert scripts.get_heads() == ["20270815_440"]
+    assert scripts.get_heads() == ["20270816_441"]
     with pytest.raises(RuntimeError, match="forward-only"):
         migration.module.downgrade()
 
