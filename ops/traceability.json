@@ -72794,6 +72794,187 @@
       "test_path": "backend/tests/test_parking_spaces_migration.py",
       "status": "implemented",
       "notes": "DL-253 parking step 1: the app reads parking tables and writes vehicles only through functions."
+    },
+    {
+      "test_id": "test_a_type_price_moves_only_the_units_that_use_it",
+      "upstream_ids": [
+        "DL-253",
+        "DB-PARK-001",
+        "DB-UNIT-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_type_prices_and_spaces_migration.py",
+      "status": "implemented",
+      "notes": "DL-253 parking step 2: a type price moves only the units that use it."
+    },
+    {
+      "test_id": "test_a_parking_space_takes_its_own_price_or_the_parking_type_price",
+      "upstream_ids": [
+        "DL-253",
+        "DB-PARK-001",
+        "DB-UNIT-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_type_prices_and_spaces_migration.py",
+      "status": "implemented",
+      "notes": "DL-253 parking step 2: a parking space takes its own price or the parking type price."
+    },
+    {
+      "test_id": "test_a_space_changes_type_area_and_places_and_follows_its_new_type_price",
+      "upstream_ids": [
+        "DL-253",
+        "DB-PARK-001",
+        "DB-UNIT-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_type_prices_and_spaces_migration.py",
+      "status": "implemented",
+      "notes": "DL-253 parking step 2: a space changes type area and places and follows its new type price."
+    },
+    {
+      "test_id": "test_the_parking_list_shows_who_holds_each_space_and_the_units_list_leaves_spaces_out",
+      "upstream_ids": [
+        "DL-253",
+        "DB-PARK-001",
+        "DB-UNIT-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_type_prices_and_spaces_migration.py",
+      "status": "implemented",
+      "notes": "DL-253 parking step 2: the parking list shows who holds each space and the units list leaves spaces out."
+    },
+    {
+      "test_id": "test_the_app_runs_the_new_functions_only",
+      "upstream_ids": [
+        "DL-253",
+        "DB-PARK-001",
+        "DB-UNIT-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_type_prices_and_spaces_migration.py",
+      "status": "implemented",
+      "notes": "DL-253 parking step 2: the app runs the new functions only."
+    },
+    {
+      "test_id": "test_spaces_are_read_with_units_read_and_added_by_a_manager",
+      "upstream_ids": [
+        "DL-253",
+        "API-029b"
+      ],
+      "test_level": "API",
+      "test_path": "backend/tests/test_parking_api.py",
+      "status": "implemented",
+      "notes": "DL-253 parking step 2: spaces are read with units read and added by a manager."
+    },
+    {
+      "test_id": "test_a_space_is_changed_whole_with_its_version",
+      "upstream_ids": [
+        "DL-253",
+        "API-029b"
+      ],
+      "test_level": "API",
+      "test_path": "backend/tests/test_parking_api.py",
+      "status": "implemented",
+      "notes": "DL-253 parking step 2: a space is changed whole with its version."
+    },
+    {
+      "test_id": "test_a_type_price_is_set_with_settings_access",
+      "upstream_ids": [
+        "DL-253",
+        "API-029b"
+      ],
+      "test_level": "API",
+      "test_path": "backend/tests/test_parking_api.py",
+      "status": "implemented",
+      "notes": "DL-253 parking step 2: a type price is set with settings access."
+    },
+    {
+      "test_id": "TEST-FE-2331",
+      "upstream_ids": [
+        "DL-253",
+        "DB-PARK-001"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/parking/ParkingPage.test.tsx",
+      "status": "implemented",
+      "notes": "The Parking page lists each space with its Parking Type, places used, price and who holds it; the count cards and the type filter narrow the table."
+    },
+    {
+      "test_id": "TEST-FE-2332",
+      "upstream_ids": [
+        "DL-253",
+        "DB-PARK-001"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/parking/ParkingPage.test.tsx",
+      "status": "implemented",
+      "notes": "New space checks its boxes and saves with the Parking Type price or its own price; a reader sees no New space or Edit."
+    },
+    {
+      "test_id": "TEST-FE-2333",
+      "upstream_ids": [
+        "DL-253",
+        "DB-PARK-001"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/parking/ParkingPage.test.tsx",
+      "status": "implemented",
+      "notes": "A refused New space says why and stays open; Edit space saves the whole space."
+    },
+    {
+      "test_id": "TEST-FE-2334",
+      "upstream_ids": [
+        "DL-253",
+        "DB-PARK-001"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/parking/ParkingPage.test.tsx",
+      "status": "implemented",
+      "notes": "An Edit refused because the space changed closes and reads again; fewer places than holds is refused; a failed read offers Retry."
+    },
+    {
+      "test_id": "TEST-FE-2335",
+      "upstream_ids": [
+        "DL-253",
+        "DB-PARK-001"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/settings/UnitSetupTab.test.tsx",
+      "status": "implemented",
+      "notes": "Settings Unit setup shows Parking Types and a price a month for Unit Types and Parking Types; Price saves or clears it."
+    },
+    {
+      "test_id": "TEST-FE-2336",
+      "upstream_ids": [
+        "DL-253",
+        "DB-PARK-001"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/units/UnitsPage.test.tsx",
+      "status": "implemented",
+      "notes": "Use the Unit Type price locks the Rent box and saves the type price; the card says so."
+    },
+    {
+      "test_id": "TEST-FE-2337",
+      "upstream_ids": [
+        "DL-253",
+        "DB-PARK-001"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/parkingClient.test.ts",
+      "status": "implemented",
+      "notes": "The parking client reads spaces with holds and sends changes with the browser proof and version."
+    },
+    {
+      "test_id": "TEST-FE-2338",
+      "upstream_ids": [
+        "DL-253",
+        "DB-PARK-001"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/parkingClient.test.ts",
+      "status": "implemented",
+      "notes": "The parking client keeps refusal codes; a stale version is Changed; no browser proof sends nothing."
     }
   ]
 }

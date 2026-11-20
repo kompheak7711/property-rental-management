@@ -121,7 +121,9 @@ def test_upgrade_keeps_every_earlier_record(migrated_database_url: str) -> None:
             "'default_monthly_rent_usd_cents','for_rent','status','version','updated_at',"
             "'building_id',"
             # DL-253 (migration 437): every Unit is a room, with no parking places.
-            "'unit_kind','parking_capacity','kept_for_short_stay_guests']"
+            "'unit_kind','parking_capacity','kept_for_short_stay_guests',"
+            # DL-253 (migration 438): no Unit uses a type price yet.
+            "'rent_from_type']"
         )
         tables = {
             "audit_events": (

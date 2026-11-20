@@ -342,6 +342,13 @@ const TEXT = {
     "There are no Services yet. Add them in Settings › Rates and services.",
     "មិនទាន់មានសេវាទេ។ សូមបន្ថែមនៅ ការកំណត់ › តម្លៃ និងសេវា។",
   ],
+  // DL-253 (parking step 2), new: the Unit may use its Unit Type price and move with it.
+  rt_use_type: ["Use the Unit Type price", "ប្រើតម្លៃប្រភេទបន្ទប់"],
+  rt_use_type_help: [
+    "The Rent follows the price set in Settings › Unit setup › Unit Types. The Unit Type must have a price.",
+    "ថ្លៃជួលតាមតម្លៃដែលបានកំណត់ក្នុង ការកំណត់ › ការរៀបចំបន្ទប់ › ប្រភេទបន្ទប់។ ប្រភេទបន្ទប់ត្រូវមានតម្លៃ។",
+  ],
+  rt_from_type: ["{0} (Unit Type price)", "{0} (តម្លៃប្រភេទបន្ទប់)"],
   rt_dialog_note: [
     "Leases that already exist do not change. The change is kept in the Unit's History.",
     "កិច្ចសន្យាដែលមានរួចមិនផ្លាស់ប្តូរទេ។ ការប្តូរត្រូវបានរក្សាទុកក្នុងប្រវត្តិបន្ទប់។",

@@ -295,6 +295,17 @@ Added by DL-250 (migration `20270810_433`).
 - `POST /units/{unit_id}/building` (`settings.manage`, Origin and CSRF, `If-Match` with the Unit version) takes `building_id` and `reason` (1 to 500 characters) and answers `unit_id`, `building_id` and the new Unit `version`. A Unit that has had a Lease, Reservation or short-stay booking gives 409.
 - Every Unit answer (list, `GET /units/{unit_id}` and the Unit commands) carries `building_id` (step 2).
 
+## API-029b — Parking spaces and type prices
+
+Added by DL-253 (parking step 2, migration `20270813_438`).
+
+- `GET /properties/{property_id}/parking-spaces?on=YYYY-MM-DD` (`units.read` or `property.manage`; `on` defaults to today in the Property time zone) answers `items` (each with `unit_id`, `unit_number`, `building_id`, `parking_type`, `area`, `parking_capacity`, `kept_for_short_stay_guests`, `default_monthly_rent_usd_cents`, `rent_from_type`, `version`, and `holds` on that day: `hold_id`, `hold_kind`, `lease_id`, `lease_number`, `customer_name`, `room_unit_number`, `plate_text`, `vehicle_type`, `held_from`, `held_until`) and `can_manage`.
+- `POST /properties/{property_id}/parking-spaces` (201; `property.manage`, Origin and CSRF) takes `unit_number` (1 to 20), `parking_type` (a Parking Type code), `area` (1 to 100), `parking_capacity` (1 to 500, default 1), `kept_for_short_stay_guests` (default false), `price_usd_cents` (empty: the space uses its Parking Type price) and optional `building_id`.
+- `PUT /parking-spaces/{unit_id}` (`property.manage`, Origin, CSRF, `If-Match`) takes the same fields without the number and building.
+- Refusals carry an `error.code`: `TYPE_HAS_NO_PRICE` (422: no own price and no type price), `NUMBER_TAKEN` (409), `PARKING_CAPACITY`, `VEHICLE_TYPE` and `PARKING_KEPT_FOR_GUESTS` (409: the change does not fit the space's holds).
+- `PUT /unit-setup/items/{item_id}/price` (`settings.manage`, Origin, CSRF, `If-Match`) takes `default_monthly_rent_usd_cents` (or null) for a Unit Type or Parking Type. The Units that use the type price take the new price; clearing it leaves them on their last price. An existing Lease never changes.
+- `GET /properties/{property_id}/unit-setup` lists `PARKING_TYPE` too; each item carries `default_monthly_rent_usd_cents`. `PUT /units/{unit_id}/rent-terms` takes `uses_type_price` (default false). Every Unit answer carries `unit_kind`, `parking_capacity`, `kept_for_short_stay_guests` and `rent_from_type`. `GET /properties/{property_id}/units` lists rooms only.
+
 # 10. Customer Endpoints
 
 ## API-030 — Customers

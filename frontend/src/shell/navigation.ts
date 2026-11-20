@@ -11,6 +11,7 @@ export type PageId =
   | "utilities"
   | "approvals"
   | "units"
+  | "parking"
   | "inspections"
   | "problems"
   | "products"
@@ -57,6 +58,7 @@ export type IconName =
   | "meter"
   | "check"
   | "units"
+  | "car"
   | "box"
   | "wrench"
   | "customers"
@@ -147,6 +149,8 @@ export const MENU: readonly MenuGroup[] = [
     // UI v81 round 2 (owner 07/11/2026): the design's order, Inspections after Units.
     items: [
       { page: "units", icon: "units" },
+      // DL-253 (parking step 2): parking spaces, after Units.
+      { page: "parking", icon: "car" },
       { page: "inspections", icon: "clip" },
       // V1.1 part 7 (DL-124): one list for Unit and Building problems.
       { page: "problems", icon: "wrench" },
@@ -255,6 +259,8 @@ const PAGE_NAMES: Record<PageId, readonly [string, string]> = {
   utilities: ["Utilities", "ទឹកភ្លើង"],
   approvals: ["Approvals", "ការអនុម័ត"],
   units: ["Units", "បន្ទប់"],
+  // DL-253; Khmer new, needs the native check.
+  parking: ["Parking", "ចំណត"],
   // UI v81 round 2 (design v81 menu); the Khmer word is new and needs the native check.
   inspections: ["Inspections", "ការត្រួតពិនិត្យ"],
   problems: ["Problem reports", "របាយការណ៍បញ្ហា"],
@@ -325,6 +331,8 @@ const PAGE_NEEDS: Record<PageId, readonly string[] | null> = {
   utilities: ["utility.read"],
   approvals: ["financial.approve"],
   units: ["units.read"],
+  // DL-253: the parking spaces read with units.read.
+  parking: ["units.read"],
   // UI v81 round 2: Inspections belong to the Units (Joint Inspections at move-in and move-out,
   // Unit Checks during a Lease), so whoever reads Units sees the page.
   inspections: ["units.read"],

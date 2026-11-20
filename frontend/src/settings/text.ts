@@ -178,6 +178,31 @@ const TEXT = {
   cf_FEATURE_TYPE: ["Feature types", "ប្រភេទលក្ខណៈ"],
   cf_UNIT_FEATURE: ["Unit features", "លក្ខណៈបន្ទប់"],
   cf_ITEM_TYPE: ["Item types", "ប្រភេទរបស់របរ"],
+  // DL-253 (parking step 2), new: the kinds of parking space and the price of each type.
+  cf_PARKING_TYPE: ["Parking Types", "ប្រភេទចំណត"],
+  cf_one_PARKING_TYPE: ["Parking Type", "ប្រភេទចំណត"],
+  pk_type_note: [
+    "Each parking space has one Parking Type. A type used by a space cannot be removed.",
+    "កន្លែងចំណតនីមួយៗមានប្រភេទចំណតមួយ។ ប្រភេទដែលកន្លែងកំពុងប្រើ មិនអាចដកចេញបានទេ។",
+  ],
+  pr_price: ["Price", "តម្លៃ"],
+  pr_a_month: ["{0} a month", "{0} ក្នុងមួយខែ"],
+  pr_none: ["No price", "គ្មានតម្លៃ"],
+  pr_title: ["Price a month", "តម្លៃក្នុងមួយខែ"],
+  pr_box: ["Price a month (USD)", "តម្លៃក្នុងមួយខែ (ដុល្លារ)"],
+  pr_help: [
+    "Leave it empty for no price. Units and spaces that use the type price move to the new price. Leases that already exist do not change.",
+    "ទុកទទេប្រសិនបើគ្មានតម្លៃ។ បន្ទប់ និងកន្លែងដែលប្រើតម្លៃប្រភេទ នឹងប្តូរទៅតម្លៃថ្មី។ កិច្ចសន្យាដែលមានរួចមិនផ្លាស់ប្តូរទេ។",
+  ],
+  pr_clear_note: [
+    "With no price, the Units and spaces that used it keep their last price as their own.",
+    "បើគ្មានតម្លៃ បន្ទប់ និងកន្លែងដែលបានប្រើវា នឹងរក្សាតម្លៃចុងក្រោយជាតម្លៃផ្ទាល់ខ្លួន។",
+  ],
+  pr_e_amount: [
+    "Enter an amount, such as 35.00, or leave it empty.",
+    "បញ្ចូលចំនួនទឹកប្រាក់ ដូចជា 35.00 ឬទុកទទេ។",
+  ],
+  pr_saved: ["The price of {0} was saved.", "បានរក្សាតម្លៃរបស់ {0}។"],
   cf_one_FEATURE_TYPE: ["Feature type", "ប្រភេទលក្ខណៈ"],
   cf_one_UNIT_FEATURE: ["Unit feature", "លក្ខណៈបន្ទប់"],
   cf_one_ITEM_TYPE: ["Item type", "ប្រភេទរបស់របរ"],

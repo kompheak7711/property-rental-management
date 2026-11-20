@@ -314,6 +314,8 @@ def test_traceability_manifest_covers_executable_tests() -> None:
     # V1-058 screen rebuild: client tests that carry numbered TEST-FE ids beside older names.
     for name in (
         "unitClient.test.ts",
+        # DL-253 (parking step 2).
+        "parkingClient.test.ts",
         "adminClient.test.ts",
         "invoiceClient.test.ts",
         "history/historyClient.test.ts",

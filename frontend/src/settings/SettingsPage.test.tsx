@@ -81,6 +81,7 @@ const setupApi = {
         FEATURE_TYPE: [],
         UNIT_FEATURE: [],
         ITEM_TYPE: [],
+        PARKING_TYPE: [],
       },
       can_manage: true,
     }),

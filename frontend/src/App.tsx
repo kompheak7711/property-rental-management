@@ -147,6 +147,8 @@ import { CustomersPage } from "./customers/CustomersPage";
 import { ReservationsPage } from "./reservations/ReservationsPage";
 import { ct } from "./customers/text";
 import { UnitsPage } from "./units/UnitsPage";
+import { ParkingPage } from "./parking/ParkingPage";
+import type { ParkingApi } from "./parkingClient";
 import { LedgerPage } from "./ledger/LedgerPage";
 import { BankCashPage } from "./ledger/BankCashPage";
 import type { CashApi } from "./ledger/cashClient";
@@ -224,6 +226,8 @@ export interface AppProps {
   shortStaysApi?: ShortStaysApi;
   propertyApi?: PropertyConfigurationApi;
   unitApi?: UnitApi;
+  /** DL-253: the parking spaces; the real server when not given. */
+  parkingApi?: ParkingApi;
   /** DL-250: the buildings, for the side-menu Building switch; the real server when not given. */
   buildingApi?: Pick<BuildingApi, "list">;
   businessSettingsApi?: BusinessSettingsApi;
@@ -715,6 +719,7 @@ export function App({
   shortStaysApi,
   propertyApi = propertyConfigurationApi,
   unitApi,
+  parkingApi,
   buildingApi = defaultBuildingApi,
   customerApi,
   effectiveConfigApi = effectiveConfigurationApi,
@@ -1701,6 +1706,21 @@ export function App({
             reservationApi={reservationApi}
             unitApi={unitApi ?? defaultUnitApi}
             utilityApi={utilityApi}
+          />
+        </div>
+        <div
+          className="shell-page"
+          data-page="parking"
+          hidden={!shown("parking")}
+        >
+          <ParkingPage
+            active={shown("parking")}
+            api={parkingApi}
+            language={language}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+            unitApi={unitApi ?? defaultUnitApi}
           />
         </div>
         <div

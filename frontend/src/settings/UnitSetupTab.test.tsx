@@ -3,6 +3,7 @@ import {
   fireEvent,
   render,
   screen,
+  waitFor,
   within,
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -19,6 +20,7 @@ import {
   BuildingChangedError,
   BuildingRefusedError,
 } from "../buildingClient";
+import { ParkingError } from "../parkingClient";
 import { UnitSetupTab } from "./UnitSetupTab";
 
 afterEach(() => {
@@ -74,6 +76,7 @@ const LISTS: UnitSetupLists = {
       }),
     ],
     ITEM_TYPE: [item("ITEM_TYPE", "KEYS", "Keys and remotes")],
+    PARKING_TYPE: [],
   },
   can_manage: true,
 };
@@ -236,6 +239,7 @@ describe("Settings: Unit setup", () => {
       "Buildings",
       "Floors",
       "Unit Types",
+      "Parking Types",
       "Unit features",
       "Views",
     ]);
@@ -462,10 +466,10 @@ describe("Settings: Unit setup", () => {
 
     show(apiOf(() => Promise.resolve({ ...LISTS, can_manage: false })));
     await openTab("Floors");
-    // Only the five list tabs are buttons.
-    expect(screen.queryAllByRole("button")).toHaveLength(5);
+    // Only the six list tabs are buttons.
+    expect(screen.queryAllByRole("button")).toHaveLength(6);
     await openTab("Unit features");
-    expect(screen.queryAllByRole("button")).toHaveLength(5);
+    expect(screen.queryAllByRole("button")).toHaveLength(6);
     expect(
       screen.getByText(
         "You can read these lists. Only the Owner or a user the Owner allows can change them.",
@@ -700,5 +704,120 @@ describe("Settings: Unit setup", () => {
     const khmer = await screen.findByRole("region", { name: "អគារ" });
     expect(khmer.textContent).toContain("ស្នាក់នៅរយៈពេលខ្លី");
     expect(khmer.textContent).toContain("បាទ/ចាស");
+  });
+
+  it("TEST-FE-2335 Unit Types and Parking Types show a price a month; Price saves a new price or clears it with an empty box, refuses a wrong amount, and a price someone changed first reads the lists again (DL-253)", async () => {
+    const priced: UnitSetupLists = {
+      ...LISTS,
+      lists: {
+        ...LISTS.lists,
+        UNIT_TYPE: [
+          item("UNIT_TYPE", "STUDIO", "Studio", {
+            in_use: true,
+            default_monthly_rent_usd_cents: 40_000,
+          }),
+        ],
+        PARKING_TYPE: [
+          item("PARKING_TYPE", "COVERED", "Covered car", {
+            in_use: true,
+            default_monthly_rent_usd_cents: 3500,
+          }),
+          item("PARKING_TYPE", "MOTORBIKE", "Motorbike area", {
+            default_monthly_rent_usd_cents: null,
+          }),
+        ],
+      },
+    };
+    const setTypePrice = vi
+      .fn()
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce({})
+      .mockRejectedValueOnce(new ParkingError("CHANGED"));
+    const api = apiOf(() => Promise.resolve(priced));
+    render(
+      <UnitSetupTab
+        active
+        api={api}
+        buildings={buildingsOf()}
+        cleaning={cleaningOf()}
+        language="en"
+        prices={{ setTypePrice }}
+        propertyId="property-1"
+      />,
+    );
+    const types = await openTab("Unit Types");
+    expect(types).toHaveTextContent("$400.00 a month");
+    const parking = await openTab("Parking Types");
+    expect(
+      within(parking)
+        .getAllByTestId("type-price")
+        .map((price) => price.textContent),
+    ).toEqual(["$35.00 a month", "No price"]);
+    // A Parking Type in use has no Remove.
+    expect(
+      within(parking).queryByRole("button", { name: "Remove: Covered car" }),
+    ).toBeNull();
+    expect(parking).toHaveTextContent("Used by a Unit");
+
+    fireEvent.click(
+      within(parking).getByRole("button", { name: "Price: Motorbike area" }),
+    );
+    let dialog = await screen.findByRole("dialog");
+    const box = within(dialog).getByLabelText("Price a month (USD)");
+    fireEvent.change(box, { target: { value: "five" } });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    expect(
+      await within(dialog).findByText(
+        "Enter an amount, such as 35.00, or leave it empty.",
+      ),
+    ).toBeInTheDocument();
+    expect(setTypePrice).not.toHaveBeenCalled();
+    fireEvent.change(box, { target: { value: "5" } });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    await waitFor(() => {
+      expect(setTypePrice).toHaveBeenCalledWith(
+        priced.lists.PARKING_TYPE[1],
+        500,
+      );
+    });
+    expect(
+      await screen.findByText("The price of Motorbike area was saved."),
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Price: Covered car" }),
+    );
+    dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByLabelText("Price a month (USD)")).toHaveValue(
+      "35.00",
+    );
+    expect(
+      within(dialog).getByText(
+        "With no price, the Units and spaces that used it keep their last price as their own.",
+      ),
+    ).toBeInTheDocument();
+    fireEvent.change(within(dialog).getByLabelText("Price a month (USD)"), {
+      target: { value: "" },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    await waitFor(() => {
+      expect(setTypePrice).toHaveBeenLastCalledWith(
+        priced.lists.PARKING_TYPE[0],
+        null,
+      );
+    });
+
+    const reads = api.setupLists.mock.calls.length;
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Price: Covered car" }),
+    );
+    dialog = await screen.findByRole("dialog");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    expect(
+      await screen.findByText(
+        "Someone changed this list, or a Unit now uses the item. The lists were read again; check and try again.",
+      ),
+    ).toBeInTheDocument();
+    expect(api.setupLists.mock.calls.length).toBeGreaterThan(reads);
   });
 });

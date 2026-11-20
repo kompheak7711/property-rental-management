@@ -6285,4 +6285,6 @@ Added by DL-253 (migration `20270812_437`, parking step 1). Parking moved into t
 - **`service_types.needs_parking_space`** `boolean NOT NULL DEFAULT false`: a Service of this type on a room Lease holds a parking space.
 - **Access.** The runtime role reads the three tables and calls only `app.create_vehicle`, `app.update_vehicle`, `app.vehicle_type_allowed` and `app.unit_is_parking`; holds are written by the later steps' functions.
 
-Tests: `backend/tests/test_parking_spaces_migration.py`.
+- **Type prices (step 2, migration `20270813_438`).** `unit_setup_items.default_monthly_rent_usd_cents integer` (cents above 0, or null; only on `UNIT_TYPE` and `PARKING_TYPE` items), set only by `app.set_type_price(item, version, cents, actor)` (audited; null answer when the version is stale). `units.rent_from_type boolean NOT NULL DEFAULT false`: the Unit uses its type price; `app.set_type_price` moves every such Unit (audit `unit.rent_terms_changed`, reason "The type price changed in Settings"), and when the price is cleared those Units keep their last price with `rent_from_type = false`. `app.set_unit_rent_terms_with_type` sets a Unit's own price or the type price (HINT `TYPE_HAS_NO_PRICE` when the type has none). `app.create_parking_space`, `app.update_parking_space` and `app.parking_spaces(property, day)` add, change and list the spaces with their holds on a day. The Units list leaves out parking spaces.
+
+Tests: `backend/tests/test_parking_spaces_migration.py`, `backend/tests/test_type_prices_and_spaces_migration.py`.
