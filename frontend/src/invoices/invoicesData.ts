@@ -288,3 +288,27 @@ export function daysBetween(from: string, to: string): number {
 export function dayAfter(day: string): string {
   return new Date(Date.parse(day) + 86_400_000).toISOString().slice(0, 10);
 }
+
+/**
+ * DL-250 step 3: the Invoices of the building chosen in the side menu. An Invoice follows the
+ * Unit of its Lease, else the Unit of the Customer's newest signed Lease; one with neither (such as
+ * a short-stay guest's) shows under every building.
+ */
+export function invoicesInBuilding(
+  data: InvoicesData,
+  showsUnit: (unitId: string | null | undefined) => boolean,
+): InvoicesData {
+  const unitOfLease = new Map(
+    (data.leases ?? []).map((lease) => [lease.lease_id, lease.unit_id]),
+  );
+  return {
+    ...data,
+    invoices: data.invoices.filter((invoice) => {
+      const leaseId =
+        invoice.lease_id ?? data.customerLeases.get(invoice.customer_id);
+      return showsUnit(
+        leaseId === undefined ? undefined : unitOfLease.get(leaseId),
+      );
+    }),
+  };
+}

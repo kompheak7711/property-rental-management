@@ -20,6 +20,7 @@ import {
 } from "react";
 
 import logoUrl from "../assets/brand/CHETANA_Logo_Horizontal_Reverse.svg";
+import { BuildingSwitch } from "./buildingChoice";
 import type { Language } from "../signInText";
 import { Icon } from "./icons";
 import { PageHeadContext, type PageHeadSlots } from "./pageHead";
@@ -569,6 +570,7 @@ export function AppShell({
               </span>
             )}
           </div>
+          <BuildingSwitch language={language} />
         </div>
         <button
           aria-pressed={rail}

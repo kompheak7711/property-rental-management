@@ -2,6 +2,8 @@
 // select, four count cards that filter the table, and the table of Units. The table shows Unit,
 // Floor, Unit Type, Status and Until; the owner removed Customer and Monthly Rent (28/10/2026).
 
+import { buildingName } from "../buildingClient";
+import { buildingColumnName, useBuildingChoice } from "../shell/buildingChoice";
 import { useState } from "react";
 
 import { dayText, todayInPhnomPenh } from "../shell/format";
@@ -70,6 +72,9 @@ export function UnitsList({
   onNewUnit: (() => void) | null;
 }) {
   const khmer = language === "km";
+  // DL-250: with two or more buildings and All buildings chosen, a Building column shows.
+  const choice = useBuildingChoice();
+  const buildingColumn = choice.buildings.length >= 2 && choice.chosen === null;
   const [floor, setFloor] = useState("all");
   const [type, setType] = useState("all");
   const [card, setCardState] = useState<UnitCard | "all">("all");
@@ -223,6 +228,9 @@ export function UnitsList({
                 <thead>
                   <tr>
                     <th scope="col">{ut(language, "col_unit")}</th>
+                    {buildingColumn && (
+                      <th scope="col">{buildingColumnName(language)}</th>
+                    )}
                     <th scope="col">{ut(language, "floor")}</th>
                     <th scope="col">{ut(language, "type")}</th>
                     <th scope="col">{ut(language, "col_status")}</th>
@@ -267,6 +275,18 @@ export function UnitsList({
                             {unit.unit_number}
                           </a>
                         </td>
+                        {buildingColumn && (
+                          <td className="pc-small">
+                            {(() => {
+                              const home = choice.buildings.find(
+                                (item) => item.building_id === unit.building_id,
+                              );
+                              return home === undefined
+                                ? ""
+                                : buildingName(language, home);
+                            })()}
+                          </td>
+                        )}
                         <td className="pc-small">
                           {floorText(language, unit.floor)}
                         </td>

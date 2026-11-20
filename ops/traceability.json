@@ -72446,6 +72446,66 @@
       "test_path": "backend/tests/test_buildings_migration.py",
       "status": "implemented",
       "notes": "DL-250 buildings step 2: the Unit answer carries building_id, before and after a move."
+    },
+    {
+      "test_id": "TEST-FE-2314",
+      "upstream_ids": [
+        "DL-250",
+        "DB-PROP-002",
+        "DB-UNIT-001"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shell/buildingChoice.test.tsx",
+      "status": "implemented",
+      "notes": "DL-250 buildings step 3: With one building there is no Building switch, the Units are not read and every record shows."
+    },
+    {
+      "test_id": "TEST-FE-2315",
+      "upstream_ids": [
+        "DL-250",
+        "DB-PROP-002",
+        "DB-UNIT-001"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shell/buildingChoice.test.tsx",
+      "status": "implemented",
+      "notes": "DL-250 buildings step 3: With two buildings the side menu shows the Building switch with All buildings first; a choice filters the lists and is kept on the device; a removed building falls back to All."
+    },
+    {
+      "test_id": "TEST-FE-2316",
+      "upstream_ids": [
+        "DL-250",
+        "DB-PROP-002",
+        "DB-UNIT-001"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shell/buildingChoice.test.tsx",
+      "status": "implemented",
+      "notes": "DL-250 buildings step 3: Invoices follow the Unit of their Lease, else of the Customer's newest signed Lease; one with neither shows under every building."
+    },
+    {
+      "test_id": "TEST-FE-2317",
+      "upstream_ids": [
+        "DL-250",
+        "DB-PROP-002",
+        "DB-UNIT-001"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/units/UnitsPage.test.tsx",
+      "status": "implemented",
+      "notes": "DL-250 buildings step 3: With All buildings the Units list has a Building column; a chosen building shows only its Units and starts the New Unit Building box."
+    },
+    {
+      "test_id": "TEST-FE-2318",
+      "upstream_ids": [
+        "DL-250",
+        "DB-PROP-002",
+        "DB-UNIT-001"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/leases/LeasesPage.test.tsx",
+      "status": "implemented",
+      "notes": "DL-250 buildings step 3: The Leases list shows only the Leases of the building chosen in the side menu."
     }
   ]
 }

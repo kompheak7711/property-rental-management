@@ -1,3 +1,9 @@
+import type { ReactNode } from "react";
+
+import {
+  BuildingChoiceProvider,
+  BuildingSwitch,
+} from "../shell/buildingChoice";
 import {
   cleanup,
   fireEvent,
@@ -403,8 +409,12 @@ function show(
       paymentsApi={signingClients.payments}
       {...extra}
     />,
+    menuWrapper === null ? {} : { wrapper: menuWrapper },
   );
 }
+
+/** DL-250 step 3: the next show() sits under the side-menu Building switch when set. */
+let menuWrapper: ((props: { children: ReactNode }) => ReactNode) | null = null;
 
 function rowOf(unit: string): HTMLElement {
   const row = screen.getAllByRole("link", { name: unit })[0]?.closest("tr");
@@ -4480,5 +4490,65 @@ describe("Add occupant (DL-102)", () => {
     ).toHaveAttribute("href", "#/leases/lease-U101");
     // A Lease read without a number still names its Unit.
     expect(screen.getByRole("link", { name: "U102" })).toBeInTheDocument();
+  });
+
+  it("TEST-FE-2318 the Leases list shows only the Leases of the building chosen in the side menu (DL-250 step 3)", async () => {
+    const two = (id: string, name: string) => ({
+      building_id: id,
+      property_id: "property-1",
+      name_en: name,
+      name_km: null,
+      address_text: null,
+      description: null,
+      takes_short_stays: false,
+      sort_order: 0,
+      removed: false,
+      unit_count: 1,
+      version: 1,
+    });
+    const buildings = [
+      two("building-1", "CHETANA Residence"),
+      two("building-2", "Building Two"),
+    ];
+    menuWrapper = ({ children }) => (
+      <BuildingChoiceProvider
+        buildingApi={{
+          list: () => Promise.resolve({ items: buildings, can_manage: true }),
+        }}
+        propertyId="property-1"
+        refreshKey="leases"
+        unitApi={{
+          list: () =>
+            Promise.resolve({
+              items: [
+                { unit_id: "unit-U101", building_id: "building-2" },
+                { unit_id: "unit-U102", building_id: "building-1" },
+              ] as UnitResource[],
+              next_cursor: null,
+              can_manage: true,
+            }),
+        }}
+      >
+        <BuildingSwitch language="en" />
+        {children}
+      </BuildingChoiceProvider>
+    );
+    try {
+      show(api());
+      expect(await screen.findByText("Tenant U101")).toBeInTheDocument();
+      expect(screen.getByText("Tenant U102")).toBeInTheDocument();
+      fireEvent.change(await screen.findByLabelText("Building"), {
+        target: { value: "building-2" },
+      });
+      await waitFor(() => {
+        expect(screen.queryByText("Tenant U102")).toBeNull();
+      });
+      expect(screen.getByText("Tenant U101")).toBeInTheDocument();
+      // A Lease whose Unit is not in the Units read (none here) still shows.
+      expect(screen.getByText("Tenant U201")).toBeInTheDocument();
+    } finally {
+      menuWrapper = null;
+      window.localStorage.clear();
+    }
   });
 });

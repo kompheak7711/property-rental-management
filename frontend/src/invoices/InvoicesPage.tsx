@@ -23,7 +23,12 @@ import type { Language } from "../signInText";
 import { CreateInvoice } from "./CreateInvoice";
 import { InvoiceDetail } from "./InvoiceDetail";
 import { InvoicesList } from "./InvoicesList";
-import { type InvoicesData, loadInvoicesData } from "./invoicesData";
+import { useBuildingChoice } from "../shell/buildingChoice";
+import {
+  type InvoicesData,
+  loadInvoicesData,
+  invoicesInBuilding,
+} from "./invoicesData";
 import { ivt } from "./text";
 
 export interface InvoicesPageProps {
@@ -70,6 +75,8 @@ export function InvoicesPage({
   reports,
 }: InvoicesPageProps) {
   const detail = useHashDetail("invoices");
+  // DL-250 step 3: the list shows the building chosen in the side menu.
+  const choice = useBuildingChoice();
   const invoiceId =
     detail?.startsWith("inv:") === true ? detail.slice(4) : null;
   const customerId =
@@ -190,7 +197,11 @@ export function InvoicesPage({
       <InvoicesList
         canCreate={may("quotations.make")}
         customerId={customerId}
-        data={data}
+        data={
+          choice.chosen === null
+            ? data
+            : invoicesInBuilding(data, choice.showsUnit)
+        }
         language={language}
         onClearCustomer={() => {
           openPageInAddress("invoices");

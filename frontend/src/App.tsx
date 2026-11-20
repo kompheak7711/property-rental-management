@@ -47,6 +47,11 @@ import {
   businessSettingsApi as businessSettingsClient,
 } from "./settings/businessSettingsClient";
 import { UnitApi, unitApi as defaultUnitApi } from "./unitClient";
+import {
+  type BuildingApi,
+  buildingApi as defaultBuildingApi,
+} from "./buildingClient";
+import { BuildingChoiceProvider } from "./shell/buildingChoice";
 import { type SearchSources, TopSearch } from "./shell/TopSearch";
 import {
   CustomerManagement,
@@ -219,6 +224,8 @@ export interface AppProps {
   shortStaysApi?: ShortStaysApi;
   propertyApi?: PropertyConfigurationApi;
   unitApi?: UnitApi;
+  /** DL-250: the buildings, for the side-menu Building switch; the real server when not given. */
+  buildingApi?: Pick<BuildingApi, "list">;
   businessSettingsApi?: BusinessSettingsApi;
   dueDaysApi?: DueDaysApi;
   customerApi?: CustomerApi;
@@ -708,6 +715,7 @@ export function App({
   shortStaysApi,
   propertyApi = propertyConfigurationApi,
   unitApi,
+  buildingApi = defaultBuildingApi,
   customerApi,
   effectiveConfigApi = effectiveConfigurationApi,
   reservationApi = reservationClient,
@@ -1473,1203 +1481,1334 @@ export function App({
   };
 
   return (
-    <AppShell
-      accountClass={session.account_class ?? null}
-      buildId={buildId}
-      capabilities={capabilities}
-      displayName={session.display_name ?? null}
-      environment={environment}
-      language={language}
-      notice={
-        notice !== null &&
-        notice !== "" && (
-          <p className="global-status" role="status">
-            {notice}
-          </p>
-        )
-      }
-      now={now}
-      onLanguageChange={changeLanguage}
-      onSignOut={handleLogout}
-      page={page}
-      search={
-        <TopSearch
-          language={language}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-          sources={searchSources}
-        />
-      }
-      signOutDisabled={isSubmitting}
+    <BuildingChoiceProvider
+      buildingApi={buildingApi}
+      propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
+      refreshKey={page}
+      unitApi={unitApi ?? defaultUnitApi}
     >
-      {!allowed && <NoAccess language={language} />}
-      <div className="shell-page" data-page="home" hidden={!shown("home")}>
-        {propertyId === "" && propertyConfiguration === null && (
-          <PropertyNeeded language={language} />
-        )}
-        <HomeScreen
-          active={shown("home")}
-          capabilities={capabilities}
-          homeApi={homeApi}
-          language={language}
-          attendanceApi={hrApi}
-          ledgerApi={generalLedgerApi}
-          problemsApi={problemsApi}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-        />
-      </div>
-      <div
-        className="shell-page"
-        data-page="payments"
-        hidden={!shown("payments")}
+      <AppShell
+        accountClass={session.account_class ?? null}
+        buildId={buildId}
+        capabilities={capabilities}
+        displayName={session.display_name ?? null}
+        environment={environment}
+        language={language}
+        notice={
+          notice !== null &&
+          notice !== "" && (
+            <p className="global-status" role="status">
+              {notice}
+            </p>
+          )
+        }
+        now={now}
+        onLanguageChange={changeLanguage}
+        onSignOut={handleLogout}
+        page={page}
+        search={
+          <TopSearch
+            language={language}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+            sources={searchSources}
+          />
+        }
+        signOutDisabled={isSubmitting}
       >
-        <PaymentsPage
-          active={shown("payments")}
-          capabilities={capabilities}
-          customerApi={customerApi ?? defaultCustomerApi}
-          invoiceApi={invoiceApi}
-          language={language}
-          leaseApi={leaseApi}
-          paymentsApi={paymentsApi}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-          ledgerApi={ledgerApi ?? customerLedgerClient}
-          actorId={sessionActorId ?? undefined}
-          reports={reportsApi}
-        />
-        {/* V1-058 R5c: the payment list, matching, Credit and refunds stay in the earlier English
+        {!allowed && <NoAccess language={language} />}
+        <div className="shell-page" data-page="home" hidden={!shown("home")}>
+          {propertyId === "" && propertyConfiguration === null && (
+            <PropertyNeeded language={language} />
+          )}
+          <HomeScreen
+            active={shown("home")}
+            capabilities={capabilities}
+            homeApi={homeApi}
+            language={language}
+            attendanceApi={hrApi}
+            ledgerApi={generalLedgerApi}
+            problemsApi={problemsApi}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+          />
+        </div>
+        <div
+          className="shell-page"
+          data-page="payments"
+          hidden={!shown("payments")}
+        >
+          <PaymentsPage
+            active={shown("payments")}
+            capabilities={capabilities}
+            customerApi={customerApi ?? defaultCustomerApi}
+            invoiceApi={invoiceApi}
+            language={language}
+            leaseApi={leaseApi}
+            paymentsApi={paymentsApi}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+            ledgerApi={ledgerApi ?? customerLedgerClient}
+            actorId={sessionActorId ?? undefined}
+            reports={reportsApi}
+          />
+          {/* V1-058 R5c: the payment list, matching, Credit and refunds stay in the earlier English
             forms, folded, until the next steps move them into the Payments screens. */}
-        <details className="ui-records">
-          <summary lang={language}>
-            <span className="ui-records-title">{pyt(language, "records")}</span>
-            <span className="ui-small ui-muted">
-              {pyt(language, "records_note")}
-            </span>
-          </summary>
-          <div lang="en">
-            {!logoutPending && (
-              <FinancialManagement
-                key={session.actor_id}
-                actorId={session.actor_id}
-                services={financialServices}
-                onDirtyStateChange={setFinancialDraftsDirty}
-              />
-            )}
-          </div>
-        </details>
-      </div>
-      <div
-        className="shell-page"
-        data-page="invoices"
-        hidden={!shown("invoices")}
-      >
-        <InvoicesPage
-          active={shown("invoices")}
-          capabilities={capabilities}
-          customerApi={customerApi ?? defaultCustomerApi}
-          invoiceApi={invoiceApi}
-          language={language}
-          lateApi={paymentsApi}
-          leaseApi={leaseApi}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-          ledgerApi={ledgerApi ?? customerLedgerClient}
-          actorId={sessionActorId ?? undefined}
-          reports={reportsApi}
-        />
-        {/* V1-058 R5: the billing runs and the Due Date settings stay in the earlier English
+          <details className="ui-records">
+            <summary lang={language}>
+              <span className="ui-records-title">
+                {pyt(language, "records")}
+              </span>
+              <span className="ui-small ui-muted">
+                {pyt(language, "records_note")}
+              </span>
+            </summary>
+            <div lang="en">
+              {!logoutPending && (
+                <FinancialManagement
+                  key={session.actor_id}
+                  actorId={session.actor_id}
+                  services={financialServices}
+                  onDirtyStateChange={setFinancialDraftsDirty}
+                />
+              )}
+            </div>
+          </details>
+        </div>
+        <div
+          className="shell-page"
+          data-page="invoices"
+          hidden={!shown("invoices")}
+        >
+          <InvoicesPage
+            active={shown("invoices")}
+            capabilities={capabilities}
+            customerApi={customerApi ?? defaultCustomerApi}
+            invoiceApi={invoiceApi}
+            language={language}
+            lateApi={paymentsApi}
+            leaseApi={leaseApi}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+            ledgerApi={ledgerApi ?? customerLedgerClient}
+            actorId={sessionActorId ?? undefined}
+            reports={reportsApi}
+          />
+          {/* V1-058 R5: the billing runs and the Due Date settings stay in the earlier English
             forms, folded, until Settings and Home take them over. */}
-        <details className="ui-records">
-          <summary lang={language}>
-            <span className="ui-records-title">{ivt(language, "records")}</span>
-            <span className="ui-small ui-muted">
-              {ivt(language, "records_note")}
-            </span>
-          </summary>
-          <div lang="en">
-            {propertyConfiguration === null && (
-              <PropertyNeeded language={language} />
-            )}
-            {!logoutPending && (
-              <InvoiceManagement
-                api={invoiceApi}
-                actorId={session.actor_id}
+          <details className="ui-records">
+            <summary lang={language}>
+              <span className="ui-records-title">
+                {ivt(language, "records")}
+              </span>
+              <span className="ui-small ui-muted">
+                {ivt(language, "records_note")}
+              </span>
+            </summary>
+            <div lang="en">
+              {propertyConfiguration === null && (
+                <PropertyNeeded language={language} />
+              )}
+              {!logoutPending && (
+                <InvoiceManagement
+                  api={invoiceApi}
+                  actorId={session.actor_id}
+                  propertyId={
+                    propertyId || (propertyConfiguration?.property_id ?? "")
+                  }
+                />
+              )}
+            </div>
+          </details>
+        </div>
+        <div
+          className="shell-page"
+          data-page="utilities"
+          hidden={!shown("utilities")}
+        >
+          <UtilitiesPage
+            active={shown("utilities")}
+            capabilities={capabilities}
+            language={language}
+            leaseApi={leaseApi}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+            staffReadingsApi={staffReadingsApi}
+            testApp={environment !== "production"}
+            unitApi={unitApi ?? defaultUnitApi}
+            utilityApi={utilityApi}
+          />
+          {/* V1-058 R4: meters, rates, corrections and move-in or move-out readings stay in the
+            earlier English forms, folded, until the next steps move them into the design. */}
+          <details className="ui-records">
+            <summary lang={language}>
+              <span className="ui-records-title">
+                {utt(language, "records")}
+              </span>
+              <span className="ui-small ui-muted">
+                {utt(language, "records_note")}
+              </span>
+            </summary>
+            <div lang="en">
+              <UtilityManagement
+                api={utilityApi}
                 propertyId={
                   propertyId || (propertyConfiguration?.property_id ?? "")
                 }
               />
-            )}
-          </div>
-        </details>
-      </div>
-      <div
-        className="shell-page"
-        data-page="utilities"
-        hidden={!shown("utilities")}
-      >
-        <UtilitiesPage
-          active={shown("utilities")}
-          capabilities={capabilities}
-          language={language}
-          leaseApi={leaseApi}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-          staffReadingsApi={staffReadingsApi}
-          testApp={environment !== "production"}
-          unitApi={unitApi ?? defaultUnitApi}
-          utilityApi={utilityApi}
-        />
-        {/* V1-058 R4: meters, rates, corrections and move-in or move-out readings stay in the
-            earlier English forms, folded, until the next steps move them into the design. */}
-        <details className="ui-records">
-          <summary lang={language}>
-            <span className="ui-records-title">{utt(language, "records")}</span>
-            <span className="ui-small ui-muted">
-              {utt(language, "records_note")}
-            </span>
-          </summary>
-          <div lang="en">
-            <UtilityManagement
-              api={utilityApi}
-              propertyId={
-                propertyId || (propertyConfiguration?.property_id ?? "")
-              }
-            />
-            <UtilityLeaseWorkflows
-              propertyId={
-                propertyId || (propertyConfiguration?.property_id ?? "")
-              }
-            />
-          </div>
-        </details>
-      </div>
-      <div
-        className="shell-page"
-        data-page="approvals"
-        hidden={!shown("approvals")}
-      >
-        <ApprovalsPage
-          active={shown("approvals")}
-          actorId={session.actor_id}
-          approvalsApi={approvalsApi}
-          capabilities={capabilities}
-          decisionApi={draftDecisionApi}
-          language={language}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-        />
-      </div>
-      <div className="shell-page" data-page="units" hidden={!shown("units")}>
-        <UnitsPage
-          active={shown("units")}
-          capabilities={capabilities}
-          language={language}
-          leaseApi={leaseApi}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-          invoiceApi={invoiceApi}
-          jointApi={defaultJointApi}
-          productsApi={productsApi}
-          reservationApi={reservationApi}
-          unitApi={unitApi ?? defaultUnitApi}
-          utilityApi={utilityApi}
-        />
-      </div>
-      <div
-        className="shell-page"
-        data-page="inspections"
-        hidden={!shown("inspections")}
-      >
-        <InspectionsPage
-          active={shown("inspections")}
-          api={problemsApi}
-          capabilities={capabilities}
-          language={language}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-        />
-      </div>
-      <div
-        className="shell-page"
-        data-page="quotations"
-        hidden={!shown("quotations")}
-      >
-        <QuotationsPage
-          active={shown("quotations")}
-          api={quotationsApi}
-          capabilities={capabilities}
-          language={language}
-          leaseApi={leaseApi}
-          productsApi={productsApi}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-        />
-      </div>
-      <div
-        className="shell-page"
-        data-page="products"
-        hidden={!shown("products")}
-      >
-        <ProductsPage
-          active={shown("products")}
-          api={productsApi}
-          capabilities={capabilities}
-          language={language}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-          tab="products"
-        />
-      </div>
-      <div className="shell-page" data-page="stock" hidden={!shown("stock")}>
-        <ProductsPage
-          active={shown("stock")}
-          api={productsApi}
-          capabilities={capabilities}
-          language={language}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-          tab="stock"
-        />
-      </div>
-      <div
-        className="shell-page"
-        data-page="locations"
-        hidden={!shown("locations")}
-      >
-        <ProductsPage
-          active={shown("locations")}
-          api={productsApi}
-          capabilities={capabilities}
-          language={language}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-          tab="locations"
-        />
-      </div>
-      <div className="shell-page" data-page="exreqs" hidden={!shown("exreqs")}>
-        <SpendingPage
-          active={shown("exreqs")}
-          actorId={sessionActorId}
-          api={spendingApi}
-          capabilities={capabilities}
-          language={language}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-          tab="exreqs"
-        />
-      </div>
-      <div
-        className="shell-page"
-        data-page="expenses"
-        hidden={!shown("expenses")}
-      >
-        <SpendingPage
-          active={shown("expenses")}
-          actorId={sessionActorId}
-          api={spendingApi}
-          capabilities={capabilities}
-          language={language}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-          tab="expenses"
-        />
-      </div>
-      <div className="shell-page" data-page="bills" hidden={!shown("bills")}>
-        <SpendingPage
-          active={shown("bills")}
-          actorId={sessionActorId}
-          api={spendingApi}
-          capabilities={capabilities}
-          language={language}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-          tab="bills"
-        />
-      </div>
-      <div
-        className="shell-page"
-        data-page="journal"
-        hidden={!shown("journal")}
-      >
-        <LedgerPage
-          active={shown("journal")}
-          api={generalLedgerApi}
-          capabilities={capabilities}
-          language={language}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-          tab="journal"
-        />
-      </div>
-      <div
-        className="shell-page"
-        data-page="needscheck"
-        hidden={!shown("needscheck")}
-      >
-        <LedgerPage
-          active={shown("needscheck")}
-          api={generalLedgerApi}
-          capabilities={capabilities}
-          language={language}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-          tab="needscheck"
-        />
-      </div>
-      <div className="shell-page" data-page="chart" hidden={!shown("chart")}>
-        <ChartPage
-          active={shown("chart")}
-          api={generalLedgerApi}
-          capabilities={capabilities}
-          language={language}
-          openingApi={openingApi}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-        />
-      </div>
-      <div
-        className="shell-page"
-        data-page="statements"
-        hidden={!shown("statements")}
-      >
-        <LedgerPage
-          active={shown("statements")}
-          api={generalLedgerApi}
-          capabilities={capabilities}
-          language={language}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-          tab="statements"
-        />
-      </div>
-      <div
-        className="shell-page"
-        data-page="bankcash"
-        hidden={!shown("bankcash")}
-      >
-        <BankCashPage
-          active={shown("bankcash")}
-          api={cashApi}
-          capabilities={capabilities}
-          language={language}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-        />
-      </div>
-      <div className="shell-page" data-page="budget" hidden={!shown("budget")}>
-        <BudgetPage
-          active={shown("budget")}
-          actorId={sessionActorId}
-          api={budgetApi}
-          capabilities={capabilities}
-          language={language}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-        />
-      </div>
-      <div
-        className="shell-page"
-        data-page="fassets"
-        hidden={!shown("fassets")}
-      >
-        <FixedAssetsPage
-          active={shown("fassets")}
-          api={assetsApi}
-          capabilities={capabilities}
-          language={language}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-          spendingApi={spendingApi}
-        />
-      </div>
-      <div className="shell-page" data-page="lclose" hidden={!shown("lclose")}>
-        <MonthEndPage
-          active={shown("lclose")}
-          api={monthEndApi}
-          capabilities={capabilities}
-          language={language}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-        />
-      </div>
-      <div
-        className="shell-page"
-        data-page="employees"
-        hidden={!shown("employees")}
-      >
-        <EmployeesPage
-          active={shown("employees")}
-          api={hrApi}
-          capabilities={capabilities}
-          language={language}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-        />
-      </div>
-      <div className="shell-page" data-page="loans" hidden={!shown("loans")}>
-        <LoansPage
-          active={shown("loans")}
-          api={hrApi}
-          language={language}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-        />
-      </div>
-      <div
-        className="shell-page"
-        data-page="payroll"
-        hidden={!shown("payroll")}
-      >
-        <PayrollPage
-          active={shown("payroll")}
-          api={hrApi}
-          language={language}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-        />
-      </div>
-      <div
-        className="shell-page"
-        data-page="attendance"
-        hidden={!shown("attendance")}
-      >
-        <AttendancePage
-          active={shown("attendance")}
-          api={hrApi}
-          language={language}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-        />
-      </div>
-      <div
-        className="shell-page"
-        data-page="problems"
-        hidden={!shown("problems")}
-      >
-        <ProblemReportsPage
-          active={shown("problems")}
-          api={problemsApi}
-          capabilities={capabilities}
-          language={language}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-        />
-      </div>
-      <div
-        className="shell-page"
-        data-page="tglinks"
-        hidden={!shown("tglinks")}
-      >
-        <LinkedTenantsPage
-          active={shown("tglinks")}
-          api={telegramApi}
-          capabilities={capabilities}
-          language={language}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-        />
-      </div>
-      <div className="shell-page" data-page="tgsent" hidden={!shown("tgsent")}>
-        <SentOnTelegramPage
-          active={shown("tgsent")}
-          api={telegramApi}
-          capabilities={capabilities}
-          language={language}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-        />
-      </div>
-      <div
-        className="shell-page"
-        data-page="tgcontact"
-        hidden={!shown("tgcontact")}
-      >
-        <ContactOfficePage
-          active={shown("tgcontact")}
-          api={telegramApi}
-          capabilities={capabilities}
-          language={language}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-        />
-      </div>
-      <div
-        className="shell-page"
-        data-page="visitreqs"
-        hidden={!shown("visitreqs")}
-      >
-        <VisitRequestsPageView
-          active={shown("visitreqs")}
-          api={telegramApi}
-          capabilities={capabilities}
-          language={language}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-        />
-      </div>
-      <div className="shell-page" data-page="tgfaq" hidden={!shown("tgfaq")}>
-        <FaqPageView
-          active={shown("tgfaq")}
-          api={telegramApi}
-          capabilities={capabilities}
-          language={language}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-        />
-      </div>
-      <div
-        className="shell-page"
-        data-page="tgnotices"
-        hidden={!shown("tgnotices")}
-      >
-        <NoticesPageView
-          active={shown("tgnotices")}
-          api={telegramApi}
-          capabilities={capabilities}
-          language={language}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-        />
-      </div>
-      <div
-        className="shell-page"
-        data-page="tghealth"
-        hidden={!shown("tghealth")}
-      >
-        <TelegramHealthPage
-          active={shown("tghealth")}
-          api={telegramApi}
-          capabilities={capabilities}
-          language={language}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-        />
-      </div>
-      <div
-        className="shell-page"
-        data-page="shortstays"
-        hidden={!shown("shortstays")}
-      >
-        <ShortStaysPage
-          active={shown("shortstays")}
-          api={shortStaysApi}
-          capabilities={capabilities}
-          customerApi={customerApi ?? defaultCustomerApi}
-          language={language}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-        />
-      </div>
-      <div
-        className="shell-page"
-        data-page="customers"
-        hidden={!shown("customers")}
-      >
-        {!logoutPending && (
-          <CustomersPage
-            active={shown("customers")}
+              <UtilityLeaseWorkflows
+                propertyId={
+                  propertyId || (propertyConfiguration?.property_id ?? "")
+                }
+              />
+            </div>
+          </details>
+        </div>
+        <div
+          className="shell-page"
+          data-page="approvals"
+          hidden={!shown("approvals")}
+        >
+          <ApprovalsPage
+            active={shown("approvals")}
             actorId={session.actor_id}
+            approvalsApi={approvalsApi}
             capabilities={capabilities}
-            customerApi={customerApi ?? defaultCustomerApi}
-            gate={customerGate}
-            onDirty={setCustomerPageDirty}
+            decisionApi={draftDecisionApi}
             language={language}
-            leaseApi={leaseApi}
-            ledgerApi={ledgerApi ?? customerLedgerClient}
-            onOpenLedger={(customerId) => {
-              const selected =
-                propertyId || (propertyConfiguration?.property_id ?? "");
-              if (selected === "") return;
-              setLedgerSelection({
-                customerId,
-                propertyId: selected,
-                actorId: session.actor_id,
-                sequence: ++ledgerSequence.current,
-              });
-              setCustomerRecordsOpen(true);
-              window.setTimeout(() => {
-                document
-                  .getElementById("customer-records")
-                  ?.scrollIntoView({ block: "start" });
-              }, 0);
-            }}
             propertyId={
               propertyId || (propertyConfiguration?.property_id ?? "")
             }
-            reservationApi={reservationApi}
           />
-        )}
-        {/* V1-058 R2 step C2: the earlier form stays folded away. It opens by itself while a
-            Customer save waits to be checked, and for the full Account Ledger. */}
-        <details
-          className="ui-records"
-          id="customer-records"
-          onToggle={(event) => {
-            // A waiting save opens it by itself; only the person's own click is remembered.
-            if (customerReconciliationRequirement === null)
-              setCustomerRecordsOpen(event.currentTarget.open);
-          }}
-          open={
-            customerRecordsOpen || customerReconciliationRequirement !== null
-          }
+        </div>
+        <div className="shell-page" data-page="units" hidden={!shown("units")}>
+          <UnitsPage
+            active={shown("units")}
+            capabilities={capabilities}
+            language={language}
+            leaseApi={leaseApi}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+            invoiceApi={invoiceApi}
+            jointApi={defaultJointApi}
+            productsApi={productsApi}
+            reservationApi={reservationApi}
+            unitApi={unitApi ?? defaultUnitApi}
+            utilityApi={utilityApi}
+          />
+        </div>
+        <div
+          className="shell-page"
+          data-page="inspections"
+          hidden={!shown("inspections")}
         >
-          <summary lang={language}>
-            <span className="ui-records-title">{ct(language, "records")}</span>
-            <span className="ui-small ui-muted">
-              {ct(language, "records_note")}
-            </span>
-          </summary>
-          <div lang="en">
-            {!logoutPending && (
-              <CustomerAccountLedger
-                key={`customer-ledger:${session.actor_id}`}
-                actorId={session.actor_id}
-                api={ledgerApi}
-                requested={
-                  ledgerSelection?.actorId === session.actor_id
-                    ? ledgerSelection
-                    : undefined
-                }
-              />
-            )}
-            {!logoutPending && (
-              <CustomerManagement
-                actorId={session.actor_id}
-                api={customerApi}
-                onOpenAccountLedger={(selection) => {
-                  setLedgerSelection({
-                    ...selection,
-                    actorId: session.actor_id,
-                    sequence: ++ledgerSequence.current,
-                  });
-                }}
-                mutationCoordinationAvailable={customerCoordinationAvailable}
-                onCommandBusyChange={setCustomerCommandBusy}
-                onDirtyStateChange={setCustomerDraftsDirty}
-                onReconciled={releaseCustomerGate}
-                onReconciliationRequired={reserveCustomerGate}
-                reconciliationRequirement={customerReconciliationRequirement}
-              />
-            )}
-            {!logoutPending && !customerCoordinationAvailable && (
-              <section className="information-card">
-                <h3>Customer command coordination unavailable</h3>
-                <p>
-                  Customer commands are blocked because the opaque
-                  reconciliation handle cannot be matched to this authenticated
-                  browser session. No confidential Customer or actor metadata
-                  was read from local storage.
-                </p>
-              </section>
-            )}
-          </div>
-        </details>
-      </div>
-      <div
-        className="shell-page"
-        data-page="reservations"
-        hidden={!shown("reservations")}
-      >
-        {/* V1-060 B6: Make Reservation is in the design now; the earlier form is gone. */}
-        <ReservationsPage
-          active={shown("reservations")}
-          api={reservationApi}
-          capabilities={capabilities}
-          customerApi={customerApi ?? defaultCustomerApi}
-          customerGate={customerGate}
-          language={language}
-          paymentsApi={paymentsApi}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-          unitApi={unitApi ?? defaultUnitApi}
-        />
-      </div>
-      <div className="shell-page" data-page="leases" hidden={!shown("leases")}>
-        <LeasesPage
-          active={shown("leases")}
-          api={leaseApi}
-          capabilities={capabilities}
-          depositApi={depositApi}
-          language={language}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-          customerApi={customerApi ?? defaultCustomerApi}
-          customerCreateApi={customerApi ?? defaultCustomerApi}
-          customerGate={customerGate}
-          reservationApi={reservationApi}
-          unitApi={unitApi ?? defaultUnitApi}
-          lettersApi={lettersApi}
-          ledgerApi={ledgerApi ?? customerLedgerClient}
-          actorId={sessionActorId ?? undefined}
-          reports={reportsApi}
-        />
-      </div>
-      <div
-        className="shell-page"
-        data-page="letters"
-        hidden={!shown("letters")}
-      >
-        <LettersPage
-          active={shown("letters")}
-          api={lettersApi}
-          capabilities={capabilities}
-          language={language}
-          leaseApi={leaseApi}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-        />
-        {/* V1-058 R3: the earlier English forms stay, folded, until the Terminate step and the
+          <InspectionsPage
+            active={shown("inspections")}
+            api={problemsApi}
+            capabilities={capabilities}
+            language={language}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+          />
+        </div>
+        <div
+          className="shell-page"
+          data-page="quotations"
+          hidden={!shown("quotations")}
+        >
+          <QuotationsPage
+            active={shown("quotations")}
+            api={quotationsApi}
+            capabilities={capabilities}
+            language={language}
+            leaseApi={leaseApi}
+            productsApi={productsApi}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+          />
+        </div>
+        <div
+          className="shell-page"
+          data-page="products"
+          hidden={!shown("products")}
+        >
+          <ProductsPage
+            active={shown("products")}
+            api={productsApi}
+            capabilities={capabilities}
+            language={language}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+            tab="products"
+          />
+        </div>
+        <div className="shell-page" data-page="stock" hidden={!shown("stock")}>
+          <ProductsPage
+            active={shown("stock")}
+            api={productsApi}
+            capabilities={capabilities}
+            language={language}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+            tab="stock"
+          />
+        </div>
+        <div
+          className="shell-page"
+          data-page="locations"
+          hidden={!shown("locations")}
+        >
+          <ProductsPage
+            active={shown("locations")}
+            api={productsApi}
+            capabilities={capabilities}
+            language={language}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+            tab="locations"
+          />
+        </div>
+        <div
+          className="shell-page"
+          data-page="exreqs"
+          hidden={!shown("exreqs")}
+        >
+          <SpendingPage
+            active={shown("exreqs")}
+            actorId={sessionActorId}
+            api={spendingApi}
+            capabilities={capabilities}
+            language={language}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+            tab="exreqs"
+          />
+        </div>
+        <div
+          className="shell-page"
+          data-page="expenses"
+          hidden={!shown("expenses")}
+        >
+          <SpendingPage
+            active={shown("expenses")}
+            actorId={sessionActorId}
+            api={spendingApi}
+            capabilities={capabilities}
+            language={language}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+            tab="expenses"
+          />
+        </div>
+        <div className="shell-page" data-page="bills" hidden={!shown("bills")}>
+          <SpendingPage
+            active={shown("bills")}
+            actorId={sessionActorId}
+            api={spendingApi}
+            capabilities={capabilities}
+            language={language}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+            tab="bills"
+          />
+        </div>
+        <div
+          className="shell-page"
+          data-page="journal"
+          hidden={!shown("journal")}
+        >
+          <LedgerPage
+            active={shown("journal")}
+            api={generalLedgerApi}
+            capabilities={capabilities}
+            language={language}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+            tab="journal"
+          />
+        </div>
+        <div
+          className="shell-page"
+          data-page="needscheck"
+          hidden={!shown("needscheck")}
+        >
+          <LedgerPage
+            active={shown("needscheck")}
+            api={generalLedgerApi}
+            capabilities={capabilities}
+            language={language}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+            tab="needscheck"
+          />
+        </div>
+        <div className="shell-page" data-page="chart" hidden={!shown("chart")}>
+          <ChartPage
+            active={shown("chart")}
+            api={generalLedgerApi}
+            capabilities={capabilities}
+            language={language}
+            openingApi={openingApi}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+          />
+        </div>
+        <div
+          className="shell-page"
+          data-page="statements"
+          hidden={!shown("statements")}
+        >
+          <LedgerPage
+            active={shown("statements")}
+            api={generalLedgerApi}
+            capabilities={capabilities}
+            language={language}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+            tab="statements"
+          />
+        </div>
+        <div
+          className="shell-page"
+          data-page="bankcash"
+          hidden={!shown("bankcash")}
+        >
+          <BankCashPage
+            active={shown("bankcash")}
+            api={cashApi}
+            capabilities={capabilities}
+            language={language}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+          />
+        </div>
+        <div
+          className="shell-page"
+          data-page="budget"
+          hidden={!shown("budget")}
+        >
+          <BudgetPage
+            active={shown("budget")}
+            actorId={sessionActorId}
+            api={budgetApi}
+            capabilities={capabilities}
+            language={language}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+          />
+        </div>
+        <div
+          className="shell-page"
+          data-page="fassets"
+          hidden={!shown("fassets")}
+        >
+          <FixedAssetsPage
+            active={shown("fassets")}
+            api={assetsApi}
+            capabilities={capabilities}
+            language={language}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+            spendingApi={spendingApi}
+          />
+        </div>
+        <div
+          className="shell-page"
+          data-page="lclose"
+          hidden={!shown("lclose")}
+        >
+          <MonthEndPage
+            active={shown("lclose")}
+            api={monthEndApi}
+            capabilities={capabilities}
+            language={language}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+          />
+        </div>
+        <div
+          className="shell-page"
+          data-page="employees"
+          hidden={!shown("employees")}
+        >
+          <EmployeesPage
+            active={shown("employees")}
+            api={hrApi}
+            capabilities={capabilities}
+            language={language}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+          />
+        </div>
+        <div className="shell-page" data-page="loans" hidden={!shown("loans")}>
+          <LoansPage
+            active={shown("loans")}
+            api={hrApi}
+            language={language}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+          />
+        </div>
+        <div
+          className="shell-page"
+          data-page="payroll"
+          hidden={!shown("payroll")}
+        >
+          <PayrollPage
+            active={shown("payroll")}
+            api={hrApi}
+            language={language}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+          />
+        </div>
+        <div
+          className="shell-page"
+          data-page="attendance"
+          hidden={!shown("attendance")}
+        >
+          <AttendancePage
+            active={shown("attendance")}
+            api={hrApi}
+            language={language}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+          />
+        </div>
+        <div
+          className="shell-page"
+          data-page="problems"
+          hidden={!shown("problems")}
+        >
+          <ProblemReportsPage
+            active={shown("problems")}
+            api={problemsApi}
+            capabilities={capabilities}
+            language={language}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+          />
+        </div>
+        <div
+          className="shell-page"
+          data-page="tglinks"
+          hidden={!shown("tglinks")}
+        >
+          <LinkedTenantsPage
+            active={shown("tglinks")}
+            api={telegramApi}
+            capabilities={capabilities}
+            language={language}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+          />
+        </div>
+        <div
+          className="shell-page"
+          data-page="tgsent"
+          hidden={!shown("tgsent")}
+        >
+          <SentOnTelegramPage
+            active={shown("tgsent")}
+            api={telegramApi}
+            capabilities={capabilities}
+            language={language}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+          />
+        </div>
+        <div
+          className="shell-page"
+          data-page="tgcontact"
+          hidden={!shown("tgcontact")}
+        >
+          <ContactOfficePage
+            active={shown("tgcontact")}
+            api={telegramApi}
+            capabilities={capabilities}
+            language={language}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+          />
+        </div>
+        <div
+          className="shell-page"
+          data-page="visitreqs"
+          hidden={!shown("visitreqs")}
+        >
+          <VisitRequestsPageView
+            active={shown("visitreqs")}
+            api={telegramApi}
+            capabilities={capabilities}
+            language={language}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+          />
+        </div>
+        <div className="shell-page" data-page="tgfaq" hidden={!shown("tgfaq")}>
+          <FaqPageView
+            active={shown("tgfaq")}
+            api={telegramApi}
+            capabilities={capabilities}
+            language={language}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+          />
+        </div>
+        <div
+          className="shell-page"
+          data-page="tgnotices"
+          hidden={!shown("tgnotices")}
+        >
+          <NoticesPageView
+            active={shown("tgnotices")}
+            api={telegramApi}
+            capabilities={capabilities}
+            language={language}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+          />
+        </div>
+        <div
+          className="shell-page"
+          data-page="tghealth"
+          hidden={!shown("tghealth")}
+        >
+          <TelegramHealthPage
+            active={shown("tghealth")}
+            api={telegramApi}
+            capabilities={capabilities}
+            language={language}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+          />
+        </div>
+        <div
+          className="shell-page"
+          data-page="shortstays"
+          hidden={!shown("shortstays")}
+        >
+          <ShortStaysPage
+            active={shown("shortstays")}
+            api={shortStaysApi}
+            capabilities={capabilities}
+            customerApi={customerApi ?? defaultCustomerApi}
+            language={language}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+          />
+        </div>
+        <div
+          className="shell-page"
+          data-page="customers"
+          hidden={!shown("customers")}
+        >
+          {!logoutPending && (
+            <CustomersPage
+              active={shown("customers")}
+              actorId={session.actor_id}
+              capabilities={capabilities}
+              customerApi={customerApi ?? defaultCustomerApi}
+              gate={customerGate}
+              onDirty={setCustomerPageDirty}
+              language={language}
+              leaseApi={leaseApi}
+              ledgerApi={ledgerApi ?? customerLedgerClient}
+              onOpenLedger={(customerId) => {
+                const selected =
+                  propertyId || (propertyConfiguration?.property_id ?? "");
+                if (selected === "") return;
+                setLedgerSelection({
+                  customerId,
+                  propertyId: selected,
+                  actorId: session.actor_id,
+                  sequence: ++ledgerSequence.current,
+                });
+                setCustomerRecordsOpen(true);
+                window.setTimeout(() => {
+                  document
+                    .getElementById("customer-records")
+                    ?.scrollIntoView({ block: "start" });
+                }, 0);
+              }}
+              propertyId={
+                propertyId || (propertyConfiguration?.property_id ?? "")
+              }
+              reservationApi={reservationApi}
+            />
+          )}
+          {/* V1-058 R2 step C2: the earlier form stays folded away. It opens by itself while a
+            Customer save waits to be checked, and for the full Account Ledger. */}
+          <details
+            className="ui-records"
+            id="customer-records"
+            onToggle={(event) => {
+              // A waiting save opens it by itself; only the person's own click is remembered.
+              if (customerReconciliationRequirement === null)
+                setCustomerRecordsOpen(event.currentTarget.open);
+            }}
+            open={
+              customerRecordsOpen || customerReconciliationRequirement !== null
+            }
+          >
+            <summary lang={language}>
+              <span className="ui-records-title">
+                {ct(language, "records")}
+              </span>
+              <span className="ui-small ui-muted">
+                {ct(language, "records_note")}
+              </span>
+            </summary>
+            <div lang="en">
+              {!logoutPending && (
+                <CustomerAccountLedger
+                  key={`customer-ledger:${session.actor_id}`}
+                  actorId={session.actor_id}
+                  api={ledgerApi}
+                  requested={
+                    ledgerSelection?.actorId === session.actor_id
+                      ? ledgerSelection
+                      : undefined
+                  }
+                />
+              )}
+              {!logoutPending && (
+                <CustomerManagement
+                  actorId={session.actor_id}
+                  api={customerApi}
+                  onOpenAccountLedger={(selection) => {
+                    setLedgerSelection({
+                      ...selection,
+                      actorId: session.actor_id,
+                      sequence: ++ledgerSequence.current,
+                    });
+                  }}
+                  mutationCoordinationAvailable={customerCoordinationAvailable}
+                  onCommandBusyChange={setCustomerCommandBusy}
+                  onDirtyStateChange={setCustomerDraftsDirty}
+                  onReconciled={releaseCustomerGate}
+                  onReconciliationRequired={reserveCustomerGate}
+                  reconciliationRequirement={customerReconciliationRequirement}
+                />
+              )}
+              {!logoutPending && !customerCoordinationAvailable && (
+                <section className="information-card">
+                  <h3>Customer command coordination unavailable</h3>
+                  <p>
+                    Customer commands are blocked because the opaque
+                    reconciliation handle cannot be matched to this
+                    authenticated browser session. No confidential Customer or
+                    actor metadata was read from local storage.
+                  </p>
+                </section>
+              )}
+            </div>
+          </details>
+        </div>
+        <div
+          className="shell-page"
+          data-page="reservations"
+          hidden={!shown("reservations")}
+        >
+          {/* V1-060 B6: Make Reservation is in the design now; the earlier form is gone. */}
+          <ReservationsPage
+            active={shown("reservations")}
+            api={reservationApi}
+            capabilities={capabilities}
+            customerApi={customerApi ?? defaultCustomerApi}
+            customerGate={customerGate}
+            language={language}
+            paymentsApi={paymentsApi}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+            unitApi={unitApi ?? defaultUnitApi}
+          />
+        </div>
+        <div
+          className="shell-page"
+          data-page="leases"
+          hidden={!shown("leases")}
+        >
+          <LeasesPage
+            active={shown("leases")}
+            api={leaseApi}
+            capabilities={capabilities}
+            depositApi={depositApi}
+            language={language}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+            customerApi={customerApi ?? defaultCustomerApi}
+            customerCreateApi={customerApi ?? defaultCustomerApi}
+            customerGate={customerGate}
+            reservationApi={reservationApi}
+            unitApi={unitApi ?? defaultUnitApi}
+            lettersApi={lettersApi}
+            ledgerApi={ledgerApi ?? customerLedgerClient}
+            actorId={sessionActorId ?? undefined}
+            reports={reportsApi}
+          />
+        </div>
+        <div
+          className="shell-page"
+          data-page="letters"
+          hidden={!shown("letters")}
+        >
+          <LettersPage
+            active={shown("letters")}
+            api={lettersApi}
+            capabilities={capabilities}
+            language={language}
+            leaseApi={leaseApi}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+          />
+          {/* V1-058 R3: the earlier English forms stay, folded, until the Terminate step and the
             later steps replace what is left in them (opening a case for another follow-up,
             Initial Rent alerts). */}
-        <details className="ui-records">
-          <summary lang={language}>
-            <span className="ui-records-title">{ltr(language, "records")}</span>
-            <span className="ui-small ui-muted">
-              {ltr(language, "records_note")}
-            </span>
-          </summary>
-          <div lang="en">
-            {!logoutPending && (
-              <LeaseEnforcementManagement
-                key={`lease-enforcement:${session.actor_id}`}
-                actorId={session.actor_id}
-                services={enforcementServices}
-                onDirtyStateChange={setEnforcementDraftsDirty}
-              />
-            )}
-          </div>
-        </details>
-      </div>
-      <div
-        className="shell-page"
-        data-page="moveout"
-        hidden={!shown("moveout")}
-      >
-        <MoveoutPage
-          active={shown("moveout")}
-          capabilities={capabilities}
-          problemsApi={problemsApi}
-          depositApi={depositApi}
-          language={language}
-          leaseApi={leaseApi}
-          moveOutApi={moveOutApi}
-          invoiceApi={invoiceApi}
-          utilityApi={utilityApi}
-          utilityLeaseApi={utilityLeaseApi}
-          settlementApi={moveOutChargeApi}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-          today={todayInPhnomPenh()}
-          unitApi={unitApi ?? defaultUnitApi}
-          jointApi={defaultJointApi}
-        />
-        {/* V1-058 R3 Move-out: the earlier English Deposit forms stay, folded, until the
+          <details className="ui-records">
+            <summary lang={language}>
+              <span className="ui-records-title">
+                {ltr(language, "records")}
+              </span>
+              <span className="ui-small ui-muted">
+                {ltr(language, "records_note")}
+              </span>
+            </summary>
+            <div lang="en">
+              {!logoutPending && (
+                <LeaseEnforcementManagement
+                  key={`lease-enforcement:${session.actor_id}`}
+                  actorId={session.actor_id}
+                  services={enforcementServices}
+                  onDirtyStateChange={setEnforcementDraftsDirty}
+                />
+              )}
+            </div>
+          </details>
+        </div>
+        <div
+          className="shell-page"
+          data-page="moveout"
+          hidden={!shown("moveout")}
+        >
+          <MoveoutPage
+            active={shown("moveout")}
+            capabilities={capabilities}
+            problemsApi={problemsApi}
+            depositApi={depositApi}
+            language={language}
+            leaseApi={leaseApi}
+            moveOutApi={moveOutApi}
+            invoiceApi={invoiceApi}
+            utilityApi={utilityApi}
+            utilityLeaseApi={utilityLeaseApi}
+            settlementApi={moveOutChargeApi}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+            today={todayInPhnomPenh()}
+            unitApi={unitApi ?? defaultUnitApi}
+            jointApi={defaultJointApi}
+          />
+          {/* V1-058 R3 Move-out: the earlier English Deposit forms stay, folded, until the
             Final Settlement steps replace them. */}
-        <details className="ui-records">
-          <summary lang={language}>
-            <span className="ui-records-title">{mt(language, "records")}</span>
-            <span className="ui-small ui-muted">
-              {mt(language, "records_note")}
-            </span>
-          </summary>
-          <div lang="en">
-            <DepositManagement api={depositApi} />
-          </div>
-        </details>
-      </div>
-      <div
-        className="shell-page"
-        data-page="reports"
-        hidden={!shown("reports")}
-      >
-        {propertyId === "" && propertyConfiguration === null && (
-          <PropertyNeeded language={language} />
-        )}
-        <ReportsPage
-          active={shown("reports")}
-          api={reportApi}
-          capabilities={capabilities}
-          language={language}
-          now={now}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-          today={todayInPhnomPenh()}
-          units={unitApi ?? defaultUnitApi}
-        />
-      </div>
-      <div
-        className="shell-page"
-        data-page="history"
-        hidden={!shown("history")}
-      >
-        <HistoryPage
-          active={shown("history")}
-          api={historyApi}
-          capabilities={capabilities}
-          exporter={historyExportApi}
-          language={language}
-          me={{
-            id: session.actor_id,
-            name: session.display_name ?? session.actor_id.slice(0, 8),
-          }}
-          people={historyPeople}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-          today={todayInPhnomPenh()}
-          units={unitApi ?? defaultUnitApi}
-        />
-      </div>
-      <div
-        className="shell-page"
-        data-page="account"
-        hidden={!shown("account")}
-        lang="en"
-      >
-        <section className="workspace-panel">
-          <div className="workspace-heading">
-            <h2 id="screen-heading">Account and access</h2>
-          </div>
-          <section
-            aria-labelledby="session-heading"
-            className="information-card"
-          >
-            <h3 id="session-heading">Current session</h3>
-            <dl className="detail-list">
-              <div>
-                <dt>Inactivity expiry</dt>
-                <dd>{formatDateTime(session.idle_expires_at)}</dd>
-              </div>
-              <div>
-                <dt>Absolute expiry</dt>
-                <dd>{formatDateTime(session.absolute_expires_at)}</dd>
-              </div>
-              <div>
-                <dt>MFA assurance</dt>
-                <dd>{session.mfa_assurance.replace("_", " ")}</dd>
-              </div>
-              <div>
-                <dt>Recent authentication</dt>
-                <dd>
-                  {session.reauthenticated_at === null
-                    ? "Not recorded"
-                    : formatDateTime(session.reauthenticated_at)}
-                </dd>
-              </div>
-            </dl>
-            <p className="panel-help">
-              The application returns to sign-in after 30 minutes of inactivity
-              or 24 hours total. Unsaved commands are never reported as
-              successful. Session timestamps are shown in UTC.
-            </p>
-            <button
-              onClick={() => {
-                setShowReauthentication((shown) => !shown);
-              }}
-              type="button"
+          <details className="ui-records">
+            <summary lang={language}>
+              <span className="ui-records-title">
+                {mt(language, "records")}
+              </span>
+              <span className="ui-small ui-muted">
+                {mt(language, "records_note")}
+              </span>
+            </summary>
+            <div lang="en">
+              <DepositManagement api={depositApi} />
+            </div>
+          </details>
+        </div>
+        <div
+          className="shell-page"
+          data-page="reports"
+          hidden={!shown("reports")}
+        >
+          {propertyId === "" && propertyConfiguration === null && (
+            <PropertyNeeded language={language} />
+          )}
+          <ReportsPage
+            active={shown("reports")}
+            api={reportApi}
+            capabilities={capabilities}
+            language={language}
+            now={now}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+            today={todayInPhnomPenh()}
+            units={unitApi ?? defaultUnitApi}
+          />
+        </div>
+        <div
+          className="shell-page"
+          data-page="history"
+          hidden={!shown("history")}
+        >
+          <HistoryPage
+            active={shown("history")}
+            api={historyApi}
+            capabilities={capabilities}
+            exporter={historyExportApi}
+            language={language}
+            me={{
+              id: session.actor_id,
+              name: session.display_name ?? session.actor_id.slice(0, 8),
+            }}
+            people={historyPeople}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+            today={todayInPhnomPenh()}
+            units={unitApi ?? defaultUnitApi}
+          />
+        </div>
+        <div
+          className="shell-page"
+          data-page="account"
+          hidden={!shown("account")}
+          lang="en"
+        >
+          <section className="workspace-panel">
+            <div className="workspace-heading">
+              <h2 id="screen-heading">Account and access</h2>
+            </div>
+            <section
+              aria-labelledby="session-heading"
+              className="information-card"
             >
-              {showReauthentication
-                ? "Cancel reauthentication"
-                : "Reauthenticate for protected administration"}
-            </button>
-            {showReauthentication && (
-              <form
-                className="form-stack nested-form"
-                onSubmit={handleReauthentication}
+              <h3 id="session-heading">Current session</h3>
+              <dl className="detail-list">
+                <div>
+                  <dt>Inactivity expiry</dt>
+                  <dd>{formatDateTime(session.idle_expires_at)}</dd>
+                </div>
+                <div>
+                  <dt>Absolute expiry</dt>
+                  <dd>{formatDateTime(session.absolute_expires_at)}</dd>
+                </div>
+                <div>
+                  <dt>MFA assurance</dt>
+                  <dd>{session.mfa_assurance.replace("_", " ")}</dd>
+                </div>
+                <div>
+                  <dt>Recent authentication</dt>
+                  <dd>
+                    {session.reauthenticated_at === null
+                      ? "Not recorded"
+                      : formatDateTime(session.reauthenticated_at)}
+                  </dd>
+                </div>
+              </dl>
+              <p className="panel-help">
+                The application returns to sign-in after 30 minutes of
+                inactivity or 24 hours total. Unsaved commands are never
+                reported as successful. Session timestamps are shown in UTC.
+              </p>
+              <button
+                onClick={() => {
+                  setShowReauthentication((shown) => !shown);
+                }}
+                type="button"
               >
-                <div className="form-field">
-                  <label htmlFor="reauth-password">Password</label>
-                  <input
-                    autoComplete="current-password"
-                    id="reauth-password"
-                    name="reauth-password"
-                    required
-                    type="password"
-                  />
-                </div>
-                <div className="form-field">
-                  <label htmlFor="reauth-code">
-                    Authenticator code, when required
-                  </label>
-                  <input
-                    autoComplete="one-time-code"
-                    id="reauth-code"
-                    inputMode="numeric"
-                    name="reauth-code"
-                  />
-                </div>
-                <button disabled={isSubmitting} type="submit">
-                  Confirm recent authentication
-                </button>
-              </form>
-            )}
-          </section>
-          <section
-            aria-labelledby="recovery-heading"
-            className="information-card"
-          >
-            <h3 id="recovery-heading">Recovery safety</h3>
-            <p>
-              Recovery codes are single-use and are never displayed again after
-              issuance. Authorized administrative recovery requires explicit
-              consequence and audit confirmation.
-            </p>
-            <p className="panel-help">
-              Staff are not granted recovery authority for Owner or Manager
-              accounts. Role labels never replace server-side capability checks.
-            </p>
-            {liveRecoverySet !== undefined && recoveryCodes === null && (
+                {showReauthentication
+                  ? "Cancel reauthentication"
+                  : "Reauthenticate for protected administration"}
+              </button>
+              {showReauthentication && (
+                <form
+                  className="form-stack nested-form"
+                  onSubmit={handleReauthentication}
+                >
+                  <div className="form-field">
+                    <label htmlFor="reauth-password">Password</label>
+                    <input
+                      autoComplete="current-password"
+                      id="reauth-password"
+                      name="reauth-password"
+                      required
+                      type="password"
+                    />
+                  </div>
+                  <div className="form-field">
+                    <label htmlFor="reauth-code">
+                      Authenticator code, when required
+                    </label>
+                    <input
+                      autoComplete="one-time-code"
+                      id="reauth-code"
+                      inputMode="numeric"
+                      name="reauth-code"
+                    />
+                  </div>
+                  <button disabled={isSubmitting} type="submit">
+                    Confirm recent authentication
+                  </button>
+                </form>
+              )}
+            </section>
+            <section
+              aria-labelledby="recovery-heading"
+              className="information-card"
+            >
+              <h3 id="recovery-heading">Recovery safety</h3>
               <p>
-                {liveRecoverySet === null
-                  ? "You have no recovery codes."
-                  : `Your recovery codes: ${String(liveRecoverySet.usable_count)} still work. ${
-                      liveRecoverySet.made_by === "issued"
-                        ? "First made"
-                        : liveRecoverySet.made_by === "regenerated"
-                          ? "Replaced"
-                          : "Made by the server set-up"
-                    } ${formatDateTime(liveRecoverySet.created_at)}.`}
+                Recovery codes are single-use and are never displayed again
+                after issuance. Authorized administrative recovery requires
+                explicit consequence and audit confirmation.
               </p>
-            )}
-            {session.reauthenticated_at === null ? (
-              <p className="muted">
-                Reauthenticate before generating or replacing recovery codes.
+              <p className="panel-help">
+                Staff are not granted recovery authority for Owner or Manager
+                accounts. Role labels never replace server-side capability
+                checks.
               </p>
-            ) : recoveryCodes === null ? (
-              liveRecoverySet === null ? (
-                <button
-                  disabled={isSubmitting}
-                  onClick={issueRecoveryCodes}
-                  type="button"
-                >
-                  Generate one-time recovery codes
-                </button>
-              ) : liveRecoverySet === undefined ? (
-                // Nothing while the read runs (review round 2).
-                liveRecoverySetFailed && (
-                  <p className="muted">
-                    Your recovery codes could not be checked. Reload the page to
-                    try again.
-                  </p>
-                )
-              ) : (
-                <button
-                  disabled={isSubmitting}
-                  onClick={regenerateRecoveryCodes}
-                  type="button"
-                >
-                  Replace my recovery codes
-                </button>
-              )
-            ) : (
-              <div
-                aria-label="One-time recovery codes"
-                className="one-time-material"
-                role="region"
-              >
+              {liveRecoverySet !== undefined && recoveryCodes === null && (
                 <p>
-                  <strong>Shown once:</strong> save each code outside this
-                  application. Each code can be used only once.
+                  {liveRecoverySet === null
+                    ? "You have no recovery codes."
+                    : `Your recovery codes: ${String(liveRecoverySet.usable_count)} still work. ${
+                        liveRecoverySet.made_by === "issued"
+                          ? "First made"
+                          : liveRecoverySet.made_by === "regenerated"
+                            ? "Replaced"
+                            : "Made by the server set-up"
+                      } ${formatDateTime(liveRecoverySet.created_at)}.`}
                 </p>
-                <ol>
-                  {recoveryCodes.codes.map((code) => (
-                    <li key={code}>
-                      <code>{code}</code>
-                    </li>
-                  ))}
-                </ol>
-                <div className="button-row">
+              )}
+              {session.reauthenticated_at === null ? (
+                <p className="muted">
+                  Reauthenticate before generating or replacing recovery codes.
+                </p>
+              ) : recoveryCodes === null ? (
+                liveRecoverySet === null ? (
+                  <button
+                    disabled={isSubmitting}
+                    onClick={issueRecoveryCodes}
+                    type="button"
+                  >
+                    Generate one-time recovery codes
+                  </button>
+                ) : liveRecoverySet === undefined ? (
+                  // Nothing while the read runs (review round 2).
+                  liveRecoverySetFailed && (
+                    <p className="muted">
+                      Your recovery codes could not be checked. Reload the page
+                      to try again.
+                    </p>
+                  )
+                ) : (
                   <button
                     disabled={isSubmitting}
                     onClick={regenerateRecoveryCodes}
                     type="button"
                   >
-                    Invalidate and replace this set
+                    Replace my recovery codes
                   </button>
-                  <button
-                    onClick={() => {
-                      setRecoveryCodes(null);
-                      setNotice(
-                        "Recovery codes were cleared from this screen and cannot be displayed again.",
-                      );
-                    }}
-                    type="button"
-                  >
-                    I saved these codes—clear them
-                  </button>
-                </div>
-              </div>
-            )}
-          </section>
-        </section>
-      </div>
-      <div
-        className="shell-page"
-        data-page="settings"
-        hidden={!shown("settings") && !shown("access")}
-      >
-        {/* UI v81: Users and access is its own menu item, drawn by the same component so the
-            earlier forms are mounted once. */}
-        <SettingsPage
-          active={shown("settings") || shown("access")}
-          mode={shown("access") ? "access" : "settings"}
-          propertyId={propertyId || (propertyConfiguration?.property_id ?? "")}
-          unitApi={unitApi ?? defaultUnitApi}
-          capabilities={capabilities}
-          earlier={{
-            business: (
-              <section className="workspace-panel">
-                <section
-                  aria-labelledby="business-configuration-heading"
-                  className="information-card"
+                )
+              ) : (
+                <div
+                  aria-label="One-time recovery codes"
+                  className="one-time-material"
+                  role="region"
                 >
-                  <h3 id="business-configuration-heading">
-                    {propertyConfigurationAuthorized
-                      ? "Business configuration"
-                      : "Business configuration access"}
-                  </h3>
-                  {propertyConfigurationAuthorized ? (
-                    <p>
-                      The server authorized this Property. A change needs{" "}
-                      <code>settings.manage</code>, and the server checks the
-                      current version for every change. The fixed timezone is
-                      shown as an authoritative value, not an editable source
-                      field.
-                    </p>
-                  ) : (
-                    <p>
-                      Enter the exact Property identifier. The server must
-                      confirm
-                      <code> settings.manage</code> or{" "}
-                      <code>property.manage</code> for that Property before any
-                      management screen or editing control is shown.
-                    </p>
-                  )}
-                  <form
-                    className="form-stack inline-form"
-                    onSubmit={loadPropertyConfiguration}
+                  <p>
+                    <strong>Shown once:</strong> save each code outside this
+                    application. Each code can be used only once.
+                  </p>
+                  <ol>
+                    {recoveryCodes.codes.map((code) => (
+                      <li key={code}>
+                        <code>{code}</code>
+                      </li>
+                    ))}
+                  </ol>
+                  <div className="button-row">
+                    <button
+                      disabled={isSubmitting}
+                      onClick={regenerateRecoveryCodes}
+                      type="button"
+                    >
+                      Invalidate and replace this set
+                    </button>
+                    <button
+                      onClick={() => {
+                        setRecoveryCodes(null);
+                        setNotice(
+                          "Recovery codes were cleared from this screen and cannot be displayed again.",
+                        );
+                      }}
+                      type="button"
+                    >
+                      I saved these codes—clear them
+                    </button>
+                  </div>
+                </div>
+              )}
+            </section>
+          </section>
+        </div>
+        <div
+          className="shell-page"
+          data-page="settings"
+          hidden={!shown("settings") && !shown("access")}
+        >
+          {/* UI v81: Users and access is its own menu item, drawn by the same component so the
+            earlier forms are mounted once. */}
+          <SettingsPage
+            active={shown("settings") || shown("access")}
+            mode={shown("access") ? "access" : "settings"}
+            propertyId={
+              propertyId || (propertyConfiguration?.property_id ?? "")
+            }
+            unitApi={unitApi ?? defaultUnitApi}
+            capabilities={capabilities}
+            earlier={{
+              business: (
+                <section className="workspace-panel">
+                  <section
+                    aria-labelledby="business-configuration-heading"
+                    className="information-card"
                   >
-                    <div className="form-field">
-                      <label htmlFor="configuration-property-id">
-                        Configuration Property identifier
-                      </label>
-                      <input
-                        id="configuration-property-id"
-                        onChange={(event) => {
-                          invalidatePropertyConfiguration();
-                          setPropertyConfigurationStatus(null);
-                          setConfigurationPropertyId(event.currentTarget.value);
-                        }}
-                        required
-                        value={configurationPropertyId}
-                      />
-                    </div>
-                    <button type="submit">Load business configuration</button>
-                  </form>
-                  {propertyConfigurationStatus !== null && (
-                    <p role="status">{propertyConfigurationStatus}</p>
-                  )}
-                  {propertyConfiguration !== null && (
-                    <div className="administration-grid">
-                      <section aria-labelledby="property-source-heading">
-                        <h4 id="property-source-heading">
-                          Property source data
-                        </h4>
-                        <dl className="detail-list">
-                          <div>
-                            <dt>Timezone</dt>
-                            <dd>{propertyConfiguration.timezone_name}</dd>
-                          </div>
-                          <div>
-                            <dt>Version</dt>
-                            <dd>{propertyConfiguration.version}</dd>
-                          </div>
-                        </dl>
-                        <form
-                          className="form-stack"
-                          key={`property-source-${String(propertyConfiguration.version)}`}
-                          onSubmit={updatePropertySource}
-                        >
-                          <div className="form-field">
-                            <label htmlFor="property-name">Property name</label>
-                            <input
-                              defaultValue={propertyConfiguration.name}
-                              id="property-name"
-                              name="property-name"
-                              required
-                            />
-                          </div>
-                          <div className="form-field">
-                            <label htmlFor="property-address">
-                              Property address
-                            </label>
-                            <textarea
-                              defaultValue={
-                                propertyConfiguration.address_text ?? ""
-                              }
-                              id="property-address"
-                              name="property-address"
-                            />
-                          </div>
-                          <button type="submit">
-                            Save Property source data
+                    <h3 id="business-configuration-heading">
+                      {propertyConfigurationAuthorized
+                        ? "Business configuration"
+                        : "Business configuration access"}
+                    </h3>
+                    {propertyConfigurationAuthorized ? (
+                      <p>
+                        The server authorized this Property. A change needs{" "}
+                        <code>settings.manage</code>, and the server checks the
+                        current version for every change. The fixed timezone is
+                        shown as an authoritative value, not an editable source
+                        field.
+                      </p>
+                    ) : (
+                      <p>
+                        Enter the exact Property identifier. The server must
+                        confirm
+                        <code> settings.manage</code> or{" "}
+                        <code>property.manage</code> for that Property before
+                        any management screen or editing control is shown.
+                      </p>
+                    )}
+                    <form
+                      className="form-stack inline-form"
+                      onSubmit={loadPropertyConfiguration}
+                    >
+                      <div className="form-field">
+                        <label htmlFor="configuration-property-id">
+                          Configuration Property identifier
+                        </label>
+                        <input
+                          id="configuration-property-id"
+                          onChange={(event) => {
+                            invalidatePropertyConfiguration();
+                            setPropertyConfigurationStatus(null);
+                            setConfigurationPropertyId(
+                              event.currentTarget.value,
+                            );
+                          }}
+                          required
+                          value={configurationPropertyId}
+                        />
+                      </div>
+                      <button type="submit">Load business configuration</button>
+                    </form>
+                    {propertyConfigurationStatus !== null && (
+                      <p role="status">{propertyConfigurationStatus}</p>
+                    )}
+                    {propertyConfiguration !== null && (
+                      <div className="administration-grid">
+                        <section aria-labelledby="property-source-heading">
+                          <h4 id="property-source-heading">
+                            Property source data
+                          </h4>
+                          <dl className="detail-list">
+                            <div>
+                              <dt>Timezone</dt>
+                              <dd>{propertyConfiguration.timezone_name}</dd>
+                            </div>
+                            <div>
+                              <dt>Version</dt>
+                              <dd>{propertyConfiguration.version}</dd>
+                            </div>
+                          </dl>
+                          <form
+                            className="form-stack"
+                            key={`property-source-${String(propertyConfiguration.version)}`}
+                            onSubmit={updatePropertySource}
+                          >
+                            <div className="form-field">
+                              <label htmlFor="property-name">
+                                Property name
+                              </label>
+                              <input
+                                defaultValue={propertyConfiguration.name}
+                                id="property-name"
+                                name="property-name"
+                                required
+                              />
+                            </div>
+                            <div className="form-field">
+                              <label htmlFor="property-address">
+                                Property address
+                              </label>
+                              <textarea
+                                defaultValue={
+                                  propertyConfiguration.address_text ?? ""
+                                }
+                                id="property-address"
+                                name="property-address"
+                              />
+                            </div>
+                            <button type="submit">
+                              Save Property source data
+                            </button>
+                          </form>
+                        </section>
+                        <section aria-labelledby="payment-methods-heading">
+                          <h4 id="payment-methods-heading">Payment Methods</h4>
+                          {propertyConfiguration.payment_methods.length ===
+                          0 ? (
+                            <p>No Payment Methods are configured.</p>
+                          ) : (
+                            <ul className="record-list">
+                              {propertyConfiguration.payment_methods.map(
+                                (method) => (
+                                  <li key={method.code}>
+                                    <label>
+                                      <input
+                                        checked={method.accepted}
+                                        onChange={(event) => {
+                                          const accepted =
+                                            event.currentTarget.checked;
+                                          setPropertyConfiguration({
+                                            ...propertyConfiguration,
+                                            payment_methods:
+                                              propertyConfiguration.payment_methods.map(
+                                                (candidate) =>
+                                                  candidate.code === method.code
+                                                    ? { ...candidate, accepted }
+                                                    : candidate,
+                                              ),
+                                          });
+                                        }}
+                                        type="checkbox"
+                                      />
+                                      {method.display_name} ({method.code})
+                                      accepted
+                                    </label>
+                                  </li>
+                                ),
+                              )}
+                            </ul>
+                          )}
+                          <form
+                            className="form-stack"
+                            onSubmit={addPaymentMethod}
+                          >
+                            <div className="form-field">
+                              <label htmlFor="payment-method-code">
+                                Method code
+                              </label>
+                              <input
+                                id="payment-method-code"
+                                name="payment-method-code"
+                                required
+                              />
+                            </div>
+                            <div className="form-field">
+                              <label htmlFor="payment-method-name">
+                                Method display name
+                              </label>
+                              <input
+                                id="payment-method-name"
+                                name="payment-method-name"
+                                required
+                              />
+                            </div>
+                            <button type="submit">Add Payment Method</button>
+                          </form>
+                          <button onClick={savePaymentMethods} type="button">
+                            Save Payment Method configuration
                           </button>
-                        </form>
-                      </section>
-                      <section aria-labelledby="payment-methods-heading">
-                        <h4 id="payment-methods-heading">Payment Methods</h4>
-                        {propertyConfiguration.payment_methods.length === 0 ? (
-                          <p>No Payment Methods are configured.</p>
-                        ) : (
-                          <ul className="record-list">
-                            {propertyConfiguration.payment_methods.map(
-                              (method) => (
-                                <li key={method.code}>
-                                  <label>
-                                    <input
-                                      checked={method.accepted}
-                                      onChange={(event) => {
-                                        const accepted =
-                                          event.currentTarget.checked;
-                                        setPropertyConfiguration({
-                                          ...propertyConfiguration,
-                                          payment_methods:
-                                            propertyConfiguration.payment_methods.map(
-                                              (candidate) =>
-                                                candidate.code === method.code
-                                                  ? { ...candidate, accepted }
-                                                  : candidate,
-                                            ),
-                                        });
-                                      }}
-                                      type="checkbox"
-                                    />
-                                    {method.display_name} ({method.code})
-                                    accepted
-                                  </label>
-                                </li>
-                              ),
-                            )}
-                          </ul>
-                        )}
-                        <form
-                          className="form-stack"
-                          onSubmit={addPaymentMethod}
-                        >
-                          <div className="form-field">
-                            <label htmlFor="payment-method-code">
-                              Method code
-                            </label>
-                            <input
-                              id="payment-method-code"
-                              name="payment-method-code"
-                              required
-                            />
-                          </div>
-                          <div className="form-field">
-                            <label htmlFor="payment-method-name">
-                              Method display name
-                            </label>
-                            <input
-                              id="payment-method-name"
-                              name="payment-method-name"
-                              required
-                            />
-                          </div>
-                          <button type="submit">Add Payment Method</button>
-                        </form>
-                        <button onClick={savePaymentMethods} type="button">
-                          Save Payment Method configuration
-                        </button>
-                        <p className="panel-help">
-                          Retired methods remain visible and are never deleted
-                          from configuration history.
-                        </p>
-                      </section>
-                    </div>
-                  )}
+                          <p className="panel-help">
+                            Retired methods remain visible and are never deleted
+                            from configuration history.
+                          </p>
+                        </section>
+                      </div>
+                    )}
+                  </section>
                 </section>
-              </section>
-            ),
-            rates: (
-              <section className="workspace-panel">
-                <ConfigurationManagement
-                  api={effectiveConfigApi}
-                  propertyId={propertyConfiguration?.property_id ?? ""}
-                />
-              </section>
-            ),
-          }}
-          healthApi={healthApi}
-          language={language}
-          myUserId={session.actor_id}
-          reauthenticate={reauthenticateForSettings}
-          usersApi={administrationApi}
-          staff={(hrApi ?? defaultHrApi).employees}
-          rolesApi={rolesApi}
-          businessApi={businessApi}
-          ratesApi={effectiveConfigApi}
-          testApp={environment !== "production"}
-        />
-      </div>
-    </AppShell>
+              ),
+              rates: (
+                <section className="workspace-panel">
+                  <ConfigurationManagement
+                    api={effectiveConfigApi}
+                    propertyId={propertyConfiguration?.property_id ?? ""}
+                  />
+                </section>
+              ),
+            }}
+            healthApi={healthApi}
+            language={language}
+            myUserId={session.actor_id}
+            reauthenticate={reauthenticateForSettings}
+            usersApi={administrationApi}
+            staff={(hrApi ?? defaultHrApi).employees}
+            rolesApi={rolesApi}
+            businessApi={businessApi}
+            ratesApi={effectiveConfigApi}
+            testApp={environment !== "production"}
+          />
+        </div>
+      </AppShell>
+    </BuildingChoiceProvider>
   );
 }
