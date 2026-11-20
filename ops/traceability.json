@@ -72576,6 +72576,104 @@
       "test_path": "frontend/src/shell/buildingChoice.test.tsx",
       "status": "implemented",
       "notes": "DL-250 buildings step 4: Home and Payments count all buildings and say so while one building is chosen."
+    },
+    {
+      "test_id": "test_migration_is_the_single_head_and_forward_only",
+      "upstream_ids": [
+        "DL-250",
+        "DB-PROP-002",
+        "DB-UNIT-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_building_short_stay_guard_migration.py",
+      "status": "implemented",
+      "notes": "DL-250 buildings step 5: migration 20270811_434 is the single head and forward-only."
+    },
+    {
+      "test_id": "test_papers_name_the_building_only_with_two_buildings",
+      "upstream_ids": [
+        "DL-250",
+        "DB-PROP-002",
+        "DB-UNIT-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_building_short_stay_guard_migration.py",
+      "status": "implemented",
+      "notes": "DL-250 buildings step 5: the Unit's building heading exists only with two or more buildings; the Telegram Invoice read adds it; only the wrapper is open to the runtime."
+    },
+    {
+      "test_id": "test_a_building_without_short_stays_refuses_bookings_and_leaves_the_calendar",
+      "upstream_ids": [
+        "DL-250",
+        "DB-PROP-002",
+        "DB-UNIT-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_building_short_stay_guard_migration.py",
+      "status": "implemented",
+      "notes": "DL-250 buildings step 5: no new or moved booking in a building with Takes short stays off; the Calendar hides its Units unless they still have a booking."
+    },
+    {
+      "test_id": "test_runtime_reads_the_open_calendar_only_through_the_function",
+      "upstream_ids": [
+        "DL-250",
+        "DB-PROP-002",
+        "DB-UNIT-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_building_short_stay_guard_migration.py",
+      "status": "implemented",
+      "notes": "DL-250 buildings step 5: the runtime may run the open Calendar read but not the guard."
+    },
+    {
+      "test_id": "test_with_two_buildings_the_page_names_the_units_building_under_the_business",
+      "upstream_ids": [
+        "DL-250"
+      ],
+      "test_level": "unit",
+      "test_path": "backend/tests/test_aba_invoice_qr.py",
+      "status": "implemented",
+      "notes": "DL-250 buildings step 5: the Invoice PDF names the Unit's building and address, escaped, only when given."
+    },
+    {
+      "test_id": "TEST-FE-2321",
+      "upstream_ids": [
+        "DL-250"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shell/buildingPapers.test.tsx",
+      "status": "implemented",
+      "notes": "DL-250 buildings step 5: the Invoice names the Unit's building under the business name only with two or more buildings."
+    },
+    {
+      "test_id": "TEST-FE-2322",
+      "upstream_ids": [
+        "DL-250"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shell/buildingPapers.test.tsx",
+      "status": "implemented",
+      "notes": "DL-250 buildings step 5: the Receipt names the Unit's building under the business name only with two or more buildings."
+    },
+    {
+      "test_id": "TEST-FE-2323",
+      "upstream_ids": [
+        "DL-250"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shell/buildingPapers.test.tsx",
+      "status": "implemented",
+      "notes": "DL-250 buildings step 5: the papers find a building by Unit number only with two or more buildings."
+    },
+    {
+      "test_id": "TEST-FE-2324",
+      "upstream_ids": [
+        "DL-250"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/shell/buildingPapers.test.tsx",
+      "status": "implemented",
+      "notes": "DL-250 buildings step 5: a booking refused for a building without short stays says how to fix it."
     }
   ]
 }

@@ -267,7 +267,8 @@ class PostgresShortStayFlow:
     def calendar(self, property_id: UUID, start: date, days: int, *, actor_id: str) -> Json:
         return _json(
             self._one(
-                "SELECT app.short_stay_calendar(%s, %s, %s, %s)",
+                # DL-250 step 5: without the Units of a building that does not take short stays.
+                "SELECT app.short_stay_calendar_open(%s, %s, %s, %s)",
                 (property_id, start, days, UUID(actor_id)),
             )
         )

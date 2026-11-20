@@ -166,6 +166,12 @@ const TEXT = {
   ],
   e_site: ["Name the booking site.", "ដាក់ឈ្មោះគេហទំព័រកក់។"],
   e_guests: ["Guests are 1 to 10.", "ភ្ញៀវពី 1 ដល់ 10 នាក់។"],
+  // DL-250 step 5: the Unit's building has "Takes short stays" off (Settings › Unit setup).
+  e_building: [
+    "This Unit's building does not take short stays. Turn on Takes short stays in Settings › Unit setup › Buildings, or choose another Unit.",
+    // new
+    "អគាររបស់បន្ទប់នេះមិនទទួលការស្នាក់នៅខ្លីទេ។ សូមបើក «ទទួលការស្នាក់នៅខ្លី» ក្នុងការកំណត់ › ការរៀបចំបន្ទប់ › អគារ ឬជ្រើសបន្ទប់ផ្សេង។",
+  ],
   e_free: [
     "These nights cannot be booked in this Unit.",
     // new

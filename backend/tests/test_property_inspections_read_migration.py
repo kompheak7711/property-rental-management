@@ -35,7 +35,7 @@ def test_migration_422_follows_430_and_is_forward_only() -> None:
     scripts = ScriptDirectory.from_config(config)
     revision = scripts.get_revision(REVISION)
     assert revision is not None and revision.down_revision == "20270806_430"
-    assert scripts.get_heads() == ["20270810_433"]  # buildings 433 follows 432
+    assert scripts.get_heads() == ["20270811_434"]  # building short-stay guard 434 follows 433
     with pytest.raises(NotImplementedError, match="forward-only"):
         revision.module.downgrade()
 

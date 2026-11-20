@@ -6,6 +6,7 @@
 // a Draft made with Create Invoice again (DL-103). D6 (DL-239): Delete Draft takes a Draft made by
 // a person out of the list; one that another record uses is made Void instead.
 
+import { useBuildingChoice } from "../shell/buildingChoice";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BackLink } from "../shell/backNav";
 
@@ -257,6 +258,7 @@ export function InvoiceDetail({
   today: string;
   capabilities: ReadonlySet<string> | null;
 }) {
+  const { buildingOfUnitNumber } = useBuildingChoice();
   const [invoice, setInvoice] = useState<InvoiceResource | null>(null);
   const [problem, setProblem] = useState<"missing" | "failed" | null>(null);
   const [dialog, setDialog] = useState<
@@ -727,6 +729,7 @@ export function InvoiceDetail({
               invoice={invoice}
               name={name}
               phone={data?.phones.get(invoice.customer_id) ?? null}
+              building={buildingOfUnitNumber(unit)}
               unit={unit}
             />
           </SheetFrame>

@@ -16,6 +16,7 @@
 .doc .logo{height:17mm;width:auto;display:block}
 .doc .biz{margin-top:3mm;color:#5C625E;font-size:8pt;line-height:1.5}
 .doc .biz b{color:#252A28;font-weight:600}
+.doc .biz .bld{display:block}
 .doc .title{text-align:right}
 .doc .title>.kh{display:block;font-size:17pt;font-weight:600;color:#4D6153;line-height:1.5}
 .doc .title>.en{display:block;font-family:"Spectral SC",Georgia,serif;font-weight:500;font-size:20pt;letter-spacing:.06em;color:#4D6153;line-height:1}

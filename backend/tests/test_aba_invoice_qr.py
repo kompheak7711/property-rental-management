@@ -179,6 +179,32 @@ def test_names_are_escaped() -> None:
     assert "&lt;b&gt;Dara&lt;/b&gt;" in html and "<b>Dara</b>" not in html
 
 
+def test_with_two_buildings_the_page_names_the_units_building_under_the_business() -> None:
+    """DL-250 step 5: the building's name and address, escaped; nothing with one building."""
+    assert '<span class="bld">' not in page(rent_invoice())
+    html = invoice_html(
+        rent_invoice(),
+        customer_name="Sok Dara",
+        customer_phone=None,
+        unit="B101",
+        qr=qr(),
+        building={"name": "Building Two", "address": "Street <2>, Phnom Penh"},
+    )
+    assert (
+        '<b>CHETANA Residence</b><span class="bld">Building Two</span>'
+        '<span class="bld">Street &lt;2&gt;, Phnom Penh</span>'
+    ) in html
+    no_address = invoice_html(
+        rent_invoice(),
+        customer_name="Sok Dara",
+        customer_phone=None,
+        unit="B101",
+        qr=qr(),
+        building={"name": "Building Two", "address": None},
+    )
+    assert no_address.count('<span class="bld">') == 1
+
+
 @pytest.mark.parametrize(
     ("changes", "amount", "code"),
     [

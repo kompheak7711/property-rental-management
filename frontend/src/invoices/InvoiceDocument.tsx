@@ -3,6 +3,8 @@
 // language of the app, dates dd/mm/yyyy, and the ABA KHQR code at the bottom. The Invoice page
 // shows it at once, scaled to its column; Print Invoice prints only this sheet.
 
+import type { Building } from "../buildingClient";
+import { BuildingLines } from "../shell/buildingChoice";
 import "./invoiceDocument.css";
 
 import { type ReactNode, useEffect, useRef } from "react";
@@ -115,11 +117,14 @@ export function InvoiceDocument({
   name,
   phone,
   unit,
+  building,
 }: {
   invoice: InvoiceResource;
   name: string | null;
   phone: string | null;
   unit: string;
+  /** DL-250 step 5: the Unit's building, only with two or more buildings. */
+  building?: Building | null;
 }) {
   const draft = invoice.status === "DRAFT";
   const voided = invoice.status === "VOID";
@@ -145,6 +150,7 @@ export function InvoiceDocument({
           <img alt="CHETANA" className="logo" src={logoUrl} />
           <div className="biz">
             <b>CHETANA Residence</b>
+            <BuildingLines building={building ?? null} />
           </div>
         </div>
         <div className="title">

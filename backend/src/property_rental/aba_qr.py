@@ -229,6 +229,7 @@ def invoice_document(
         customer_phone=info.get("customer_phone"),
         unit=info.get("unit"),
         qr=InvoiceQr(qr_png(qr_string), to_pay, expires.astimezone(zone).date()),
+        building=info.get("building"),
     )
     return InvoiceDocument(pdf, f"{invoice['invoice_number']}.pdf", tran_id)
 
