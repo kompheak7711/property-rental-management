@@ -194,8 +194,8 @@ const TEXT = {
   lp_price: ["{0} a month, fixed", "{0} ក្នុងមួយខែ ថេរ"],
   lp_no_vehicle: ["No vehicle yet", "មិនទាន់មានយានយន្ត"],
   lp_none: [
-    "No space picked yet. Until a space is picked, the parking is billed at the Service rate in Settings.",
-    "មិនទាន់ជ្រើសកន្លែងទេ។ រហូតដល់ជ្រើសកន្លែង ការចំណតត្រូវគិតតាមតម្លៃសេវាក្នុងការកំណត់។",
+    "No space picked yet. Pick a space before you sign the Lease.",
+    "មិនទាន់ជ្រើសកន្លែងទេ។ សូមជ្រើសកន្លែងមុនពេលចុះហត្ថលេខាលើកិច្ចសន្យា។",
   ],
   lp_pick: ["Pick space", "ជ្រើសកន្លែង"],
   lp_pick_title: ["Pick a space · {0}", "ជ្រើសកន្លែង · {0}"],

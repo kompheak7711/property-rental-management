@@ -91,7 +91,7 @@ describe("Lease Parking card (DL-253)", () => {
     render(<LeaseParkingCard api={api} language="en" leaseId="lease-1" />);
     expect(
       await screen.findByText(
-        "No space picked yet. Until a space is picked, the parking is billed at the Service rate in Settings.",
+        "No space picked yet. Pick a space before you sign the Lease.",
       ),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Pick space" }));

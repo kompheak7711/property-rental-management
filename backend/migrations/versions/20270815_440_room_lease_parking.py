@@ -4,7 +4,8 @@
 Owner decision of 20 Nov 2026 (decision card, option "The space's price"): a room tenant who has
 parking on the Lease pays the price of the space picked (its Parking Type price or its own price)
 on the same Rent Invoice. The price is copied when the space is picked and never changes after.
-Without a space picked, the Parking Service keeps its rate in Settings, as before.
+Owner decision of 20 Nov 2026 (decision card, option "Pick a space before signing"): a room Lease
+with parking cannot be signed until each parking Service on it has a space picked.
 
 1. `parking_space_holds.monthly_price_usd_cents`: the price a month copied from the space when a
    room Lease picks it (Way A; required there). It never changes.
@@ -16,6 +17,7 @@ Without a space picked, the Parking Service keeps its rate in Settings, as befor
    free spaces that fit, and the vehicles of the people on the Lease.
 5. The Rent Invoice generator, the issue checks and the signing preview bill a term that holds a
    space at the space's price (no Service rate on that line).
+6. `app.sign_lease` refuses a room Lease whose parking Service has no space picked.
 
 Technical shape by Claude under the owner's 2026-10-23 22:30 rule. Additive, forward-only. The
 generator, issue checks and preview are patched in place, as migration 237 did.
@@ -289,6 +291,32 @@ PREVIEW_PATCH = (
 )
 
 
+SIGN = "app.sign_lease(uuid,uuid,text,uuid,uuid,integer,timestamptz,text,uuid)"
+SIGN_TERMS = """            THEN RAISE EXCEPTION 'Lease terms are incomplete' USING ERRCODE = '23514'; END IF;
+"""
+SIGN_PATCH = (
+    (
+        SIGN_TERMS,
+        SIGN_TERMS
+        + """            -- DL-253 (owner 20 Nov 2026): parking on a room Lease needs its space first.
+            IF EXISTS (
+                SELECT 1 FROM app.lease_service_terms AS term
+                JOIN app.property_services AS service ON service.id = term.property_service_id
+                JOIN app.service_types AS kind ON kind.id = service.service_type_id
+                JOIN app.units AS unit ON unit.id = v_lease.unit_id
+                WHERE term.lease_id = p_lease_id AND kind.needs_parking_space
+                  AND unit.unit_kind = 'HOME'
+                  AND NOT EXISTS (SELECT 1 FROM app.parking_space_holds AS hold
+                      WHERE hold.lease_service_term_id = term.id AND hold.voided_at IS NULL)
+            ) THEN
+                RAISE EXCEPTION 'Pick a parking space before signing'
+                    USING ERRCODE = '23514', HINT = 'PARKING_SPACE_NOT_PICKED';
+            END IF;
+""",
+    ),
+)
+
+
 def _patch(signature: str, replacements: tuple[tuple[str, str], ...]) -> None:
     definition = (
         op.get_bind()
@@ -312,6 +340,7 @@ def upgrade() -> None:
     _patch(GENERATOR, GENERATOR_PATCH)
     _patch(ISSUE, ISSUE_PATCH)
     _patch(PREVIEW, PREVIEW_PATCH)
+    _patch(SIGN, SIGN_PATCH)
 
 
 def downgrade() -> None:

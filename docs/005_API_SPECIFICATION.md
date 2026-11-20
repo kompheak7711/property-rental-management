@@ -320,6 +320,7 @@ Added by DL-253 (parking step 3b, migration `20270815_440`).
 
 - `GET /leases/{lease_id}/parking` (`leases.read` or `leases.draft`; 404 when neither) answers `lease_status`, `terms` (each parking Service term of a room Lease: `lease_service_term_id`, `service_name`, `service_name_km`, `held_from`, `held_until`, `hold` or null, and `free_spaces` that are free on those days with `unit_id`, `unit_number`, `parking_type`, `area`, `monthly_price_usd_cents`), `vehicles` of the people on the Lease, and `can_pick`.
 - `POST /leases/{lease_id}/parking-holds` (201; `leases.draft`, Origin and CSRF) takes `lease_service_term_id`, `space_unit_id` and optional `vehicle_id`. The space's price is copied (`monthly_price_usd_cents`) and never changes. Refusals (409) carry `PARKING_ALREADY_HELD`, `PARKING_SPACE_TAKEN`, `VEHICLE_TYPE`, `VEHICLE_NOT_OF_LEASE`, `PARKING_KEPT_FOR_GUESTS`, `TYPE_HAS_NO_PRICE` or `LEASE_CLOSED`.
+- Sign Lease refuses a room Lease while a parking Service on it has no space picked: `SIGNING_PARKING_SPACE_MISSING` (409; owner decision 20 Nov 2026).
 
 # 10. Customer Endpoints
 

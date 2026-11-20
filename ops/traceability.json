@@ -73076,7 +73076,7 @@
       "notes": "DL-253 parking step 3b: a picked space is billed at its price on the Rent Invoice; the price never changes."
     },
     {
-      "test_id": "test_parking_without_a_space_keeps_the_service_rate",
+      "test_id": "test_a_lease_with_parking_is_signed_only_after_its_space_is_picked",
       "upstream_ids": [
         "DL-253",
         "DB-PARK-001"
@@ -73084,7 +73084,7 @@
       "test_level": "DB",
       "test_path": "backend/tests/test_room_lease_parking_migration.py",
       "status": "implemented",
-      "notes": "DL-253 parking step 3b: parking without a space keeps the Service rate."
+      "notes": "DL-253 parking step 3b (owner 20 Nov 2026): a room Lease with parking is signed only after its space is picked."
     },
     {
       "test_id": "test_a_space_is_picked_only_for_an_open_room_lease_with_a_priced_space",

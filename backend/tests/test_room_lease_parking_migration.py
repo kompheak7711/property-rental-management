@@ -1,8 +1,8 @@
 """PostgreSQL tests for parking on a room Lease (migration 20270815_440, DL-253 step 3b).
 
 Owner decision of 20 Nov 2026: a room tenant pays the price of the space picked, on the same Rent
-Invoice. The price is copied when the space is picked and never changes after; without a space,
-the Parking Service keeps its rate in Settings.
+Invoice. The price is copied when the space is picked and never changes after. A second owner
+decision the same day: such a Lease cannot be signed until its space is picked.
 """
 
 from __future__ import annotations
@@ -245,16 +245,37 @@ def test_a_picked_space_is_billed_at_its_price_on_the_rent_invoice(
     assert _parking_lines(url, invoice) == [(3500, 3500, None, None, 3500, "UNPAID")]
 
 
-def test_parking_without_a_space_keeps_the_service_rate(migrated_database_url: str) -> None:
+def test_a_lease_with_parking_is_signed_only_after_its_space_is_picked(
+    migrated_database_url: str,
+) -> None:
     case = _parking_lease(migrated_database_url, rate=2000)
-    with psycopg.connect(case["url"]) as connection:
-        sign_lease(connection, case["lease"], case["actor"])
-    invoice = _initial_invoice(case)
-    ((amount, contractual, line_rate, component_rate, monthly, status),) = _parking_lines(
-        case["url"], invoice
-    )
-    assert (amount, contractual, monthly, status) == (2000, 2000, 2000, "UNPAID")
-    assert line_rate is not None and line_rate == component_rate
+    url = case["url"]
+
+    def sign() -> tuple[str, str]:
+        version = _one(url, "SELECT version FROM app.leases WHERE id = %s", case["lease"])[0]
+        with psycopg.connect(url) as connection:
+            try:
+                connection.execute(
+                    "SELECT app.sign_lease(%s, %s, %s, %s, %s, %s, statement_timestamp(), "
+                    "'Signed', %s)",
+                    (
+                        case["prop"],
+                        uuid4(),
+                        hashlib.sha256(uuid4().bytes).hexdigest(),
+                        uuid4(),
+                        case["lease"],
+                        version,
+                        case["actor"],
+                    ),
+                )
+            except psycopg.Error as error:
+                return str(error.sqlstate), str(error.diag.message_hint or "")
+        return "signed", ""
+
+    assert sign() == ("23514", "PARKING_SPACE_NOT_PICKED")
+    _hold(case)
+    assert sign() == ("signed", "")
+    assert _one(url, "SELECT status FROM app.leases WHERE id = %s", case["lease"]) == ("SIGNED",)
 
 
 def test_a_space_is_picked_only_for_an_open_room_lease_with_a_priced_space(
