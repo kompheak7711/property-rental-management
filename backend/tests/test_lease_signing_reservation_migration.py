@@ -52,7 +52,9 @@ UNIT_SETUP_COLUMNS = (
     # C2 (DL-241): a stored holder word becomes the condition VACANT, one version later.
     "'status','version','updated_at',"
     # DL-250 (migration 433): every Unit goes into building 1.
-    "'building_id']"
+    "'building_id',"
+    # DL-253 (migration 437): every Unit is a room, with no parking places.
+    "'unit_kind','parking_capacity','kept_for_short_stay_guests']"
 )
 
 

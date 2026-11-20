@@ -119,7 +119,9 @@ def test_upgrade_keeps_every_earlier_record(migrated_database_url: str) -> None:
             "to_jsonb(t)-ARRAY['floor_item_id','size_square_metres','bedrooms','bathrooms',"
             "'view_item_id','kitchen_item_id','notes',"
             "'default_monthly_rent_usd_cents','for_rent','status','version','updated_at',"
-            "'building_id']"
+            "'building_id',"
+            # DL-253 (migration 437): every Unit is a room, with no parking places.
+            "'unit_kind','parking_capacity','kept_for_short_stay_guests']"
         )
         tables = {
             "audit_events": (
