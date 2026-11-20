@@ -2,6 +2,8 @@
 // a space (and a vehicle of someone on the Lease). The owner's rule of 20 Nov 2026: the tenant
 // pays the price of the space picked; it is copied when the space is picked and never changes.
 
+import { VEHICLE_TYPES, type VehicleType } from "./vehiclesClient";
+
 export interface LeaseParkingHold {
   hold_id: string;
   space_number: string;
@@ -32,7 +34,7 @@ export interface LeaseParkingTerm {
 
 export interface LeaseParkingVehicle {
   vehicle_id: string;
-  vehicle_type: string;
+  vehicle_type: VehicleType;
   plate_text: string;
   customer_name: string | null;
 }
@@ -209,17 +211,20 @@ function term(value: unknown): LeaseParkingTerm {
 }
 
 function vehicle(value: unknown): LeaseParkingVehicle {
+  const type = isObject(value)
+    ? VEHICLE_TYPES.find((item) => item === value.vehicle_type)
+    : undefined;
   if (
     !isObject(value) ||
+    type === undefined ||
     typeof value.vehicle_id !== "string" ||
-    typeof value.vehicle_type !== "string" ||
     typeof value.plate_text !== "string"
   ) {
     throw new LeaseParkingError("FAILED");
   }
   return {
     vehicle_id: value.vehicle_id,
-    vehicle_type: value.vehicle_type,
+    vehicle_type: type,
     plate_text: value.plate_text,
     customer_name: text(value.customer_name),
   };
