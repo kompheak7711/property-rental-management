@@ -609,6 +609,66 @@ function CloseAgreementDialog({
   );
 }
 
+// DL-259 (Q17): a parking customer from before the app paid no deposit, so their agreement is
+// signed with none. Only a Manager or the Owner, and only on a draft.
+function NoDepositDialog({
+  api,
+  language,
+  leaseId,
+  spaceNumber,
+  onClose,
+  onSaved,
+}: {
+  api: LeaseParkingApi;
+  language: Language;
+  leaseId: string;
+  spaceNumber: string;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [problem, setProblem] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (busy) return;
+    setBusy(true);
+    setProblem(null);
+    void api
+      .startWithoutDeposit(leaseId)
+      .then(() => {
+        onSaved();
+      })
+      .catch((error: unknown) => {
+        setBusy(false);
+        const code = error instanceof LeaseParkingError ? error.code : "FAILED";
+        setProblem(pt(language, `lp_r_${code}`));
+      });
+  }
+
+  return (
+    <Dialog
+      busy={busy}
+      closeLabel={pt(language, "cancel")}
+      onClose={onClose}
+      onSubmit={submit}
+      submitLabel={pt(language, "pn_ok")}
+      title={pt(language, "pn_title", spaceNumber)}
+    >
+      <p>{pt(language, "pn_text")}</p>
+      <p>
+        <b>{pt(language, "pn_reason")}</b>
+      </p>
+      {problem !== null && (
+        <p className="ui-error" role="alert">
+          <Icon name="alert" small />
+          <span>{problem}</span>
+        </p>
+      )}
+    </Dialog>
+  );
+}
+
 function AgreementCard({
   api,
   language,
@@ -633,6 +693,7 @@ function AgreementCard({
   const [changing, setChanging] = useState(false);
   const [ending, setEnding] = useState(false);
   const [closing, setClosing] = useState(false);
+  const [skipping, setSkipping] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const space = parking.space;
   const hold = parking.agreement_hold;
@@ -655,6 +716,10 @@ function AgreementCard({
     lease.end_date !== null &&
     lease.end_date <= today;
   const terminated = parking.lease_status === "TERMINATED";
+  const maySkipDeposit =
+    parking.lease_status === "DRAFTED" &&
+    parking.can_skip_deposit &&
+    parking.no_deposit_start === null;
 
   return (
     <section aria-labelledby="lease-parking" className="ui-card">
@@ -699,6 +764,9 @@ function AgreementCard({
                 )}
               </small>
             )}
+            {parking.no_deposit_start !== null && (
+              <small>{pt(language, "pn_set")}</small>
+            )}
           </span>
           {open ? (
             <button
@@ -736,8 +804,21 @@ function AgreementCard({
           )}
         </li>
       </ul>
-      {(mayEnd || mayClose || terminated) && (
+      {(mayEnd || mayClose || terminated || maySkipDeposit) && (
         <div className="ui-actions">
+          {maySkipDeposit && (
+            <button
+              className="ui-btn"
+              onClick={() => {
+                setNotice(null);
+                setSkipping(true);
+              }}
+              type="button"
+            >
+              <Icon name="lock" />
+              {pt(language, "pn_button")}
+            </button>
+          )}
           {mayEnd && (
             <button
               className="ui-btn"
@@ -783,6 +864,23 @@ function AgreementCard({
           onEnded={(endsOn) => {
             setEnding(false);
             setNotice(pt(language, "pe_saved", dayText(endsOn)));
+            reload();
+            onLeaseChanged?.();
+          }}
+          spaceNumber={spaceNumber}
+        />
+      )}
+      {skipping && (
+        <NoDepositDialog
+          api={api}
+          language={language}
+          leaseId={leaseId}
+          onClose={() => {
+            setSkipping(false);
+          }}
+          onSaved={() => {
+            setSkipping(false);
+            setNotice(pt(language, "pn_saved"));
             reload();
             onLeaseChanged?.();
           }}

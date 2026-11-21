@@ -1025,6 +1025,10 @@ const TEXT = {
     "ប្រាក់ត្រូវទទួលមុនចុះហត្ថលេខា",
   ],
   sp_deposit: ["Security Deposit", "ប្រាក់កក់សុវត្ថិភាព"],
+  sp_no_deposit: [
+    "No Security Deposit: customer from before the app",
+    "គ្មានប្រាក់កក់សុវត្ថិភាព៖ អតិថិជនពីមុនកម្មវិធី",
+  ],
   sp_deposit_rest: [
     "Rest of the Security Deposit ({0} of {1} received with the Booking)",
     "ប្រាក់កក់សុវត្ថិភាពដែលនៅសល់ (បានទទួល {0} នៃ {1} ជាមួយការកក់)",

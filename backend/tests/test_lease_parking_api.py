@@ -1,4 +1,4 @@
-"""HTTP tests for parking on a Lease (DL-253, DL-254, DL-255, DL-258), in-memory flow."""
+"""HTTP tests for parking on a Lease (DL-253 to DL-255, DL-258, DL-259), in-memory flow."""
 
 from __future__ import annotations
 
@@ -106,6 +106,13 @@ class InMemoryLeaseParkingFlow:
             "lease_id": str(lease_id),
             "ending": {"told_by": told_by, "told_on": told_on.isoformat(), "note": note},
         }
+
+    def start_without_deposit(self, lease_id: UUID, *, actor_id: str) -> dict[str, object]:
+        del actor_id
+        if self.hold_record is not None:  # stands for an agreement that already has it
+            raise LeaseParkingConflict("set", "NO_DEPOSIT_ALREADY_SET")
+        self.hold_record = {"lease_id": str(lease_id)}
+        return {"reason": "Customer from before the app"}
 
 
 def clients(property_id: UUID, flow: InMemoryLeaseParkingFlow) -> tuple[TestClient, ...]:
@@ -219,3 +226,28 @@ def test_a_manager_ends_a_month_to_month_agreement_by_notice() -> None:
     assert data["can_end"] is True
     blank = manager.post(url, headers=BROWSER, json={**body, "note": "  "})
     assert blank.json()["data"]["ending"]["note"] is None
+
+
+def test_a_manager_starts_a_customer_from_before_the_app_with_no_deposit() -> None:
+    property_id, lease_id = uuid4(), uuid4()
+    flow = InMemoryLeaseParkingFlow(property_id, lease_id)
+    drafter, reader, _ = clients(property_id, flow)
+    manager = TestClient(
+        create_app(
+            actor_resolver=lambda _: actor_with(property_id, "deposits.manage"),
+            lease_parking_flow=flow,
+        )
+    )
+    url = f"/leases/{lease_id}/no-deposit-start"
+
+    # Only a Manager or the Owner (deposits.manage) may; they also read the card.
+    assert drafter.get(f"/leases/{lease_id}/parking").json()["data"]["can_skip_deposit"] is False
+    assert manager.get(f"/leases/{lease_id}/parking").json()["data"]["can_skip_deposit"] is True
+    assert drafter.post(url, headers=BROWSER).status_code == 403
+    assert reader.post(url, headers=BROWSER).status_code == 403
+    assert manager.post(url).status_code == 403  # no browser proof
+    started = manager.post(url, headers=BROWSER)
+    assert started.status_code == 201
+    assert started.json()["data"] == {"reason": "Customer from before the app"}
+    again = manager.post(url, headers=BROWSER)
+    assert again.status_code == 409 and again.json()["error"]["code"] == "NO_DEPOSIT_ALREADY_SET"

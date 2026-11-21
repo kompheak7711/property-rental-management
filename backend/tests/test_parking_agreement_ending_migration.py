@@ -69,7 +69,7 @@ def _monthly(connection: Db, start: date, plate: str) -> tuple[UUID, UUID, UUID,
 
 def test_migration_is_the_single_head_and_forward_only() -> None:
     scripts = ScriptDirectory.from_config(Config(str(Path(__file__).parents[1] / "alembic.ini")))
-    assert scripts.get_heads() == [REVISION]
+    assert scripts.get_heads() == ["20270822_447"]  # step 5d follows 446
     revision = scripts.get_revision(REVISION)
     assert revision is not None and revision.down_revision == "20270820_445"
     with pytest.raises(RuntimeError, match="forward-only"):

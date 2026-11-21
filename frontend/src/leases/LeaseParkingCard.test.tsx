@@ -2,6 +2,7 @@
 // DL-254 (parking step 4b): the Parking agreement card. TEST-FE-2346.
 // DL-255 (parking step 4c): Change vehicle on a signed agreement. TEST-FE-2350.
 // DL-258 (parking step 5c): End agreement and Close agreement. TEST-FE-2354 and TEST-FE-2355.
+// DL-259 (parking step 5d): a customer from before the app starts with no deposit. TEST-FE-2356, 2357.
 
 import {
   cleanup,
@@ -80,6 +81,8 @@ const OPEN: LeaseParking = {
   month_to_month: false,
   space: null,
   agreement_hold: null,
+  can_skip_deposit: false,
+  no_deposit_start: null,
 };
 
 const HELD: LeaseParking = { ...OPEN, terms: [{ ...TERM, hold: HOLD }] };
@@ -119,6 +122,9 @@ function apiOf(overrides: Partial<LeaseParkingApi> = {}): LeaseParkingApi {
           note: null,
         },
       }),
+    ),
+    startWithoutDeposit: vi.fn<LeaseParkingApi["startWithoutDeposit"]>(() =>
+      Promise.resolve({ reason: "Customer from before the app" }),
     ),
     ...overrides,
   };
@@ -520,5 +526,105 @@ describe("Lease Parking card (DL-253)", () => {
     expect(
       await screen.findByRole("link", { name: "Open the Final Settlement" }),
     ).toHaveAttribute("href", "#/moveout/lease-9");
+  });
+  it("TEST-FE-2356 a Manager starts the draft agreement of a customer from before the app with no deposit; the card then says so and the button goes", async () => {
+    const draft: LeaseParking = {
+      ...OPEN,
+      lease_status: "DRAFTED",
+      terms: [],
+      can_pick: true,
+      can_skip_deposit: true,
+      on_parking_space: true,
+      month_to_month: true,
+      space: {
+        unit_id: "space-1",
+        unit_number: "P01",
+        parking_type: "COVERED",
+        area: null,
+      },
+      agreement_hold: null,
+    };
+    const started: LeaseParking = {
+      ...draft,
+      no_deposit_start: { reason: "Customer from before the app" },
+    };
+    const changed = vi.fn();
+    const api = apiOf({
+      read: vi
+        .fn<LeaseParkingApi["read"]>()
+        .mockResolvedValueOnce(draft)
+        .mockResolvedValue(started),
+    });
+    render(
+      <LeaseParkingCard
+        api={api}
+        language="en"
+        leaseId="lease-7"
+        onLeaseChanged={changed}
+      />,
+    );
+    fireEvent.click(await screen.findByRole("button", { name: "No deposit" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(
+      within(dialog).getByText("Reason: Customer from before the app"),
+    ).toBeInTheDocument();
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Start with no deposit" }),
+    );
+    await waitFor(() => {
+      expect(api.startWithoutDeposit).toHaveBeenCalledWith("lease-7");
+    });
+    expect(
+      await screen.findByText("This agreement will be signed with no deposit."),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByText("No deposit: customer from before the app"),
+    ).toBeInTheDocument();
+    expect(changed).toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: "No deposit" })).toBeNull();
+  });
+
+  it("TEST-FE-2357 a person without the deposit right sees no No deposit button, and a refusal shows its reason", async () => {
+    const draft: LeaseParking = {
+      ...OPEN,
+      lease_status: "DRAFTED",
+      terms: [],
+      on_parking_space: true,
+      month_to_month: true,
+      space: {
+        unit_id: "space-1",
+        unit_number: "P01",
+        parking_type: "COVERED",
+        area: null,
+      },
+    };
+    const { unmount } = render(
+      <LeaseParkingCard
+        api={apiOf({ read: vi.fn(() => Promise.resolve(draft)) })}
+        language="en"
+        leaseId="lease-7"
+      />,
+    );
+    expect(await screen.findByText(/Space P01/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "No deposit" })).toBeNull();
+    unmount();
+
+    const api = apiOf({
+      read: vi.fn(() => Promise.resolve({ ...draft, can_skip_deposit: true })),
+      startWithoutDeposit: vi.fn(() =>
+        Promise.reject(new LeaseParkingError("DEPOSIT_ALREADY_HELD")),
+      ),
+    });
+    render(<LeaseParkingCard api={api} language="en" leaseId="lease-7" />);
+    fireEvent.click(await screen.findByRole("button", { name: "No deposit" }));
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Start with no deposit" }),
+    );
+    expect(
+      await within(dialog).findByText(
+        "This draft already has a Security Deposit, from a Booking or an earlier agreement.",
+      ),
+    ).toBeInTheDocument();
   });
 });

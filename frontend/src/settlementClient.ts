@@ -263,6 +263,8 @@ export interface SigningPreview {
   pet_deposit_required: boolean;
   /** D4 (DL-234): the draft's Pet Deposit amount; null until it is recorded. */
   planned_pet_deposit_usd_cents: number | null;
+  /** DL-259 (Q17): a parking customer from before the app is signed with no deposit. */
+  no_deposit_start: boolean;
   /** DL-101: the Reservation's Security Deposit a Lease from a Reservation takes over. */
   held_security_deposit: {
     deposit_id: string;
@@ -299,6 +301,9 @@ function signingPreview(data: SettlementRecord): SigningPreview {
     planned_security_deposit_usd_cents:
       planned === null || planned === undefined ? null : centsField(planned),
     pet_deposit_required: data.pet_deposit_required === true,
+    no_deposit_start:
+      data.no_deposit_start !== null &&
+      typeof data.no_deposit_start === "object",
     planned_pet_deposit_usd_cents:
       pet === null || pet === undefined ? null : centsField(pet),
     held_security_deposit:

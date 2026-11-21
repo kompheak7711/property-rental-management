@@ -354,6 +354,40 @@ const TEXT = {
     "A draft Invoice bills a day after the last day. Delete that draft first.",
     "មានវិក្កយបត្រព្រាងគិតថ្ងៃក្រោយថ្ងៃចុងក្រោយ។ សូមលុបវិក្កយបត្រព្រាងនោះជាមុនសិន។",
   ],
+  pn_button: ["No deposit", "គ្មានប្រាក់កក់"],
+  pn_title: [
+    "Start with no deposit · space {0}",
+    "ចាប់ផ្តើមដោយគ្មានប្រាក់កក់ · កន្លែង {0}",
+  ],
+  pn_text: [
+    "This customer parked here before the app and paid no deposit. The agreement is signed with no Security Deposit. The customer pays only the first Invoice.",
+    "អតិថិជននេះបានចតនៅទីនេះមុនពេលមានកម្មវិធី ហើយមិនបានបង់ប្រាក់កក់ទេ។ កិច្ចសន្យានឹងចុះហត្ថលេខាដោយគ្មានប្រាក់កក់សុវត្ថិភាព។ អតិថិជនបង់តែវិក្កយបត្រដំបូងប៉ុណ្ណោះ។",
+  ],
+  pn_reason: [
+    "Reason: Customer from before the app",
+    "មូលហេតុ៖ អតិថិជនពីមុនកម្មវិធី",
+  ],
+  pn_ok: ["Start with no deposit", "ចាប់ផ្តើមដោយគ្មានប្រាក់កក់"],
+  pn_set: [
+    "No deposit: customer from before the app",
+    "គ្មានប្រាក់កក់៖ អតិថិជនពីមុនកម្មវិធី",
+  ],
+  pn_saved: [
+    "This agreement will be signed with no deposit.",
+    "កិច្ចសន្យានេះនឹងចុះហត្ថលេខាដោយគ្មានប្រាក់កក់។",
+  ],
+  lp_r_NO_DEPOSIT_ALREADY_SET: [
+    "This agreement already starts with no deposit.",
+    "កិច្ចសន្យានេះចាប់ផ្តើមដោយគ្មានប្រាក់កក់រួចហើយ។",
+  ],
+  lp_r_NOT_A_PARKING_DRAFT: [
+    "Only a drafted Parking agreement can start with no deposit.",
+    "មានតែកិច្ចសន្យាចំណតព្រាងទេ ដែលអាចចាប់ផ្តើមដោយគ្មានប្រាក់កក់។",
+  ],
+  lp_r_DEPOSIT_ALREADY_HELD: [
+    "This draft already has a Security Deposit, from a Booking or an earlier agreement.",
+    "ព្រាងនេះមានប្រាក់កក់សុវត្ថិភាពរួចហើយ ពីការកក់ ឬកិច្ចសន្យាមុន។",
+  ],
   col_actions: ["Actions", "សកម្មភាព"],
   ptype_COVERED: ["Covered", "ចំណតមានដំបូល"],
   ptype_UNCOVERED: ["Uncovered", "ចំណតគ្មានដំបូល"],

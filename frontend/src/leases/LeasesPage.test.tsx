@@ -282,6 +282,7 @@ function signing(
   planned: number | null = 50_000,
   held: SigningPreview["held_security_deposit"] = null,
   pet: { required?: boolean; planned?: number | null } = {},
+  noDeposit = false,
 ) {
   const calls = {
     signingPreview: vi.fn<SettlementApi["signingPreview"]>().mockResolvedValue({
@@ -306,6 +307,7 @@ function signing(
       held_security_deposit: held,
       pet_deposit_required: pet.required ?? false,
       planned_pet_deposit_usd_cents: pet.planned ?? null,
+      no_deposit_start: noDeposit,
     }),
     planSecurityDeposit: vi
       .fn<SettlementApi["planSecurityDeposit"]>()
@@ -819,6 +821,45 @@ describe("Lease actions", () => {
     await waitFor(() => {
       expect(get).toHaveBeenCalledTimes(2);
     });
+  });
+
+  it("TEST-FE-2358 (DL-259) a parking draft of a customer from before the app is signed with no Security Deposit: only the first Invoice is received", async () => {
+    window.location.hash = "#/leases/lease-sign";
+    const money = signing({}, 50_000, null, {}, true);
+    show(
+      api({ get: vi.fn().mockResolvedValue(signable) }),
+      deposits(),
+      null,
+      undefined,
+      undefined,
+      {},
+      {},
+      {},
+      undefined,
+      money,
+    );
+
+    fireEvent.click(await screen.findByRole("button", { name: /^Sign Lease/ }));
+    const dialog = screen.getByRole("dialog", { name: "Sign Lease · U301" });
+    await checked(dialog);
+    expect(dialog).toHaveTextContent(
+      "No Security Deposit: customer from before the app$0.00",
+    );
+    expect(dialog).toHaveTextContent("Total to receive$354.84");
+    for (const box of within(dialog).getAllByRole("checkbox"))
+      fireEvent.click(box);
+    fireEvent.change(
+      await within(dialog).findByLabelText("How the money came"),
+      { target: { value: "method-cash" } },
+    );
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Receive $354.84 and sign" }),
+    );
+    await waitFor(() => {
+      expect(money.signWithPayment).toHaveBeenCalledTimes(1);
+    });
+    const body = money.signWithPayment.mock.calls[0]?.[3];
+    expect(body?.payment.amount.minor_units).toBe(35_484);
   });
 
   it("TEST-FE-851 after a lost answer Try again sends the very same request with the same key and nothing can be changed; a conflict reads the Lease again", async () => {

@@ -73455,6 +73455,80 @@
       "test_path": "frontend/src/leases/LeaseParkingCard.test.tsx",
       "status": "implemented",
       "notes": "Close agreement ends the Lease on its End Date (SIGNED_LEASE_OTHER), then the card opens the Final Settlement."
+    },
+    {
+      "test_id": "test_a_customer_from_before_the_app_signs_with_no_deposit",
+      "upstream_ids": [
+        "DL-259",
+        "DB-PARK-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_parking_no_deposit_start_migration.py",
+      "status": "implemented",
+      "notes": "DL-259 parking step 5d (Q17): a drafted Parking agreement marked 'Customer from before the app' is signed with no Security Deposit; only the Initial Rent Invoice is paid; audited; a retry answers again."
+    },
+    {
+      "test_id": "test_a_new_customer_still_pays_the_deposit_and_rooms_never_skip_it",
+      "upstream_ids": [
+        "DL-259",
+        "DB-PARK-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_parking_no_deposit_start_migration.py",
+      "status": "implemented",
+      "notes": "DL-259: a new parking customer still pays the deposit; a room Lease or a signed agreement cannot start with no deposit."
+    },
+    {
+      "test_id": "test_the_app_starts_with_no_deposit_only_through_the_function",
+      "upstream_ids": [
+        "DL-259",
+        "DB-PARK-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_parking_no_deposit_start_migration.py",
+      "status": "implemented",
+      "notes": "DL-259: the runtime role records a no-deposit start only through app.start_lease_without_deposit."
+    },
+    {
+      "test_id": "test_a_manager_starts_a_customer_from_before_the_app_with_no_deposit",
+      "upstream_ids": [
+        "DL-259",
+        "API-029d"
+      ],
+      "test_level": "API",
+      "test_path": "backend/tests/test_lease_parking_api.py",
+      "status": "implemented",
+      "notes": "POST /leases/{id}/no-deposit-start needs deposits.manage and browser proof; refusals are 409; can_skip_deposit on the card."
+    },
+    {
+      "test_id": "TEST-FE-2356",
+      "upstream_ids": [
+        "DL-259"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/leases/LeaseParkingCard.test.tsx",
+      "status": "implemented",
+      "notes": "No deposit on a draft Parking agreement: the reason is shown, it is saved, and the card says No deposit."
+    },
+    {
+      "test_id": "TEST-FE-2357",
+      "upstream_ids": [
+        "DL-259"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/leases/LeaseParkingCard.test.tsx",
+      "status": "implemented",
+      "notes": "Without deposits.manage there is no No deposit button; a refusal shows its reason."
+    },
+    {
+      "test_id": "TEST-FE-2358",
+      "upstream_ids": [
+        "DL-259"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/leases/LeasesPage.test.tsx",
+      "status": "implemented",
+      "notes": "Sign Lease of a no-deposit parking draft shows no Security Deposit and receives only the first Invoice."
     }
   ]
 }

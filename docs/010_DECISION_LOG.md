@@ -3622,3 +3622,13 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **Still open.** Q17 (start without a deposit for customers from before the app) and the agreement paper (waits for the lawyer's text).
 - **Links:** DL-253, DL-254, DL-255, DB-PARK-001, BR-LEASE-021, BR-LEASE-023.
 - **Decision date:** 2026-11-21.
+
+## DL-259 — A parking customer from before the app starts with no deposit (parking step 5d)
+
+- **Type:** `OWNER DECISION` for the rule (parking plan Q5 and Q17, agreed 20 Nov 2026), `TECHNICAL DECISION UNDER THE OWNER'S RULE` (owner 2026-10-23 22:30) for the shape.
+- **Rule.** A new parking customer pays a Security Deposit of one month. A customer who parked before the app paid none, so a Manager or the Owner may start that customer's Parking agreement with no deposit, with the reason "Customer from before the app".
+- **No deposit.** On a drafted Parking agreement (not a room Lease, not a renewal, not a draft from a Booking or one that already holds a deposit) a Manager or the Owner (`deposits.manage`) presses No deposit on the Parking card. The record is append-only and audited (`lease.no_deposit_start`). Sign Lease then shows "No Security Deposit: customer from before the app" at $0.00, and the customer pays only the Initial Rent Invoice. The draft's typed deposit amount is not used.
+- **Built.** Migration `20270822_447` (forward-only): `app.lease_no_deposit_starts`, `app.lease_no_deposit_start`, `app.start_lease_without_deposit`, the changed `app.sign_lease_with_payment`. Route `POST /leases/{lease_id}/no-deposit-start` (API-029d); the signing preview adds `no_deposit_start`.
+- **Still open.** The agreement paper (waits for the lawyer's text).
+- **Links:** DL-254, DL-258, DB-PARK-001, API-029d.
+- **Decision date:** 2026-11-21.

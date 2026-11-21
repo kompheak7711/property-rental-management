@@ -34,7 +34,7 @@ def _rows(read: str, actor: UUID, prop: UUID) -> list[Any]:
 
 def test_migration_is_the_single_head_and_forward_only() -> None:
     scripts = ScriptDirectory.from_config(Config(str(Path(__file__).parents[1] / "alembic.ini")))
-    assert scripts.get_heads() == ["20270821_446"]  # step 5c follows 445
+    assert scripts.get_heads() == ["20270822_447"]  # step 5c follows 445
     revision = scripts.get_revision(REVISION)
     assert revision is not None and revision.down_revision == "20270819_444"
     with pytest.raises(RuntimeError, match="forward-only"):
