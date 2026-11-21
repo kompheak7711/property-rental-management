@@ -9,13 +9,16 @@ draft staff pick the vehicle that parks there.
 
 Change vehicle (DL-255, parking step 4c): on a signed Lease the vehicle of a held space changes
 from a day, with a reason.
+
+End agreement (DL-258, parking step 5c): a Manager or the Owner records the notice that ends a
+month-to-month Parking agreement; its End Date moves to the last day by the owner's rules.
 """
 
 from __future__ import annotations
 
 from collections.abc import Callable
 from datetime import date
-from typing import Final, Protocol, TypeVar
+from typing import Final, Literal, Protocol, TypeVar
 from uuid import UUID, uuid4
 
 import psycopg
@@ -34,6 +37,7 @@ from property_rental.settings import Settings
 
 LEASE_READ_CAPABILITY: Final = "leases.read"
 LEASE_DRAFT_CAPABILITY: Final = "leases.draft"
+LEASE_TERMINATE_CAPABILITY: Final = "leases.terminate"
 _T = TypeVar("_T")
 _MESSAGES: Final = {
     "PARKING_ALREADY_HELD": "This parking already has a space.",
@@ -47,6 +51,10 @@ _MESSAGES: Final = {
     "VEHICLE_SAME": "This vehicle already parks here.",
     "CHANGE_DATE": "Pick a day on which this space is held.",
     "CHANGE_REASON": "Give a short reason for the change.",
+    "LEASE_NOT_MONTH_TO_MONTH": "Only a signed month-to-month Parking agreement ends by notice.",
+    "ENDING_ALREADY_SET": "This agreement already has its last day.",
+    "TOLD_DATE": "Pick a day from the Start Date to today.",
+    "DRAFT_AFTER_END": "A draft Invoice bills a day after the last day. Delete that draft first.",
 }
 
 
@@ -96,6 +104,16 @@ class LeaseParkingFlow(Protocol):
         actor_id: str,
     ) -> dict[str, object]: ...
 
+    def end_agreement(
+        self,
+        lease_id: UUID,
+        *,
+        told_by: str,
+        told_on: date,
+        note: str | None,
+        actor_id: str,
+    ) -> dict[str, object]: ...
+
 
 class UnavailableLeaseParkingFlow:
     """Used when the app has no database."""
@@ -120,11 +138,15 @@ class UnavailableLeaseParkingFlow:
         del lease_id
         raise LeaseParkingUnavailable("Parking persistence is not configured")
 
+    def end_agreement(self, lease_id: UUID, **_: object) -> dict[str, object]:
+        del lease_id
+        raise LeaseParkingUnavailable("Parking persistence is not configured")
+
 
 class PostgresLeaseParkingFlow:
     """Runs `app.lease_parking`, `app.hold_room_parking_space` (migration 440),
-    `app.hold_parking_agreement_space` (migration 441) and `app.change_parking_vehicle`
-    (migration 443)."""
+    `app.hold_parking_agreement_space` (migration 441), `app.change_parking_vehicle`
+    (migration 443) and `app.end_parking_agreement` (migration 446)."""
 
     def __init__(self, database_url: str) -> None:
         self._database_url = database_url
@@ -229,6 +251,32 @@ class PostgresLeaseParkingFlow:
             raise LeaseParkingUnavailable("Parking is unavailable")
         return row[0]
 
+    def end_agreement(
+        self,
+        lease_id: UUID,
+        *,
+        told_by: str,
+        told_on: date,
+        note: str | None,
+        actor_id: str,
+    ) -> dict[str, object]:
+        try:
+            with psycopg.connect(self._database_url) as connection:
+                row = connection.execute(
+                    "SELECT app.end_parking_agreement(%s, %s, %s, %s, %s, %s)",
+                    (uuid4(), lease_id, told_by, told_on, note, UUID(actor_id)),
+                ).fetchone()
+        except psycopg.errors.NoDataFound as exc:
+            raise LeaseParkingNotFound("Parking agreement was not found") from exc
+        except psycopg.Error as exc:
+            hint = exc.diag.message_hint
+            if hint:
+                raise LeaseParkingConflict("The agreement cannot end", str(hint)) from exc
+            raise LeaseParkingUnavailable("Parking is unavailable") from exc
+        if row is None or not isinstance(row[0], dict):
+            raise LeaseParkingUnavailable("Parking is unavailable")
+        return row[0]
+
 
 class HoldBody(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -250,6 +298,14 @@ class VehicleChangeBody(BaseModel):
     vehicle_id: UUID
     change_date: date
     reason: str = Field(min_length=1, max_length=500)
+
+
+class EndingBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    told_by: Literal["CUSTOMER", "OWNER"]
+    told_on: date
+    note: str | None = Field(default=None, max_length=500)
 
 
 def _allowed(actor: AuthenticatedActor, capability: str, property_id: UUID) -> bool:
@@ -290,10 +346,15 @@ def create_lease_parking_router(
     def can_pick(actor: AuthenticatedActor, property_id: UUID) -> bool:
         return _allowed(actor, LEASE_DRAFT_CAPABILITY, property_id)
 
+    def can_end(actor: AuthenticatedActor, property_id: UUID) -> bool:
+        return _allowed(actor, LEASE_TERMINATE_CAPABILITY, property_id)
+
     def readable(actor: AuthenticatedActor, lease_id: UUID) -> UUID:
         property_id = run(lambda: flow.lease_property(lease_id))
         if not (
-            can_pick(actor, property_id) or _allowed(actor, LEASE_READ_CAPABILITY, property_id)
+            can_pick(actor, property_id)
+            or can_end(actor, property_id)
+            or _allowed(actor, LEASE_READ_CAPABILITY, property_id)
         ):
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
         return property_id
@@ -305,7 +366,11 @@ def create_lease_parking_router(
         parking = run(lambda: flow.read(lease_id))
         response.headers["Cache-Control"] = "private, no-store"
         return {
-            "data": {**parking, "can_pick": can_pick(actor, property_id)},
+            "data": {
+                **parking,
+                "can_pick": can_pick(actor, property_id),
+                "can_end": can_end(actor, property_id),
+            },
             "meta": {"request_id": request.state.request_id},
         }
 
@@ -374,5 +439,37 @@ def create_lease_parking_router(
         )
         response.headers["Cache-Control"] = "private, no-store"
         return {"data": hold, "meta": {"request_id": request.state.request_id}}
+
+    @router.post("/leases/{lease_id}/agreement-ending", status_code=status.HTTP_201_CREATED)
+    def end_agreement(
+        lease_id: UUID, body: EndingBody, request: Request, response: Response
+    ) -> dict[str, object]:
+        """DL-258: record the notice that ends a month-to-month Parking agreement. The customer
+        told before the 25th: the end of that month, else the end of next month; the owner's
+        letter: 30 days later. Answers the Parking card with the new last day."""
+        actor = actor_of(request)
+        property_id = readable(actor, lease_id)
+        if not can_end(actor, property_id):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+        require_browser_mutation(request, settings)
+        note = None if body.note is None or body.note.strip() == "" else body.note.strip()
+        parking = run(
+            lambda: flow.end_agreement(
+                lease_id,
+                told_by=body.told_by,
+                told_on=body.told_on,
+                note=note,
+                actor_id=actor.actor_id,
+            )
+        )
+        response.headers["Cache-Control"] = "private, no-store"
+        return {
+            "data": {
+                **parking,
+                "can_pick": can_pick(actor, property_id),
+                "can_end": True,
+            },
+            "meta": {"request_id": request.state.request_id},
+        }
 
     return router

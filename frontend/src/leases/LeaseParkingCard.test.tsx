@@ -1,6 +1,7 @@
 // DL-253 (parking step 3b): the Parking card of a room Lease. TEST-FE-2343 and TEST-FE-2344.
 // DL-254 (parking step 4b): the Parking agreement card. TEST-FE-2346.
 // DL-255 (parking step 4c): Change vehicle on a signed agreement. TEST-FE-2350.
+// DL-258 (parking step 5c): End agreement and Close agreement. TEST-FE-2354 and TEST-FE-2355.
 
 import {
   cleanup,
@@ -12,6 +13,7 @@ import {
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import type { LeaseApi, LeaseResource } from "../leaseClient";
 import {
   type LeaseParking,
   type LeaseParkingApi,
@@ -19,7 +21,7 @@ import {
   type LeaseParkingHold,
   type LeaseParkingTerm,
 } from "../leaseParkingClient";
-import { LeaseParkingCard } from "./LeaseParkingCard";
+import { endDay, LeaseParkingCard } from "./LeaseParkingCard";
 
 afterEach(() => {
   cleanup();
@@ -63,6 +65,8 @@ const HOLD: LeaseParkingHold = {
 const OPEN: LeaseParking = {
   lease_status: "SIGNED",
   can_pick: true,
+  can_end: false,
+  ending: null,
   terms: [TERM],
   vehicles: [
     {
@@ -103,6 +107,17 @@ function apiOf(overrides: Partial<LeaseParkingApi> = {}): LeaseParkingApi {
         plate_text: "2A-5678",
         held_from: "2027-01-01",
         held_until: "2099-12-31",
+      }),
+    ),
+    endAgreement: vi.fn<LeaseParkingApi["endAgreement"]>(() =>
+      Promise.resolve({
+        ...OPEN,
+        ending: {
+          told_by: "CUSTOMER",
+          told_on: "2026-11-10",
+          ends_on: "2026-11-30",
+          note: null,
+        },
       }),
     ),
     ...overrides,
@@ -333,5 +348,177 @@ describe("Lease Parking card (DL-253)", () => {
     expect(
       await screen.findByText("The vehicle is now 2A-5678."),
     ).toBeInTheDocument();
+  });
+
+  it("TEST-FE-2354 a Manager ends a month-to-month agreement by notice: the last day follows the owner's rules, and the card shows it", async () => {
+    // Q15: before the 25th, the end of this month; from the 25th, the end of next month.
+    expect(endDay("CUSTOMER", "2027-03-24")).toBe("2027-03-31");
+    expect(endDay("CUSTOMER", "2027-03-25")).toBe("2027-04-30");
+    expect(endDay("CUSTOMER", "2027-12-31")).toBe("2028-01-31");
+    // Q16: the owner's letter, 30 days after it is given.
+    expect(endDay("OWNER", "2027-03-10")).toBe("2027-04-09");
+
+    const monthly: LeaseParking = {
+      ...OPEN,
+      terms: [],
+      can_pick: false,
+      can_end: true,
+      on_parking_space: true,
+      month_to_month: true,
+      space: {
+        unit_id: "space-1",
+        unit_number: "P01",
+        parking_type: "COVERED",
+        area: null,
+      },
+      agreement_hold: {
+        hold_id: "hold-9",
+        vehicle_id: "car-1",
+        plate_text: "2A-1234",
+        held_from: "2026-09-01",
+        held_until: null,
+      },
+    };
+    const ended: LeaseParking = {
+      ...monthly,
+      month_to_month: false,
+      ending: {
+        told_by: "CUSTOMER",
+        told_on: "2026-11-10",
+        ends_on: "2026-11-30",
+        note: null,
+      },
+    };
+    const changed = vi.fn();
+    const api = apiOf({
+      read: vi
+        .fn<LeaseParkingApi["read"]>()
+        .mockResolvedValueOnce(monthly)
+        .mockResolvedValue(ended),
+      endAgreement: vi.fn(() => Promise.resolve(ended)),
+    });
+    render(
+      <LeaseParkingCard
+        api={api}
+        language="en"
+        leaseId="lease-9"
+        onLeaseChanged={changed}
+      />,
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: "End agreement" }),
+    );
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.click(
+      within(dialog).getByLabelText("The owner gives a 30-day letter"),
+    );
+    expect(
+      within(dialog).getByLabelText(/^Day the letter is given/),
+    ).toBeInTheDocument();
+    fireEvent.click(within(dialog).getByLabelText("The customer told us"));
+    fireEvent.change(within(dialog).getByLabelText(/^Note/), {
+      target: { value: " Moving away " },
+    });
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "End agreement" }),
+    );
+    await waitFor(() => {
+      expect(api.endAgreement).toHaveBeenCalledWith(
+        "lease-9",
+        expect.objectContaining({ told_by: "CUSTOMER", note: "Moving away" }),
+      );
+    });
+    expect(
+      await screen.findByText("The agreement ends on 30/11/2026."),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByText(
+        "Ends on 30/11/2026 · notice given on 10/11/2026",
+      ),
+    ).toBeInTheDocument();
+    expect(changed).toHaveBeenCalled();
+    // Once it has a last day it is not ended again.
+    expect(screen.queryByRole("button", { name: "End agreement" })).toBeNull();
+  });
+
+  it("TEST-FE-2355 on or after its End Date the agreement is closed on that day as signed, then the Final Settlement opens from the card", async () => {
+    const due: LeaseParking = {
+      ...OPEN,
+      terms: [],
+      can_pick: false,
+      can_end: true,
+      on_parking_space: true,
+      month_to_month: false,
+      space: {
+        unit_id: "space-1",
+        unit_number: "P01",
+        parking_type: "COVERED",
+        area: null,
+      },
+      agreement_hold: {
+        hold_id: "hold-9",
+        vehicle_id: "car-1",
+        plate_text: "2A-1234",
+        held_from: "2026-01-01",
+        held_until: "2026-10-31",
+      },
+      ending: {
+        told_by: "OWNER",
+        told_on: "2026-10-01",
+        ends_on: "2026-10-31",
+        note: null,
+      },
+    };
+    const lease = {
+      lease_id: "lease-9",
+      status: "SIGNED",
+      version: 4,
+      end_date: "2026-10-31",
+      actual_termination_date: null,
+    } as unknown as LeaseResource;
+    const terminate = vi.fn<LeaseApi["terminate"]>(() =>
+      Promise.resolve({
+        ...lease,
+        status: "TERMINATED",
+        actual_termination_date: "2026-10-31",
+      } as LeaseResource),
+    );
+    const api = apiOf({
+      read: vi
+        .fn<LeaseParkingApi["read"]>()
+        .mockResolvedValueOnce(due)
+        .mockResolvedValue({ ...due, lease_status: "TERMINATED" }),
+    });
+    render(
+      <LeaseParkingCard
+        api={api}
+        language="en"
+        lease={lease}
+        leaseApi={{ terminate }}
+        leaseId="lease-9"
+      />,
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Close agreement" }),
+    );
+    const dialog = await screen.findByRole("dialog");
+    expect(dialog).toHaveTextContent("not an early ending");
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Close agreement" }),
+    );
+    await waitFor(() => {
+      expect(terminate).toHaveBeenCalled();
+    });
+    const [sentLease, source] = terminate.mock.calls[0] ?? [];
+    expect(sentLease).toBe(lease);
+    expect(source?.actual_termination_date).toBe("2026-10-31");
+    expect(source?.governing_event_reference).toBe("BR-LEASE-023");
+    expect(source?.context?.basis).toBe("SIGNED_LEASE_OTHER");
+    expect(
+      await screen.findByText("The agreement was closed on 31/10/2026."),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByRole("link", { name: "Open the Final Settlement" }),
+    ).toHaveAttribute("href", "#/moveout/lease-9");
   });
 });

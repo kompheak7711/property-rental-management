@@ -88,7 +88,7 @@ def _try(connection: Db, values: tuple[object, ...]) -> tuple[str, ...]:
 
 def test_migration_is_the_single_head_and_forward_only() -> None:
     scripts = ScriptDirectory.from_config(Config(str(Path(__file__).parents[1] / "alembic.ini")))
-    assert scripts.get_heads() == ["20270820_445"]  # step 4c follows 442
+    assert scripts.get_heads() == ["20270821_446"]  # step 4c follows 442
     page = scripts.get_revision("20270817_442")
     assert page is not None and page.down_revision == REVISION
     revision = scripts.get_revision(REVISION)

@@ -9,22 +9,68 @@
 //
 // DL-255 (parking step 4c): on a signed Lease, Change vehicle moves a held space to another
 // vehicle from a day, with a reason.
+//
+// DL-258 (parking step 5c): a Manager or the Owner records the notice that ends a month-to-month
+// agreement (End agreement); the server moves its End Date to the last day. On or after the End
+// Date, Close agreement ends the Lease on that day as signed (not early), so the Final Settlement
+// gives the deposit back, less money owed.
 
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 
+import type { LeaseApi, LeaseResource } from "../leaseClient";
 import {
   type LeaseParking,
   type LeaseParkingApi,
   LeaseParkingError,
   type LeaseParkingTerm,
+  type ToldBy,
   leaseParkingApi as defaultLeaseParkingApi,
 } from "../leaseParkingClient";
 import { pt } from "../parking/text";
 import { DateInput, isDay } from "../shell/DateInput";
 import { dayText, todayInPhnomPenh, usdFromCents } from "../shell/format";
 import { Icon } from "../shell/icons";
+import { hashForPage } from "../shell/navigation";
 import { Chip, Dialog } from "../shell/ui";
 import type { Language } from "../signInText";
+import { useValuesIdentity } from "./LeaseDialogs";
+
+// What the termination record keeps, in English like every stored record (as Record hand-back).
+const CLOSE_SOURCE = {
+  governing_event_reference: "BR-LEASE-023",
+  reason: "Parking agreement ended on its End Date",
+  context: {
+    basis: "SIGNED_LEASE_OTHER" as const,
+    signed_lease_provision:
+      "Signed Lease: the Lease ends on its End Date (BR-LEASE-023)",
+    approved_grounds:
+      "The Parking agreement reached its End Date after notice (DL-258)",
+    management_authorization_reference:
+      "Approved in the app by the signed-in Owner or Manager (leases.terminate)",
+    evidence_reference: "Closed in the app on or after the End Date",
+    notice_required: false,
+    notice_exception_reason:
+      "No landlord notice: the Parking agreement ended on its End Date",
+  },
+};
+
+function monthEnd(year: number, month: number): string {
+  // Day 0 of the month after is the last day of this month (months count from 0).
+  return new Date(Date.UTC(year, month + 1, 0)).toISOString().slice(0, 10);
+}
+
+/** DL-258: the last day by the owner's rules (Q15, Q16). The server also never cuts a billed
+ * month, so the saved day can be later. */
+export function endDay(toldBy: ToldBy, toldOn: string): string {
+  const year = Number(toldOn.slice(0, 4));
+  const month = Number(toldOn.slice(5, 7));
+  const day = Number(toldOn.slice(8, 10));
+  if (toldBy === "OWNER") {
+    const date = new Date(Date.UTC(year, month - 1, day + 30));
+    return date.toISOString().slice(0, 10);
+  }
+  return monthEnd(year, day < 25 ? month - 1 : month);
+}
 
 const KNOWN_TYPES = [
   "COVERED",
@@ -377,21 +423,216 @@ function ChangeVehicleDialog({
   );
 }
 
+function EndAgreementDialog({
+  api,
+  language,
+  leaseId,
+  spaceNumber,
+  onClose,
+  onEnded,
+}: {
+  api: LeaseParkingApi;
+  language: Language;
+  leaseId: string;
+  spaceNumber: string;
+  onClose: () => void;
+  onEnded: (endsOn: string) => void;
+}) {
+  const [toldBy, setToldBy] = useState<ToldBy>("CUSTOMER");
+  const [day, setDay] = useState(todayInPhnomPenh());
+  const [note, setNote] = useState("");
+  const [problem, setProblem] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const today = todayInPhnomPenh();
+  const valid = isDay(day) && day <= today;
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (busy) return;
+    if (!valid) {
+      setProblem(pt(language, "lp_r_TOLD_DATE"));
+      return;
+    }
+    setBusy(true);
+    setProblem(null);
+    void api
+      .endAgreement(leaseId, {
+        told_by: toldBy,
+        told_on: day,
+        note: note.trim() === "" ? null : note.trim(),
+      })
+      .then((saved) => {
+        onEnded(saved.ending?.ends_on ?? endDay(toldBy, day));
+      })
+      .catch((error: unknown) => {
+        setBusy(false);
+        const code = error instanceof LeaseParkingError ? error.code : "FAILED";
+        setProblem(pt(language, `lp_r_${code}`));
+      });
+  }
+
+  return (
+    <Dialog
+      busy={busy}
+      closeLabel={pt(language, "cancel")}
+      onClose={onClose}
+      onSubmit={submit}
+      submitLabel={pt(language, "pe_end")}
+      title={pt(language, "pe_title", spaceNumber)}
+    >
+      <fieldset className="ui-field">
+        <legend>{pt(language, "pe_who")}</legend>
+        {(["CUSTOMER", "OWNER"] as const).map((who) => (
+          <label key={who}>
+            <input
+              checked={toldBy === who}
+              name="ending-told-by"
+              onChange={() => {
+                setToldBy(who);
+              }}
+              type="radio"
+              value={who}
+            />{" "}
+            {pt(language, who === "CUSTOMER" ? "pe_customer" : "pe_owner")}
+          </label>
+        ))}
+      </fieldset>
+      <div className="ui-field">
+        <label htmlFor="ending-day">
+          {pt(
+            language,
+            toldBy === "CUSTOMER" ? "pe_day_customer" : "pe_day_owner",
+          )}
+          <span className="req">{pt(language, "required")}</span>
+        </label>
+        <DateInput
+          id="ending-day"
+          language={language}
+          onChange={setDay}
+          value={day}
+        />
+        <p className="help">
+          {pt(
+            language,
+            toldBy === "CUSTOMER" ? "pe_rule_customer" : "pe_rule_owner",
+          )}
+        </p>
+      </div>
+      <div className="ui-field">
+        <label htmlFor="ending-note">
+          {pt(language, "pe_note")}
+          <span className="req">{pt(language, "v_optional")}</span>
+        </label>
+        <input
+          id="ending-note"
+          maxLength={500}
+          onChange={(event) => {
+            setNote(event.currentTarget.value);
+          }}
+          value={note}
+        />
+      </div>
+      {valid && (
+        <p className="ui-num">
+          <b>{pt(language, "pe_last", dayText(endDay(toldBy, day)))}</b>
+        </p>
+      )}
+      <p className="ui-small ui-muted">{pt(language, "pe_rule_money")}</p>
+      {problem !== null && (
+        <p className="ui-error" role="alert">
+          <Icon name="alert" small />
+          <span>{problem}</span>
+        </p>
+      )}
+    </Dialog>
+  );
+}
+
+function CloseAgreementDialog({
+  language,
+  lease,
+  leaseApi,
+  spaceNumber,
+  onClose,
+  onClosed,
+}: {
+  language: Language;
+  lease: LeaseResource;
+  leaseApi: Pick<LeaseApi, "terminate">;
+  spaceNumber: string;
+  onClose: () => void;
+  onClosed: (saved: LeaseResource) => void;
+}) {
+  const [problem, setProblem] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const identity = useValuesIdentity();
+  const last = lease.end_date ?? todayInPhnomPenh();
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (busy) return;
+    const source = { actual_termination_date: last, ...CLOSE_SOURCE };
+    // Kept while the values stay the same, so Try again sends the very same request.
+    const chosen = identity(JSON.stringify([lease.version, source]));
+    setBusy(true);
+    setProblem(null);
+    leaseApi
+      .terminate(lease, { event_id: chosen.id, ...source }, chosen.key)
+      .then(
+        (saved) => {
+          onClosed(saved);
+        },
+        () => {
+          setBusy(false);
+          setProblem(pt(language, "pe_close_failed"));
+        },
+      );
+  }
+
+  return (
+    <Dialog
+      busy={busy}
+      closeLabel={pt(language, "cancel")}
+      onClose={onClose}
+      onSubmit={submit}
+      submitLabel={pt(language, "pe_close")}
+      title={pt(language, "pe_close_title", spaceNumber)}
+    >
+      <p>{pt(language, "pe_close_text", dayText(last))}</p>
+      {problem !== null && (
+        <p className="ui-error" role="alert">
+          <Icon name="alert" small />
+          <span>{problem}</span>
+        </p>
+      )}
+    </Dialog>
+  );
+}
+
 function AgreementCard({
   api,
   language,
   leaseId,
   parking,
   reload,
+  lease,
+  leaseApi,
+  onLeaseChanged,
 }: {
   api: LeaseParkingApi;
   language: Language;
   leaseId: string;
   parking: LeaseParking;
   reload: () => void;
+  lease?: LeaseResource;
+  leaseApi?: Pick<LeaseApi, "terminate">;
+  /** The Lease changed here (its End Date or status): the page reads it again. */
+  onLeaseChanged?: () => void;
 }) {
   const [picking, setPicking] = useState(false);
   const [changing, setChanging] = useState(false);
+  const [ending, setEnding] = useState(false);
+  const [closing, setClosing] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const space = parking.space;
   const hold = parking.agreement_hold;
@@ -400,6 +641,20 @@ function AgreementCard({
   const changeable =
     parking.can_pick && parking.lease_status === "SIGNED" && hold !== null;
   const plate = (hold?.vehicle_id ?? null) === null ? null : hold?.plate_text;
+  const today = todayInPhnomPenh();
+  const signed = parking.lease_status === "SIGNED";
+  const mayEnd = parking.can_end && signed && parking.month_to_month;
+  // On or after its End Date a signed agreement is closed on that day.
+  const mayClose =
+    parking.can_end &&
+    signed &&
+    !parking.month_to_month &&
+    lease !== undefined &&
+    leaseApi !== undefined &&
+    lease.status === "SIGNED" &&
+    lease.end_date !== null &&
+    lease.end_date <= today;
+  const terminated = parking.lease_status === "TERMINATED";
 
   return (
     <section aria-labelledby="lease-parking" className="ui-card">
@@ -434,6 +689,16 @@ function AgreementCard({
               </small>
             )}
             <small>{plate ?? pt(language, "pa_vehicle_none")}</small>
+            {parking.ending !== null && (
+              <small className="ui-num">
+                {pt(
+                  language,
+                  "pe_ends",
+                  dayText(parking.ending.ends_on),
+                  dayText(parking.ending.told_on),
+                )}
+              </small>
+            )}
           </span>
           {open ? (
             <button
@@ -471,6 +736,82 @@ function AgreementCard({
           )}
         </li>
       </ul>
+      {(mayEnd || mayClose || terminated) && (
+        <div className="ui-actions">
+          {mayEnd && (
+            <button
+              className="ui-btn"
+              onClick={() => {
+                setNotice(null);
+                setEnding(true);
+              }}
+              type="button"
+            >
+              <Icon name="x" />
+              {pt(language, "pe_end")}
+            </button>
+          )}
+          {mayClose && (
+            <button
+              className="ui-btn primary"
+              onClick={() => {
+                setNotice(null);
+                setClosing(true);
+              }}
+              type="button"
+            >
+              <Icon name="check" />
+              {pt(language, "pe_close")}
+            </button>
+          )}
+          {terminated && (
+            <a className="ui-btn" href={hashForPage("moveout", leaseId)}>
+              <Icon name="moveout" />
+              {pt(language, "pe_settlement")}
+            </a>
+          )}
+        </div>
+      )}
+      {ending && (
+        <EndAgreementDialog
+          api={api}
+          language={language}
+          leaseId={leaseId}
+          onClose={() => {
+            setEnding(false);
+          }}
+          onEnded={(endsOn) => {
+            setEnding(false);
+            setNotice(pt(language, "pe_saved", dayText(endsOn)));
+            reload();
+            onLeaseChanged?.();
+          }}
+          spaceNumber={spaceNumber}
+        />
+      )}
+      {closing && lease !== undefined && leaseApi !== undefined && (
+        <CloseAgreementDialog
+          language={language}
+          lease={lease}
+          leaseApi={leaseApi}
+          onClose={() => {
+            setClosing(false);
+          }}
+          onClosed={(saved) => {
+            setClosing(false);
+            setNotice(
+              pt(
+                language,
+                "pe_closed",
+                dayText(saved.actual_termination_date ?? lease.end_date),
+              ),
+            );
+            reload();
+            onLeaseChanged?.();
+          }}
+          spaceNumber={spaceNumber}
+        />
+      )}
       {picking && (
         <VehicleDialog
           api={api}
@@ -515,10 +856,18 @@ export function LeaseParkingCard({
   leaseId,
   language,
   api = defaultLeaseParkingApi,
+  lease,
+  leaseApi,
+  onLeaseChanged,
 }: {
   leaseId: string;
   language: Language;
   api?: LeaseParkingApi;
+  /** DL-258: the Lease, to close a Parking agreement on its End Date. */
+  lease?: LeaseResource;
+  leaseApi?: Pick<LeaseApi, "terminate">;
+  /** The Lease changed here (its End Date or status): the page reads it again. */
+  onLeaseChanged?: () => void;
 }) {
   const [parking, setParking] = useState<LeaseParking | null | undefined>(
     undefined,
@@ -551,7 +900,10 @@ export function LeaseParkingCard({
       <AgreementCard
         api={api}
         language={language}
+        lease={lease}
+        leaseApi={leaseApi}
         leaseId={leaseId}
+        onLeaseChanged={onLeaseChanged}
         parking={parking}
         reload={load}
       />

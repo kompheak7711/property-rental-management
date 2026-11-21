@@ -3611,3 +3611,14 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **Built.** Migration `20270820_445` (forward-only): `app.report_income_facts` kind `PARKING_CHARGES` and `app.report_unit_occupancy` without parking spaces. The Total Income chart has the part Parking.
 - **Links:** DL-253, DL-256, DB-PARK-001.
 - **Decision date:** 2026-11-21.
+
+## DL-258 — End a month-to-month Parking agreement by notice (parking step 5c)
+
+- **Type:** `OWNER DECISION` for the rules (parking plan Q15 and Q16, agreed 20 Nov 2026; deposit card 21 Nov 2026), `TECHNICAL DECISION UNDER THE OWNER'S RULE` (owner 2026-10-23 22:30) for the shape.
+- **Rules.** The customer tells before the 25th of a month: the agreement ends on the last day of that month; told on the 25th or later, on the last day of the next month (Q15). The owner ends it with a letter: it ends 30 days after the letter is given (Q16). The agreement then ends on its own End Date, so it is not an early ending: the Security Deposit goes back, less money owed, in the Final Settlement (owner, 21 Nov 2026; BR-LEASE-021 keeps the deposit only for an early ending).
+- **End agreement.** On a signed month-to-month Parking agreement a Manager or the Owner (`leases.terminate`) records who gave notice, the day and a note. The End Date moves from 31 Dec 2099 to the last day, and the space is free after it. Claude's choices (no money rule changes): a month already billed on an issued Invoice is never cut, so the last day is at least the end of that month; a draft Invoice for a day after the last day must be deleted first; the day told is from the Start Date to today; an agreement ends this way once.
+- **Close agreement.** On or after the End Date the Parking card shows Close agreement: it ends the Lease on its End Date as signed (basis `SIGNED_LEASE_OTHER`, BR-LEASE-023), as Record hand-back does for a room. A Parking agreement has no Occupancy, so the Move-out page skips the hand-back and final readings and goes to the Final Settlement, which the card opens.
+- **Built.** Migration `20270821_446` (forward-only): `app.parking_agreement_endings`, `app.parking_agreement_end_day`, `app.end_parking_agreement`, the changed `app.protect_lease_history` and `app.lease_parking`. Route `POST /leases/{lease_id}/agreement-ending` (API-029d). The Parking agreement card shows End agreement, "Ends on …", Close agreement and Open the Final Settlement.
+- **Still open.** Q17 (start without a deposit for customers from before the app) and the agreement paper (waits for the lawyer's text).
+- **Links:** DL-253, DL-254, DL-255, DB-PARK-001, BR-LEASE-021, BR-LEASE-023.
+- **Decision date:** 2026-11-21.

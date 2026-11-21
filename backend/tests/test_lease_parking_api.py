@@ -1,4 +1,4 @@
-"""HTTP tests for parking on a Lease (DL-253 3b, DL-254 4b, DL-255 4c), in-memory flow."""
+"""HTTP tests for parking on a Lease (DL-253, DL-254, DL-255, DL-258), in-memory flow."""
 
 from __future__ import annotations
 
@@ -90,6 +90,23 @@ class InMemoryLeaseParkingFlow:
         self.hold_record = {"vehicle_id": str(vehicle_id), "reason": reason}
         return self.hold_record
 
+    def end_agreement(
+        self,
+        lease_id: UUID,
+        *,
+        told_by: str,
+        told_on: date,
+        note: str | None,
+        actor_id: str,
+    ) -> dict[str, object]:
+        del actor_id
+        if told_on > date(2027, 3, 31):
+            raise LeaseParkingConflict("day", "TOLD_DATE")
+        return {
+            "lease_id": str(lease_id),
+            "ending": {"told_by": told_by, "told_on": told_on.isoformat(), "note": note},
+        }
+
 
 def clients(property_id: UUID, flow: InMemoryLeaseParkingFlow) -> tuple[TestClient, ...]:
     def client(*capabilities: str, other: bool = False) -> TestClient:
@@ -171,3 +188,34 @@ def test_a_drafter_changes_the_vehicle_of_a_held_space_from_a_day() -> None:
     changed = drafter.post(url, headers=BROWSER, json=body)
     assert changed.status_code == 201
     assert changed.json()["data"] == {"vehicle_id": car, "reason": "Sold the old car"}
+
+
+def test_a_manager_ends_a_month_to_month_agreement_by_notice() -> None:
+    property_id, lease_id = uuid4(), uuid4()
+    flow = InMemoryLeaseParkingFlow(property_id, lease_id)
+    drafter, reader, _ = clients(property_id, flow)
+    manager = TestClient(
+        create_app(
+            actor_resolver=lambda _: actor_with(property_id, "leases.terminate"),
+            lease_parking_flow=flow,
+        )
+    )
+    url = f"/leases/{lease_id}/agreement-ending"
+    body = {"told_by": "CUSTOMER", "told_on": "2027-03-10", "note": " Moving away "}
+
+    # Only a Manager or the Owner (leases.terminate) ends it; they also read the card.
+    assert drafter.get(f"/leases/{lease_id}/parking").json()["data"]["can_end"] is False
+    assert manager.get(f"/leases/{lease_id}/parking").json()["data"]["can_end"] is True
+    assert drafter.post(url, headers=BROWSER, json=body).status_code == 403
+    assert reader.post(url, headers=BROWSER, json=body).status_code == 403
+    assert manager.post(url, json=body).status_code == 403  # no browser proof
+    assert manager.post(url, headers=BROWSER, json={**body, "told_by": "AGENT"}).status_code == 422
+    late = manager.post(url, headers=BROWSER, json={**body, "told_on": "2027-04-01"})
+    assert late.status_code == 409 and late.json()["error"]["code"] == "TOLD_DATE"
+    ended = manager.post(url, headers=BROWSER, json=body)
+    assert ended.status_code == 201
+    data = ended.json()["data"]
+    assert data["ending"] == {"told_by": "CUSTOMER", "told_on": "2027-03-10", "note": "Moving away"}
+    assert data["can_end"] is True
+    blank = manager.post(url, headers=BROWSER, json={**body, "note": "  "})
+    assert blank.json()["data"]["ending"]["note"] is None
