@@ -1239,7 +1239,10 @@ export function LeaseDetail({
             <LeaseParkingCard
               api={parkingApi}
               language={language}
+              lease={lease}
+              leaseApi={api}
               leaseId={leaseId}
+              onLeaseChanged={load}
             />
           </>
         }

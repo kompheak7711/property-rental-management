@@ -296,6 +296,64 @@ const TEXT = {
     "Give a short reason for the change.",
     "សូមផ្តល់មូលហេតុខ្លីសម្រាប់ការប្តូរ។",
   ],
+  // DL-258 (parking step 5c): End agreement and Close agreement.
+  pe_end: ["End agreement", "បញ្ចប់កិច្ចសន្យា"],
+  pe_title: ["End agreement · space {0}", "បញ្ចប់កិច្ចសន្យា · កន្លែង {0}"],
+  pe_who: ["Who gave notice", "អ្នកផ្តល់ការជូនដំណឹង"],
+  pe_customer: ["The customer told us", "អតិថិជនបានប្រាប់យើង"],
+  pe_owner: ["The owner gives a 30-day letter", "ម្ចាស់ផ្តល់លិខិត ៣០ ថ្ងៃ"],
+  pe_day_customer: ["Day the customer told us", "ថ្ងៃដែលអតិថិជនបានប្រាប់"],
+  pe_day_owner: ["Day the letter is given", "ថ្ងៃប្រគល់លិខិត"],
+  pe_note: ["Note", "កំណត់ចំណាំ"],
+  pe_last: ["Last day: {0}", "ថ្ងៃចុងក្រោយ៖ {0}"],
+  pe_rule_customer: [
+    "Told before the 25th: the agreement ends at the end of this month. Told on the 25th or later: at the end of next month.",
+    "ប្រាប់មុនថ្ងៃទី ២៥៖ កិច្ចសន្យាបញ្ចប់នៅចុងខែនេះ។ ប្រាប់ថ្ងៃទី ២៥ ឬក្រោយ៖ នៅចុងខែក្រោយ។",
+  ],
+  pe_rule_owner: [
+    "The agreement ends 30 days after the letter is given.",
+    "កិច្ចសន្យាបញ្ចប់ ៣០ ថ្ងៃក្រោយការប្រគល់លិខិត។",
+  ],
+  pe_rule_money: [
+    "A month already billed is never cut. On the last day close the agreement; the deposit goes back, less any money owed.",
+    "ខែដែលបានចេញវិក្កយបត្ររួច មិនត្រូវកាត់ទេ។ នៅថ្ងៃចុងក្រោយ សូមបិទកិច្ចសន្យា។ ប្រាក់កក់ត្រូវប្រគល់វិញ ដកប្រាក់ដែលនៅជំពាក់។",
+  ],
+  pe_saved: ["The agreement ends on {0}.", "កិច្ចសន្យាបញ្ចប់នៅ {0}។"],
+  pe_ends: [
+    "Ends on {0} · notice given on {1}",
+    "បញ្ចប់នៅ {0} · បានជូនដំណឹងនៅ {1}",
+  ],
+  pe_close: ["Close agreement", "បិទកិច្ចសន្យា"],
+  pe_close_title: ["Close agreement · space {0}", "បិទកិច្ចសន្យា · កន្លែង {0}"],
+  pe_close_text: [
+    "The agreement reached its last day, {0}. Closing it ends it on that day. It is not an early ending, so the deposit goes back, less any money owed, in the Final Settlement.",
+    "កិច្ចសន្យាដល់ថ្ងៃចុងក្រោយ {0}។ ការបិទនឹងបញ្ចប់វានៅថ្ងៃនោះ។ វាមិនមែនជាការបញ្ចប់មុនកាលកំណត់ទេ ដូច្នេះប្រាក់កក់ត្រូវប្រគល់វិញ ដកប្រាក់ដែលនៅជំពាក់ ក្នុងការទូទាត់ចុងក្រោយ។",
+  ],
+  pe_closed: [
+    "The agreement was closed on {0}.",
+    "កិច្ចសន្យាត្រូវបានបិទនៅ {0}។",
+  ],
+  pe_settlement: ["Open the Final Settlement", "បើកការទូទាត់ចុងក្រោយ"],
+  pe_close_failed: [
+    "The agreement was not closed. Check your connection and try again.",
+    "កិច្ចសន្យាមិនត្រូវបានបិទទេ។ សូមពិនិត្យការតភ្ជាប់ ហើយព្យាយាមម្តងទៀត។",
+  ],
+  lp_r_LEASE_NOT_MONTH_TO_MONTH: [
+    "Only a signed month-to-month Parking agreement ends by notice.",
+    "មានតែកិច្ចសន្យាចំណតប្រចាំខែដែលបានចុះហត្ថលេខាទេ ដែលបញ្ចប់ដោយការជូនដំណឹង។",
+  ],
+  lp_r_ENDING_ALREADY_SET: [
+    "This agreement already has its last day.",
+    "កិច្ចសន្យានេះមានថ្ងៃចុងក្រោយរួចហើយ។",
+  ],
+  lp_r_TOLD_DATE: [
+    "Pick a day from the Start Date to today.",
+    "សូមជ្រើសថ្ងៃពីថ្ងៃចាប់ផ្តើមដល់ថ្ងៃនេះ។",
+  ],
+  lp_r_DRAFT_AFTER_END: [
+    "A draft Invoice bills a day after the last day. Delete that draft first.",
+    "មានវិក្កយបត្រព្រាងគិតថ្ងៃក្រោយថ្ងៃចុងក្រោយ។ សូមលុបវិក្កយបត្រព្រាងនោះជាមុនសិន។",
+  ],
   col_actions: ["Actions", "សកម្មភាព"],
   ptype_COVERED: ["Covered", "ចំណតមានដំបូល"],
   ptype_UNCOVERED: ["Uncovered", "ចំណតគ្មានដំបូល"],

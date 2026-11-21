@@ -55,15 +55,28 @@ export interface AgreementHold {
   held_until: string | null;
 }
 
+// DL-258 (parking step 5c): a month-to-month agreement ended by notice.
+export type ToldBy = "CUSTOMER" | "OWNER";
+
+export interface AgreementEnding {
+  told_by: ToldBy;
+  told_on: string;
+  ends_on: string;
+  note: string | null;
+}
+
 export interface LeaseParking {
   lease_status: string;
   terms: LeaseParkingTerm[];
   vehicles: LeaseParkingVehicle[];
   can_pick: boolean;
+  /** leases.terminate: a Manager or the Owner. */
+  can_end: boolean;
   on_parking_space: boolean;
   month_to_month: boolean;
   space: AgreementSpace | null;
   agreement_hold: AgreementHold | null;
+  ending: AgreementEnding | null;
 }
 
 export interface LeaseParkingPick {
@@ -82,6 +95,17 @@ export interface LeaseParkingApi {
     holdId: string,
     change: VehicleChange,
   ) => Promise<AgreementHold>;
+  /** DL-258: record the notice that ends a month-to-month Parking agreement. */
+  endAgreement: (
+    leaseId: string,
+    ending: EndingNotice,
+  ) => Promise<LeaseParking>;
+}
+
+export interface EndingNotice {
+  told_by: ToldBy;
+  told_on: string;
+  note: string | null;
 }
 
 export interface VehicleChange {
@@ -102,6 +126,10 @@ export type LeaseParkingRefusal =
   | "VEHICLE_SAME"
   | "CHANGE_DATE"
   | "CHANGE_REASON"
+  | "LEASE_NOT_MONTH_TO_MONTH"
+  | "ENDING_ALREADY_SET"
+  | "TOLD_DATE"
+  | "DRAFT_AFTER_END"
   | "UNAVAILABLE"
   | "FAILED";
 
@@ -117,6 +145,10 @@ const KNOWN: readonly LeaseParkingRefusal[] = [
   "VEHICLE_SAME",
   "CHANGE_DATE",
   "CHANGE_REASON",
+  "LEASE_NOT_MONTH_TO_MONTH",
+  "ENDING_ALREADY_SET",
+  "TOLD_DATE",
+  "DRAFT_AFTER_END",
 ];
 
 export class LeaseParkingError extends Error {
@@ -304,10 +336,32 @@ function agreementHold(value: unknown): AgreementHold {
   };
 }
 
+function ending(value: unknown): AgreementEnding | null {
+  if (!isObject(value)) return null;
+  if (
+    (value.told_by !== "CUSTOMER" && value.told_by !== "OWNER") ||
+    typeof value.told_on !== "string" ||
+    typeof value.ends_on !== "string"
+  ) {
+    throw new LeaseParkingError("FAILED");
+  }
+  return {
+    told_by: value.told_by,
+    told_on: value.told_on,
+    ends_on: value.ends_on,
+    note: text(value.note),
+  };
+}
+
 async function read(leaseId: string): Promise<LeaseParking> {
-  const data = await request(`/leases/${encodeURIComponent(leaseId)}/parking`, {
-    method: "GET",
-  });
+  return parking(
+    await request(`/leases/${encodeURIComponent(leaseId)}/parking`, {
+      method: "GET",
+    }),
+  );
+}
+
+function parking(data: Record<string, unknown>): LeaseParking {
   if (
     typeof data.lease_status !== "string" ||
     !Array.isArray(data.terms) ||
@@ -320,12 +374,14 @@ async function read(leaseId: string): Promise<LeaseParking> {
     terms: data.terms.map(term),
     vehicles: Array.isArray(data.vehicles) ? data.vehicles.map(vehicle) : [],
     can_pick: data.can_pick,
+    can_end: data.can_end === true,
     on_parking_space: data.on_parking_space === true,
     month_to_month: data.month_to_month === true,
     space: agreementSpace(data.space),
     agreement_hold: isObject(data.agreement_hold)
       ? agreementHold(data.agreement_hold)
       : null,
+    ending: ending(data.ending),
   };
 }
 
@@ -384,9 +440,27 @@ async function changeVehicle(
   );
 }
 
+async function endAgreement(
+  leaseId: string,
+  notice: EndingNotice,
+): Promise<LeaseParking> {
+  const token = csrfToken();
+  if (token === null || token.length === 0) {
+    throw new LeaseParkingError("FAILED");
+  }
+  return parking(
+    await request(`/leases/${encodeURIComponent(leaseId)}/agreement-ending`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-CSRF-Token": token },
+      body: JSON.stringify(notice),
+    }),
+  );
+}
+
 export const leaseParkingApi: LeaseParkingApi = {
   read,
   pick,
   pickVehicle,
   changeVehicle,
+  endAgreement,
 };

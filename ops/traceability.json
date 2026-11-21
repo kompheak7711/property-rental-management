@@ -73368,6 +73368,93 @@
       "test_path": "frontend/src/reports/TotalsView.test.tsx",
       "status": "implemented",
       "notes": "Total Income shows parking money as its own part of the month chart."
+    },
+    {
+      "test_id": "test_the_last_day_follows_the_owner_rules",
+      "upstream_ids": [
+        "DL-258",
+        "DB-PARK-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_parking_agreement_ending_migration.py",
+      "status": "implemented",
+      "notes": "DL-258 parking step 5c: customer before the 25th ends at month end, else end of next month; owner letter ends 30 days later."
+    },
+    {
+      "test_id": "test_a_customer_notice_ends_the_agreement_and_frees_the_space",
+      "upstream_ids": [
+        "DL-258",
+        "DB-PARK-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_parking_agreement_ending_migration.py",
+      "status": "implemented",
+      "notes": "DL-258: End Date moves to the last day, the hold ends then, a retry answers again, a second ending is refused, and the Lease terminates on its End Date as signed."
+    },
+    {
+      "test_id": "test_only_a_signed_month_to_month_agreement_ends_this_way",
+      "upstream_ids": [
+        "DL-258",
+        "DB-PARK-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_parking_agreement_ending_migration.py",
+      "status": "implemented",
+      "notes": "DL-258: a draft or an agreement with its own End Date is refused; a signed End Date still never changes directly."
+    },
+    {
+      "test_id": "test_an_owner_letter_ends_it_30_days_later_but_never_cuts_a_billed_month",
+      "upstream_ids": [
+        "DL-258",
+        "DB-PARK-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_parking_agreement_ending_migration.py",
+      "status": "implemented",
+      "notes": "DL-258: the owner's letter ends it 30 days later, never before a month billed on an issued Invoice."
+    },
+    {
+      "test_id": "test_the_app_ends_an_agreement_only_through_the_function",
+      "upstream_ids": [
+        "DL-258",
+        "DB-PARK-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_parking_agreement_ending_migration.py",
+      "status": "implemented",
+      "notes": "DL-258: the runtime role ends an agreement only through app.end_parking_agreement."
+    },
+    {
+      "test_id": "test_a_manager_ends_a_month_to_month_agreement_by_notice",
+      "upstream_ids": [
+        "DL-258",
+        "API-029d"
+      ],
+      "test_level": "API",
+      "test_path": "backend/tests/test_lease_parking_api.py",
+      "status": "implemented",
+      "notes": "POST /leases/{id}/agreement-ending needs leases.terminate and browser proof; refusals are 409; can_end on the card."
+    },
+    {
+      "test_id": "TEST-FE-2354",
+      "upstream_ids": [
+        "DL-258"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/leases/LeaseParkingCard.test.tsx",
+      "status": "implemented",
+      "notes": "End agreement: the last day follows Q15/Q16, the notice is saved and the card shows Ends on."
+    },
+    {
+      "test_id": "TEST-FE-2355",
+      "upstream_ids": [
+        "DL-258",
+        "BR-LEASE-023"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/leases/LeaseParkingCard.test.tsx",
+      "status": "implemented",
+      "notes": "Close agreement ends the Lease on its End Date (SIGNED_LEASE_OTHER), then the card opens the Final Settlement."
     }
   ]
 }

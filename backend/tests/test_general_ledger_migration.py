@@ -133,7 +133,7 @@ def test_the_starter_chart_and_fiscal_year_2027_are_seeded_once(ledger: Ledger) 
         (ledger.property_id,),
     ).fetchall()
     # 59 starter accounts plus 1021 ABA Bank · KHR account (migration 20270609_320, DL-160) and
-    # 4110 Parking (migration 20270820_445, DL-256).
+    # 4110 Parking (migration 20270819_444, DL-256).
     assert len(accounts) == 61
     by_code = {row[0]: row for row in accounts}
     assert by_code["1021"][1] == "ABA Bank · KHR account" and by_code["1021"][5] == "BANK_KHR"
