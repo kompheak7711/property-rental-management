@@ -73529,6 +73529,16 @@
       "test_path": "frontend/src/leases/LeasesPage.test.tsx",
       "status": "implemented",
       "notes": "Sign Lease of a no-deposit parking draft shows no Security Deposit and receives only the first Invoice."
+    },
+    {
+      "test_id": "TEST-FE-2371",
+      "upstream_ids": [
+        "UI-008"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/hr/HrPages.test.tsx",
+      "status": "implemented",
+      "notes": "V1.3 bug fix (owner 21/11/2026, Own column): Staff lists show the Employee ID in its own first column, not as a line under the name; on a phone card the name stays the title and the ID is a labelled line."
     }
   ]
 }
