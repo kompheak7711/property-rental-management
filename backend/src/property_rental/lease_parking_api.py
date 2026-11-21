@@ -6,17 +6,21 @@ Rent Invoice; the price is copied when the space is picked and never changes aft
 
 A Parking agreement (DL-254, parking step 4b) is a Lease on the parking space itself; on its
 draft staff pick the vehicle that parks there.
+
+Change vehicle (DL-255, parking step 4c): on a signed Lease the vehicle of a held space changes
+from a day, with a reason.
 """
 
 from __future__ import annotations
 
 from collections.abc import Callable
+from datetime import date
 from typing import Final, Protocol, TypeVar
 from uuid import UUID, uuid4
 
 import psycopg
 from fastapi import APIRouter, HTTPException, Request, Response, status
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from property_rental.api_refusals import Refusal, RefusedRequest
 from property_rental.browser_security import require_browser_mutation
@@ -40,6 +44,9 @@ _MESSAGES: Final = {
     "TYPE_HAS_NO_PRICE": "This space has no price. Set the Parking Type price first.",
     "LEASE_CLOSED": "Only a drafted or signed Lease takes a parking space.",
     "AGREEMENT_DATES_MISSING": "Add the start date first (Edit draft).",
+    "VEHICLE_SAME": "This vehicle already parks here.",
+    "CHANGE_DATE": "Pick a day on which this space is held.",
+    "CHANGE_REASON": "Give a short reason for the change.",
 }
 
 
@@ -78,6 +85,17 @@ class LeaseParkingFlow(Protocol):
         self, lease_id: UUID, *, vehicle_id: UUID, actor_id: str
     ) -> dict[str, object]: ...
 
+    def change_vehicle(
+        self,
+        lease_id: UUID,
+        *,
+        hold_id: UUID,
+        vehicle_id: UUID,
+        change_date: date,
+        reason: str,
+        actor_id: str,
+    ) -> dict[str, object]: ...
+
 
 class UnavailableLeaseParkingFlow:
     """Used when the app has no database."""
@@ -98,10 +116,15 @@ class UnavailableLeaseParkingFlow:
         del lease_id
         raise LeaseParkingUnavailable("Parking persistence is not configured")
 
+    def change_vehicle(self, lease_id: UUID, **_: object) -> dict[str, object]:
+        del lease_id
+        raise LeaseParkingUnavailable("Parking persistence is not configured")
+
 
 class PostgresLeaseParkingFlow:
-    """Runs `app.lease_parking`, `app.hold_room_parking_space` (migration 440) and
-    `app.hold_parking_agreement_space` (migration 441)."""
+    """Runs `app.lease_parking`, `app.hold_room_parking_space` (migration 440),
+    `app.hold_parking_agreement_space` (migration 441) and `app.change_parking_vehicle`
+    (migration 443)."""
 
     def __init__(self, database_url: str) -> None:
         self._database_url = database_url
@@ -174,6 +197,38 @@ class PostgresLeaseParkingFlow:
             raise LeaseParkingUnavailable("Parking is unavailable")
         return row[0]
 
+    def change_vehicle(
+        self,
+        lease_id: UUID,
+        *,
+        hold_id: UUID,
+        vehicle_id: UUID,
+        change_date: date,
+        reason: str,
+        actor_id: str,
+    ) -> dict[str, object]:
+        try:
+            with psycopg.connect(self._database_url) as connection:
+                # The hold must be one of this Lease's.
+                row = connection.execute(
+                    "SELECT app.change_parking_vehicle(%s, hold.id, %s, %s, %s, %s) "
+                    "FROM app.parking_space_holds AS hold "
+                    "WHERE hold.id = %s AND hold.lease_id = %s",
+                    (uuid4(), vehicle_id, change_date, reason, UUID(actor_id), hold_id, lease_id),
+                ).fetchone()
+        except psycopg.errors.NoDataFound as exc:
+            raise LeaseParkingNotFound("Space hold was not found") from exc
+        except psycopg.Error as exc:
+            hint = exc.diag.message_hint
+            if hint:
+                raise LeaseParkingConflict("The vehicle cannot be changed", str(hint)) from exc
+            raise LeaseParkingUnavailable("Parking is unavailable") from exc
+        if row is None:
+            raise LeaseParkingNotFound("Space hold was not found")
+        if not isinstance(row[0], dict):
+            raise LeaseParkingUnavailable("Parking is unavailable")
+        return row[0]
+
 
 class HoldBody(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -187,6 +242,14 @@ class VehicleBody(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     vehicle_id: UUID
+
+
+class VehicleChangeBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    vehicle_id: UUID
+    change_date: date
+    reason: str = Field(min_length=1, max_length=500)
 
 
 def _allowed(actor: AuthenticatedActor, capability: str, property_id: UUID) -> bool:
@@ -282,6 +345,32 @@ def create_lease_parking_router(
         require_browser_mutation(request, settings)
         hold = run(
             lambda: flow.pick_vehicle(lease_id, vehicle_id=body.vehicle_id, actor_id=actor.actor_id)
+        )
+        response.headers["Cache-Control"] = "private, no-store"
+        return {"data": hold, "meta": {"request_id": request.state.request_id}}
+
+    @router.post(
+        "/leases/{lease_id}/parking-holds/{hold_id}/vehicle-changes",
+        status_code=status.HTTP_201_CREATED,
+    )
+    def change_vehicle(
+        lease_id: UUID, hold_id: UUID, body: VehicleChangeBody, request: Request, response: Response
+    ) -> dict[str, object]:
+        """DL-255: change the vehicle of a held space on a signed Lease, from a day."""
+        actor = actor_of(request)
+        property_id = readable(actor, lease_id)
+        if not can_pick(actor, property_id):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+        require_browser_mutation(request, settings)
+        hold = run(
+            lambda: flow.change_vehicle(
+                lease_id,
+                hold_id=hold_id,
+                vehicle_id=body.vehicle_id,
+                change_date=body.change_date,
+                reason=body.reason.strip(),
+                actor_id=actor.actor_id,
+            )
         )
         response.headers["Cache-Control"] = "private, no-store"
         return {"data": hold, "meta": {"request_id": request.state.request_id}}

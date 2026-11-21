@@ -113,7 +113,7 @@ def audit_actions(connection: Connection[tuple[object, ...]], entity_id: UUID) -
 def test_migration_is_the_single_head() -> None:
     scripts = ScriptDirectory.from_config(_config())
     # The building short-stay guard 434 follows 433; parking step 2 438 follows 437.
-    assert scripts.get_heads() == ["20270817_442"]
+    assert scripts.get_heads() == ["20270818_443"]
     assert scripts.get_revision("20270811_434").down_revision == REVISION
 
 

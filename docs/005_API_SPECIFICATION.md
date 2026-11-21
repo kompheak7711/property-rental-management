@@ -324,6 +324,8 @@ Added by DL-253 (parking step 3b, migration `20270815_440`).
 - DL-254 (parking step 4b, migration `20270817_442`): on a Parking agreement (a Lease on the space itself) `GET /leases/{lease_id}/parking` also answers `on_parking_space`, `month_to_month` (End Date 31 Dec 2099), `space` (`unit_id`, `unit_number`, `parking_type`, `area`, `parking_capacity`) and `agreement_hold` (the active hold with its vehicle, or null).
 - `POST /leases/{lease_id}/agreement-vehicle` (201; `leases.draft`, Origin and CSRF) takes `vehicle_id` and picks the vehicle of a drafted Parking agreement for its dates; picking again replaces the earlier pick. Refusals (409) carry `VEHICLE_TYPE`, `PARKING_SPACE_TAKEN`, `LEASE_CLOSED` or `AGREEMENT_DATES_MISSING`.
 - Sign Lease refuses a Parking agreement until its vehicle is picked for its dates: `SIGNING_AGREEMENT_VEHICLE_MISSING` (409).
+- DL-255 (parking step 4c, migration `20270818_443`): `POST /leases/{lease_id}/parking-holds/{hold_id}/vehicle-changes` (201; `leases.draft`, Origin and CSRF) takes `vehicle_id`, `change_date` and `reason` (1 to 500 characters) and changes the vehicle of a held space on a signed Lease from that day. It answers the hold as `agreement_hold` does. A retry is safe. Refusals (409) carry `LEASE_CLOSED`, `CHANGE_DATE`, `CHANGE_REASON`, `VEHICLE_SAME`, `VEHICLE_TYPE` or `VEHICLE_NOT_OF_LEASE`; 404 when the hold is not on that Lease.
+- When a Lease is terminated its space holds end on its last day; when a draft is cancelled they are voided, so the space shows free again.
 
 # 10. Customer Endpoints
 

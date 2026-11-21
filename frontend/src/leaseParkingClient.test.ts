@@ -1,5 +1,6 @@
 // DL-253 (parking step 3b): the Lease parking client. TEST-FE-2345.
 // DL-254 (parking step 4b): a Parking agreement and its vehicle. TEST-FE-2349.
+// DL-255 (parking step 4c): Change vehicle. TEST-FE-2351.
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -158,5 +159,41 @@ describe("Lease parking client (DL-253)", () => {
     await expect(
       leaseParkingApi.pickVehicle("lease-9", "car-1"),
     ).rejects.toMatchObject({ code: "AGREEMENT_DATES_MISSING" });
+  });
+
+  it("TEST-FE-2351 changes the vehicle of a held space with the day and reason, and reads a refusal", async () => {
+    Object.defineProperty(document, "cookie", {
+      configurable: true,
+      value: "__Host-prm_csrf=token-3",
+    });
+    const changed = {
+      hold_id: "hold-9",
+      vehicle_id: "car-2",
+      plate_text: "2A-5678",
+      held_from: "2027-01-01",
+      held_until: "2099-12-31",
+    };
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(answer(201, { data: changed }))
+      .mockResolvedValueOnce(answer(409, { error: { code: "CHANGE_DATE" } }));
+    vi.stubGlobal("fetch", fetchMock);
+    const change = {
+      vehicle_id: "car-2",
+      change_date: "2027-03-01",
+      reason: "Sold the old car",
+    };
+    expect(
+      (await leaseParkingApi.changeVehicle("lease-9", "hold-9", change))
+        .plate_text,
+    ).toBe("2A-5678");
+    const [path, init] = fetchMock.mock.calls[0] ?? [];
+    expect(path).toBe("/leases/lease-9/parking-holds/hold-9/vehicle-changes");
+    expect(init?.method).toBe("POST");
+    expect(new Headers(init?.headers).get("X-CSRF-Token")).toBe("token-3");
+    expect(init?.body).toBe(JSON.stringify(change));
+    await expect(
+      leaseParkingApi.changeVehicle("lease-9", "hold-9", change),
+    ).rejects.toMatchObject({ code: "CHANGE_DATE" });
   });
 });

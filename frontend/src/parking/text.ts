@@ -275,6 +275,27 @@ const TEXT = {
   ],
   pa_vehicle_saved: ["Vehicle {0} was picked.", "បានជ្រើសយានយន្ត {0}។"],
   pa_new: ["New Parking agreement", "កិច្ចសន្យាចំណតថ្មី"],
+  pc_title: ["Change vehicle · space {0}", "ប្តូរយានយន្ត · កន្លែង {0}"],
+  pc_new_vehicle: ["New vehicle", "យានយន្តថ្មី"],
+  pc_day: ["From", "ចាប់ពី"],
+  pc_reason: ["Reason", "មូលហេតុ"],
+  pc_no_other: [
+    "There is no other vehicle on this Lease. Add one on the Customer page first.",
+    "គ្មានយានយន្តផ្សេងទៀតក្នុងកិច្ចសន្យានេះទេ។ សូមបន្ថែមនៅទំព័រអតិថិជនជាមុនសិន។",
+  ],
+  pc_saved: ["The vehicle is now {0}.", "យានយន្តឥឡូវគឺ {0}។"],
+  lp_r_VEHICLE_SAME: [
+    "This vehicle already parks here.",
+    "យានយន្តនេះចតនៅទីនេះរួចហើយ។",
+  ],
+  lp_r_CHANGE_DATE: [
+    "Pick a day on which this space is held.",
+    "សូមជ្រើសថ្ងៃដែលកន្លែងនេះត្រូវបានកក់។",
+  ],
+  lp_r_CHANGE_REASON: [
+    "Give a short reason for the change.",
+    "សូមផ្តល់មូលហេតុខ្លីសម្រាប់ការប្តូរ។",
+  ],
   col_actions: ["Actions", "សកម្មភាព"],
   ptype_COVERED: ["Covered", "ចំណតមានដំបូល"],
   ptype_UNCOVERED: ["Uncovered", "ចំណតគ្មានដំបូល"],

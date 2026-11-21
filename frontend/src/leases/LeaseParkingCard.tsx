@@ -6,6 +6,9 @@
 // DL-254 (parking step 4b): on a Parking agreement (a Lease on the space itself) the card shows
 // the space, its dates (or Month to month) and the vehicle that parks there, with Pick vehicle
 // while the agreement is a draft.
+//
+// DL-255 (parking step 4c): on a signed Lease, Change vehicle moves a held space to another
+// vehicle from a day, with a reason.
 
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 
@@ -17,7 +20,8 @@ import {
   leaseParkingApi as defaultLeaseParkingApi,
 } from "../leaseParkingClient";
 import { pt } from "../parking/text";
-import { dayText, usdFromCents } from "../shell/format";
+import { DateInput, isDay } from "../shell/DateInput";
+import { dayText, todayInPhnomPenh, usdFromCents } from "../shell/format";
 import { Icon } from "../shell/icons";
 import { Chip, Dialog } from "../shell/ui";
 import type { Language } from "../signInText";
@@ -244,6 +248,135 @@ function VehicleDialog({
   );
 }
 
+function ChangeVehicleDialog({
+  api,
+  language,
+  leaseId,
+  holdId,
+  currentVehicleId,
+  parking,
+  spaceNumber,
+  onClose,
+  onChanged,
+}: {
+  api: LeaseParkingApi;
+  language: Language;
+  leaseId: string;
+  holdId: string;
+  currentVehicleId: string | null;
+  parking: LeaseParking;
+  spaceNumber: string;
+  onClose: () => void;
+  onChanged: (plate: string) => void;
+}) {
+  const others = parking.vehicles.filter(
+    (item) => item.vehicle_id !== currentVehicleId,
+  );
+  const [vehicle, setVehicle] = useState(others[0]?.vehicle_id ?? "");
+  const [day, setDay] = useState(todayInPhnomPenh());
+  const [reason, setReason] = useState("");
+  const [problem, setProblem] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (busy || vehicle === "") return;
+    if (!isDay(day)) {
+      setProblem(pt(language, "lp_r_CHANGE_DATE"));
+      return;
+    }
+    if (reason.trim() === "") {
+      setProblem(pt(language, "lp_r_CHANGE_REASON"));
+      return;
+    }
+    setBusy(true);
+    setProblem(null);
+    void api
+      .changeVehicle(leaseId, holdId, {
+        vehicle_id: vehicle,
+        change_date: day,
+        reason: reason.trim(),
+      })
+      .then((hold) => {
+        onChanged(hold.plate_text ?? "");
+      })
+      .catch((error: unknown) => {
+        setBusy(false);
+        const code = error instanceof LeaseParkingError ? error.code : "FAILED";
+        setProblem(pt(language, `lp_r_${code}`));
+      });
+  }
+
+  return (
+    <Dialog
+      busy={busy}
+      closeLabel={pt(language, "cancel")}
+      onClose={onClose}
+      onSubmit={others.length === 0 ? undefined : submit}
+      submitLabel={pt(language, "save")}
+      title={pt(language, "pc_title", spaceNumber)}
+    >
+      {others.length === 0 ? (
+        <p className="ui-muted">{pt(language, "pc_no_other")}</p>
+      ) : (
+        <>
+          <div className="ui-field">
+            <label htmlFor="change-vehicle">
+              {pt(language, "pc_new_vehicle")}
+              <span className="req">{pt(language, "required")}</span>
+            </label>
+            <select
+              id="change-vehicle"
+              onChange={(event) => {
+                setVehicle(event.currentTarget.value);
+              }}
+              value={vehicle}
+            >
+              {others.map((item) => (
+                <option key={item.vehicle_id} value={item.vehicle_id}>
+                  {item.plate_text} · {pt(language, `v_${item.vehicle_type}`)}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="ui-field">
+            <label htmlFor="change-vehicle-day">
+              {pt(language, "pc_day")}
+              <span className="req">{pt(language, "required")}</span>
+            </label>
+            <DateInput
+              id="change-vehicle-day"
+              language={language}
+              onChange={setDay}
+              value={day}
+            />
+          </div>
+          <div className="ui-field">
+            <label htmlFor="change-vehicle-reason">
+              {pt(language, "pc_reason")}
+              <span className="req">{pt(language, "required")}</span>
+            </label>
+            <input
+              id="change-vehicle-reason"
+              maxLength={500}
+              onChange={(event) => {
+                setReason(event.currentTarget.value);
+              }}
+              value={reason}
+            />
+          </div>
+        </>
+      )}
+      {problem !== null && (
+        <p className="ui-error" role="alert">
+          <Icon name="alert" small />
+          <span>{problem}</span>
+        </p>
+      )}
+    </Dialog>
+  );
+}
+
 function AgreementCard({
   api,
   language,
@@ -258,11 +391,14 @@ function AgreementCard({
   reload: () => void;
 }) {
   const [picking, setPicking] = useState(false);
+  const [changing, setChanging] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const space = parking.space;
   const hold = parking.agreement_hold;
   const spaceNumber = space?.unit_number ?? "";
   const open = parking.can_pick && parking.lease_status === "DRAFTED";
+  const changeable =
+    parking.can_pick && parking.lease_status === "SIGNED" && hold !== null;
   const plate = (hold?.vehicle_id ?? null) === null ? null : hold?.plate_text;
 
   return (
@@ -314,6 +450,18 @@ function AgreementCard({
                 plate === null ? "pa_vehicle_pick" : "pa_vehicle_change",
               )}
             </button>
+          ) : changeable ? (
+            <button
+              className="ui-btn"
+              onClick={() => {
+                setNotice(null);
+                setChanging(true);
+              }}
+              type="button"
+            >
+              <Icon name="car" />
+              {pt(language, "pa_vehicle_change")}
+            </button>
           ) : plate !== null ? (
             <Chip icon="car" tone="ok">
               {plate}
@@ -335,6 +483,25 @@ function AgreementCard({
             setPicking(false);
             setNotice(pt(language, "pa_vehicle_saved", picked));
             reload();
+          }}
+          parking={parking}
+          spaceNumber={spaceNumber}
+        />
+      )}
+      {changing && hold !== null && (
+        <ChangeVehicleDialog
+          api={api}
+          currentVehicleId={hold.vehicle_id}
+          holdId={hold.hold_id}
+          language={language}
+          leaseId={leaseId}
+          onChanged={(changed) => {
+            setChanging(false);
+            setNotice(pt(language, "pc_saved", changed));
+            reload();
+          }}
+          onClose={() => {
+            setChanging(false);
           }}
           parking={parking}
           spaceNumber={spaceNumber}

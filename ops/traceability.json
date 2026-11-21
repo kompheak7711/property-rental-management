@@ -73238,6 +73238,72 @@
       "test_path": "frontend/src/leaseParkingClient.test.ts",
       "status": "implemented",
       "notes": "The Lease parking client reads a Parking agreement and picks its vehicle with the browser proof."
+    },
+    {
+      "test_id": "test_a_signed_lease_changes_its_vehicle_from_a_day_with_a_reason",
+      "upstream_ids": [
+        "DL-255",
+        "DB-PARK-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_parking_change_vehicle_migration.py",
+      "status": "implemented",
+      "notes": "DL-255 parking step 4c: on a signed Lease the vehicle of a held space changes from a day, with a reason; the change is kept and audited."
+    },
+    {
+      "test_id": "test_an_ended_lease_frees_its_space_and_a_cancelled_draft_lets_it_go",
+      "upstream_ids": [
+        "DL-255",
+        "DB-PARK-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_parking_change_vehicle_migration.py",
+      "status": "implemented",
+      "notes": "DL-255 parking step 4c: a terminated Lease ends its space holds on its last day and a cancelled draft voids them, so the space is free again."
+    },
+    {
+      "test_id": "test_the_app_changes_the_vehicle_only_through_the_function",
+      "upstream_ids": [
+        "DL-255",
+        "DB-PARK-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_parking_change_vehicle_migration.py",
+      "status": "implemented",
+      "notes": "DL-255 parking step 4c: the app changes the vehicle only through app.change_parking_vehicle."
+    },
+    {
+      "test_id": "test_a_drafter_changes_the_vehicle_of_a_held_space_from_a_day",
+      "upstream_ids": [
+        "DL-255",
+        "API-029d"
+      ],
+      "test_level": "API",
+      "test_path": "backend/tests/test_lease_parking_api.py",
+      "status": "implemented",
+      "notes": "DL-255 parking step 4c: a drafter changes the vehicle of a held space; readers and requests without browser proof are refused."
+    },
+    {
+      "test_id": "TEST-FE-2350",
+      "upstream_ids": [
+        "DL-255",
+        "API-029d"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/leases/LeaseParkingCard.test.tsx",
+      "status": "implemented",
+      "notes": "A signed Parking agreement changes its vehicle from a day with a reason; a missing reason is refused on the form."
+    },
+    {
+      "test_id": "TEST-FE-2351",
+      "upstream_ids": [
+        "DL-255",
+        "API-029d"
+      ],
+      "test_level": "unit",
+      "test_path": "frontend/src/leaseParkingClient.test.ts",
+      "status": "implemented",
+      "notes": "The Lease parking client changes the vehicle with the browser proof and keeps refusal codes."
     }
   ]
 }
