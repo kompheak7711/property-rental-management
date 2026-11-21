@@ -57,7 +57,7 @@ def _end(connection: Db, lease_id: UUID, actor_id: UUID, status: str, last: date
 
 def test_migration_is_the_single_head_and_forward_only() -> None:
     scripts = ScriptDirectory.from_config(Config(str(Path(__file__).parents[1] / "alembic.ini")))
-    assert scripts.get_heads() == [REVISION]
+    assert scripts.get_heads() == ["20270819_444"]  # step 5a follows 443
     revision = scripts.get_revision(REVISION)
     assert revision is not None and revision.down_revision == "20270817_442"
     with pytest.raises(RuntimeError, match="forward-only"):

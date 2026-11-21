@@ -63,7 +63,7 @@ def test_migration_365_follows_the_payments_paid_for_and_is_forward_only() -> No
     scripts = ScriptDirectory.from_config(config)
     revision = scripts.get_revision(REVISION)
     assert revision is not None and revision.down_revision == PREVIOUS
-    assert scripts.get_heads() == ["20270818_443"]
+    assert scripts.get_heads() == ["20270819_444"]
     with pytest.raises(NotImplementedError, match="forward-only"):
         revision.module.downgrade()
 
@@ -103,6 +103,10 @@ def test_the_home_page_at_the_head_holds_every_fix_once(migrated_database_url: s
     module = _migration()
     with psycopg.connect(migrated_database_url) as connection:
         definition = _definition(connection)
+    # 444 (DL-256) counts rooms only on the Units card and adds the Parking taken card.
+    parking = _migration("20270819_444")
+    for before, after in cast(tuple[tuple[str, str], ...], parking.HOME_PATCH):
+        definition = definition.replace(after, before)
     # Main's 421 (C2, DL-241; joined by 417) reads who holds each Unit for the Units card, so the
     # card reads a worked-out status instead of app.units; the for-rent rule stays.
     held = _migration("20270803_417")
