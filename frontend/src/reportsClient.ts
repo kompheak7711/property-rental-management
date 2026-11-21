@@ -37,6 +37,8 @@ export interface HomeCards {
     vacant: number;
     total: number;
   };
+  // DL-256 (parking step 5a): vehicle places held today of all the places staff rent out.
+  parking_taken?: { taken: number; total: number };
   pending_payment?: { amount_usd_cents: number; invoice_count: number };
   overdue?: { amount_usd_cents: number; invoice_count: number };
   // "Paid for this month": the billed fields come with Invoices, the received fields with

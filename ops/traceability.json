@@ -73304,6 +73304,38 @@
       "test_path": "frontend/src/leaseParkingClient.test.ts",
       "status": "implemented",
       "notes": "The Lease parking client changes the vehicle with the browser proof and keeps refusal codes."
+    },
+    {
+      "test_id": "test_home_counts_rooms_apart_and_the_vehicle_places_taken_today",
+      "upstream_ids": [
+        "DL-256",
+        "DB-PARK-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_parking_home_and_ledger_migration.py",
+      "status": "implemented",
+      "notes": "DL-256 parking step 5a: Home counts rooms apart from parking spaces and the vehicle places taken today; spaces kept for guests are left out."
+    },
+    {
+      "test_id": "test_parking_money_posts_to_4110",
+      "upstream_ids": [
+        "DL-256",
+        "DB-PARK-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_parking_home_and_ledger_migration.py",
+      "status": "implemented",
+      "notes": "DL-256 parking step 5a: the parking Service of a room Lease posts to 4110 Parking; parking Rent income goes to 4110 after 2050."
+    },
+    {
+      "test_id": "TEST-FE-2352",
+      "upstream_ids": [
+        "DL-256"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/home/HomeScreen.test.tsx",
+      "status": "implemented",
+      "notes": "Home shows Parking taken after Vacant Units in vehicle places with the places free and opens the Parking page; no spaces, no card."
     }
   ]
 }

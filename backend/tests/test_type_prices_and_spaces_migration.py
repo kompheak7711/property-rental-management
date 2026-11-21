@@ -112,7 +112,7 @@ def space(
 
 def test_migration_is_the_single_head_and_forward_only() -> None:
     scripts = ScriptDirectory.from_config(_config())
-    assert scripts.get_heads() == ["20270818_443"]  # parking step 3b 440 follows 439
+    assert scripts.get_heads() == ["20270819_444"]  # parking step 3b 440 follows 439
     revision = scripts.get_revision(REVISION)
     assert revision is not None and revision.down_revision == "20270812_437"
     with pytest.raises(RuntimeError, match="forward-only"):

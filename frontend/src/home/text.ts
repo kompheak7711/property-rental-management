@@ -29,6 +29,10 @@ const TEXT = {
   // Owner 12/11/2026: the Occupancy card is a Vacant card (vacant Units only).
   k_vac: ["Vacant Units", "បន្ទប់ទំនេរ"], // new
   k_vac_s: ["{0} Units · {1} reserved", "បន្ទប់ {0} · បានកក់ {1}"], // new
+  // DL-256 (parking step 5a)
+  k_park: ["Parking taken", "ចំណតដែលមានគេជួល"],
+  k_park_v: ["{0} of {1}", "{0} នៃ {1}"],
+  k_park_s: ["{0} places free", "នៅទំនេរ {0} កន្លែង"],
   // Owner 14/11/2026: "Unpaid", the same word as the Invoices card it opens ("Total unpaid").
   k_pend: ["Unpaid", "ប្រាក់មិនទាន់បង់"],
   k_paid: ["Paid this month", "បានបង់ខែនេះ"],

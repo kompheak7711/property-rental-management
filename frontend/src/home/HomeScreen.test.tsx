@@ -1,3 +1,4 @@
+// DL-256 (parking step 5a): the Parking taken card. TEST-FE-2352.
 import {
   cleanup,
   fireEvent,
@@ -915,5 +916,44 @@ describe("Home", () => {
     expect(
       document.querySelector(".ui-todo-card")?.compareDocumentPosition(calm),
     ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
+  it("TEST-FE-2352 (DL-256) parking spaces show as Parking taken after Vacant Units, in vehicle places with the places free, and open the Parking page; no spaces, no card", async () => {
+    show(
+      () =>
+        Promise.resolve({
+          ...PAGE,
+          sections: ["units"],
+          cards: {
+            units_occupied: { occupied: 21, reserved: 1, vacant: 1, total: 23 },
+            parking_taken: { taken: 18, total: 24 },
+          },
+        }),
+      { capabilities: new Set(["units.read"]) },
+    );
+    expect(await screen.findByText("Parking taken")).toBeInTheDocument();
+    const parking = card(/Parking taken/);
+    expect(parking).toHaveTextContent("18 of 24");
+    expect(parking).toHaveTextContent("6 places free");
+    expect(parking).toHaveAttribute("href", hashForPage("parking"));
+    expect(card(/Vacant Units/).compareDocumentPosition(parking)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    cleanup();
+
+    show(
+      () =>
+        Promise.resolve({
+          ...PAGE,
+          sections: ["units"],
+          cards: {
+            units_occupied: { occupied: 21, reserved: 1, vacant: 1, total: 23 },
+            parking_taken: { taken: 0, total: 0 },
+          },
+        }),
+      { capabilities: new Set(["units.read"]) },
+    );
+    expect(await screen.findByText("Vacant Units")).toBeInTheDocument();
+    expect(screen.queryByText("Parking taken")).toBeNull();
   });
 });

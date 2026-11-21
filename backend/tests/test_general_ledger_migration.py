@@ -132,8 +132,9 @@ def test_the_starter_chart_and_fiscal_year_2027_are_seeded_once(ledger: Ledger) 
         "bs_section, is_retained_earnings FROM app.gl_accounts WHERE property_id=%s ORDER BY code",
         (ledger.property_id,),
     ).fetchall()
-    # 59 starter accounts plus 1021 ABA Bank · KHR account (migration 20270609_320, DL-160).
-    assert len(accounts) == 60
+    # 59 starter accounts plus 1021 ABA Bank · KHR account (migration 20270609_320, DL-160) and
+    # 4110 Parking (migration 20270819_444, DL-256).
+    assert len(accounts) == 61
     by_code = {row[0]: row for row in accounts}
     assert by_code["1021"][1] == "ABA Bank · KHR account" and by_code["1021"][5] == "BANK_KHR"
     assert by_code["1010"][1:] == (
@@ -179,7 +180,7 @@ def test_the_starter_chart_and_fiscal_year_2027_are_seeded_once(ledger: Ledger) 
     assert first == again
     assert connection.execute(
         "SELECT count(*) FROM app.gl_accounts WHERE property_id=%s", (ledger.property_id,)
-    ).fetchone() == (60,)
+    ).fetchone() == (61,)
     started = connection.execute(
         "SELECT count(*) FROM app.audit_events WHERE property_id=%s AND action='ledger.started'",
         (ledger.property_id,),
@@ -694,7 +695,7 @@ def test_the_runtime_role_only_reads_the_ledger(migrated_database_url: str) -> N
     assert migrated_database_url
     with psycopg.connect(runtime_database_url()) as runtime:
         assert runtime.execute("SELECT count(*) >= 0 FROM app.gl_journal_entries").fetchone()
-        assert runtime.execute("SELECT count(*) = 60 FROM app.gl_chart_template").fetchone() == (
+        assert runtime.execute("SELECT count(*) = 61 FROM app.gl_chart_template").fetchone() == (
             True,
         )
         for query in (

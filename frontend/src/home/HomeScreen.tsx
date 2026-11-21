@@ -460,6 +460,23 @@ function Cards({
       />,
     );
   }
+  const parking = cards.parking_taken;
+  if (parking !== undefined && parking.total > 0) {
+    // DL-256: parking spaces count apart from rooms, in vehicle places.
+    const free = Math.max(parking.total - parking.taken, 0);
+    shown.push(
+      <Card
+        empty={false}
+        icon="car"
+        key="parking"
+        label={hmt(language, "k_park")}
+        note={free === 0 ? undefined : hmt(language, "k_park_s", free)}
+        page="parking"
+        tone="brand"
+        value={hmt(language, "k_park_v", parking.taken, parking.total)}
+      />,
+    );
+  }
   if (visits !== null) {
     shown.push(
       <Card
