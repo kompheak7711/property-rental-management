@@ -747,6 +747,7 @@ function WeekPlan({ language, propertyId, api, active }: PartProps) {
             <table className="ui-table hr-week">
               <thead>
                 <tr>
+                  <th scope="col">{ht(language, "e_code")}</th>
                   <th scope="col">{ht(language, "e_name")}</th>
                   {days.map((day) => (
                     <th key={day} scope="col">
@@ -766,12 +767,8 @@ function WeekPlan({ language, propertyId, api, active }: PartProps) {
                   ).length;
                   return (
                     <tr key={person.employee_id}>
-                      <th scope="row">
-                        {nameOf(language, person)}
-                        <span className="ui-sub2 ui-num">
-                          {person.employee_code}
-                        </span>
-                      </th>
+                      <td className="ui-num hr-code">{person.employee_code}</td>
+                      <th scope="row">{nameOf(language, person)}</th>
                       {person.days.map((one) => {
                         const words = !one.works
                           ? ht(language, "a_not_working")
@@ -1436,6 +1433,7 @@ function MonthSummary({ language, propertyId, api, active }: PartProps) {
           <table className="ui-table">
             <thead>
               <tr>
+                <th scope="col">{ht(language, "e_code")}</th>
                 <th scope="col">{ht(language, "e_name")}</th>
                 <th className="r" scope="col">
                   {ht(language, "m_worked")}
@@ -1466,10 +1464,8 @@ function MonthSummary({ language, propertyId, api, active }: PartProps) {
             <tbody>
               {data.people.map((line) => (
                 <tr key={line.employee_id}>
-                  <th scope="row">
-                    {nameOf(language, line)}
-                    <span className="ui-sub2 ui-num">{line.employee_code}</span>
-                  </th>
+                  <td className="ui-num hr-code">{line.employee_code}</td>
+                  <th scope="row">{nameOf(language, line)}</th>
                   <td className="r ui-num">{line.days_worked}</td>
                   <td className="r ui-num">{line.times_late}</td>
                   <td className="r ui-num">{line.days_absent}</td>

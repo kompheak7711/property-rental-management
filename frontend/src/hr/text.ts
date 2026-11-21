@@ -205,6 +205,8 @@ const TEXT = {
     "លេខគណនី ABA",
   ],
   e_id: ["ID number", "លេខអត្តសញ្ញាណប័ណ្ណ"],
+  // V1.3 bug fix (owner 21/11/2026): the Employee ID has its own column on Staff lists.
+  e_code: ["Employee ID", "លេខបុគ្គលិក"],
   e_id_type: [
     "ID type",
     // new
