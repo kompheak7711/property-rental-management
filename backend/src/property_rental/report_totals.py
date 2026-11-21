@@ -39,6 +39,8 @@ INCOME_GROUPS: Final[Mapping[str, str]] = {
     "MISCELLANEOUS_CHARGES": "move_out_and_damage",
     # V1.1 part 6 (DL-123): the lines of a Products Invoice made from a Quotation.
     "PRODUCT_CHARGES": "products_and_services",
+    # DL-257 (parking step 5b): Parking agreement Rent and the parking Service of a room Lease.
+    "PARKING_CHARGES": "parking",
     "LATE_PAYMENT_CHARGES": "other",
     "DEPOSIT_KEPT": "other",
 }

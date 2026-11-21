@@ -3598,6 +3598,16 @@ The unpublished due-attribution implementation is removed by a forward commit: m
 - **Home.** "Vacant Units" counts rooms only; a parking space is not a room. A new card "Parking taken" shows the vehicle places held today of all the places staff rent out (for example 18 of 24), with the places free, and opens the Parking page. The Motorbike area counts each of its places. Spaces kept for short-stay guests are left out. With no parking spaces there is no card.
 - **Ledger.** A new income account 4110 "Parking". The Rent of a Parking agreement and the parking Service of a room Lease post to 4110 instead of 4010 Rent and 4020 Services. Rent paid before its month still waits in 2050 until the month starts, then moves to 4110. Records already posted stay as they are.
 - **Built.** Migration `20270819_444` (forward-only): `app.home_page` card `parking_taken`, `app.gl_line_is_parking`, `app.gl_parking_rent_account`, account 4110 in the chart template and every chart already started, and the changed `app.gl_app_record_events`.
-- **Still to build (step 5b).** Reports: Parking income and Parking taken (by building when there are 2 or more), Rooms reports without parking spaces; the Tenant bot for Parking agreement customers.
+- **Step 5b (DL-257).** Reports and the Tenant bot.
 - **Links:** DL-253, DL-255, DB-PARK-001.
+- **Decision date:** 2026-11-21.
+
+## DL-257 — Parking in Reports, and the Tenant bot for Parking customers (parking step 5b)
+
+- **Type:** `TECHNICAL DECISION UNDER THE OWNER'S RULE` (owner 2026-10-23 22:30). The owner agreed that parking money shows on its own line in reports (parking plan, phase 2, 20 Nov 2026).
+- **Total Income.** Parking money is a part of its own, "Parking": the Rent of a Parking agreement and the parking Service of a room Lease. It no longer counts with Monthly Rent and Services. A missed amount keeps its line's kind.
+- **Unit occupancy.** A parking space is not a room, so it is left out, as on Home. How many vehicle places are taken shows on Home ("Parking taken", DL-256) and on the Parking page.
+- **Tenant bot.** A Parking agreement is a Lease on its space, so its customer links to the Tenant bot like a room tenant (the space number and their name or phone) and gets Invoices, Receipts and notices. No change was needed; a test keeps it so. Staff already report parking problems in the Staff bot (area "Parking").
+- **Built.** Migration `20270820_445` (forward-only): `app.report_income_facts` kind `PARKING_CHARGES` and `app.report_unit_occupancy` without parking spaces. The Total Income chart has the part Parking.
+- **Links:** DL-253, DL-256, DB-PARK-001.
 - **Decision date:** 2026-11-21.

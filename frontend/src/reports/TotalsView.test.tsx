@@ -1,3 +1,4 @@
+// DL-257 (parking step 5b): the Parking part of Total Income. TEST-FE-2353.
 import {
   act,
   cleanup,
@@ -104,6 +105,7 @@ describe("Totals by Unit and month", () => {
     expect(headRow(chart)).toEqual([
       "Month",
       "Monthly Rent and Services",
+      "Parking",
       "Utilities",
       "Move-out and damage",
       "Products and services",
@@ -113,6 +115,7 @@ describe("Totals by Unit and month", () => {
     expect(bodyRows(chart)[4]).toEqual([
       "October 2026",
       "$800.00",
+      "$0.00",
       "$120.00",
       "$0.00",
       "$0.00",
@@ -366,5 +369,28 @@ describe("Totals by Unit and month", () => {
     expect(
       screen.getByRole("button", { name: "Back to Reports" }),
     ).toBeInTheDocument();
+  });
+
+  it("TEST-FE-2353 (DL-257) Total Income shows parking money as its own part of the month chart", async () => {
+    openReports({
+      hash: "#/reports/total_income",
+      totals: () =>
+        Promise.resolve({
+          ...INCOME,
+          chart: {
+            ...INCOME.chart,
+            months: [
+              { month: "2026-10", parts: { rent: 80000, parking: 3500 } },
+            ],
+          },
+        }),
+    });
+    const chart = await screen.findByRole("table", { name: "Income by month" });
+    expect(headRow(chart)[2]).toBe("Parking");
+    expect(bodyRows(chart)[0]?.slice(0, 3)).toEqual([
+      "October 2026",
+      "$800.00",
+      "$35.00",
+    ]);
   });
 });

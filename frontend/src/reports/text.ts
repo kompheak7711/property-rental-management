@@ -237,6 +237,7 @@ const TEXT = {
   s_utilities: ["Utilities", "ទឹកភ្លើង"],
   s_move_out_and_damage: ["Move-out and damage", "ចាកចេញ និងខូចខាត"],
   s_products_and_services: ["Products and services", "ផលិតផល និងសេវា"],
+  s_parking: ["Parking", "ចំណត"],
   // new
   s_other_income: [
     "Late charges and kept Deposits",

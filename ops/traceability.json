@@ -73336,6 +73336,38 @@
       "test_path": "frontend/src/home/HomeScreen.test.tsx",
       "status": "implemented",
       "notes": "Home shows Parking taken after Vacant Units in vehicle places with the places free and opens the Parking page; no spaces, no card."
+    },
+    {
+      "test_id": "test_parking_money_is_its_own_income_part_and_spaces_are_not_rooms",
+      "upstream_ids": [
+        "DL-257",
+        "DB-PARK-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_parking_reports_migration.py",
+      "status": "implemented",
+      "notes": "DL-257 parking step 5b: parking Services count as Parking in Total Income; Unit occupancy leaves parking spaces out."
+    },
+    {
+      "test_id": "test_a_parking_agreement_customer_may_link_to_the_tenant_bot",
+      "upstream_ids": [
+        "DL-257",
+        "DB-PARK-001"
+      ],
+      "test_level": "DB",
+      "test_path": "backend/tests/test_parking_reports_migration.py",
+      "status": "implemented",
+      "notes": "DL-257 parking step 5b: the customer of a signed Parking agreement may link to the Tenant bot with the space."
+    },
+    {
+      "test_id": "TEST-FE-2353",
+      "upstream_ids": [
+        "DL-257"
+      ],
+      "test_level": "UI component",
+      "test_path": "frontend/src/reports/TotalsView.test.tsx",
+      "status": "implemented",
+      "notes": "Total Income shows parking money as its own part of the month chart."
     }
   ]
 }
