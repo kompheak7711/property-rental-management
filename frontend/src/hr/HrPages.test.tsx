@@ -484,6 +484,33 @@ describe("HRIS phase 6 screens", () => {
     ).toBeInTheDocument();
   });
 
+  it("TEST-FE-2371 (V1.3 bug fix, owner 21/11/2026) the Employee ID has its own column before the name, not a line under the name", async () => {
+    render(
+      <EmployeesPage
+        active
+        api={fakeApi()}
+        capabilities={null}
+        language="en"
+        propertyId={PROPERTY}
+      />,
+    );
+    const table = await screen.findByRole("table");
+    const heads = within(table)
+      .getAllByRole("columnheader")
+      .map((th) => th.textContent);
+    expect(heads.slice(0, 2)).toEqual(["Employee ID", "Name"]);
+    const name = within(table).getByRole("button", { name: "Chan Dara" });
+    const nameCell = name.closest("td");
+    if (nameCell === null) throw new Error("The name is in a cell");
+    expect(nameCell.textContent).toBe("Chan Dara");
+    expect(nameCell.className).toContain("ui-rc-title");
+    const codeCell = nameCell.previousElementSibling;
+    expect(codeCell?.textContent).toBe("E-001");
+    // On a phone card the ID is a labelled line; the name is the title with no label.
+    expect(codeCell?.getAttribute("data-label")).toBe("Employee ID");
+    expect(nameCell.dataset.label).toBeUndefined();
+  });
+
   it("TEST-FE-1300 adds an employee with the salary in whole cents and says it was added", async () => {
     const api = fakeApi();
     render(

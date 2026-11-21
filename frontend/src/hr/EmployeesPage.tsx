@@ -286,6 +286,7 @@ function EmployeeList({
             <table className="ui-table ui-rowcards hr-cards" ref={cardLabels}>
               <thead>
                 <tr>
+                  <th scope="col">{ht(language, "e_code")}</th>
                   <th scope="col">{ht(language, "e_name")}</th>
                   <th scope="col">{ht(language, "e_job")}</th>
                   <th scope="col">{ht(language, "e_shift")}</th>
@@ -307,7 +308,8 @@ function EmployeeList({
                       openPageInAddress("employees", false, person.employee_id);
                     }}
                   >
-                    <td>
+                    <td className="ui-num hr-code">{person.employee_code}</td>
+                    <td className="ui-rc-title">
                       <button
                         className="ui-btn link"
                         onClick={(event) => {
@@ -322,9 +324,6 @@ function EmployeeList({
                       >
                         {nameOf(language, person)}
                       </button>
-                      <span className="ui-sub2 ui-num">
-                        {person.employee_code}
-                      </span>
                     </td>
                     <td>
                       {person.job_title === null

@@ -15,9 +15,15 @@ export function useCardLabels(): RefObject<HTMLTableElement | null> {
       th.querySelector(".ui-sr") !== null ? "" : th.textContent.trim(),
     );
     for (const row of element.querySelectorAll("tbody tr")) {
-      [...row.children].forEach((cell, index) => {
+      // The card's title is the cell marked "ui-rc-title", or else the first cell.
+      const cells = [...row.children];
+      const marked = cells.findIndex((cell) =>
+        cell.classList.contains("ui-rc-title"),
+      );
+      const title = marked === -1 ? 0 : marked;
+      cells.forEach((cell, index) => {
         if (!(cell instanceof HTMLElement)) return;
-        const label = index === 0 ? "" : (heads[index] ?? "");
+        const label = index === title ? "" : (heads[index] ?? "");
         if (label === "") delete cell.dataset.label;
         else cell.dataset.label = label;
       });

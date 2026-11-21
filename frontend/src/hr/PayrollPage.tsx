@@ -514,6 +514,7 @@ function RunView({
           <table className="ui-table ui-rowcards hr-cards" ref={cardLabels}>
             <thead>
               <tr>
+                <th scope="col">{ht(language, "e_code")}</th>
                 <th scope="col">{ht(language, "e_name")}</th>
                 <th scope="col">{ht(language, "p_lines")}</th>
                 <th className="r" scope="col">
@@ -530,12 +531,8 @@ function RunView({
                 const payment = person.payslip?.payment ?? null;
                 return (
                   <tr key={person.employee_id}>
-                    <td>
-                      {nameOf(language, person)}
-                      <span className="ui-sub2 ui-num">
-                        {person.employee_code}
-                      </span>
-                    </td>
+                    <td className="ui-num hr-code">{person.employee_code}</td>
+                    <td className="ui-rc-title">{nameOf(language, person)}</td>
                     <td className="ui-rc-wide">
                       <ul className="ui-plain">
                         {person.lines.map((line) => (
