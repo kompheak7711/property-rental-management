@@ -379,6 +379,7 @@ database_test_suites='
   tests/test_parking_home_and_ledger_migration.py
   tests/test_parking_reports_migration.py
   tests/test_parking_agreement_ending_migration.py
+  tests/test_parking_no_deposit_start_migration.py
   tests/test_type_prices_and_spaces_migration.py
   tests/test_hr_employees_migration.py
   tests/test_hr_payroll_migration.py

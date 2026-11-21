@@ -443,8 +443,10 @@ class PostgresLeaseSigningFlow:
             with self._connect(self._database_url) as connection:
                 row = connection.execute(
                     "SELECT app.lease_signing_preview(%s,%s) || jsonb_build_object("
-                    "'held_security_deposit', app.lease_held_security_deposit(%s,%s))",
-                    (property_id, lease_id, property_id, lease_id),
+                    "'held_security_deposit', app.lease_held_security_deposit(%s,%s), "
+                    # DL-259 (Q17): a parking customer from before the app pays no deposit.
+                    "'no_deposit_start', app.lease_no_deposit_start(%s))",
+                    (property_id, lease_id, property_id, lease_id, lease_id),
                 ).fetchone()
         except psycopg.Error as exc:
             self._raise(exc)

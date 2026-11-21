@@ -77,6 +77,15 @@ export interface LeaseParking {
   space: AgreementSpace | null;
   agreement_hold: AgreementHold | null;
   ending: AgreementEnding | null;
+  /** deposits.manage: a Manager or the Owner (DL-259). */
+  can_skip_deposit: boolean;
+  /** DL-259: this draft is signed with no Security Deposit. */
+  no_deposit_start: NoDepositStart | null;
+}
+
+// DL-259 (parking step 5d): a customer from before the app starts with no deposit.
+export interface NoDepositStart {
+  reason: string;
 }
 
 export interface LeaseParkingPick {
@@ -100,6 +109,8 @@ export interface LeaseParkingApi {
     leaseId: string,
     ending: EndingNotice,
   ) => Promise<LeaseParking>;
+  /** DL-259: sign this Parking draft with no Security Deposit. */
+  startWithoutDeposit: (leaseId: string) => Promise<NoDepositStart>;
 }
 
 export interface EndingNotice {
@@ -130,6 +141,9 @@ export type LeaseParkingRefusal =
   | "ENDING_ALREADY_SET"
   | "TOLD_DATE"
   | "DRAFT_AFTER_END"
+  | "NO_DEPOSIT_ALREADY_SET"
+  | "NOT_A_PARKING_DRAFT"
+  | "DEPOSIT_ALREADY_HELD"
   | "UNAVAILABLE"
   | "FAILED";
 
@@ -149,6 +163,9 @@ const KNOWN: readonly LeaseParkingRefusal[] = [
   "ENDING_ALREADY_SET",
   "TOLD_DATE",
   "DRAFT_AFTER_END",
+  "NO_DEPOSIT_ALREADY_SET",
+  "NOT_A_PARKING_DRAFT",
+  "DEPOSIT_ALREADY_HELD",
 ];
 
 export class LeaseParkingError extends Error {
@@ -353,6 +370,12 @@ function ending(value: unknown): AgreementEnding | null {
   };
 }
 
+function noDepositStart(value: unknown): NoDepositStart | null {
+  if (!isObject(value)) return null;
+  if (typeof value.reason !== "string") throw new LeaseParkingError("FAILED");
+  return { reason: value.reason };
+}
+
 async function read(leaseId: string): Promise<LeaseParking> {
   return parking(
     await request(`/leases/${encodeURIComponent(leaseId)}/parking`, {
@@ -382,6 +405,8 @@ function parking(data: Record<string, unknown>): LeaseParking {
       ? agreementHold(data.agreement_hold)
       : null,
     ending: ending(data.ending),
+    can_skip_deposit: data.can_skip_deposit === true,
+    no_deposit_start: noDepositStart(data.no_deposit_start),
   };
 }
 
@@ -457,10 +482,26 @@ async function endAgreement(
   );
 }
 
+async function startWithoutDeposit(leaseId: string): Promise<NoDepositStart> {
+  const token = csrfToken();
+  if (token === null || token.length === 0) {
+    throw new LeaseParkingError("FAILED");
+  }
+  const start = noDepositStart(
+    await request(`/leases/${encodeURIComponent(leaseId)}/no-deposit-start`, {
+      method: "POST",
+      headers: { "X-CSRF-Token": token },
+    }),
+  );
+  if (start === null) throw new LeaseParkingError("FAILED");
+  return start;
+}
+
 export const leaseParkingApi: LeaseParkingApi = {
   read,
   pick,
   pickVehicle,
   changeVehicle,
   endAgreement,
+  startWithoutDeposit,
 };

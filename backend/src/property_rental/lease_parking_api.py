@@ -12,6 +12,9 @@ from a day, with a reason.
 
 End agreement (DL-258, parking step 5c): a Manager or the Owner records the notice that ends a
 month-to-month Parking agreement; its End Date moves to the last day by the owner's rules.
+
+No deposit (DL-259, parking step 5d): a Manager or the Owner starts the drafted agreement of a
+customer from before the app with no Security Deposit (owner answers Q5 and Q17).
 """
 
 from __future__ import annotations
@@ -38,6 +41,7 @@ from property_rental.settings import Settings
 LEASE_READ_CAPABILITY: Final = "leases.read"
 LEASE_DRAFT_CAPABILITY: Final = "leases.draft"
 LEASE_TERMINATE_CAPABILITY: Final = "leases.terminate"
+DEPOSIT_MANAGE_CAPABILITY: Final = "deposits.manage"
 _T = TypeVar("_T")
 _MESSAGES: Final = {
     "PARKING_ALREADY_HELD": "This parking already has a space.",
@@ -55,6 +59,9 @@ _MESSAGES: Final = {
     "ENDING_ALREADY_SET": "This agreement already has its last day.",
     "TOLD_DATE": "Pick a day from the Start Date to today.",
     "DRAFT_AFTER_END": "A draft Invoice bills a day after the last day. Delete that draft first.",
+    "NO_DEPOSIT_ALREADY_SET": "This agreement already starts with no deposit.",
+    "NOT_A_PARKING_DRAFT": "Only a drafted Parking agreement starts with no deposit.",
+    "DEPOSIT_ALREADY_HELD": "This draft already carries a Security Deposit.",
 }
 
 
@@ -114,6 +121,8 @@ class LeaseParkingFlow(Protocol):
         actor_id: str,
     ) -> dict[str, object]: ...
 
+    def start_without_deposit(self, lease_id: UUID, *, actor_id: str) -> dict[str, object]: ...
+
 
 class UnavailableLeaseParkingFlow:
     """Used when the app has no database."""
@@ -142,11 +151,16 @@ class UnavailableLeaseParkingFlow:
         del lease_id
         raise LeaseParkingUnavailable("Parking persistence is not configured")
 
+    def start_without_deposit(self, lease_id: UUID, **_: object) -> dict[str, object]:
+        del lease_id
+        raise LeaseParkingUnavailable("Parking persistence is not configured")
+
 
 class PostgresLeaseParkingFlow:
     """Runs `app.lease_parking`, `app.hold_room_parking_space` (migration 440),
     `app.hold_parking_agreement_space` (migration 441), `app.change_parking_vehicle`
-    (migration 443) and `app.end_parking_agreement` (migration 446)."""
+    (migration 443), `app.end_parking_agreement` (migration 446) and
+    `app.start_lease_without_deposit` (migration 447)."""
 
     def __init__(self, database_url: str) -> None:
         self._database_url = database_url
@@ -168,7 +182,11 @@ class PostgresLeaseParkingFlow:
     def read(self, lease_id: UUID) -> dict[str, object]:
         try:
             with psycopg.connect(self._database_url) as connection:
-                row = connection.execute("SELECT app.lease_parking(%s)", (lease_id,)).fetchone()
+                row = connection.execute(
+                    "SELECT app.lease_parking(%s) || jsonb_build_object("
+                    "'no_deposit_start', app.lease_no_deposit_start(%s))",
+                    (lease_id, lease_id),
+                ).fetchone()
         except psycopg.Error as exc:
             raise LeaseParkingUnavailable("Parking is unavailable") from exc
         if row is None or not isinstance(row[0], dict):
@@ -277,6 +295,24 @@ class PostgresLeaseParkingFlow:
             raise LeaseParkingUnavailable("Parking is unavailable")
         return row[0]
 
+    def start_without_deposit(self, lease_id: UUID, *, actor_id: str) -> dict[str, object]:
+        try:
+            with psycopg.connect(self._database_url) as connection:
+                row = connection.execute(
+                    "SELECT app.start_lease_without_deposit(%s, %s, %s)",
+                    (uuid4(), lease_id, UUID(actor_id)),
+                ).fetchone()
+        except psycopg.errors.NoDataFound as exc:
+            raise LeaseParkingNotFound("Parking agreement was not found") from exc
+        except psycopg.Error as exc:
+            hint = exc.diag.message_hint
+            if hint:
+                raise LeaseParkingConflict("No deposit cannot be set", str(hint)) from exc
+            raise LeaseParkingUnavailable("Parking is unavailable") from exc
+        if row is None or not isinstance(row[0], dict):
+            raise LeaseParkingUnavailable("Parking is unavailable")
+        return row[0]
+
 
 class HoldBody(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -349,11 +385,15 @@ def create_lease_parking_router(
     def can_end(actor: AuthenticatedActor, property_id: UUID) -> bool:
         return _allowed(actor, LEASE_TERMINATE_CAPABILITY, property_id)
 
+    def can_skip_deposit(actor: AuthenticatedActor, property_id: UUID) -> bool:
+        return _allowed(actor, DEPOSIT_MANAGE_CAPABILITY, property_id)
+
     def readable(actor: AuthenticatedActor, lease_id: UUID) -> UUID:
         property_id = run(lambda: flow.lease_property(lease_id))
         if not (
             can_pick(actor, property_id)
             or can_end(actor, property_id)
+            or can_skip_deposit(actor, property_id)
             or _allowed(actor, LEASE_READ_CAPABILITY, property_id)
         ):
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
@@ -370,6 +410,7 @@ def create_lease_parking_router(
                 **parking,
                 "can_pick": can_pick(actor, property_id),
                 "can_end": can_end(actor, property_id),
+                "can_skip_deposit": can_skip_deposit(actor, property_id),
             },
             "meta": {"request_id": request.state.request_id},
         }
@@ -471,5 +512,20 @@ def create_lease_parking_router(
             },
             "meta": {"request_id": request.state.request_id},
         }
+
+    @router.post("/leases/{lease_id}/no-deposit-start", status_code=status.HTTP_201_CREATED)
+    def start_without_deposit(
+        lease_id: UUID, request: Request, response: Response
+    ) -> dict[str, object]:
+        """DL-259 (Q17): the drafted Parking agreement of a customer from before the app is
+        signed with no Security Deposit. Only a Manager or the Owner (deposits.manage)."""
+        actor = actor_of(request)
+        property_id = readable(actor, lease_id)
+        if not can_skip_deposit(actor, property_id):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+        require_browser_mutation(request, settings)
+        start = run(lambda: flow.start_without_deposit(lease_id, actor_id=actor.actor_id))
+        response.headers["Cache-Control"] = "private, no-store"
+        return {"data": start, "meta": {"request_id": request.state.request_id}}
 
     return router

@@ -159,7 +159,10 @@ export function SignDialog({
     preview.state === "done" ? preview.value.held_security_deposit : null;
   const fromBooking =
     lease.security_deposit_id !== null || booking !== null || held !== null;
-  const walkIn = !renewal && !fromBooking;
+  // DL-259 (Q17): a parking customer from before the app is signed with no deposit.
+  const noDeposit =
+    preview.state === "done" && preview.value.no_deposit_start && !fromBooking;
+  const walkIn = !renewal && !fromBooking && !noDeposit;
   const planned =
     preview.state === "done"
       ? preview.value.planned_security_deposit_usd_cents
@@ -178,13 +181,14 @@ export function SignDialog({
           }
         : null;
   // The server works the total out the same way and refuses any other amount.
-  const depositDue = renewal
-    ? 0
-    : bookingDeposit !== null
-      ? Math.max(0, bookingDeposit.required - bookingDeposit.received)
-      : fromBooking
-        ? 0
-        : (planned ?? 0);
+  const depositDue =
+    renewal || noDeposit
+      ? 0
+      : bookingDeposit !== null
+        ? Math.max(0, bookingDeposit.required - bookingDeposit.received)
+        : fromBooking
+          ? 0
+          : (planned ?? 0);
   // The rest of a Booking's deposit must be known to work out the total. The server finds and
   // completes the Customer's active Booking of the Unit itself.
   const bookingUnknown = !renewal && fromBooking && bookingDeposit === null;
@@ -423,7 +427,9 @@ export function SignDialog({
                           usdFromCents(bookingDeposit.received),
                           usdFromCents(bookingDeposit.required),
                         )
-                      : lt(language, "sp_deposit")}
+                      : noDeposit
+                        ? lt(language, "sp_no_deposit")
+                        : lt(language, "sp_deposit")}
                   </td>
                   <td>{depositMissing ? "—" : usdFromCents(depositDue)}</td>
                 </tr>
