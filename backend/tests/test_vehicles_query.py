@@ -89,7 +89,7 @@ def test_a_vehicle_is_read_with_the_spaces_it_holds_today(connection: Db) -> Non
 
 def test_migration_is_the_single_head_and_forward_only() -> None:
     scripts = ScriptDirectory.from_config(Config(str(Path(__file__).parents[1] / "alembic.ini")))
-    assert scripts.get_heads() == ["20270819_444"]  # parking step 4b 442 is the head
+    assert scripts.get_heads() == ["20270820_445"]  # parking step 4b 442 is the head
     revision = scripts.get_revision("20270814_439")
     assert revision is not None and revision.down_revision == "20270813_438"
     with pytest.raises(RuntimeError, match="forward-only"):

@@ -25,6 +25,8 @@ const PARTS: Record<
 > = {
   total_income: [
     ["rent", "s_rent"],
+    // DL-257 (parking step 5b): Parking agreement Rent and parking Services of room Leases.
+    ["parking", "s_parking"],
     ["utilities", "s_utilities"],
     ["move_out_and_damage", "s_move_out_and_damage"],
     // V1.1 part 6 (DL-123): the Products Invoices made from Quotations.
